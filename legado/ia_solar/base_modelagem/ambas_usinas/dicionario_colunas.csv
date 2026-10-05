@@ -1,0 +1,29 @@
+﻿coluna;tipo;faltantes_pct;minimo;maximo;descricao
+site;str;0,0;;;Usina: Cascavel (Usina Cascavel) ou Curitiba (Usina Curitiba)
+data_hora;datetime64[us];0,0;;;Carimbo de tempo local do inversor, intervalo de 5 min
+ano;int32;0,0;2019.0;2026.0;Ano
+mes;int32;0,0;1.0;12.0;Mes (1-12)
+dia_do_ano;float64;0,0;1.0;366.0;Dia do ano (1-366)
+hora_solar;float64;0,0;5.233;18.788;Hora solar verdadeira (12 = meio-dia solar)
+elevacao_solar;float64;0,0;0.0;88.564;Elevacao do Sol acima do horizonte (graus)
+cos_zenite;float64;0,0;0.0;1.0;Cosseno do angulo zenital
+poa_ceu_claro;float64;0,0;0.03;1033.142;Irradiancia no plano dos modulos em ceu claro, modelo fisico (W/m2)
+kc_horario;float64;4,49;0.019;1.118;Indice de ceu claro horario da NASA POWER (GHI / GHI ceu claro)
+poa_estimada;float64;4,49;0.001;1032.896;poa_ceu_claro x kc_horario - irradiancia estimada no plano (W/m2)
+ghi_horario;float64;2,12;0.0;1141.43;Irradiancia global horizontal horaria, NASA POWER (W/m2)
+dni_horario;float64;2,12;0.0;1184.64;Irradiancia direta normal horaria, NASA POWER (W/m2)
+temp_ar_horaria;float64;0,0;-1.93;39.55;Temperatura do ar a 2 m, horaria (C)
+vento_horario;float64;0,0;0.01;4.25;Velocidade do vento a 2 m, horaria (m/s)
+kt_diario;float64;0,97;0.031;0.79;Indice de claridade diario, NASA POWER
+ghi_diario;float64;0,0;0.202;9.235;Irradiacao global horizontal diaria (kWh/m2/dia)
+temp_ar_diaria;float64;0,0;4.23;31.11;Temperatura media diaria do ar (C)
+umidade_diaria;float64;0,0;31.86;98.27;Umidade relativa media diaria (%)
+vento_diario;float64;0,0;0.33;2.97;Velocidade media diaria do vento a 2 m (m/s)
+chuva_diaria;float64;0,0;0.0;129.24;Precipitacao diaria (mm)
+nuvens_diaria;float64;2,12;0.02;100.0;Cobertura de nuvens media diaria (%)
+aerossol_diario;float64;2,12;0.01;3.41;Profundidade optica de aerossois em 550 nm
+estado_sujeira;float64;0,41;0.178;0.817;Mediana movel de 30 dias do indice de desempenho, DEFASADA em 1 dia
+pot_nominal_kWp;float64;0,0;3.96;9.603;Potencia nominal CC do arranjo (kWp). Curitiba e ESTIMADA
+pot_inversor_kW;float64;0,0;4.0;12.0;Potencia nominal CA do inversor (kW)
+indice_desempenho;float64;6,47;0.0;5.354;DIAGNOSTICO APENAS - calculado a partir do alvo, NAO usar como preditor
+potencia_ca_W;float64;0,0;0.0;11671.8;ALVO - potencia CA media no intervalo de 5 min (W)

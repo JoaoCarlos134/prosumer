@@ -1,0 +1,116 @@
+PROJETO_IA - SUMMARY OF TESTS, NETWORK ANALYSIS AND LIBRARY PROPOSAL
+2 October 2026
+
+Everything ran to completion. Two caveats: one test defect was found and fixed
+along the way, and the trained networks did not all run under identical settings
+(see "Problems found along the way").
+
+
+=====================================================================
+1. TESTS (33 models, 3 cases, forecasting tomorrow's 24 hours at 00:00)
+=====================================================================
+
+20 of the 127 surveyed models were tested, plus references, LightGBM, a physics
+model and an ensemble. That covers every family that can run on this data and
+machine; the reasons for each gap are in the write-up.
+
+Case                               Best                                Notes
+---------------------------------  ----------------------------------  ------------------------------------------
+Plants with tomorrow's real        Median of all models +51%,          8 models tie; LightGBM and TimesFM +48%
+weather                            TFT +50%
+Plants, history only               Median of all models +11%,          LSTM and GRU do worse than the simple
+                                   ResNet-1D +10%                      reference (-14% and -13%)
+Household solar (10 houses)        KAN +17%                            LightGBM only +6%: it learned summer and
+                                                                       overpredicts winter by 40%
+Household consumption (20 houses)  LightGBM +20%                       TTM and SparseTSF +19%, a statistical tie
+
+Percentages are the gain in error (RMSE) over a simple reference. For the plants
+that is yesterday's sky conditions applied to today's sun path; for the houses,
+"same as yesterday". 95% intervals by day-level bootstrap are in the write-up.
+
+Main findings
+- Weather matters far more than the model. The gap between having tomorrow's
+  weather and not is about 0.40; the spread between the best algorithms is about
+  0.03. A linear model with a single physical variable already reaches +42%.
+- Foundation models with no training tie with trained ones. TTM (3M parameters,
+  runs on a CPU) is the most consistent across all three cases.
+- SparseTSF, with 32 parameters, ties the best on consumption. It and TTM are the
+  embedded candidates.
+- The median of all models is the safest default. It was never below 2nd place,
+  and it does not require picking a model.
+
+Model improvements, in order
+1. Use a real weather forecast instead of NASA (pvlib already downloads the CAMS
+   satellite data).
+2. A physics-plus-residual hybrid as the default.
+3. The median ensemble instead of choosing one model.
+4. Correct the foundation models' -20% bias on consumption.
+Details are in the write-up.
+
+Problems found along the way
+- In the first run, four networks given weather inputs predicted up to 2,400 kWh
+  in an hour on a 4 kW plant. It was a normalization defect in how weather inputs
+  were scaled. It was fixed, checked, and all seven affected networks retrained.
+- The memory guard stopped training twice. It was finished in a separate process.
+- The networks did not all train under identical settings. The 9 plant networks
+  with history only used the default batch sizes; the rest used smaller ones to
+  save memory.
+- Toto and PatchTST ran on the plants only. xLSTM did not run (it needs GPU
+  kernels); the TiRex foundation model covers that family.
+- Half the houses (10 of 20) have no solar panels. They are consumption-only. The
+  houses also appear to be in Europe, not Brazil.
+
+
+=====================================================================
+2. NETWORK ANALYSIS OF THE PROJECT
+=====================================================================
+
+The graph has 1,342 nodes and 2,570 edges across code (via Graphify), data flow,
+documents, literature, and findings/papers/open items. It can be browsed in
+analise_rede/grafo_projeto/graphify-out/graph.html.
+
+- The most connected file in the project does not exist on disk
+  (frame5.parquet). It is an intermediate that 19 scripts depend on and nothing
+  stores. Changing the start of the Cascavel chain affects about 110 files, which
+  are redone by hand.
+- Results reach the reports by hand. 27 analysis outputs are never read by any
+  code; their numbers are typed into the reports. None of the 32 TFLite models
+  has ever been loaded and run.
+- The OCR paper and the Edge AI review share 21 papers, so they are one research
+  line. Articles A and B have no bibliography yet.
+- Curitiba's unknown geometry is the most strategic open item. It blocks both
+  solar papers, and two surveyed models built for plants without metadata could
+  turn it into a contribution instead.
+- The OCR paper's code is not in the project. The documents cite 7 scripts and a
+  simulator that do not exist here.
+
+
+=====================================================================
+3. LIBRARY (prossumidor)
+=====================================================================
+
+It is worth building, but as a thin layer over pvlib, NeuralForecast and the
+foundation models, not a library that "solves everything" from scratch. The
+evidence: the same logic is repeated across 7 to 19 scripts, and three package
+conflicts broke the environment in a single day. The design covers 8 modules,
+which code they would come from, a usage example, the choices the tests settled,
+and about 11 weeks of work. The name is free on PyPI.
+
+
+=====================================================================
+4. STILL TO DO
+=====================================================================
+
+- The cleanup list from earlier (copies, catboost_info/, figuras/dq4_viz.py).
+- Decide what to do with dados/merged/ (1.7 GB that nothing in the project reads).
+- Nothing is running now.
+
+
+=====================================================================
+5. FILES (all inside Projeto_IA)
+=====================================================================
+
+testes_modelos/LEIA-ME.md                              test write-up
+analise_rede/REDE_PROJETO.md                           network report
+analise_rede/grafo_projeto/graphify-out/graph.html     interactive graph
+biblioteca_tcc/PROPOSTA_BIBLIOTECA.md                  library proposal

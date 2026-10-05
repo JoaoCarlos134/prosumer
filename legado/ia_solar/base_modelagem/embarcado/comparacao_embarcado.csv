@@ -1,0 +1,81 @@
+﻿usina;conjunto;familia;modelo;R2;MAE;KB;us_por_amostra;treino_s
+Cascavel;COMPLETO;classico;HistGradientBoosting;0,8199;298,1;389,4;1299,2;2,9
+Cascavel;COMPLETO;classico;Random Forest;0,8124;307,4;2611008,6;21097,2;111,6
+Cascavel;COMPLETO;classico;Regressao Linear;0,8228;296,8;0,7;27,8;0,2
+Cascavel;COMPLETO;classico;LightGBM;0,8193;299,1;294,2;1195,4;1,1
+Cascavel;COMPLETO;classico;CatBoost;0,8158;301,7;1098,2;1309,6;25,3
+Cascavel;COMPLETO;classico;XGBoost;0,8075;312,7;472,6;1050,6;1,4
+Cascavel;COMPLETO;classico;Huber;0,8223;288,7;300,7;25,2;5,8
+Cascavel;COMPLETO;classico;ElasticNet;0,797;356,3;0,7;32,0;0,2
+Cascavel;COMPLETO;classico;PLS;0,8137;315,3;24004,6;32,1;0,4
+Cascavel;COMPLETO;classico;Voting (HGB+RF+Linear);0,8243;292,2;2611401,5;34365,1;109,0
+Cascavel;COMPLETO;keras;Keras MLP 32-16;0,8141;307,7;4,8;;5,3
+Cascavel;COMPLETO;tflite;TFLite MLP 32-16 float32;0,8141;307,7;6,7;2,6;
+Cascavel;COMPLETO;tflite;TFLite MLP 32-16 float16;0,8141;307,7;5,2;2,6;
+Cascavel;COMPLETO;tflite;TFLite MLP 32-16 int8 dinamico;0,8141;307,7;6,7;3,2;
+Cascavel;COMPLETO;tflite;TFLite MLP 32-16 int8 total;0,8109;317,6;4,7;11,1;
+Cascavel;COMPLETO;keras;Keras MLP 16-8;0,8166;303,2;1,9;;6,3
+Cascavel;COMPLETO;tflite;TFLite MLP 16-8 float32;0,8166;303,2;3,8;2,8;
+Cascavel;COMPLETO;tflite;TFLite MLP 16-8 float16;0,8166;303,2;3,8;2,8;
+Cascavel;COMPLETO;tflite;TFLite MLP 16-8 int8 dinamico;0,8166;303,2;3,8;3,3;
+Cascavel;COMPLETO;tflite;TFLite MLP 16-8 int8 total;0,8117;318,1;3,4;11,1;
+Cascavel;EMBARCADO;classico;HistGradientBoosting;0,5839;523,3;364,3;2036,2;1,2
+Cascavel;EMBARCADO;classico;Random Forest;0,5252;541,0;2635577,5;27074,9;47,2
+Cascavel;EMBARCADO;classico;Regressao Linear;0,598;524,8;0,5;28,4;0,1
+Cascavel;EMBARCADO;classico;LightGBM;0,5812;524,2;291,1;1092,1;0,6
+Cascavel;EMBARCADO;classico;CatBoost;0,5697;527,7;1092,3;1306,3;21,0
+Cascavel;EMBARCADO;classico;XGBoost;0,5539;533,4;487,1;1005,6;1,0
+Cascavel;EMBARCADO;classico;Huber;0,5895;503,8;300,6;24,7;0,9
+Cascavel;EMBARCADO;classico;ElasticNet;0,568;572,3;0,6;27,7;0,1
+Cascavel;EMBARCADO;classico;PLS;0,5958;523,7;24002,8;31,3;0,2
+Cascavel;EMBARCADO;classico;Voting (HGB+RF+Linear);0,5962;517,1;2635945,9;39988,4;45,5
+Cascavel;EMBARCADO;keras;Keras MLP 32-16;0,5901;512,6;3,1;;5,9
+Cascavel;EMBARCADO;tflite;TFLite MLP 32-16 float32;0,5901;512,6;5,1;2,6;
+Cascavel;EMBARCADO;tflite;TFLite MLP 32-16 float16;0,5901;512,6;4,5;2,7;
+Cascavel;EMBARCADO;tflite;TFLite MLP 32-16 int8 dinamico;0,5901;512,6;5,1;2,9;
+Cascavel;EMBARCADO;tflite;TFLite MLP 32-16 int8 total;0,5901;513,5;4,3;12,0;
+Cascavel;EMBARCADO;keras;Keras MLP 16-8;0,5885;516,4;1,1;;14,0
+Cascavel;EMBARCADO;tflite;TFLite MLP 16-8 float32;0,5885;516,4;3,0;2,7;
+Cascavel;EMBARCADO;tflite;TFLite MLP 16-8 float16;0,5885;516,5;3,5;2,6;
+Cascavel;EMBARCADO;tflite;TFLite MLP 16-8 int8 dinamico;0,5885;516,4;3,0;2,5;
+Cascavel;EMBARCADO;tflite;TFLite MLP 16-8 int8 total;0,5879;518,8;3,2;10,9;
+Curitiba;COMPLETO;classico;HistGradientBoosting;0,7483;759,7;388,1;1818,1;1,2
+Curitiba;COMPLETO;classico;Random Forest;0,7372;772,0;1707990,0;16718,6;63,9
+Curitiba;COMPLETO;classico;Regressao Linear;0,7132;888,2;0,7;25,0;0,1
+Curitiba;COMPLETO;classico;LightGBM;0,7495;759,5;291,1;946,9;0,7
+Curitiba;COMPLETO;classico;CatBoost;0,747;761,2;1097,1;1092,4;20,0
+Curitiba;COMPLETO;classico;XGBoost;0,7293;788,6;475,5;925,9;0,9
+Curitiba;COMPLETO;classico;Huber;0,7111;879,7;192,8;24,6;3,1
+Curitiba;COMPLETO;classico;ElasticNet;0,6765;980,4;0,7;31,4;0,1
+Curitiba;COMPLETO;classico;PLS;0,697;928,6;15374,5;52,9;0,3
+Curitiba;COMPLETO;classico;Voting (HGB+RF+Linear);0,7499;775,4;1708381,5;38231,2;65,1
+Curitiba;COMPLETO;keras;Keras MLP 32-16;0,7339;794,8;4,8;;11,9
+Curitiba;COMPLETO;tflite;TFLite MLP 32-16 float32;0,7339;794,8;6,7;2,8;
+Curitiba;COMPLETO;tflite;TFLite MLP 32-16 float16;0,7339;794,7;5,3;2,9;
+Curitiba;COMPLETO;tflite;TFLite MLP 32-16 int8 dinamico;0,7339;794,8;6,7;3,2;
+Curitiba;COMPLETO;tflite;TFLite MLP 32-16 int8 total;0,7343;796,7;4,7;11,8;
+Curitiba;COMPLETO;keras;Keras MLP 16-8;0,7453;778,8;1,9;;12,4
+Curitiba;COMPLETO;tflite;TFLite MLP 16-8 float32;0,7453;778,8;3,9;3,0;
+Curitiba;COMPLETO;tflite;TFLite MLP 16-8 float16;0,7453;778,8;3,9;2,7;
+Curitiba;COMPLETO;tflite;TFLite MLP 16-8 int8 dinamico;0,7453;778,8;3,9;2,8;
+Curitiba;COMPLETO;tflite;TFLite MLP 16-8 int8 total;0,7358;824,2;3,4;11,4;
+Curitiba;EMBARCADO;classico;HistGradientBoosting;0,5163;1131,2;364,3;2199,0;0,8
+Curitiba;EMBARCADO;classico;Random Forest;0,4633;1156,0;1714502,7;16608,6;23,1
+Curitiba;EMBARCADO;classico;Regressao Linear;0,4813;1272,7;0,5;20,5;0,0
+Curitiba;EMBARCADO;classico;LightGBM;0,5225;1125,3;288,6;580,6;0,2
+Curitiba;EMBARCADO;classico;CatBoost;0,4796;1160,2;1093,1;775,9;11,1
+Curitiba;EMBARCADO;classico;XGBoost;0,4456;1205,0;478,5;844,1;0,6
+Curitiba;EMBARCADO;classico;Huber;0,463;1277,3;192,7;24,0;0,7
+Curitiba;EMBARCADO;classico;ElasticNet;0,452;1334,3;0,6;27,3;0,0
+Curitiba;EMBARCADO;classico;PLS;0,4753;1288,5;15372,6;29,8;0,1
+Curitiba;EMBARCADO;classico;Voting (HGB+RF+Linear);0,5323;1141,2;1714871,2;33637,4;23,8
+Curitiba;EMBARCADO;keras;Keras MLP 32-16;0,5272;1130,5;3,1;;4,5
+Curitiba;EMBARCADO;tflite;TFLite MLP 32-16 float32;0,5272;1130,5;5,1;2,6;
+Curitiba;EMBARCADO;tflite;TFLite MLP 32-16 float16;0,5272;1130,5;4,5;2,6;
+Curitiba;EMBARCADO;tflite;TFLite MLP 32-16 int8 dinamico;0,5272;1130,5;5,1;2,7;
+Curitiba;EMBARCADO;tflite;TFLite MLP 32-16 int8 total;0,518;1157,3;4,3;10,1;
+Curitiba;EMBARCADO;keras;Keras MLP 16-8;0,5283;1139,3;1,1;;4,1
+Curitiba;EMBARCADO;tflite;TFLite MLP 16-8 float32;0,5283;1139,3;3,1;2,6;
+Curitiba;EMBARCADO;tflite;TFLite MLP 16-8 float16;0,5283;1139,3;3,5;2,7;
+Curitiba;EMBARCADO;tflite;TFLite MLP 16-8 int8 dinamico;0,5283;1139,3;3,1;2,7;
+Curitiba;EMBARCADO;tflite;TFLite MLP 16-8 int8 total;0,5051;1177,9;3,2;14,4;

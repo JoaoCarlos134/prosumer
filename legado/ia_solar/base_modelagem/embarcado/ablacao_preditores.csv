@@ -1,0 +1,13 @@
+﻿usina;camada;n_preditores;R2_Linear;MAE_Linear;R2_HistGB;MAE_HistGB
+Cascavel;1. so poa_estimada;1;0,8196;305,0;0,8192;305,5
+Cascavel;2. so geometria;5;0,5837;533,4;0,5687;538,8
+Cascavel;3. geometria + poa_estimada;6;0,821;299,8;0,8117;311,3
+Cascavel;4. + resto da NASA horaria;11;0,8207;298,1;0,813;307,7
+Cascavel;5. + NASA diaria;19;0,8226;297,1;0,8181;302,0
+Cascavel;6. + estado_sujeira = COMPLETO;20;0,8228;296,8;0,8199;298,1
+Curitiba;1. so poa_estimada;1;0,7071;884,5;0,7111;868,9
+Curitiba;2. so geometria;5;0,4475;1290,5;0,4568;1236,3
+Curitiba;3. geometria + poa_estimada;6;0,7077;885,4;0,7431;768,6
+Curitiba;4. + resto da NASA horaria;11;0,7101;881,2;0,7465;764,6
+Curitiba;5. + NASA diaria;19;0,7143;876,0;0,7517;756,8
+Curitiba;6. + estado_sujeira = COMPLETO;20;0,7132;888,2;0,7483;759,7

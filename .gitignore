@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.venvs/
+.ipynb_checkpoints/
+lightning_logs/
+catboost_info/
+~$*
+desktop.ini
+.DS_Store
+experimentos/testes_previsao/resultados/log_*.txt

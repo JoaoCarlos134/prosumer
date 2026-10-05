@@ -1,0 +1,3 @@
+site,kWp,inverter,geometry,lat,lon,years,kWh_yr,yield_kWh_kWp,PI_median,n_5min
+Usina Cascavel / Cascavel,3.96,Fronius Primo 4.0-1 (1 MPPT),13 deg / 25 deg E of N,-24.83,-53.65,0,,,0.6628014330298532,694488
+Usina Curitiba / Curitiba,9.602976240711268,Fronius Symo 12.0-3 (2 MPPT),"MPP1 22/24, MPP2 10/60",-25.4284,-49.2733,0,,,0.35378348014768934,490013

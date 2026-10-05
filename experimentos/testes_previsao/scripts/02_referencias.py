@@ -1,0 +1,111 @@
+# -*- coding: utf-8 -*-
+"""Referencias ingenuas, fisica linear e LightGBM global.
+
+  persist_24h        o mesmo horario de ontem
+  semanal_168h       o mesmo horario de 7 dias atras
+  media_7d           media do mesmo horario nos ultimos 7 dias
+  persist_ceu_claro  (usinas) indice de ceu claro de ontem x ceu claro de hoje; so geometria
+  linear_fisico      (usinas, B) energia = a + b * poa_estimada, ajustado no treino
+  LightGBM           global; A: defasagens + calendario; B (usinas): + ceu claro e clima do dia;
+                     C: + ceu claro e previsao real da vespera
+LightGBM e linear fisico sao retreinados no inicio de cada dobra (origem movel, comum.dobras).
+Nas usinas rodam tambem os diagnosticos B-curto e C-gfs (ver comum.py).
+"""
+import numpy as np, pandas as pd, lightgbm as lgb
+from comum import carrega, dias_teste, dobras, grava, CASOS, EXOG, H, REGIMES, DIAGNOSTICOS
+
+
+def matriz(g, col):
+    """dia x hora (24 colunas)."""
+    m = g.assign(dia=g.ds.dt.normalize(), h=g.ds.dt.hour).pivot_table(index="dia", columns="h", values=col, dropna=False)
+    m = m.reindex(columns=range(24))
+    return m.reindex(pd.date_range(m.index.min(), m.index.max(), freq="D"))
+
+
+def tabela_features(d, caso):
+    """Uma linha por (serie, dia, hora) com tudo o que se sabe as 00:00 do dia."""
+    blocos = []
+    for k, (uid, g) in enumerate(d.groupby("unique_id", sort=False)):
+        Y = matriz(g, "y")
+        f = {}
+        for lag in (1, 2, 7):
+            f[f"y_d{lag}"] = Y.shift(lag)
+        f["y_media7"] = sum(Y.shift(i) for i in range(1, 8)) / 7
+        tot = Y.sum(axis=1, min_count=20)
+        f["tot_d1"] = pd.DataFrame(np.repeat(tot.shift(1).to_numpy()[:, None], 24, 1), index=Y.index, columns=Y.columns)
+        f["tot_media7"] = pd.DataFrame(np.repeat(tot.shift(1).rolling(7, min_periods=5).mean().to_numpy()[:, None], 24, 1),
+                                       index=Y.index, columns=Y.columns)
+        if caso == "usinas":
+            X = {c: matriz(g, c) for c in EXOG}
+            cs = X["poa_ceu_claro"]
+            k_ontem = (tot.shift(1) / cs.sum(axis=1).shift(1)).replace([np.inf, -np.inf], np.nan)
+            f["persist_ceu_claro"] = cs.mul(k_ontem, axis=0)
+            for c in EXOG:
+                f[c] = X[c]
+        longo = pd.concat({n: m.stack(future_stack=True) for n, m in f.items()}, axis=1)
+        longo["y"] = Y.stack(future_stack=True)
+        longo.index.names = ["dia", "h"]
+        longo = longo.reset_index()
+        longo["unique_id"], longo["serie_cod"] = uid, k
+        blocos.append(longo)
+    t = pd.concat(blocos, ignore_index=True)
+    t["ds"] = t.dia + pd.to_timedelta(t.h, unit="h")
+    t["dow"] = t.dia.dt.dayofweek
+    t["doy_sin"], t["doy_cos"] = np.sin(2 * np.pi * t.dia.dt.dayofyear / 365.25), np.cos(2 * np.pi * t.dia.dt.dayofyear / 365.25)
+    return t
+
+
+def linear_fisico(treino, tt):
+    """energia = a + b * poa_estimada, por usina, so horas de sol."""
+    out = pd.Series(np.nan, index=tt.index)
+    for uid, g in treino.groupby("unique_id"):
+        sol = g[g.poa_ceu_claro > 0]
+        coef = np.linalg.lstsq(np.c_[np.ones(len(sol)), sol.poa_estimada], sol.y.to_numpy(), rcond=None)[0]
+        m = tt.unique_id == uid
+        out[m] = np.where(tt.loc[m, "poa_ceu_claro"] > 0, coef[0] + coef[1] * tt.loc[m, "poa_estimada"], 0.0)
+    return out
+
+
+def lgbm(treino, tt, cols):
+    m = lgb.LGBMRegressor(n_estimators=600, learning_rate=0.03, num_leaves=63, min_child_samples=40,
+                          subsample=0.8, subsample_freq=1, colsample_bytree=0.8, random_state=42, verbose=-1)
+    m.fit(treino[cols], treino.y, categorical_feature=["serie_cod"])
+    return m.predict(tt[cols])
+
+
+def roda(caso):
+    cal = ["h", "dow", "doy_sin", "doy_cos", "serie_cod"]
+    lags = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
+    regimes = REGIMES[caso] + (DIAGNOSTICOS if caso == "usinas" else [])
+    for regime in regimes:
+        d = carrega(caso, regime)
+        t = tabela_features(d, caso)
+        teste = pd.DataFrame(dias_teste(d, caso), columns=["unique_id", "dia"])
+        tt = teste.merge(t, on=["unique_id", "dia"], how="left").sort_values(["unique_id", "dia", "h"]).reset_index(drop=True)
+        teste = tt[["unique_id", "dia"]].drop_duplicates().reset_index(drop=True)
+        jan = [dict(unique_id=u, ds_fut=pd.date_range(dia, periods=H, freq="h")) for u, dia in teste.itertuples(index=False)]
+
+        def salva(nome, col):
+            grava(nome, caso, regime, jan, tt[col].to_numpy().reshape(-1, H))
+
+        if regime == "A":                          # referencias: nao treinam, uma vez so
+            salva("persist_24h", "y_d1"); salva("semanal_168h", "y_d7"); salva("media_7d", "y_media7")
+            if caso == "usinas":
+                salva("persist_ceu_claro", "persist_ceu_claro")
+        cols = cal + lags + (["persist_ceu_claro"] + EXOG if regime != "A" else [])
+        tt["lgb"], tt["linear_fisico"] = np.nan, np.nan
+        for ini, fim in dobras(caso):
+            treino = t[(t.dia < ini) & t.y.notna()]
+            m = (tt.dia >= ini) & (tt.dia <= fim)
+            tt.loc[m, "lgb"] = lgbm(treino, tt[m], cols)
+            if regime != "A":
+                tt.loc[m, "linear_fisico"] = linear_fisico(treino, tt[m])[m[m].index]
+        salva("LightGBM", "lgb")
+        if regime != "A":
+            salva("linear_fisico", "linear_fisico")
+        print("%-10s %-7s %4d dias de teste, %d dobras, treino desde %s" % (caso, regime, len(teste), len(dobras(caso)), t.dia.min().date()), flush=True)
+
+
+if __name__ == "__main__":
+    for caso in CASOS:
+        roda(caso)

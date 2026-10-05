@@ -1,0 +1,86 @@
+{
+ "Chronos-2|usinas|A": {
+  "segundos": 70.1,
+  "janelas": 598
+ },
+ "Chronos-2|usinas|B": {
+  "segundos": 289.9,
+  "janelas": 598
+ },
+ "Chronos-2|casas_prod|A": {
+  "segundos": 179.7,
+  "janelas": 1820
+ },
+ "Chronos-2|casas_cons|A": {
+  "segundos": 170.3,
+  "janelas": 1820
+ },
+ "Chronos-Bolt-small|usinas|A": {
+  "segundos": 11.8,
+  "janelas": 598
+ },
+ "Chronos-Bolt-small|casas_prod|A": {
+  "segundos": 33.2,
+  "janelas": 1820
+ },
+ "Chronos-Bolt-small|casas_cons|A": {
+  "segundos": 33.4,
+  "janelas": 1820
+ },
+ "TimesFM-2.5|usinas|A": {
+  "segundos": 130.8,
+  "janelas": 598
+ },
+ "TimesFM-2.5|usinas|B": {
+  "segundos": 144.1,
+  "janelas": 598
+ },
+ "TimesFM-2.5|casas_prod|A": {
+  "segundos": 407.5,
+  "janelas": 1820
+ },
+ "TimesFM-2.5|casas_cons|A": {
+  "segundos": 404.6,
+  "janelas": 1820
+ },
+ "TiRex|usinas|A": {
+  "segundos": 421.1,
+  "janelas": 598
+ },
+ "TiRex|casas_prod|A": {
+  "segundos": 1283.6,
+  "janelas": 1820
+ },
+ "TiRex|casas_cons|A": {
+  "segundos": 1286.0,
+  "janelas": 1820
+ },
+ "TTM-r2|usinas|A": {
+  "segundos": 2.3,
+  "janelas": 598
+ },
+ "TTM-r2|casas_prod|A": {
+  "segundos": 2.8,
+  "janelas": 1820
+ },
+ "TTM-r2|casas_cons|A": {
+  "segundos": 2.9,
+  "janelas": 1820
+ },
+ "Moirai-2.0-small|usinas|A": {
+  "segundos": 9.8,
+  "janelas": 598
+ },
+ "Moirai-2.0-small|casas_prod|A": {
+  "segundos": 26.2,
+  "janelas": 1820
+ },
+ "Moirai-2.0-small|casas_cons|A": {
+  "segundos": 26.4,
+  "janelas": 1820
+ },
+ "Toto|usinas|A": {
+  "segundos": 28.2,
+  "janelas": 598
+ }
+}

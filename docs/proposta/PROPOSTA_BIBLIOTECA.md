@@ -1,0 +1,164 @@
+# Proposta: biblioteca `prossumidor`
+
+Uma biblioteca Python para prever **geração e consumo** de quem produz e consome
+energia — usina FV, casa com FV e bateria, edificação — do dado bruto do medidor
+ao modelo embarcado. Estudo de viabilidade feito em 30/09/2026 a partir da análise
+de rede do projeto (`REDE_PROJETO.md`) e dos testes de modelos
+(`../testes_modelos/LEIA-ME.md`). Nome livre no PyPI (conferido).
+
+**Recomendação em uma frase:** sim, vale fazer — mas como uma **camada de domínio
+fina sobre bibliotecas que já existem**, não como uma biblioteca que "resolve tudo"
+do zero. O que é único deste projeto (diagnóstico só com o inversor, protocolo de
+previsão congelado com modelos fundacionais, contexto tarifário brasileiro,
+exportação para embarcado) cabe em ~6 módulos; o resto é adaptador.
+
+---
+
+## 1. Por que agora: o que a análise de rede mostrou
+
+| Sintoma no projeto | Número | Consequência |
+|---|---:|---|
+| Data de corte `2025-08-01` escrita à mão | 16 scripts | mudar o teste = editar 16 arquivos |
+| Métricas (R², MAE…) reimplementadas | 19 scripts | definições divergem entre relatórios |
+| Agregação horária reescrita | 7 scripts | cada uma com sua regra de buraco/noite |
+| Semente fixada separadamente | 12 scripts | reprodutibilidade depende de disciplina |
+| Correção do proxy (`truststore`) repetida | 5 scripts | — |
+| Nó mais conectado do projeto | `frame5.parquet`, que **não existe no disco** | 19 scripts dependem de um intermediário não guardado |
+| Cadeia mais longa da linhagem | 14 passos, da NASA ao relatório de 5 min | uma mudança no início (kWp 4,00 → 3,96) propaga para ~110 arquivos à mão |
+| Saídas que nenhum script lê | ~30 arquivos | números chegam aos relatórios por transcrição manual |
+
+O `relatorio.html` desatualizado e a fatura de 2025 que não entrou na análise
+(ambos corrigidos em 28/09) foram exatamente esse tipo de falha. Uma biblioteca
+com protocolo único e um pipeline declarado resolve a classe inteira de problemas,
+não um caso.
+
+Os próprios testes deram a segunda evidência: em um dia, três quebras de
+ambiente — `uni2ts` rebaixando o torch, o `huggingface_hub` novo quebrando o
+Toto, o `granite-tsfm` do GitHub trocando o `transformers`. Modelos fundacionais
+mudam de API a cada trimestre; o código de projeto não deve falar com eles direto.
+
+## 2. O que NÃO fazer de novo (o ecossistema já resolve)
+
+| Necessidade | Já existe | Como a `prossumidor` usa |
+|---|---|---|
+| Geometria solar, céu claro, transposição, temperatura de célula | **pvlib** | dependência direta |
+| Clima: NASA POWER, **CAMS (satélite)**, ERA5, PVGIS, Solcast | **pvlib.iotools** | adaptador + o alinhamento de −55 min da NASA como função testada |
+| Redes treinadas (LSTM, GRU, NHITS, TiDE, PatchTST, TFT…) | **NeuralForecast** / Darts | adaptador opcional |
+| Modelos fundacionais | chronos-forecasting, timesfm, tirex, granite-tsfm, uni2ts, toto | um adaptador por modelo, cada um como *extra* isolado |
+| Estatísticos e árvores | StatsForecast, LightGBM | adaptador |
+| Pipeline de carga em produção | **OpenSTEF 4.0** | não competir: exportar para ele |
+| Degradação e sujeira (SRR) | **RdTools** | comparar com o diagnóstico próprio, não substituir |
+| Execução em microcontrolador | LiteRT (TFLite), emlearn | etapa de exportação |
+
+## 3. O que é único (a lacuna que justifica a biblioteca)
+
+Nenhuma biblioteca acima faz:
+
+1. **Diagnóstico só com o inversor**, sem sensor de irradiância: separação
+   corrente × tensão CC para sujeira, duas entradas MPPT como controle uma da outra
+   para falha de string, detecção de limpezas por ponto de mudança
+   (`a2_fault.py`, `a3_shading.py`, `changepoint.py`, `curitiba_analysis2.py`).
+2. **Um protocolo de previsão congelado** que compara referências, árvores, redes e
+   modelos fundacionais na mesma tarefa, com regimes explícitos (só histórico ×
+   clima conhecido), IC por bootstrap de dias e *skill* contra a persistência de
+   céu claro (`testes_modelos/scripts/comum.py`, `05_avalia.py`).
+3. **Leitura dos formatos reais** que o projeto recebe: exportação anual do
+   Fronius Solar.web, medidor de 1 min das casas (com detecção de casa sem FV,
+   minuto corrompido e mudança de horário de verão), fatura Copel.
+4. **Contexto tarifário brasileiro**: TUSD/TE da ANEEL, bandeiras, ICMS do PR por
+   período, Lei 14.300 e créditos que expiram (`tarifas/`, `billing.py`).
+5. **Caminho até o embarcado** medido por igual para todas as famílias
+   (tamanho, R², latência — hoje só TFLite em `compara_modelos_embarcado.py`).
+6. **Regras de qualidade que custaram horas** e não estão em documentação nenhuma:
+   colunas que reescrevem o alvo, hora de ponta com inversor dormindo, eficiência
+   do inversor > 1 por falta de simultaneidade, NASA diária 3,2% abaixo.
+
+## 4. Módulos e de onde vem o código
+
+| Módulo | Faz | Código que já existe no projeto |
+|---|---|---|
+| `prossumidor.io` | lê Fronius, medidores, faturas, ANEEL; clima via pvlib com alinhamento | `merge_5min.py`, `merge_curitiba.py`, `build_merge.py`, `billing.py`, `baixa_tarifas_aneel.py`, `h1_align.py` |
+| `prossumidor.qualidade` | buracos, noite, pontas do dia, vazamento, casas sem FV, horário de verão, relatório de qualidade | `01_prepara_dados.py`, `dq1..dq3`, `dq_curitiba.py`, `data_quality_summary.csv` |
+| `prossumidor.fisica` | POA de céu claro, ajuste de geometria, kWp estimado, irradiância inversa | `solar.py`, `a1_geometry.py`, `build_curitiba2.py`, `estima_irradiancia.py` |
+| `prossumidor.diagnostico` | sujeira, falha de string, limpezas, PR corrigido | `a2_fault.py`, `a3_shading.py`, `changepoint.py`, `curitiba_analysis2.py` |
+| `prossumidor.previsao` | interface única `ajusta/preve` + adaptadores | `02_referencias.py`, `03_fundacionais.py`, `04_redes_treinadas.py` |
+| `prossumidor.protocolo` | janelas do dia seguinte, regimes, métricas, bootstrap, Diebold–Mariano, relatório | `comum.py`, `05_avalia.py` |
+| `prossumidor.embarcado` | exporta (TFLite int8, ONNX, emlearn) e mede | `compara_modelos_embarcado.py` |
+| `prossumidor.economia` | tarifa cheia, créditos, Lei 14.300, exportação HOMER | `aplica_tarifas.py`, `monta_planilha_tarifas.py` |
+
+## 5. Como seria usar
+
+```python
+import prossumidor as ps
+
+usina = ps.io.fronius("dados_brutos/cascavel/serie_5min/", kwp=3.96, lat=-24.83, lon=-53.65,
+                      inclinacao=13, azimute=155)
+clima = ps.io.clima(usina, fonte="cams")              # ou "nasa" (já alinhada em -55 min), "era5"
+serie = ps.qualidade.limpa(usina, clima)              # noite, pontas do dia, vazamento — com relatório
+print(serie.relatorio_qualidade())
+
+tarefa = ps.protocolo.DiaSeguinte(serie, teste_de="2025-08-01", regimes=["historico", "clima"])
+resultado = tarefa.compara([
+    ps.previsao.PersistenciaCeuClaro(),
+    ps.previsao.LinearFisico(),
+    ps.previsao.LightGBM(),
+    ps.previsao.fundacional("chronos-2"),             # extra: pip install prossumidor[chronos]
+    ps.previsao.fundacional("ttm"),                   # 3M parâmetros, o mais consistente nos testes
+])                                                    # + mediana de todos, sempre incluída
+resultado.tabela()                                    # skill com IC95%, nMAE, viés, R², energia diária
+ps.embarcado.exporta(resultado.melhor(max_kb=64), formato="tflite-int8")
+
+diag = ps.diagnostico.sujeira(serie)                  # eventos de limpeza, perda acumulada
+ps.economia.fatura(serie, consumo, distribuidora="copel", conexao="2019-07")
+```
+
+## 5b. O que os testes decidiram para a biblioteca
+
+Os testes de `../testes_modelos/` (33 modelos, 3 casos) viram escolhas concretas:
+
+| Decisão | Por quê (resultado do teste) |
+|---|---|
+| **Conjunto padrão de `compara()`:** persistência de céu claro, linear físico, LightGBM, TTM, Chronos-2 | cobre o teto (LightGBM/TFT ≈ +0,48–0,50 com clima), o melhor zero-shot consistente (TTM, ranking médio 3,3) e o híbrido físico (+0,42 com uma variável) — em segundos, sem GPU |
+| **Saída padrão = mediana dos modelos**, não "o melhor" | a mediana nunca ficou abaixo do 2º lugar nos 4 cenários; escolher o vencedor pelo teste é vazamento |
+| **Normalização global obrigatória com covariáveis** | a normalização por janela do NeuralForecast fez GRU/LSTM/NHITS/KAN preverem até 2.400 kWh/h numa usina de 4 kW; a biblioteca deve impedir essa combinação, não documentá-la |
+| **Relatório de viés junto do erro** | os fundacionais subestimam o consumo em ~20% (preveem a mediana); um bom RMSE escondia isso |
+| **Detecção de série sem sinal** em `qualidade` | 10 das 20 casas não têm FV; sem a checagem, o erro normalizado dobrou |
+| **`embarcado` começa por TTM (3 M) e SparseTSF (32 parâmetros)** | SparseTSF empata com os melhores no consumo; TTM é o mais estável sem treino |
+| **Regime explícito (histórico × clima conhecido)** | o vão entre regimes (~0,40) é dez vezes a diferença entre algoritmos; misturar os dois numa tabela engana |
+| **Cada fundacional num ambiente isolado** | `uni2ts` exige torch 2.4; `granite-tsfm` do GitHub trouxe torch 2.11 e transformers 5; o Toto quebrou com o `huggingface_hub` novo |
+
+## 6. Princípios de projeto
+
+- **Adaptadores finos, dependências opcionais.** `pip install prossumidor` traz só
+  pandas, numpy, pvlib e LightGBM. Cada modelo fundacional é um *extra*
+  (`prossumidor[chronos]`, `[timesfm]`, `[ttm]`…) com versão travada e teste de
+  contrato — quando a API do fornecedor mudar, quebra um adaptador, não o projeto.
+- **Um protocolo, um lugar.** Datas de corte, sementes e métricas vivem na tarefa,
+  nunca no script.
+- **Pipeline declarado.** O grafo de linhagem já calculado (`linhagem.json`) é a
+  especificação do pipeline: cada etapa declara o que lê e escreve, e só o que
+  mudou é refeito. Recomendo **não** escrever um executor próprio: usar Snakemake
+  ou DVC por cima.
+- **Contratos de dados.** Toda série carrega unidade, fuso, taxa e máscara de
+  validade; nenhuma função aceita um DataFrame "cru".
+- **Anonimização por padrão.** Nomes de proprietários nunca entram em nomes de
+  arquivo ou colunas (pendência do `PLANO_ARTIGO.md`).
+
+## 7. Esforço e ordem
+
+| Versão | Conteúdo | Esforço (1 pessoa) |
+|---|---|---|
+| 0.1 | `io` (Fronius, medidor, clima), `qualidade`, `fisica`, `protocolo`, adaptadores de referências + LightGBM + Chronos-2 + TTM | ~4 semanas — o código existe, falta empacotar e testar |
+| 0.2 | `diagnostico`, adaptadores NeuralForecast e demais fundacionais, `embarcado` | ~4 semanas |
+| 0.3 | `economia` (ANEEL, Lei 14.300, HOMER), documentação, CI, publicação no PyPI | ~3 semanas |
+
+## 8. Riscos e quando não fazer
+
+- **Manutenção dos adaptadores** é o custo recorrente real. Mitigação: poucos
+  modelos por padrão, os demais como contribuição.
+- **Sobreposição com OpenSTEF** no lado do consumo: se o foco virar só carga de
+  distribuidora, contribuir com o OpenSTEF é melhor que competir.
+- **Dados de terceiros:** os dados das usinas e das casas não podem ir junto
+  sem consentimento; a biblioteca precisa de dados de exemplo sintéticos.
+- **Não vale a pena** se o objetivo for só publicar os artigos A e B: para isso
+  basta congelar o protocolo (`comum.py` + `05_avalia.py`) e um Snakefile.

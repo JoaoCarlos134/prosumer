@@ -1,0 +1,27 @@
+{
+ "LSTM|casas_prod|A": {
+  "segundos": 1509.5,
+  "parametros": 215809,
+  "dobras": 3
+ },
+ "GRU|casas_prod|A": {
+  "segundos": 3098.4,
+  "parametros": 388857,
+  "dobras": 3
+ },
+ "NHITS|casas_prod|A": {
+  "segundos": 224.8,
+  "parametros": 2817570,
+  "dobras": 3
+ },
+ "TiDE|casas_prod|A": {
+  "segundos": 716.4,
+  "parametros": 1497340,
+  "dobras": 3
+ },
+ "KAN|casas_prod|A": {
+  "segundos": 262.1,
+  "parametros": 983040,
+  "dobras": 3
+ }
+}

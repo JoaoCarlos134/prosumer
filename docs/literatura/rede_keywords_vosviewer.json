@@ -1,0 +1,8138 @@
+{
+  "network": {
+    "items": [
+      {
+        "id": 1,
+        "label": "constrained q-learning",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 10,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.005291,
+          "Eigenvector": 0.038821
+        },
+        "cluster": 1,
+        "x": -0.276908,
+        "y": 0.446022
+      },
+      {
+        "id": 2,
+        "label": "data-driven optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 7.9e-05,
+          "Eigenvector": 0.015707
+        },
+        "cluster": 1,
+        "x": 0.181952,
+        "y": 0.398465
+      },
+      {
+        "id": 3,
+        "label": "deep reinforcement learning",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 7.9e-05,
+          "Eigenvector": 0.015707
+        },
+        "cluster": 1,
+        "x": -0.466373,
+        "y": 0.004018
+      },
+      {
+        "id": 4,
+        "label": "energy management",
+        "weights": {
+          "Occurrences": 15,
+          "Links": 53,
+          "Total link strength": 71
+        },
+        "scores": {
+          "Betweenness": 0.141685,
+          "Eigenvector": 0.354652
+        },
+        "cluster": 2,
+        "x": 0.008038,
+        "y": -0.03044
+      },
+      {
+        "id": 5,
+        "label": "uncertainty",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 9,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.006862,
+          "Eigenvector": 0.067741
+        },
+        "cluster": 1,
+        "x": -0.287719,
+        "y": 0.001294
+      },
+      {
+        "id": 6,
+        "label": "building microgrids",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 10,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.032931,
+          "Eigenvector": 0.054448
+        },
+        "cluster": 3,
+        "x": -0.387856,
+        "y": -0.217014
+      },
+      {
+        "id": 7,
+        "label": "electrical appliance",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00199
+        },
+        "cluster": 3,
+        "x": -0.063958,
+        "y": -0.750604
+      },
+      {
+        "id": 8,
+        "label": "grasshopper optimization algorithm (goa)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00199
+        },
+        "cluster": 3,
+        "x": -0.601601,
+        "y": -0.768025
+      },
+      {
+        "id": 9,
+        "label": "improved sine cosine algorithm (isca)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00199
+        },
+        "cluster": 3,
+        "x": -0.731661,
+        "y": -0.500531
+      },
+      {
+        "id": 10,
+        "label": "moth-flame optimization algorithm (mfoa)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00199
+        },
+        "cluster": 3,
+        "x": -0.324398,
+        "y": -0.914708
+      },
+      {
+        "id": 11,
+        "label": "5g technology",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 6,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.001344,
+          "Eigenvector": 0.058785
+        },
+        "cluster": 2,
+        "x": 0.063099,
+        "y": 0.050093
+      },
+      {
+        "id": 12,
+        "label": "build environment",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.001124,
+          "Eigenvector": 0.045054
+        },
+        "cluster": 2,
+        "x": -0.432225,
+        "y": 0.204216
+      },
+      {
+        "id": 13,
+        "label": "facilities management",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.003501,
+          "Eigenvector": 0.025928
+        },
+        "cluster": 2,
+        "x": -0.202222,
+        "y": 0.538944
+      },
+      {
+        "id": 14,
+        "label": "smart buildings",
+        "weights": {
+          "Occurrences": 32,
+          "Links": 99,
+          "Total link strength": 150
+        },
+        "scores": {
+          "Betweenness": 0.320653,
+          "Eigenvector": 0.538138
+        },
+        "cluster": 2,
+        "x": 0.007346,
+        "y": 0.081004
+      },
+      {
+        "id": 15,
+        "label": "sustainability",
+        "weights": {
+          "Occurrences": 5,
+          "Links": 20,
+          "Total link strength": 26
+        },
+        "scores": {
+          "Betweenness": 0.047298,
+          "Eigenvector": 0.145274
+        },
+        "cluster": 2,
+        "x": 0.319862,
+        "y": 0.188967
+      },
+      {
+        "id": 16,
+        "label": "energy-efficient building",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.070462
+        },
+        "cluster": 2,
+        "x": 0.085485,
+        "y": 0.255416
+      },
+      {
+        "id": 17,
+        "label": "green building",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.006696,
+          "Eigenvector": 0.039519
+        },
+        "cluster": 2,
+        "x": -0.039478,
+        "y": 0.624695
+      },
+      {
+        "id": 18,
+        "label": "intelligent control",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.070462
+        },
+        "cluster": 2,
+        "x": 0.325859,
+        "y": 0.501952
+      },
+      {
+        "id": 19,
+        "label": "machine learning",
+        "weights": {
+          "Occurrences": 12,
+          "Links": 41,
+          "Total link strength": 60
+        },
+        "scores": {
+          "Betweenness": 0.045305,
+          "Eigenvector": 0.291377
+        },
+        "cluster": 2,
+        "x": 0.194724,
+        "y": 0.101913
+      },
+      {
+        "id": 20,
+        "label": "occupant-centric control",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.070462
+        },
+        "cluster": 2,
+        "x": 0.264171,
+        "y": 0.509795
+      },
+      {
+        "id": 21,
+        "label": "renewable energy integration",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 14,
+          "Total link strength": 16
+        },
+        "scores": {
+          "Betweenness": 0.014776,
+          "Eigenvector": 0.100332
+        },
+        "cluster": 2,
+        "x": 0.228333,
+        "y": 0.201909
+      },
+      {
+        "id": 22,
+        "label": "sustainable architecture",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 10,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.003148,
+          "Eigenvector": 0.058691
+        },
+        "cluster": 2,
+        "x": 0.035641,
+        "y": 0.52764
+      },
+      {
+        "id": 23,
+        "label": "clustering-based electricity tariff",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.001487
+        },
+        "cluster": 4,
+        "x": -0.313159,
+        "y": 0.8546
+      },
+      {
+        "id": 24,
+        "label": "demand response program",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 14,
+          "Total link strength": 15
+        },
+        "scores": {
+          "Betweenness": 0.041237,
+          "Eigenvector": 0.024577
+        },
+        "cluster": 4,
+        "x": 0.05068,
+        "y": 0.65524
+      },
+      {
+        "id": 25,
+        "label": "electric vehicle (ev)",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 15,
+          "Total link strength": 15
+        },
+        "scores": {
+          "Betweenness": 0.034504,
+          "Eigenvector": 0.015245
+        },
+        "cluster": 4,
+        "x": -0.345805,
+        "y": 0.191521
+      },
+      {
+        "id": 26,
+        "label": "smart home",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001641,
+          "Eigenvector": 0.002362
+        },
+        "cluster": 4,
+        "x": 0.343715,
+        "y": 0.637533
+      },
+      {
+        "id": 27,
+        "label": "solar energy",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.001487
+        },
+        "cluster": 4,
+        "x": 0.34586,
+        "y": 0.858104
+      },
+      {
+        "id": 28,
+        "label": "stochastic programming",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.001487
+        },
+        "cluster": 4,
+        "x": 0.018378,
+        "y": 0.995054
+      },
+      {
+        "id": 29,
+        "label": "artificial intelligence",
+        "weights": {
+          "Occurrences": 9,
+          "Links": 37,
+          "Total link strength": 51
+        },
+        "scores": {
+          "Betweenness": 0.060848,
+          "Eigenvector": 0.295419
+        },
+        "cluster": 2,
+        "x": 0.033593,
+        "y": -0.074216
+      },
+      {
+        "id": 30,
+        "label": "autonomous management architecture",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.001029,
+          "Eigenvector": 0.043394
+        },
+        "cluster": 2,
+        "x": -0.441723,
+        "y": -0.312968
+      },
+      {
+        "id": 31,
+        "label": "smart grid",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 15,
+          "Total link strength": 17
+        },
+        "scores": {
+          "Betweenness": 0.012542,
+          "Eigenvector": 0.085971
+        },
+        "cluster": 1,
+        "x": -0.205147,
+        "y": 0.31675
+      },
+      {
+        "id": 32,
+        "label": "systematic literature review",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.001029,
+          "Eigenvector": 0.043394
+        },
+        "cluster": 2,
+        "x": 0.035227,
+        "y": -0.384251
+      },
+      {
+        "id": 33,
+        "label": "business innovation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.620834,
+        "y": -0.129388
+      },
+      {
+        "id": 34,
+        "label": "construction 4.0",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.668732,
+        "y": 0.031112
+      },
+      {
+        "id": 35,
+        "label": "construction firms",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.558713,
+        "y": 0.079672
+      },
+      {
+        "id": 36,
+        "label": "digital transformation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.217299,
+        "y": -0.016704
+      },
+      {
+        "id": 37,
+        "label": "factors",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.66453,
+        "y": -0.03467
+      },
+      {
+        "id": 38,
+        "label": "industry 4.0",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.409532,
+        "y": 0.280141
+      },
+      {
+        "id": 39,
+        "label": "organizational behavior",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.261428,
+        "y": -0.147841
+      },
+      {
+        "id": 40,
+        "label": "project management",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 8.6e-05,
+          "Eigenvector": 0.035679
+        },
+        "cluster": 5,
+        "x": -0.544464,
+        "y": -0.16301
+      },
+      {
+        "id": 41,
+        "label": "future perspectives",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.004638,
+          "Eigenvector": 0.064011
+        },
+        "cluster": 2,
+        "x": 0.53632,
+        "y": 0.008791
+      },
+      {
+        "id": 42,
+        "label": "optimization",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 14,
+          "Total link strength": 15
+        },
+        "scores": {
+          "Betweenness": 0.021528,
+          "Eigenvector": 0.090366
+        },
+        "cluster": 2,
+        "x": 0.37967,
+        "y": -0.157851
+      },
+      {
+        "id": 43,
+        "label": "predictive analytics",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.004638,
+          "Eigenvector": 0.064011
+        },
+        "cluster": 2,
+        "x": 0.216076,
+        "y": -0.279193
+      },
+      {
+        "id": 44,
+        "label": "sustainable development",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.004638,
+          "Eigenvector": 0.064011
+        },
+        "cluster": 2,
+        "x": 0.541014,
+        "y": -0.147258
+      },
+      {
+        "id": 45,
+        "label": "anomaly detection",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.005805,
+          "Eigenvector": 0.038493
+        },
+        "cluster": 2,
+        "x": 0.671862,
+        "y": -0.021526
+      },
+      {
+        "id": 46,
+        "label": "deep learning",
+        "weights": {
+          "Occurrences": 8,
+          "Links": 34,
+          "Total link strength": 40
+        },
+        "scores": {
+          "Betweenness": 0.108919,
+          "Eigenvector": 0.128565
+        },
+        "cluster": 15,
+        "x": -0.002074,
+        "y": -0.132516
+      },
+      {
+        "id": 47,
+        "label": "energy efficiency",
+        "weights": {
+          "Occurrences": 7,
+          "Links": 18,
+          "Total link strength": 24
+        },
+        "scores": {
+          "Betweenness": 0.050242,
+          "Eigenvector": 0.166945
+        },
+        "cluster": 2,
+        "x": 0.222206,
+        "y": 0.030524
+      },
+      {
+        "id": 48,
+        "label": "internet of things (iot)",
+        "weights": {
+          "Occurrences": 15,
+          "Links": 52,
+          "Total link strength": 74
+        },
+        "scores": {
+          "Betweenness": 0.115894,
+          "Eigenvector": 0.3351
+        },
+        "cluster": 7,
+        "x": 0.102496,
+        "y": -0.24191
+      },
+      {
+        "id": 49,
+        "label": "adaptive quantization",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.004179,
+          "Eigenvector": 0.024411
+        },
+        "cluster": 8,
+        "x": -0.165025,
+        "y": 0.171981
+      },
+      {
+        "id": 50,
+        "label": "cnn",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.017724,
+          "Eigenvector": 0.02329
+        },
+        "cluster": 8,
+        "x": 0.031269,
+        "y": -0.256047
+      },
+      {
+        "id": 51,
+        "label": "post-training quantiza- tion",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 2,
+          "Total link strength": 2
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001571
+        },
+        "cluster": 8,
+        "x": -0.964508,
+        "y": 0.170677
+      },
+      {
+        "id": 52,
+        "label": "energy forecasting",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 11,
+          "Total link strength": 14
+        },
+        "scores": {
+          "Betweenness": 0.003655,
+          "Eigenvector": 0.072136
+        },
+        "cluster": 2,
+        "x": 0.402757,
+        "y": -0.279835
+      },
+      {
+        "id": 53,
+        "label": "green energy",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000432,
+          "Eigenvector": 0.021577
+        },
+        "cluster": 2,
+        "x": 0.722999,
+        "y": -0.361405
+      },
+      {
+        "id": 54,
+        "label": "recurrent neural network (rnn)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000432,
+          "Eigenvector": 0.021577
+        },
+        "cluster": 2,
+        "x": 0.381112,
+        "y": 0.205471
+      },
+      {
+        "id": 55,
+        "label": "deep reinforcement learning (drl)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.002705,
+          "Eigenvector": 0.054194
+        },
+        "cluster": 2,
+        "x": -0.292159,
+        "y": -0.374223
+      },
+      {
+        "id": 56,
+        "label": "automatic meter reading",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004698
+        },
+        "cluster": 15,
+        "x": 0.302705,
+        "y": -0.300737
+      },
+      {
+        "id": 57,
+        "label": "component",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004698
+        },
+        "cluster": 15,
+        "x": 0.823383,
+        "y": 0.143392
+      },
+      {
+        "id": 58,
+        "label": "counter detection",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004698
+        },
+        "cluster": 15,
+        "x": 0.557853,
+        "y": 0.290183
+      },
+      {
+        "id": 59,
+        "label": "mask-rcnn",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004698
+        },
+        "cluster": 15,
+        "x": 0.76465,
+        "y": -0.31803
+      },
+      {
+        "id": 60,
+        "label": "estimation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001626
+        },
+        "cluster": 8,
+        "x": 0.651045,
+        "y": -0.430622
+      },
+      {
+        "id": 61,
+        "label": "microcontrollers",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.007294,
+          "Eigenvector": 0.024465
+        },
+        "cluster": 8,
+        "x": 0.250062,
+        "y": -0.105873
+      },
+      {
+        "id": 62,
+        "label": "model",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001626
+        },
+        "cluster": 8,
+        "x": 0.047751,
+        "y": -0.797113
+      },
+      {
+        "id": 63,
+        "label": "activity prediction",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000961
+        },
+        "cluster": 9,
+        "x": -0.838925,
+        "y": -0.506937
+      },
+      {
+        "id": 64,
+        "label": "activity recognition",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000961
+        },
+        "cluster": 9,
+        "x": -0.240174,
+        "y": 0.08905
+      },
+      {
+        "id": 65,
+        "label": "commercial building automation",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 10,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.030648,
+          "Eigenvector": 0.02629
+        },
+        "cluster": 9,
+        "x": -0.120331,
+        "y": -0.447633
+      },
+      {
+        "id": 66,
+        "label": "cyber-physical systems (cps)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000961
+        },
+        "cluster": 9,
+        "x": -0.424946,
+        "y": -0.810491
+      },
+      {
+        "id": 67,
+        "label": "smart cities",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000961
+        },
+        "cluster": 9,
+        "x": -0.795281,
+        "y": -0.583753
+      },
+      {
+        "id": 68,
+        "label": "embedded systems",
+        "weights": {
+          "Occurrences": 5,
+          "Links": 24,
+          "Total link strength": 29
+        },
+        "scores": {
+          "Betweenness": 0.035606,
+          "Eigenvector": 0.08147
+        },
+        "cluster": 7,
+        "x": 0.336645,
+        "y": -0.110211
+      },
+      {
+        "id": 69,
+        "label": "machine learning optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001253,
+          "Eigenvector": 0.019043
+        },
+        "cluster": 7,
+        "x": 0.358241,
+        "y": 0.559426
+      },
+      {
+        "id": 70,
+        "label": "resource-constrained devices",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 9,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.006156,
+          "Eigenvector": 0.036181
+        },
+        "cluster": 7,
+        "x": -0.010488,
+        "y": 0.273097
+      },
+      {
+        "id": 71,
+        "label": "tinyml",
+        "weights": {
+          "Occurrences": 7,
+          "Links": 25,
+          "Total link strength": 36
+        },
+        "scores": {
+          "Betweenness": 0.011328,
+          "Eigenvector": 0.125458
+        },
+        "cluster": 7,
+        "x": 0.188246,
+        "y": -0.103458
+      },
+      {
+        "id": 72,
+        "label": "edge computing",
+        "weights": {
+          "Occurrences": 5,
+          "Links": 15,
+          "Total link strength": 19
+        },
+        "scores": {
+          "Betweenness": 0.022287,
+          "Eigenvector": 0.114222
+        },
+        "cluster": 7,
+        "x": 0.358279,
+        "y": -0.231914
+      },
+      {
+        "id": 73,
+        "label": "embedded neural networks",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000306,
+          "Eigenvector": 0.019575
+        },
+        "cluster": 7,
+        "x": 0.011591,
+        "y": -0.822116
+      },
+      {
+        "id": 74,
+        "label": "water contamination classification",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000306,
+          "Eigenvector": 0.019575
+        },
+        "cluster": 7,
+        "x": 0.599726,
+        "y": -0.634378
+      },
+      {
+        "id": 75,
+        "label": "boxelder bug search optimization (bbso)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.012711
+        },
+        "cluster": 7,
+        "x": -0.220295,
+        "y": -0.606696
+      },
+      {
+        "id": 76,
+        "label": "carbon-restricted operation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.012711
+        },
+        "cluster": 7,
+        "x": 0.221878,
+        "y": -0.749228
+      },
+      {
+        "id": 77,
+        "label": "cloud theory uncertainty modeling",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.012711
+        },
+        "cluster": 7,
+        "x": -0.175227,
+        "y": -0.518338
+      },
+      {
+        "id": 78,
+        "label": "energy performance certificate (epc)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.012711
+        },
+        "cluster": 7,
+        "x": 0.324384,
+        "y": -0.641727
+      },
+      {
+        "id": 79,
+        "label": "smart home energy management",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.012711
+        },
+        "cluster": 7,
+        "x": 0.150916,
+        "y": -0.083532
+      },
+      {
+        "id": 80,
+        "label": "benefit",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001042,
+          "Eigenvector": 0.036091
+        },
+        "cluster": 2,
+        "x": -0.183004,
+        "y": 0.746393
+      },
+      {
+        "id": 81,
+        "label": "smart automation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001042,
+          "Eigenvector": 0.036091
+        },
+        "cluster": 2,
+        "x": -0.16585,
+        "y": 0.695833
+      },
+      {
+        "id": 82,
+        "label": "carbon trading",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.013518
+        },
+        "cluster": 4,
+        "x": -0.405984,
+        "y": 0.225681
+      },
+      {
+        "id": 83,
+        "label": "distributionally robust optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.013518
+        },
+        "cluster": 4,
+        "x": -0.82094,
+        "y": 0.422208
+      },
+      {
+        "id": 84,
+        "label": "price-based demand response",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.013518
+        },
+        "cluster": 4,
+        "x": -0.720626,
+        "y": -0.167421
+      },
+      {
+        "id": 85,
+        "label": "stackelberg game",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.013518
+        },
+        "cluster": 4,
+        "x": -0.900552,
+        "y": 0.189795
+      },
+      {
+        "id": 86,
+        "label": "bipv",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 2,
+          "Total link strength": 2
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00172
+        },
+        "cluster": 10,
+        "x": 0.293424,
+        "y": -0.970697
+      },
+      {
+        "id": 87,
+        "label": "blockchain",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 11,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.017059,
+          "Eigenvector": 0.050514
+        },
+        "cluster": 10,
+        "x": -0.134663,
+        "y": -0.639383
+      },
+      {
+        "id": 88,
+        "label": "information management",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 2,
+          "Total link strength": 2
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00172
+        },
+        "cluster": 10,
+        "x": 0.367334,
+        "y": -0.93923
+      },
+      {
+        "id": 89,
+        "label": "demand side management",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000421,
+          "Eigenvector": 0.026168
+        },
+        "cluster": 9,
+        "x": 0.481249,
+        "y": -0.684602
+      },
+      {
+        "id": 90,
+        "label": "power quality",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000421,
+          "Eigenvector": 0.026168
+        },
+        "cluster": 9,
+        "x": 0.443292,
+        "y": -0.73315
+      },
+      {
+        "id": 91,
+        "label": "smart compact energy meter (scem)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000421,
+          "Eigenvector": 0.026168
+        },
+        "cluster": 9,
+        "x": 0.238702,
+        "y": -0.6845
+      },
+      {
+        "id": 92,
+        "label": "system (cbems)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000421,
+          "Eigenvector": 0.026168
+        },
+        "cluster": 9,
+        "x": 0.516387,
+        "y": -0.166389
+      },
+      {
+        "id": 93,
+        "label": "battery storage",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.023707
+        },
+        "cluster": 1,
+        "x": -0.424557,
+        "y": 0.619936
+      },
+      {
+        "id": 94,
+        "label": "energy arbitrage",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.023707
+        },
+        "cluster": 1,
+        "x": 0.130493,
+        "y": 0.455656
+      },
+      {
+        "id": 95,
+        "label": "energy storage",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.023707
+        },
+        "cluster": 1,
+        "x": -0.085846,
+        "y": 0.07463
+      },
+      {
+        "id": 96,
+        "label": "smart grid optimised buildings",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.023707
+        },
+        "cluster": 1,
+        "x": -0.303414,
+        "y": 0.765293
+      },
+      {
+        "id": 97,
+        "label": "aluminum matrix composites",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00551
+        },
+        "cluster": 11,
+        "x": 0.988195,
+        "y": 0.188433
+      },
+      {
+        "id": 98,
+        "label": "coconut shell particles",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00551
+        },
+        "cluster": 11,
+        "x": 0.400445,
+        "y": -0.089046
+      },
+      {
+        "id": 99,
+        "label": "compocasting",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00551
+        },
+        "cluster": 11,
+        "x": 0.623074,
+        "y": 0.451578
+      },
+      {
+        "id": 100,
+        "label": "composite property prediction neural network",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00551
+        },
+        "cluster": 11,
+        "x": 0.893503,
+        "y": 0.367429
+      },
+      {
+        "id": 101,
+        "label": "mechanical properties",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.00551
+        },
+        "cluster": 11,
+        "x": 0.655981,
+        "y": -0.197466
+      },
+      {
+        "id": 102,
+        "label": "edge ai",
+        "weights": {
+          "Occurrences": 4,
+          "Links": 24,
+          "Total link strength": 28
+        },
+        "scores": {
+          "Betweenness": 0.027186,
+          "Eigenvector": 0.065784
+        },
+        "cluster": 7,
+        "x": -0.050409,
+        "y": 0.10903
+      },
+      {
+        "id": 103,
+        "label": "inference optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000166,
+          "Eigenvector": 0.010297
+        },
+        "cluster": 7,
+        "x": 0.048272,
+        "y": -0.581561
+      },
+      {
+        "id": 104,
+        "label": "model compression",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000166,
+          "Eigenvector": 0.010297
+        },
+        "cluster": 7,
+        "x": -0.433217,
+        "y": -0.140073
+      },
+      {
+        "id": 105,
+        "label": "neural networks",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.013173,
+          "Eigenvector": 0.029642
+        },
+        "cluster": 7,
+        "x": 0.000777,
+        "y": -0.412305
+      },
+      {
+        "id": 106,
+        "label": "fault diagnosis",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.501657,
+        "y": 0.423377
+      },
+      {
+        "id": 107,
+        "label": "iepe",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.365642,
+        "y": 0.100519
+      },
+      {
+        "id": 108,
+        "label": "k-nearest neighbors (k-nn)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.143656,
+        "y": 0.284385
+      },
+      {
+        "id": 109,
+        "label": "maintenance",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.549235,
+        "y": 0.477446
+      },
+      {
+        "id": 110,
+        "label": "monitoring system",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 13,
+          "Total link strength": 13
+        },
+        "scores": {
+          "Betweenness": 0.035063,
+          "Eigenvector": 0.041982
+        },
+        "cluster": 15,
+        "x": -0.136206,
+        "y": 0.357658
+      },
+      {
+        "id": 111,
+        "label": "random forests",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.407478,
+        "y": 0.266578
+      },
+      {
+        "id": 112,
+        "label": "support vector machines (svm)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.629232,
+        "y": 0.297275
+      },
+      {
+        "id": 113,
+        "label": "vibration",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0097
+        },
+        "cluster": 15,
+        "x": -0.56928,
+        "y": 0.287973
+      },
+      {
+        "id": 114,
+        "label": "arm cortex-m",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.907706,
+        "y": -0.297862
+      },
+      {
+        "id": 115,
+        "label": "cmsis-dsp",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.911196,
+        "y": -0.240544
+      },
+      {
+        "id": 116,
+        "label": "cmsis-nn",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.880547,
+        "y": -0.379262
+      },
+      {
+        "id": 117,
+        "label": "energy consumption",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 13,
+          "Total link strength": 14
+        },
+        "scores": {
+          "Betweenness": 0.019595,
+          "Eigenvector": 0.04825
+        },
+        "cluster": 12,
+        "x": 0.524921,
+        "y": -0.414041
+      },
+      {
+        "id": 118,
+        "label": "fpu",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.375492,
+        "y": -0.10367
+      },
+      {
+        "id": 119,
+        "label": "machine learning (ml)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.429292,
+        "y": -0.527723
+      },
+      {
+        "id": 120,
+        "label": "simd",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005115
+        },
+        "cluster": 12,
+        "x": 0.740517,
+        "y": -0.607485
+      },
+      {
+        "id": 121,
+        "label": "energy optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004293
+        },
+        "cluster": 1,
+        "x": 0.285803,
+        "y": 0.881479
+      },
+      {
+        "id": 122,
+        "label": "hvac systems",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 10,
+          "Total link strength": 10
+        },
+        "scores": {
+          "Betweenness": 0.013864,
+          "Eigenvector": 0.038312
+        },
+        "cluster": 1,
+        "x": 0.097379,
+        "y": 0.300937
+      },
+      {
+        "id": 123,
+        "label": "long short-term memory networks",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004293
+        },
+        "cluster": 1,
+        "x": -0.414073,
+        "y": 0.741719
+      },
+      {
+        "id": 124,
+        "label": "management building environment",
+        "weights": {
+          "Occurrences": 3,
+          "Links": 11,
+          "Total link strength": 12
+        },
+        "scores": {
+          "Betweenness": 0.007014,
+          "Eigenvector": 0.055697
+        },
+        "cluster": 1,
+        "x": 0.007044,
+        "y": 0.624006
+      },
+      {
+        "id": 125,
+        "label": "reinforcement learning",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 11,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.008921,
+          "Eigenvector": 0.02776
+        },
+        "cluster": 1,
+        "x": -0.040208,
+        "y": 0.587987
+      },
+      {
+        "id": 126,
+        "label": "smart control systems",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004293
+        },
+        "cluster": 1,
+        "x": -0.194066,
+        "y": 0.606701
+      },
+      {
+        "id": 127,
+        "label": "special relativity search",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.002457,
+          "Eigenvector": 0.020289
+        },
+        "cluster": 12,
+        "x": 0.759622,
+        "y": -0.630395
+      },
+      {
+        "id": 128,
+        "label": "blynk application",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 13,
+        "x": -0.829385,
+        "y": 0.402156
+      },
+      {
+        "id": 129,
+        "label": "current sensor",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 13,
+        "x": 0.102222,
+        "y": 0.311798
+      },
+      {
+        "id": 130,
+        "label": "esp32 controller",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 13,
+        "x": -0.274974,
+        "y": -0.154393
+      },
+      {
+        "id": 131,
+        "label": "power supply",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 13,
+        "x": -0.263123,
+        "y": 0.629263
+      },
+      {
+        "id": 132,
+        "label": "voltage sensor",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 13,
+        "x": -0.769945,
+        "y": 0.300554
+      },
+      {
+        "id": 133,
+        "label": "explainable artificial intelligence (xai)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000151,
+          "Eigenvector": 0.015968
+        },
+        "cluster": 7,
+        "x": 0.917546,
+        "y": 0.295614
+      },
+      {
+        "id": 134,
+        "label": "green internet of things",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000151,
+          "Eigenvector": 0.015968
+        },
+        "cluster": 7,
+        "x": 0.733688,
+        "y": 0.541915
+      },
+      {
+        "id": 135,
+        "label": "low-power devices",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.002508,
+          "Eigenvector": 0.033788
+        },
+        "cluster": 7,
+        "x": 0.484236,
+        "y": -0.061539
+      },
+      {
+        "id": 136,
+        "label": "multilayer perceptron (mlp)",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 13,
+          "Total link strength": 13
+        },
+        "scores": {
+          "Betweenness": 0.024553,
+          "Eigenvector": 0.059131
+        },
+        "cluster": 7,
+        "x": 0.371505,
+        "y": 0.023873
+      },
+      {
+        "id": 137,
+        "label": "neural networks (nns)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.002508,
+          "Eigenvector": 0.033788
+        },
+        "cluster": 7,
+        "x": 0.551427,
+        "y": 0.175433
+      },
+      {
+        "id": 138,
+        "label": "wearable",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.002508,
+          "Eigenvector": 0.033788
+        },
+        "cluster": 7,
+        "x": 0.623049,
+        "y": 0.071436
+      },
+      {
+        "id": 139,
+        "label": "deep learning (dl)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000582,
+          "Eigenvector": 0.029536
+        },
+        "cluster": 7,
+        "x": 0.698767,
+        "y": -0.261969
+      },
+      {
+        "id": 140,
+        "label": "federated learning (fl)",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 9,
+          "Total link strength": 11
+        },
+        "scores": {
+          "Betweenness": 0.008587,
+          "Eigenvector": 0.081748
+        },
+        "cluster": 7,
+        "x": 0.453915,
+        "y": -0.18629
+      },
+      {
+        "id": 141,
+        "label": "large machine learning (largeml)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000582,
+          "Eigenvector": 0.029536
+        },
+        "cluster": 7,
+        "x": 0.654668,
+        "y": -0.52501
+      },
+      {
+        "id": 142,
+        "label": "sixth-generation (6g)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000582,
+          "Eigenvector": 0.029536
+        },
+        "cluster": 7,
+        "x": 0.355017,
+        "y": -0.57263
+      },
+      {
+        "id": 143,
+        "label": "smart meter",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.00587,
+          "Eigenvector": 0.025923
+        },
+        "cluster": 12,
+        "x": 0.310542,
+        "y": -0.771158
+      },
+      {
+        "id": 144,
+        "label": "and smart home technologies",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.041818
+        },
+        "cluster": 2,
+        "x": -0.126164,
+        "y": 0.582863
+      },
+      {
+        "id": 145,
+        "label": "sensors",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.041818
+        },
+        "cluster": 2,
+        "x": -0.534515,
+        "y": 0.353095
+      },
+      {
+        "id": 146,
+        "label": "model predictive control",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.001194,
+          "Eigenvector": 0.035241
+        },
+        "cluster": 2,
+        "x": 0.056014,
+        "y": -0.421291
+      },
+      {
+        "id": 147,
+        "label": "thermal comfort",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.001194,
+          "Eigenvector": 0.035241
+        },
+        "cluster": 2,
+        "x": 0.559373,
+        "y": -0.217352
+      },
+      {
+        "id": 148,
+        "label": "battery storage system (bss)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001212
+        },
+        "cluster": 4,
+        "x": -0.77412,
+        "y": -0.405377
+      },
+      {
+        "id": 149,
+        "label": "combined heat and power system (chp)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001212
+        },
+        "cluster": 4,
+        "x": -0.234661,
+        "y": -0.579505
+      },
+      {
+        "id": 150,
+        "label": "real coded genetic algorithm (rcga)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001212
+        },
+        "cluster": 4,
+        "x": -0.29206,
+        "y": -0.691001
+      },
+      {
+        "id": 151,
+        "label": "renewable energy system (res)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001212
+        },
+        "cluster": 4,
+        "x": -0.830724,
+        "y": -0.350813
+      },
+      {
+        "id": 152,
+        "label": "smart building energy management system (sbems)",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.026191,
+          "Eigenvector": 0.017922
+        },
+        "cluster": 4,
+        "x": -0.430151,
+        "y": -0.368074
+      },
+      {
+        "id": 153,
+        "label": "knx protocol",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000766,
+          "Eigenvector": 0.032378
+        },
+        "cluster": 14,
+        "x": 0.405886,
+        "y": 0.398895
+      },
+      {
+        "id": 154,
+        "label": "particle swarm optimisation",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.009415,
+          "Eigenvector": 0.057765
+        },
+        "cluster": 15,
+        "x": 0.281933,
+        "y": -0.01899
+      },
+      {
+        "id": 155,
+        "label": "photovoltaic systems",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 8
+        },
+        "scores": {
+          "Betweenness": 0.030992,
+          "Eigenvector": 0.03253
+        },
+        "cluster": 14,
+        "x": 0.005992,
+        "y": -0.506671
+      },
+      {
+        "id": 156,
+        "label": "chance constraints",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000477,
+          "Eigenvector": 0.030406
+        },
+        "cluster": 2,
+        "x": -0.320888,
+        "y": -0.550778
+      },
+      {
+        "id": 157,
+        "label": "multi-agent deep reinforcement learning",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000477,
+          "Eigenvector": 0.030406
+        },
+        "cluster": 2,
+        "x": -0.680042,
+        "y": 0.230615
+      },
+      {
+        "id": 158,
+        "label": "generative adversarial network (gan)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000166
+        },
+        "cluster": 15,
+        "x": 0.274573,
+        "y": -0.115153
+      },
+      {
+        "id": 159,
+        "label": "occlu- sion",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000166
+        },
+        "cluster": 15,
+        "x": -0.155871,
+        "y": -0.962135
+      },
+      {
+        "id": 160,
+        "label": "pointer mask generation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.000166
+        },
+        "cluster": 15,
+        "x": -0.582077,
+        "y": -0.706874
+      },
+      {
+        "id": 161,
+        "label": "pointer meter reading",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 7,
+          "Total link strength": 7
+        },
+        "scores": {
+          "Betweenness": 0.02278,
+          "Eigenvector": 0.004715
+        },
+        "cluster": 15,
+        "x": -0.35,
+        "y": -0.316821
+      },
+      {
+        "id": 162,
+        "label": "adaptive surrogate modelling",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.00047,
+          "Eigenvector": 0.022777
+        },
+        "cluster": 2,
+        "x": 0.780436,
+        "y": -0.133216
+      },
+      {
+        "id": 163,
+        "label": "smart green buildings",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.00047,
+          "Eigenvector": 0.022777
+        },
+        "cluster": 2,
+        "x": 0.924363,
+        "y": 0.224571
+      },
+      {
+        "id": 164,
+        "label": "supervisory predictive control",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.00047,
+          "Eigenvector": 0.022777
+        },
+        "cluster": 2,
+        "x": 0.732374,
+        "y": 0.444266
+      },
+      {
+        "id": 165,
+        "label": "case study",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.003058,
+          "Eigenvector": 0.027229
+        },
+        "cluster": 15,
+        "x": 0.08743,
+        "y": -0.351374
+      },
+      {
+        "id": 166,
+        "label": "short-term load forecasting",
+        "weights": {
+          "Occurrences": 2,
+          "Links": 8,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.008691,
+          "Eigenvector": 0.043135
+        },
+        "cluster": 15,
+        "x": -0.179679,
+        "y": -0.085759
+      },
+      {
+        "id": 167,
+        "label": "ma- chine learning",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001189
+        },
+        "cluster": 14,
+        "x": -0.611775,
+        "y": -0.75874
+      },
+      {
+        "id": 168,
+        "label": "predictive maintenance",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001189
+        },
+        "cluster": 14,
+        "x": -0.479049,
+        "y": -0.843194
+      },
+      {
+        "id": 169,
+        "label": "soiling detection",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001189
+        },
+        "cluster": 14,
+        "x": 0.250353,
+        "y": -0.374325
+      },
+      {
+        "id": 170,
+        "label": "tree-based models",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.001189
+        },
+        "cluster": 14,
+        "x": -0.040495,
+        "y": -0.998048
+      },
+      {
+        "id": 171,
+        "label": "autonomous systems",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000129,
+          "Eigenvector": 0.019499
+        },
+        "cluster": 2,
+        "x": -0.083053,
+        "y": -0.698377
+      },
+      {
+        "id": 172,
+        "label": "neural networks compression",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000129,
+          "Eigenvector": 0.019499
+        },
+        "cluster": 2,
+        "x": -0.285276,
+        "y": -0.462957
+      },
+      {
+        "id": 173,
+        "label": "power con- sumption",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.000474,
+          "Eigenvector": 0.023619
+        },
+        "cluster": 8,
+        "x": 0.214383,
+        "y": 0.475192
+      },
+      {
+        "id": 174,
+        "label": "meter recognition",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 16,
+        "x": 0.144873,
+        "y": -0.956822
+      },
+      {
+        "id": 175,
+        "label": "power equipment meter",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 16,
+        "x": -0.219045,
+        "y": -0.292862
+      },
+      {
+        "id": 176,
+        "label": "real-time detection",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 16,
+        "x": 0.158418,
+        "y": 0.120504
+      },
+      {
+        "id": 177,
+        "label": "yolov5",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 16,
+        "x": 0.414825,
+        "y": -0.842637
+      },
+      {
+        "id": 178,
+        "label": "distributed energy resource",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.024352
+        },
+        "cluster": 1,
+        "x": -0.541686,
+        "y": 0.56032
+      },
+      {
+        "id": 179,
+        "label": "markov decision process",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.024352
+        },
+        "cluster": 1,
+        "x": -0.497189,
+        "y": 0.503734
+      },
+      {
+        "id": 180,
+        "label": "renewable energy sources",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 9.9e-05,
+          "Eigenvector": 0.024352
+        },
+        "cluster": 1,
+        "x": 0.122081,
+        "y": 0.376902
+      },
+      {
+        "id": 181,
+        "label": "rectangular word wheel region",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 17,
+        "x": 0.139645,
+        "y": 0.7684
+      },
+      {
+        "id": 182,
+        "label": "water meter reading",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 17,
+        "x": 0.093336,
+        "y": 0.667848
+      },
+      {
+        "id": 183,
+        "label": "wise-iou loss function",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 17,
+        "x": 0.751258,
+        "y": 0.106032
+      },
+      {
+        "id": 184,
+        "label": "yolo v8 model",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 17,
+        "x": 0.735793,
+        "y": 0.689217
+      },
+      {
+        "id": 185,
+        "label": "image segmentation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004699
+        },
+        "cluster": 15,
+        "x": -0.590168,
+        "y": -0.78259
+      },
+      {
+        "id": 186,
+        "label": "indication recognition",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004699
+        },
+        "cluster": 15,
+        "x": -0.574816,
+        "y": -0.824097
+      },
+      {
+        "id": 187,
+        "label": "object detection",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.004699
+        },
+        "cluster": 15,
+        "x": -0.778513,
+        "y": -0.073586
+      },
+      {
+        "id": 188,
+        "label": "big data analytics",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000901,
+          "Eigenvector": 0.030788
+        },
+        "cluster": 7,
+        "x": -0.38489,
+        "y": -0.581614
+      },
+      {
+        "id": 189,
+        "label": "certificate authority",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000901,
+          "Eigenvector": 0.030788
+        },
+        "cluster": 7,
+        "x": 0.198391,
+        "y": -0.844656
+      },
+      {
+        "id": 190,
+        "label": "smart infrastructure",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000901,
+          "Eigenvector": 0.030788
+        },
+        "cluster": 7,
+        "x": 0.294057,
+        "y": -0.740872
+      },
+      {
+        "id": 191,
+        "label": "building professionals",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000498,
+          "Eigenvector": 0.020224
+        },
+        "cluster": 1,
+        "x": -0.663285,
+        "y": 0.637867
+      },
+      {
+        "id": 192,
+        "label": "technology acceptance",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000498,
+          "Eigenvector": 0.020224
+        },
+        "cluster": 1,
+        "x": 0.105476,
+        "y": 0.989118
+      },
+      {
+        "id": 193,
+        "label": "building performance",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000559,
+          "Eigenvector": 0.021043
+        },
+        "cluster": 2,
+        "x": 0.172584,
+        "y": 0.875897
+      },
+      {
+        "id": 194,
+        "label": "buildings’ systems",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000559,
+          "Eigenvector": 0.021043
+        },
+        "cluster": 2,
+        "x": -0.25435,
+        "y": 0.216856
+      },
+      {
+        "id": 195,
+        "label": "drivers",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000559,
+          "Eigenvector": 0.021043
+        },
+        "cluster": 2,
+        "x": 0.236553,
+        "y": 0.872345
+      },
+      {
+        "id": 196,
+        "label": "energy",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001871,
+          "Eigenvector": 0.033621
+        },
+        "cluster": 2,
+        "x": 0.642914,
+        "y": 0.221221
+      },
+      {
+        "id": 197,
+        "label": "cost",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.00095
+        },
+        "cluster": 4,
+        "x": 0.049138,
+        "y": 0.939745
+      },
+      {
+        "id": 198,
+        "label": "peak to average ratio",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.00095
+        },
+        "cluster": 4,
+        "x": 0.118759,
+        "y": 0.913692
+      },
+      {
+        "id": 199,
+        "label": "weighted mean of vectors algorithm",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000282,
+          "Eigenvector": 0.00095
+        },
+        "cluster": 4,
+        "x": 0.576188,
+        "y": 0.343
+      },
+      {
+        "id": 200,
+        "label": "demand-side flexibility",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.020413
+        },
+        "cluster": 18,
+        "x": 0.418611,
+        "y": 0.712202
+      },
+      {
+        "id": 201,
+        "label": "electric vehicle fleets",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.020413
+        },
+        "cluster": 18,
+        "x": -0.100184,
+        "y": 0.863866
+      },
+      {
+        "id": 202,
+        "label": "energy resilience",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.020413
+        },
+        "cluster": 18,
+        "x": 0.074426,
+        "y": 0.986663
+      },
+      {
+        "id": 203,
+        "label": "sustainable cities",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.020413
+        },
+        "cluster": 18,
+        "x": -0.044176,
+        "y": 0.947983
+      },
+      {
+        "id": 204,
+        "label": "urban energy systems",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.020413
+        },
+        "cluster": 18,
+        "x": -0.111281,
+        "y": 0.077265
+      },
+      {
+        "id": 205,
+        "label": "ensemble learning",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.003548,
+          "Eigenvector": 0.029236
+        },
+        "cluster": 2,
+        "x": 0.60716,
+        "y": -0.334608
+      },
+      {
+        "id": 206,
+        "label": "extra tree",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.003548,
+          "Eigenvector": 0.029236
+        },
+        "cluster": 2,
+        "x": 0.274763,
+        "y": 0.145866
+      },
+      {
+        "id": 207,
+        "label": "hyper-parameter tuning",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.003548,
+          "Eigenvector": 0.029236
+        },
+        "cluster": 2,
+        "x": 0.720124,
+        "y": -0.090452
+      },
+      {
+        "id": 208,
+        "label": "deep learning quantization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.35679,
+        "y": -0.12483
+      },
+      {
+        "id": 209,
+        "label": "jiaqi zhang∗",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.819669,
+        "y": -0.059427
+      },
+      {
+        "id": 210,
+        "label": "los angeles, usa",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.394403,
+        "y": 0.360266
+      },
+      {
+        "id": 211,
+        "label": "survey of quantization-aware training (qat) applications in",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.241257,
+        "y": 0.083117
+      },
+      {
+        "id": 212,
+        "label": "university of southern california",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.976738,
+        "y": 0.020611
+      },
+      {
+        "id": 213,
+        "label": "∗correspondence author",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 5,
+          "Total link strength": 5
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 19,
+        "x": -0.989819,
+        "y": 0.099734
+      },
+      {
+        "id": 214,
+        "label": "barrier",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000717,
+          "Eigenvector": 0.020562
+        },
+        "cluster": 2,
+        "x": -0.368485,
+        "y": 0.614531
+      },
+      {
+        "id": 215,
+        "label": "challenge",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000717,
+          "Eigenvector": 0.020562
+        },
+        "cluster": 2,
+        "x": -0.473714,
+        "y": -0.191586
+      },
+      {
+        "id": 216,
+        "label": "public policies",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.000717,
+          "Eigenvector": 0.020562
+        },
+        "cluster": 2,
+        "x": -0.721187,
+        "y": 0.60278
+      },
+      {
+        "id": 217,
+        "label": "data privacy",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.372781,
+        "y": -0.52967
+      },
+      {
+        "id": 218,
+        "label": "interoperability",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.542116,
+        "y": -0.360742
+      },
+      {
+        "id": 219,
+        "label": "network robustness",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.497328,
+        "y": -0.342567
+      },
+      {
+        "id": 220,
+        "label": "real-time data processing",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.288424,
+        "y": -0.507712
+      },
+      {
+        "id": 221,
+        "label": "scalability",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.369064,
+        "y": -0.186139
+      },
+      {
+        "id": 222,
+        "label": "smart contracts",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 9,
+          "Total link strength": 9
+        },
+        "scores": {
+          "Betweenness": 0.001799,
+          "Eigenvector": 0.050404
+        },
+        "cluster": 10,
+        "x": -0.460903,
+        "y": -0.512674
+      },
+      {
+        "id": 223,
+        "label": "bim",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005886
+        },
+        "cluster": 2,
+        "x": 0.631273,
+        "y": 0.495542
+      },
+      {
+        "id": 224,
+        "label": "combination evaluation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005886
+        },
+        "cluster": 2,
+        "x": 1.0,
+        "y": 0.068215
+      },
+      {
+        "id": 225,
+        "label": "the barriers of bim implementation",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.005886
+        },
+        "cluster": 2,
+        "x": 0.347195,
+        "y": -0.403628
+      },
+      {
+        "id": 226,
+        "label": "embedded ai",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 3,
+          "Total link strength": 3
+        },
+        "scores": {
+          "Betweenness": 0.000306,
+          "Eigenvector": 0.01893
+        },
+        "cluster": 7,
+        "x": 0.93266,
+        "y": -0.100097
+      },
+      {
+        "id": 227,
+        "label": "industrial internet of things (iiot)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000346,
+          "Eigenvector": 0.018291
+        },
+        "cluster": 7,
+        "x": -0.308621,
+        "y": 0.521136
+      },
+      {
+        "id": 228,
+        "label": "model optimization",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000346,
+          "Eigenvector": 0.018291
+        },
+        "cluster": 7,
+        "x": -0.485845,
+        "y": 0.329275
+      },
+      {
+        "id": 229,
+        "label": "on-device inference",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 6,
+          "Total link strength": 6
+        },
+        "scores": {
+          "Betweenness": 0.000346,
+          "Eigenvector": 0.018291
+        },
+        "cluster": 7,
+        "x": -0.4794,
+        "y": 0.236951
+      },
+      {
+        "id": 230,
+        "label": "clustering",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.001785,
+          "Eigenvector": 0.017281
+        },
+        "cluster": 15,
+        "x": -0.379531,
+        "y": -0.733418
+      },
+      {
+        "id": 231,
+        "label": "computer vision",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 6,
+        "x": -0.390366,
+        "y": 0.552648
+      },
+      {
+        "id": 232,
+        "label": "engineering",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 6,
+        "x": 0.25215,
+        "y": 0.714411
+      },
+      {
+        "id": 233,
+        "label": "image signal processing",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 6,
+        "x": 0.350339,
+        "y": 0.333857
+      },
+      {
+        "id": 234,
+        "label": "optical character recognition (ocr)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 6,
+        "x": -0.231049,
+        "y": 0.947566
+      },
+      {
+        "id": 235,
+        "label": "you only look once (yolo)",
+        "weights": {
+          "Occurrences": 1,
+          "Links": 4,
+          "Total link strength": 4
+        },
+        "scores": {
+          "Betweenness": 0.0,
+          "Eigenvector": 0.0
+        },
+        "cluster": 6,
+        "x": -0.160338,
+        "y": 0.965508
+      }
+    ],
+    "links": [
+      {
+        "source_id": 1,
+        "target_id": 2,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 3,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 4,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 5,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 178,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 179,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 14,
+        "strength": 1
+      },
+      {
+        "source_id": 1,
+        "target_id": 31,
+        "strength": 1
+      },
+      {
+        "source_id": 2,
+        "target_id": 3,
+        "strength": 1
+      },
+      {
+        "source_id": 2,
+        "target_id": 4,
+        "strength": 1
+      },
+      {
+        "source_id": 2,
+        "target_id": 5,
+        "strength": 1
+      },
+      {
+        "source_id": 3,
+        "target_id": 4,
+        "strength": 1
+      },
+      {
+        "source_id": 3,
+        "target_id": 5,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 5,
+        "strength": 2
+      },
+      {
+        "source_id": 4,
+        "target_id": 29,
+        "strength": 4
+      },
+      {
+        "source_id": 4,
+        "target_id": 30,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 14,
+        "strength": 9
+      },
+      {
+        "source_id": 4,
+        "target_id": 31,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 32,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 19,
+        "strength": 2
+      },
+      {
+        "source_id": 4,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 15,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 6,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 48,
+        "strength": 5
+      },
+      {
+        "source_id": 4,
+        "target_id": 80,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 47,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 81,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 82,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 83,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 25,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 84,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 85,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 65,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 89,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 90,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 91,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 72,
+        "strength": 2
+      },
+      {
+        "source_id": 4,
+        "target_id": 133,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 134,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 144,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 145,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 140,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 153,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 154,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 155,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 156,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 157,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 162,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 163,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 164,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 87,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 217,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 218,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 4,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 5,
+        "target_id": 29,
+        "strength": 1
+      },
+      {
+        "source_id": 5,
+        "target_id": 6,
+        "strength": 1
+      },
+      {
+        "source_id": 5,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 5,
+        "target_id": 48,
+        "strength": 1
+      },
+      {
+        "source_id": 5,
+        "target_id": 14,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 7,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 8,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 9,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 10,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 29,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 48,
+        "strength": 1
+      },
+      {
+        "source_id": 6,
+        "target_id": 14,
+        "strength": 1
+      },
+      {
+        "source_id": 7,
+        "target_id": 8,
+        "strength": 1
+      },
+      {
+        "source_id": 7,
+        "target_id": 9,
+        "strength": 1
+      },
+      {
+        "source_id": 7,
+        "target_id": 10,
+        "strength": 1
+      },
+      {
+        "source_id": 8,
+        "target_id": 9,
+        "strength": 1
+      },
+      {
+        "source_id": 8,
+        "target_id": 10,
+        "strength": 1
+      },
+      {
+        "source_id": 9,
+        "target_id": 10,
+        "strength": 1
+      },
+      {
+        "source_id": 11,
+        "target_id": 12,
+        "strength": 1
+      },
+      {
+        "source_id": 11,
+        "target_id": 13,
+        "strength": 1
+      },
+      {
+        "source_id": 11,
+        "target_id": 14,
+        "strength": 2
+      },
+      {
+        "source_id": 11,
+        "target_id": 15,
+        "strength": 2
+      },
+      {
+        "source_id": 11,
+        "target_id": 19,
+        "strength": 1
+      },
+      {
+        "source_id": 11,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 12,
+        "target_id": 13,
+        "strength": 1
+      },
+      {
+        "source_id": 12,
+        "target_id": 14,
+        "strength": 2
+      },
+      {
+        "source_id": 12,
+        "target_id": 15,
+        "strength": 1
+      },
+      {
+        "source_id": 12,
+        "target_id": 214,
+        "strength": 1
+      },
+      {
+        "source_id": 12,
+        "target_id": 215,
+        "strength": 1
+      },
+      {
+        "source_id": 12,
+        "target_id": 216,
+        "strength": 1
+      },
+      {
+        "source_id": 13,
+        "target_id": 14,
+        "strength": 1
+      },
+      {
+        "source_id": 13,
+        "target_id": 15,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 15,
+        "strength": 4
+      },
+      {
+        "source_id": 14,
+        "target_id": 16,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 17,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 18,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 19,
+        "strength": 7
+      },
+      {
+        "source_id": 14,
+        "target_id": 20,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 21,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 22,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 29,
+        "strength": 7
+      },
+      {
+        "source_id": 14,
+        "target_id": 30,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 31,
+        "strength": 3
+      },
+      {
+        "source_id": 14,
+        "target_id": 32,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 33,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 34,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 35,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 36,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 42,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 45,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 46,
+        "strength": 4
+      },
+      {
+        "source_id": 14,
+        "target_id": 47,
+        "strength": 5
+      },
+      {
+        "source_id": 14,
+        "target_id": 48,
+        "strength": 7
+      },
+      {
+        "source_id": 14,
+        "target_id": 50,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 52,
+        "strength": 3
+      },
+      {
+        "source_id": 14,
+        "target_id": 53,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 54,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 80,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 81,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 93,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 24,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 94,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 95,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 117,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 127,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 143,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 144,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 145,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 72,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 140,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 122,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 146,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 147,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 153,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 154,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 155,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 156,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 157,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 165,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 178,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 179,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 188,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 189,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 190,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 191,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 124,
+        "strength": 2
+      },
+      {
+        "source_id": 14,
+        "target_id": 192,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 193,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 194,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 195,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 196,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 200,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 201,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 202,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 203,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 204,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 205,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 206,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 214,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 215,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 216,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 87,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 217,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 218,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 14,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 29,
+        "strength": 2
+      },
+      {
+        "source_id": 15,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 19,
+        "strength": 2
+      },
+      {
+        "source_id": 15,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 97,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 98,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 99,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 100,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 101,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 196,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 15,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 16,
+        "target_id": 17,
+        "strength": 1
+      },
+      {
+        "source_id": 16,
+        "target_id": 18,
+        "strength": 2
+      },
+      {
+        "source_id": 16,
+        "target_id": 19,
+        "strength": 2
+      },
+      {
+        "source_id": 16,
+        "target_id": 20,
+        "strength": 2
+      },
+      {
+        "source_id": 16,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 16,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 17,
+        "target_id": 18,
+        "strength": 1
+      },
+      {
+        "source_id": 17,
+        "target_id": 19,
+        "strength": 1
+      },
+      {
+        "source_id": 17,
+        "target_id": 20,
+        "strength": 1
+      },
+      {
+        "source_id": 17,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 17,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 18,
+        "target_id": 19,
+        "strength": 2
+      },
+      {
+        "source_id": 18,
+        "target_id": 20,
+        "strength": 2
+      },
+      {
+        "source_id": 18,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 18,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 20,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 21,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 29,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 102,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 68,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 48,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 135,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 71,
+        "strength": 2
+      },
+      {
+        "source_id": 19,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 47,
+        "strength": 3
+      },
+      {
+        "source_id": 19,
+        "target_id": 122,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 146,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 147,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 162,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 163,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 164,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 171,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 72,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 172,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 49,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 61,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 173,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 227,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 228,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 19,
+        "target_id": 70,
+        "strength": 1
+      },
+      {
+        "source_id": 20,
+        "target_id": 21,
+        "strength": 1
+      },
+      {
+        "source_id": 20,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 22,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 29,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 21,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 22,
+        "target_id": 193,
+        "strength": 1
+      },
+      {
+        "source_id": 22,
+        "target_id": 194,
+        "strength": 1
+      },
+      {
+        "source_id": 22,
+        "target_id": 195,
+        "strength": 1
+      },
+      {
+        "source_id": 23,
+        "target_id": 24,
+        "strength": 1
+      },
+      {
+        "source_id": 23,
+        "target_id": 25,
+        "strength": 1
+      },
+      {
+        "source_id": 23,
+        "target_id": 26,
+        "strength": 1
+      },
+      {
+        "source_id": 23,
+        "target_id": 27,
+        "strength": 1
+      },
+      {
+        "source_id": 23,
+        "target_id": 28,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 25,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 26,
+        "strength": 2
+      },
+      {
+        "source_id": 24,
+        "target_id": 27,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 28,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 93,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 94,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 95,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 31,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 197,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 198,
+        "strength": 1
+      },
+      {
+        "source_id": 24,
+        "target_id": 199,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 26,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 27,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 28,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 82,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 83,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 84,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 85,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 148,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 149,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 150,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 151,
+        "strength": 1
+      },
+      {
+        "source_id": 25,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 26,
+        "target_id": 27,
+        "strength": 1
+      },
+      {
+        "source_id": 26,
+        "target_id": 28,
+        "strength": 1
+      },
+      {
+        "source_id": 26,
+        "target_id": 197,
+        "strength": 1
+      },
+      {
+        "source_id": 26,
+        "target_id": 198,
+        "strength": 1
+      },
+      {
+        "source_id": 26,
+        "target_id": 199,
+        "strength": 1
+      },
+      {
+        "source_id": 27,
+        "target_id": 28,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 30,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 31,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 32,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 33,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 34,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 35,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 36,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 41,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 48,
+        "strength": 3
+      },
+      {
+        "source_id": 29,
+        "target_id": 47,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 139,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 140,
+        "strength": 2
+      },
+      {
+        "source_id": 29,
+        "target_id": 141,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 71,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 72,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 49,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 68,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 61,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 173,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 196,
+        "strength": 1
+      },
+      {
+        "source_id": 29,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 30,
+        "target_id": 31,
+        "strength": 1
+      },
+      {
+        "source_id": 30,
+        "target_id": 32,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 32,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 93,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 94,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 95,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 178,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 179,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 31,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 34,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 35,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 36,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 33,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 35,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 36,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 34,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 35,
+        "target_id": 36,
+        "strength": 1
+      },
+      {
+        "source_id": 35,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 35,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 35,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 35,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 36,
+        "target_id": 37,
+        "strength": 1
+      },
+      {
+        "source_id": 36,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 36,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 36,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 37,
+        "target_id": 38,
+        "strength": 1
+      },
+      {
+        "source_id": 37,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 37,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 38,
+        "target_id": 39,
+        "strength": 1
+      },
+      {
+        "source_id": 38,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 39,
+        "target_id": 40,
+        "strength": 1
+      },
+      {
+        "source_id": 41,
+        "target_id": 42,
+        "strength": 1
+      },
+      {
+        "source_id": 41,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 41,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 43,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 46,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 52,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 205,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 206,
+        "strength": 1
+      },
+      {
+        "source_id": 42,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 43,
+        "target_id": 44,
+        "strength": 1
+      },
+      {
+        "source_id": 45,
+        "target_id": 46,
+        "strength": 1
+      },
+      {
+        "source_id": 45,
+        "target_id": 47,
+        "strength": 1
+      },
+      {
+        "source_id": 45,
+        "target_id": 48,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 47,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 48,
+        "strength": 2
+      },
+      {
+        "source_id": 46,
+        "target_id": 56,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 57,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 58,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 59,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 102,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 106,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 107,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 108,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 109,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 52,
+        "strength": 2
+      },
+      {
+        "source_id": 46,
+        "target_id": 143,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 165,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 154,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 166,
+        "strength": 2
+      },
+      {
+        "source_id": 46,
+        "target_id": 185,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 186,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 187,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 161,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 205,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 206,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 230,
+        "strength": 1
+      },
+      {
+        "source_id": 46,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 48,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 80,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 81,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 122,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 146,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 147,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 171,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 72,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 172,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 223,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 224,
+        "strength": 1
+      },
+      {
+        "source_id": 47,
+        "target_id": 225,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 55,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 68,
+        "strength": 2
+      },
+      {
+        "source_id": 48,
+        "target_id": 69,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 70,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 71,
+        "strength": 5
+      },
+      {
+        "source_id": 48,
+        "target_id": 72,
+        "strength": 3
+      },
+      {
+        "source_id": 48,
+        "target_id": 73,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 74,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 75,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 76,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 77,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 78,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 79,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 65,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 89,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 90,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 91,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 102,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 135,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 139,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 140,
+        "strength": 2
+      },
+      {
+        "source_id": 48,
+        "target_id": 141,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 144,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 145,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 188,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 189,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 190,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 87,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 217,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 218,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 226,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 230,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 48,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 49,
+        "target_id": 50,
+        "strength": 1
+      },
+      {
+        "source_id": 49,
+        "target_id": 51,
+        "strength": 1
+      },
+      {
+        "source_id": 49,
+        "target_id": 68,
+        "strength": 1
+      },
+      {
+        "source_id": 49,
+        "target_id": 61,
+        "strength": 1
+      },
+      {
+        "source_id": 49,
+        "target_id": 173,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 51,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 52,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 53,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 54,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 60,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 61,
+        "strength": 1
+      },
+      {
+        "source_id": 50,
+        "target_id": 62,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 53,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 54,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 143,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 205,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 206,
+        "strength": 1
+      },
+      {
+        "source_id": 52,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 53,
+        "target_id": 54,
+        "strength": 1
+      },
+      {
+        "source_id": 56,
+        "target_id": 57,
+        "strength": 1
+      },
+      {
+        "source_id": 56,
+        "target_id": 58,
+        "strength": 1
+      },
+      {
+        "source_id": 56,
+        "target_id": 59,
+        "strength": 1
+      },
+      {
+        "source_id": 57,
+        "target_id": 58,
+        "strength": 1
+      },
+      {
+        "source_id": 57,
+        "target_id": 59,
+        "strength": 1
+      },
+      {
+        "source_id": 58,
+        "target_id": 59,
+        "strength": 1
+      },
+      {
+        "source_id": 60,
+        "target_id": 61,
+        "strength": 1
+      },
+      {
+        "source_id": 60,
+        "target_id": 62,
+        "strength": 1
+      },
+      {
+        "source_id": 61,
+        "target_id": 62,
+        "strength": 1
+      },
+      {
+        "source_id": 61,
+        "target_id": 68,
+        "strength": 1
+      },
+      {
+        "source_id": 61,
+        "target_id": 173,
+        "strength": 1
+      },
+      {
+        "source_id": 63,
+        "target_id": 64,
+        "strength": 1
+      },
+      {
+        "source_id": 63,
+        "target_id": 65,
+        "strength": 1
+      },
+      {
+        "source_id": 63,
+        "target_id": 66,
+        "strength": 1
+      },
+      {
+        "source_id": 63,
+        "target_id": 67,
+        "strength": 1
+      },
+      {
+        "source_id": 64,
+        "target_id": 65,
+        "strength": 1
+      },
+      {
+        "source_id": 64,
+        "target_id": 66,
+        "strength": 1
+      },
+      {
+        "source_id": 64,
+        "target_id": 67,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 66,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 67,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 89,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 90,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 91,
+        "strength": 1
+      },
+      {
+        "source_id": 65,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 66,
+        "target_id": 67,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 69,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 70,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 71,
+        "strength": 3
+      },
+      {
+        "source_id": 68,
+        "target_id": 102,
+        "strength": 2
+      },
+      {
+        "source_id": 68,
+        "target_id": 103,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 104,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 114,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 115,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 116,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 118,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 135,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 68,
+        "target_id": 173,
+        "strength": 1
+      },
+      {
+        "source_id": 69,
+        "target_id": 70,
+        "strength": 1
+      },
+      {
+        "source_id": 69,
+        "target_id": 71,
+        "strength": 1
+      },
+      {
+        "source_id": 70,
+        "target_id": 71,
+        "strength": 2
+      },
+      {
+        "source_id": 70,
+        "target_id": 102,
+        "strength": 1
+      },
+      {
+        "source_id": 70,
+        "target_id": 227,
+        "strength": 1
+      },
+      {
+        "source_id": 70,
+        "target_id": 228,
+        "strength": 1
+      },
+      {
+        "source_id": 70,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 72,
+        "strength": 2
+      },
+      {
+        "source_id": 71,
+        "target_id": 73,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 74,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 102,
+        "strength": 3
+      },
+      {
+        "source_id": 71,
+        "target_id": 103,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 104,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 135,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 139,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 140,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 141,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 226,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 227,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 228,
+        "strength": 1
+      },
+      {
+        "source_id": 71,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 73,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 74,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 133,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 134,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 140,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 171,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 172,
+        "strength": 1
+      },
+      {
+        "source_id": 72,
+        "target_id": 226,
+        "strength": 1
+      },
+      {
+        "source_id": 73,
+        "target_id": 74,
+        "strength": 1
+      },
+      {
+        "source_id": 75,
+        "target_id": 76,
+        "strength": 1
+      },
+      {
+        "source_id": 75,
+        "target_id": 77,
+        "strength": 1
+      },
+      {
+        "source_id": 75,
+        "target_id": 78,
+        "strength": 1
+      },
+      {
+        "source_id": 75,
+        "target_id": 79,
+        "strength": 1
+      },
+      {
+        "source_id": 76,
+        "target_id": 77,
+        "strength": 1
+      },
+      {
+        "source_id": 76,
+        "target_id": 78,
+        "strength": 1
+      },
+      {
+        "source_id": 76,
+        "target_id": 79,
+        "strength": 1
+      },
+      {
+        "source_id": 77,
+        "target_id": 78,
+        "strength": 1
+      },
+      {
+        "source_id": 77,
+        "target_id": 79,
+        "strength": 1
+      },
+      {
+        "source_id": 78,
+        "target_id": 79,
+        "strength": 1
+      },
+      {
+        "source_id": 80,
+        "target_id": 81,
+        "strength": 1
+      },
+      {
+        "source_id": 82,
+        "target_id": 83,
+        "strength": 1
+      },
+      {
+        "source_id": 82,
+        "target_id": 84,
+        "strength": 1
+      },
+      {
+        "source_id": 82,
+        "target_id": 85,
+        "strength": 1
+      },
+      {
+        "source_id": 83,
+        "target_id": 84,
+        "strength": 1
+      },
+      {
+        "source_id": 83,
+        "target_id": 85,
+        "strength": 1
+      },
+      {
+        "source_id": 84,
+        "target_id": 85,
+        "strength": 1
+      },
+      {
+        "source_id": 86,
+        "target_id": 87,
+        "strength": 1
+      },
+      {
+        "source_id": 86,
+        "target_id": 88,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 88,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 217,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 218,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 87,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 89,
+        "target_id": 90,
+        "strength": 1
+      },
+      {
+        "source_id": 89,
+        "target_id": 91,
+        "strength": 1
+      },
+      {
+        "source_id": 89,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 90,
+        "target_id": 91,
+        "strength": 1
+      },
+      {
+        "source_id": 90,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 91,
+        "target_id": 92,
+        "strength": 1
+      },
+      {
+        "source_id": 93,
+        "target_id": 94,
+        "strength": 1
+      },
+      {
+        "source_id": 93,
+        "target_id": 95,
+        "strength": 1
+      },
+      {
+        "source_id": 93,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 94,
+        "target_id": 95,
+        "strength": 1
+      },
+      {
+        "source_id": 94,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 95,
+        "target_id": 96,
+        "strength": 1
+      },
+      {
+        "source_id": 97,
+        "target_id": 98,
+        "strength": 1
+      },
+      {
+        "source_id": 97,
+        "target_id": 99,
+        "strength": 1
+      },
+      {
+        "source_id": 97,
+        "target_id": 100,
+        "strength": 1
+      },
+      {
+        "source_id": 97,
+        "target_id": 101,
+        "strength": 1
+      },
+      {
+        "source_id": 98,
+        "target_id": 99,
+        "strength": 1
+      },
+      {
+        "source_id": 98,
+        "target_id": 100,
+        "strength": 1
+      },
+      {
+        "source_id": 98,
+        "target_id": 101,
+        "strength": 1
+      },
+      {
+        "source_id": 99,
+        "target_id": 100,
+        "strength": 1
+      },
+      {
+        "source_id": 99,
+        "target_id": 101,
+        "strength": 1
+      },
+      {
+        "source_id": 100,
+        "target_id": 101,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 103,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 104,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 106,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 107,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 108,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 109,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 135,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 227,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 228,
+        "strength": 1
+      },
+      {
+        "source_id": 102,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 103,
+        "target_id": 104,
+        "strength": 1
+      },
+      {
+        "source_id": 103,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 104,
+        "target_id": 105,
+        "strength": 1
+      },
+      {
+        "source_id": 105,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 105,
+        "target_id": 127,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 107,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 108,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 109,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 106,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 108,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 109,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 107,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 108,
+        "target_id": 109,
+        "strength": 1
+      },
+      {
+        "source_id": 108,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 108,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 108,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 108,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 109,
+        "target_id": 110,
+        "strength": 1
+      },
+      {
+        "source_id": 109,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 109,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 109,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 110,
+        "target_id": 111,
+        "strength": 1
+      },
+      {
+        "source_id": 110,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 110,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 110,
+        "target_id": 196,
+        "strength": 1
+      },
+      {
+        "source_id": 111,
+        "target_id": 112,
+        "strength": 1
+      },
+      {
+        "source_id": 111,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 112,
+        "target_id": 113,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 115,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 116,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 118,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 114,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 115,
+        "target_id": 116,
+        "strength": 1
+      },
+      {
+        "source_id": 115,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 115,
+        "target_id": 118,
+        "strength": 1
+      },
+      {
+        "source_id": 115,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 115,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 116,
+        "target_id": 117,
+        "strength": 1
+      },
+      {
+        "source_id": 116,
+        "target_id": 118,
+        "strength": 1
+      },
+      {
+        "source_id": 116,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 116,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 117,
+        "target_id": 118,
+        "strength": 1
+      },
+      {
+        "source_id": 117,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 117,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 117,
+        "target_id": 127,
+        "strength": 1
+      },
+      {
+        "source_id": 117,
+        "target_id": 143,
+        "strength": 1
+      },
+      {
+        "source_id": 118,
+        "target_id": 119,
+        "strength": 1
+      },
+      {
+        "source_id": 118,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 119,
+        "target_id": 120,
+        "strength": 1
+      },
+      {
+        "source_id": 121,
+        "target_id": 122,
+        "strength": 1
+      },
+      {
+        "source_id": 121,
+        "target_id": 123,
+        "strength": 1
+      },
+      {
+        "source_id": 121,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 121,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 121,
+        "target_id": 126,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 123,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 126,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 146,
+        "strength": 1
+      },
+      {
+        "source_id": 122,
+        "target_id": 147,
+        "strength": 1
+      },
+      {
+        "source_id": 123,
+        "target_id": 124,
+        "strength": 1
+      },
+      {
+        "source_id": 123,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 123,
+        "target_id": 126,
+        "strength": 1
+      },
+      {
+        "source_id": 124,
+        "target_id": 125,
+        "strength": 1
+      },
+      {
+        "source_id": 124,
+        "target_id": 126,
+        "strength": 1
+      },
+      {
+        "source_id": 124,
+        "target_id": 191,
+        "strength": 1
+      },
+      {
+        "source_id": 124,
+        "target_id": 192,
+        "strength": 1
+      },
+      {
+        "source_id": 125,
+        "target_id": 126,
+        "strength": 1
+      },
+      {
+        "source_id": 125,
+        "target_id": 178,
+        "strength": 1
+      },
+      {
+        "source_id": 125,
+        "target_id": 179,
+        "strength": 1
+      },
+      {
+        "source_id": 125,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 128,
+        "target_id": 129,
+        "strength": 1
+      },
+      {
+        "source_id": 128,
+        "target_id": 130,
+        "strength": 1
+      },
+      {
+        "source_id": 128,
+        "target_id": 131,
+        "strength": 1
+      },
+      {
+        "source_id": 128,
+        "target_id": 132,
+        "strength": 1
+      },
+      {
+        "source_id": 129,
+        "target_id": 130,
+        "strength": 1
+      },
+      {
+        "source_id": 129,
+        "target_id": 131,
+        "strength": 1
+      },
+      {
+        "source_id": 129,
+        "target_id": 132,
+        "strength": 1
+      },
+      {
+        "source_id": 130,
+        "target_id": 131,
+        "strength": 1
+      },
+      {
+        "source_id": 130,
+        "target_id": 132,
+        "strength": 1
+      },
+      {
+        "source_id": 131,
+        "target_id": 132,
+        "strength": 1
+      },
+      {
+        "source_id": 133,
+        "target_id": 134,
+        "strength": 1
+      },
+      {
+        "source_id": 135,
+        "target_id": 136,
+        "strength": 1
+      },
+      {
+        "source_id": 135,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 135,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 136,
+        "target_id": 137,
+        "strength": 1
+      },
+      {
+        "source_id": 136,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 136,
+        "target_id": 165,
+        "strength": 1
+      },
+      {
+        "source_id": 136,
+        "target_id": 154,
+        "strength": 1
+      },
+      {
+        "source_id": 136,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 137,
+        "target_id": 138,
+        "strength": 1
+      },
+      {
+        "source_id": 139,
+        "target_id": 140,
+        "strength": 1
+      },
+      {
+        "source_id": 139,
+        "target_id": 141,
+        "strength": 1
+      },
+      {
+        "source_id": 139,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 140,
+        "target_id": 141,
+        "strength": 1
+      },
+      {
+        "source_id": 140,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 141,
+        "target_id": 142,
+        "strength": 1
+      },
+      {
+        "source_id": 144,
+        "target_id": 145,
+        "strength": 1
+      },
+      {
+        "source_id": 146,
+        "target_id": 147,
+        "strength": 1
+      },
+      {
+        "source_id": 148,
+        "target_id": 149,
+        "strength": 1
+      },
+      {
+        "source_id": 148,
+        "target_id": 150,
+        "strength": 1
+      },
+      {
+        "source_id": 148,
+        "target_id": 151,
+        "strength": 1
+      },
+      {
+        "source_id": 148,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 149,
+        "target_id": 150,
+        "strength": 1
+      },
+      {
+        "source_id": 149,
+        "target_id": 151,
+        "strength": 1
+      },
+      {
+        "source_id": 149,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 150,
+        "target_id": 151,
+        "strength": 1
+      },
+      {
+        "source_id": 150,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 151,
+        "target_id": 152,
+        "strength": 1
+      },
+      {
+        "source_id": 152,
+        "target_id": 230,
+        "strength": 1
+      },
+      {
+        "source_id": 152,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 153,
+        "target_id": 154,
+        "strength": 1
+      },
+      {
+        "source_id": 153,
+        "target_id": 155,
+        "strength": 1
+      },
+      {
+        "source_id": 154,
+        "target_id": 155,
+        "strength": 1
+      },
+      {
+        "source_id": 154,
+        "target_id": 165,
+        "strength": 1
+      },
+      {
+        "source_id": 154,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 155,
+        "target_id": 167,
+        "strength": 1
+      },
+      {
+        "source_id": 155,
+        "target_id": 168,
+        "strength": 1
+      },
+      {
+        "source_id": 155,
+        "target_id": 169,
+        "strength": 1
+      },
+      {
+        "source_id": 155,
+        "target_id": 170,
+        "strength": 1
+      },
+      {
+        "source_id": 156,
+        "target_id": 157,
+        "strength": 1
+      },
+      {
+        "source_id": 158,
+        "target_id": 159,
+        "strength": 1
+      },
+      {
+        "source_id": 158,
+        "target_id": 160,
+        "strength": 1
+      },
+      {
+        "source_id": 158,
+        "target_id": 161,
+        "strength": 1
+      },
+      {
+        "source_id": 159,
+        "target_id": 160,
+        "strength": 1
+      },
+      {
+        "source_id": 159,
+        "target_id": 161,
+        "strength": 1
+      },
+      {
+        "source_id": 160,
+        "target_id": 161,
+        "strength": 1
+      },
+      {
+        "source_id": 161,
+        "target_id": 185,
+        "strength": 1
+      },
+      {
+        "source_id": 161,
+        "target_id": 186,
+        "strength": 1
+      },
+      {
+        "source_id": 161,
+        "target_id": 187,
+        "strength": 1
+      },
+      {
+        "source_id": 162,
+        "target_id": 163,
+        "strength": 1
+      },
+      {
+        "source_id": 162,
+        "target_id": 164,
+        "strength": 1
+      },
+      {
+        "source_id": 163,
+        "target_id": 164,
+        "strength": 1
+      },
+      {
+        "source_id": 165,
+        "target_id": 166,
+        "strength": 1
+      },
+      {
+        "source_id": 166,
+        "target_id": 230,
+        "strength": 1
+      },
+      {
+        "source_id": 167,
+        "target_id": 168,
+        "strength": 1
+      },
+      {
+        "source_id": 167,
+        "target_id": 169,
+        "strength": 1
+      },
+      {
+        "source_id": 167,
+        "target_id": 170,
+        "strength": 1
+      },
+      {
+        "source_id": 168,
+        "target_id": 169,
+        "strength": 1
+      },
+      {
+        "source_id": 168,
+        "target_id": 170,
+        "strength": 1
+      },
+      {
+        "source_id": 169,
+        "target_id": 170,
+        "strength": 1
+      },
+      {
+        "source_id": 171,
+        "target_id": 172,
+        "strength": 1
+      },
+      {
+        "source_id": 174,
+        "target_id": 175,
+        "strength": 1
+      },
+      {
+        "source_id": 174,
+        "target_id": 176,
+        "strength": 1
+      },
+      {
+        "source_id": 174,
+        "target_id": 177,
+        "strength": 1
+      },
+      {
+        "source_id": 175,
+        "target_id": 176,
+        "strength": 1
+      },
+      {
+        "source_id": 175,
+        "target_id": 177,
+        "strength": 1
+      },
+      {
+        "source_id": 176,
+        "target_id": 177,
+        "strength": 1
+      },
+      {
+        "source_id": 178,
+        "target_id": 179,
+        "strength": 1
+      },
+      {
+        "source_id": 178,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 179,
+        "target_id": 180,
+        "strength": 1
+      },
+      {
+        "source_id": 181,
+        "target_id": 182,
+        "strength": 1
+      },
+      {
+        "source_id": 181,
+        "target_id": 183,
+        "strength": 1
+      },
+      {
+        "source_id": 181,
+        "target_id": 184,
+        "strength": 1
+      },
+      {
+        "source_id": 182,
+        "target_id": 183,
+        "strength": 1
+      },
+      {
+        "source_id": 182,
+        "target_id": 184,
+        "strength": 1
+      },
+      {
+        "source_id": 183,
+        "target_id": 184,
+        "strength": 1
+      },
+      {
+        "source_id": 185,
+        "target_id": 186,
+        "strength": 1
+      },
+      {
+        "source_id": 185,
+        "target_id": 187,
+        "strength": 1
+      },
+      {
+        "source_id": 186,
+        "target_id": 187,
+        "strength": 1
+      },
+      {
+        "source_id": 188,
+        "target_id": 189,
+        "strength": 1
+      },
+      {
+        "source_id": 188,
+        "target_id": 190,
+        "strength": 1
+      },
+      {
+        "source_id": 189,
+        "target_id": 190,
+        "strength": 1
+      },
+      {
+        "source_id": 191,
+        "target_id": 192,
+        "strength": 1
+      },
+      {
+        "source_id": 193,
+        "target_id": 194,
+        "strength": 1
+      },
+      {
+        "source_id": 193,
+        "target_id": 195,
+        "strength": 1
+      },
+      {
+        "source_id": 194,
+        "target_id": 195,
+        "strength": 1
+      },
+      {
+        "source_id": 197,
+        "target_id": 198,
+        "strength": 1
+      },
+      {
+        "source_id": 197,
+        "target_id": 199,
+        "strength": 1
+      },
+      {
+        "source_id": 198,
+        "target_id": 199,
+        "strength": 1
+      },
+      {
+        "source_id": 200,
+        "target_id": 201,
+        "strength": 1
+      },
+      {
+        "source_id": 200,
+        "target_id": 202,
+        "strength": 1
+      },
+      {
+        "source_id": 200,
+        "target_id": 203,
+        "strength": 1
+      },
+      {
+        "source_id": 200,
+        "target_id": 204,
+        "strength": 1
+      },
+      {
+        "source_id": 201,
+        "target_id": 202,
+        "strength": 1
+      },
+      {
+        "source_id": 201,
+        "target_id": 203,
+        "strength": 1
+      },
+      {
+        "source_id": 201,
+        "target_id": 204,
+        "strength": 1
+      },
+      {
+        "source_id": 202,
+        "target_id": 203,
+        "strength": 1
+      },
+      {
+        "source_id": 202,
+        "target_id": 204,
+        "strength": 1
+      },
+      {
+        "source_id": 203,
+        "target_id": 204,
+        "strength": 1
+      },
+      {
+        "source_id": 205,
+        "target_id": 206,
+        "strength": 1
+      },
+      {
+        "source_id": 205,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 206,
+        "target_id": 207,
+        "strength": 1
+      },
+      {
+        "source_id": 208,
+        "target_id": 209,
+        "strength": 1
+      },
+      {
+        "source_id": 208,
+        "target_id": 210,
+        "strength": 1
+      },
+      {
+        "source_id": 208,
+        "target_id": 211,
+        "strength": 1
+      },
+      {
+        "source_id": 208,
+        "target_id": 212,
+        "strength": 1
+      },
+      {
+        "source_id": 208,
+        "target_id": 213,
+        "strength": 1
+      },
+      {
+        "source_id": 209,
+        "target_id": 210,
+        "strength": 1
+      },
+      {
+        "source_id": 209,
+        "target_id": 211,
+        "strength": 1
+      },
+      {
+        "source_id": 209,
+        "target_id": 212,
+        "strength": 1
+      },
+      {
+        "source_id": 209,
+        "target_id": 213,
+        "strength": 1
+      },
+      {
+        "source_id": 210,
+        "target_id": 211,
+        "strength": 1
+      },
+      {
+        "source_id": 210,
+        "target_id": 212,
+        "strength": 1
+      },
+      {
+        "source_id": 210,
+        "target_id": 213,
+        "strength": 1
+      },
+      {
+        "source_id": 211,
+        "target_id": 212,
+        "strength": 1
+      },
+      {
+        "source_id": 211,
+        "target_id": 213,
+        "strength": 1
+      },
+      {
+        "source_id": 212,
+        "target_id": 213,
+        "strength": 1
+      },
+      {
+        "source_id": 214,
+        "target_id": 215,
+        "strength": 1
+      },
+      {
+        "source_id": 214,
+        "target_id": 216,
+        "strength": 1
+      },
+      {
+        "source_id": 215,
+        "target_id": 216,
+        "strength": 1
+      },
+      {
+        "source_id": 217,
+        "target_id": 218,
+        "strength": 1
+      },
+      {
+        "source_id": 217,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 217,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 217,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 217,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 218,
+        "target_id": 219,
+        "strength": 1
+      },
+      {
+        "source_id": 218,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 218,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 218,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 219,
+        "target_id": 220,
+        "strength": 1
+      },
+      {
+        "source_id": 219,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 219,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 220,
+        "target_id": 221,
+        "strength": 1
+      },
+      {
+        "source_id": 220,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 221,
+        "target_id": 222,
+        "strength": 1
+      },
+      {
+        "source_id": 223,
+        "target_id": 224,
+        "strength": 1
+      },
+      {
+        "source_id": 223,
+        "target_id": 225,
+        "strength": 1
+      },
+      {
+        "source_id": 224,
+        "target_id": 225,
+        "strength": 1
+      },
+      {
+        "source_id": 227,
+        "target_id": 228,
+        "strength": 1
+      },
+      {
+        "source_id": 227,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 228,
+        "target_id": 229,
+        "strength": 1
+      },
+      {
+        "source_id": 231,
+        "target_id": 232,
+        "strength": 1
+      },
+      {
+        "source_id": 231,
+        "target_id": 233,
+        "strength": 1
+      },
+      {
+        "source_id": 231,
+        "target_id": 234,
+        "strength": 1
+      },
+      {
+        "source_id": 231,
+        "target_id": 235,
+        "strength": 1
+      },
+      {
+        "source_id": 232,
+        "target_id": 233,
+        "strength": 1
+      },
+      {
+        "source_id": 232,
+        "target_id": 234,
+        "strength": 1
+      },
+      {
+        "source_id": 232,
+        "target_id": 235,
+        "strength": 1
+      },
+      {
+        "source_id": 233,
+        "target_id": 234,
+        "strength": 1
+      },
+      {
+        "source_id": 233,
+        "target_id": 235,
+        "strength": 1
+      },
+      {
+        "source_id": 234,
+        "target_id": 235,
+        "strength": 1
+      }
+    ]
+  }
+}

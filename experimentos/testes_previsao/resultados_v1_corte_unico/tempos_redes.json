@@ -1,0 +1,154 @@
+{
+ "LSTM|usinas|A": {
+  "segundos": 168.9,
+  "parametros": 215809
+ },
+ "GRU|usinas|A": {
+  "segundos": 476.8,
+  "parametros": 388857
+ },
+ "NHITS|usinas|A": {
+  "segundos": 100.2,
+  "parametros": 2817570
+ },
+ "TiDE|usinas|A": {
+  "segundos": 87.5,
+  "parametros": 1497340
+ },
+ "KAN|usinas|A": {
+  "segundos": 167.2,
+  "parametros": 983040
+ },
+ "TCN|usinas|A": {
+  "segundos": 153.8,
+  "parametros": 152665
+ },
+ "DLinear|usinas|A": {
+  "segundos": 31.4,
+  "parametros": 8112
+ },
+ "PatchTST|usinas|A": {
+  "segundos": 870.5,
+  "parametros": 466843
+ },
+ "iTransformer|usinas|A": {
+  "segundos": 49.4,
+  "parametros": 6404632
+ },
+ "SparseTSF|usinas|A": {
+  "segundos": 7.3,
+  "parametros": 32
+ },
+ "ResNet-1D|usinas|A": {
+  "segundos": 757.2,
+  "parametros": 122328
+ },
+ "LSTM|casas_prod|A": {
+  "segundos": 286.2,
+  "parametros": 215809
+ },
+ "GRU|casas_prod|A": {
+  "segundos": 671.0,
+  "parametros": 388857
+ },
+ "NHITS|casas_prod|A": {
+  "segundos": 51.5,
+  "parametros": 2817570
+ },
+ "TiDE|casas_prod|A": {
+  "segundos": 44.7,
+  "parametros": 1497340
+ },
+ "KAN|casas_prod|A": {
+  "segundos": 67.4,
+  "parametros": 983040
+ },
+ "TCN|casas_prod|A": {
+  "segundos": 227.1,
+  "parametros": 152665
+ },
+ "DLinear|casas_prod|A": {
+  "segundos": 27.3,
+  "parametros": 8112
+ },
+ "iTransformer|casas_prod|A": {
+  "segundos": 287.9,
+  "parametros": 6404632
+ },
+ "SparseTSF|casas_prod|A": {
+  "segundos": 6.7,
+  "parametros": 32
+ },
+ "ResNet-1D|casas_prod|A": {
+  "segundos": 566.7,
+  "parametros": 122328
+ },
+ "LSTM|casas_cons|A": {
+  "segundos": 413.3,
+  "parametros": 215809
+ },
+ "GRU|casas_cons|A": {
+  "segundos": 698.1,
+  "parametros": 388857
+ },
+ "NHITS|casas_cons|A": {
+  "segundos": 45.6,
+  "parametros": 2817570
+ },
+ "TiDE|casas_cons|A": {
+  "segundos": 38.3,
+  "parametros": 1497340
+ },
+ "KAN|casas_cons|A": {
+  "segundos": 58.5,
+  "parametros": 983040
+ },
+ "TCN|casas_cons|A": {
+  "segundos": 233.0,
+  "parametros": 152665
+ },
+ "DLinear|casas_cons|A": {
+  "segundos": 23.4,
+  "parametros": 8112
+ },
+ "iTransformer|casas_cons|A": {
+  "segundos": 602.2,
+  "parametros": 6404632
+ },
+ "SparseTSF|casas_cons|A": {
+  "segundos": 7.3,
+  "parametros": 32
+ },
+ "ResNet-1D|casas_cons|A": {
+  "segundos": 605.8,
+  "parametros": 122328
+ },
+ "LSTM|usinas|B": {
+  "segundos": 207.4,
+  "parametros": 218369
+ },
+ "GRU|usinas|B": {
+  "segundos": 459.9,
+  "parametros": 391769
+ },
+ "NHITS|usinas|B": {
+  "segundos": 65.3,
+  "parametros": 3604002
+ },
+ "TiDE|usinas|B": {
+  "segundos": 86.9,
+  "parametros": 2291504
+ },
+ "KAN|usinas|B": {
+  "segundos": 96.6,
+  "parametros": 4915200
+ },
+ "TFT|usinas|B": {
+  "segundos": 1110.6,
+  "parametros": 1373230
+ },
+ "TSMixerx|usinas|B": {
+  "segundos": 20.0,
+  "parametros": 81830
+ }
+}

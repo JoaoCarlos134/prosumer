@@ -1,0 +1,5 @@
+vigencia_ini,vigencia_fim,tributo,aliquota_pct,base,fonte
+2010-01-01,2022-06-22,ICMS,29.00,por dentro,"PR aplicava 29% sobre energia elétrica antes da LC 194/2022"
+2022-06-23,2024-03-17,ICMS,18.00,por dentro,"LC 194/2022 enquadrou energia como bem essencial; PR fixou 18% (Lei PR 21.308/2022)"
+2024-03-18,2099-12-31,ICMS,19.00,por dentro,"Decreto PR 5.143/2023, vigência 18/03/2024 (18% apenas eletrificação rural) — Copel/Tributos"
+2010-01-01,2099-12-31,PIS_COFINS,9.25,por dentro,"PARÂMETRO — nominal PIS 1,65% + COFINS 7,60%. A alíquota efetiva é apurada mês a mês pela Copel e costuma ser MENOR. Conferir na fatura e reajustar."

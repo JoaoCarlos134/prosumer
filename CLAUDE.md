@@ -125,6 +125,13 @@ with generation at Cascavel vs 0.96 for NASA.
    `prossumidor.protocolo`.
 3. Still open from the tests: fine-tuning TTM/Chronos-2, probabilistic forecasts (CRPS), consumption bias of
    foundation models (~−20%), house location for clear-sky, embedded latency/energy on Raspberry Pi 5 / ESP32
-   (proposal step E5), loading the 32 TFLite models back (never done).
+   (proposal step E5).
+5. TFLite (done 2026-10-05 at Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`): the
+   32 `.tflite` files in `legado/ia_solar/base_modelagem/embarcado/` were reloaded from disk and all reproduce
+   their original R² (`verificacao_tflite.csv`). The `.tflite` holds only the network: input imputation and
+   scaling plus output de-normalisation were never saved, so they were rebuilt and stored in
+   `embarcado/preprocessamento_<plant>_<set>.json` — a device needs file + JSON. x86 latency (~2.5 µs float,
+   ~11 µs int8-total) is Python-call overhead, not network cost; it says nothing about an MCU. The verify
+   script needs the 5-min base, which stayed at Lactec — it can't rerun here.
 4. Known project gaps: Curitiba roof geometry unknown (blocks papers A and B); papers A and B have no
    bibliography yet.

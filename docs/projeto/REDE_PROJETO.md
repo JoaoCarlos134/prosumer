@@ -118,7 +118,9 @@ avisa quando elas mudam.
   4,00 kWp por meses.
 - **Os 32 modelos `.tflite`.** O R² e a latência foram medidos em memória, na criação;
   nenhum script carrega o arquivo salvo. O caminho até o embarcado nunca foi testado
-  a partir do artefato que iria para a placa.
+  a partir do artefato que iria para a placa. *Resolvido em 05/10/2026:
+  `ia_solar/base_modelagem/referencia/verifica_tflite.py` recarrega os 32 e reproduz o R²
+  de todos; o pré-processamento, que não estava salvo, foi para `embarcado/preprocessamento_*.json`.*
 
 **Entradas sem origem em script** (feitas à mão ou externas, todas legítimas):
 `parametros_fiscais.csv`, `parametros_usinas.csv`, `explorer_tpl.html`.

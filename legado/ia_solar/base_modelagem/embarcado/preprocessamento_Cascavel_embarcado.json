@@ -1,0 +1,41 @@
+{
+ "entradas": [
+  "dia_do_ano",
+  "hora_solar",
+  "elevacao_solar",
+  "cos_zenite",
+  "poa_ceu_claro",
+  "temp_ar_horaria",
+  "estado_sujeira"
+ ],
+ "mediana_buracos": [
+  185.0,
+  12.002070567466625,
+  37.36100356855466,
+  0.6068350076842879,
+  658.1448977714961,
+  25.41,
+  0.6379827687683431
+ ],
+ "media": [
+  183.87714187130544,
+  12.006697222004492,
+  37.62350306483398,
+  0.5671716361252711,
+  595.2733199614557,
+  24.926872347074294,
+  0.6202319357512966
+ ],
+ "desvio": [
+  108.92145504358113,
+  3.4308532281524875,
+  21.460979013049332,
+  0.27645054176823236,
+  311.5309970217097,
+  5.931137112698551,
+  0.11051164033704115
+ ],
+ "saida_media_W": 1333.617240306242,
+ "saida_desvio_W": 1026.0093997433494,
+ "uso": "x = (entrada, com buraco -> mediana, - media) / desvio; potencia_W = max(0, rede(x) * saida_desvio_W + saida_media_W). Nos modelos int8 total, quantizar x e desquantizar a saida com os parametros de quantizacao do proprio .tflite."
+}

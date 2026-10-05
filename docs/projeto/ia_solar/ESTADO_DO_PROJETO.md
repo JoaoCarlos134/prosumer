@@ -28,7 +28,7 @@ Só diferiram a fatura (entrou 2025, ver pendência 1) e tempos de execução.
 | Base tarifária Copel-DIS (ANEEL) | `analise/tarifas/` — histórico 2010→2027, bandeiras mês a mês, componentes |
 | Séries de 5 min em XLSX com tarifa por linha | `analise/*/dados/*_5min_*.xlsx` (abas Tarifas, Bandeiras, HOMER) |
 | Teste do downscaling por inversão da potência | `analise/irradiancia_inversa/` — não melhora o modelo, ver LEIA-ME |
-| Modelos para embarcamento, com TensorFlow Lite | `base_modelagem/embarcado/` — 32 arquivos .tflite e o comparativo |
+| Modelos para embarcamento, com TensorFlow Lite | `base_modelagem/embarcado/` — 32 arquivos .tflite e o comparativo. **Verificados em 05/10/2026** a partir do arquivo (`referencia/verifica_tflite.py`): os 32 reproduzem o R² original; o pré-processamento que faltava para usá-los fora do Python está em `preprocessamento_*.json` |
 | Documentação dividida em duas | `base_modelagem/Documentacao_Dados.xlsx` e `_Resultados.xlsx` |
 
 ### Artefatos publicados (claude.ai)

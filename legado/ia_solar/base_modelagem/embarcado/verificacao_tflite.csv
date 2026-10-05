@@ -1,0 +1,33 @@
+﻿usina;conjunto;rede;conversao;arquivo;KB;entrada;amostras_teste;R2_recarregado;R2_original;diferenca_R2;MAE_W;us_por_amostra;us_original;cpu
+Cascavel;COMPLETO;MLP 16-8;float16;Cascavel_completo_MLP16-8_float16.tflite;3,8;float32;43889;0,8166;0,8166;0,0;303,2;2,44;2,8;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 16-8;float32;Cascavel_completo_MLP16-8_float32.tflite;3,8;float32;43889;0,8166;0,8166;0,0;303,2;2,46;2,8;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 16-8;int8 dinamico;Cascavel_completo_MLP16-8_int8dinamico.tflite;3,8;float32;43889;0,8166;0,8166;0,0;303,2;2,54;3,3;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 16-8;int8 total;Cascavel_completo_MLP16-8_int8total.tflite;3,4;int8;43889;0,8117;0,8117;0,0;318,1;11,55;11,1;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 32-16;float16;Cascavel_completo_MLP32-16_float16.tflite;5,2;float32;43889;0,8141;0,8141;0,0;307,7;2,64;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 32-16;float32;Cascavel_completo_MLP32-16_float32.tflite;6,7;float32;43889;0,8141;0,8141;0,0;307,7;2,33;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 32-16;int8 dinamico;Cascavel_completo_MLP32-16_int8dinamico.tflite;6,7;float32;43889;0,8141;0,8141;0,0;307,7;2,69;3,2;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;COMPLETO;MLP 32-16;int8 total;Cascavel_completo_MLP32-16_int8total.tflite;4,7;int8;43889;0,8109;0,8109;0,0;317,6;10,61;11,1;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 16-8;float16;Cascavel_embarcado_MLP16-8_float16.tflite;3,5;float32;43889;0,5885;0,5885;-0,0;516,5;2,42;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 16-8;float32;Cascavel_embarcado_MLP16-8_float32.tflite;3,0;float32;43889;0,5885;0,5885;-0,0;516,4;2,61;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 16-8;int8 dinamico;Cascavel_embarcado_MLP16-8_int8dinamico.tflite;3,0;float32;43889;0,5885;0,5885;-0,0;516,4;2,57;2,5;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 16-8;int8 total;Cascavel_embarcado_MLP16-8_int8total.tflite;3,2;int8;43889;0,5879;0,5879;0,0;518,8;11,09;10,9;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 32-16;float16;Cascavel_embarcado_MLP32-16_float16.tflite;4,5;float32;43889;0,5901;0,5901;0,0;512,6;2,25;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 32-16;float32;Cascavel_embarcado_MLP32-16_float32.tflite;5,1;float32;43889;0,5901;0,5901;-0,0;512,6;2,44;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 32-16;int8 dinamico;Cascavel_embarcado_MLP32-16_int8dinamico.tflite;5,1;float32;43889;0,5901;0,5901;-0,0;512,6;2,6;2,9;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Cascavel;EMBARCADO;MLP 32-16;int8 total;Cascavel_embarcado_MLP32-16_int8total.tflite;4,3;int8;43889;0,5901;0,5901;-0,0;513,5;10,89;12,0;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 16-8;float16;Curitiba_completo_MLP16-8_float16.tflite;3,9;float32;42115;0,7453;0,7453;-0,0;778,8;2,6;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 16-8;float32;Curitiba_completo_MLP16-8_float32.tflite;3,9;float32;42115;0,7453;0,7453;-0,0;778,8;3,19;3,0;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 16-8;int8 dinamico;Curitiba_completo_MLP16-8_int8dinamico.tflite;3,9;float32;42115;0,7453;0,7453;-0,0;778,8;2,65;2,8;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 16-8;int8 total;Curitiba_completo_MLP16-8_int8total.tflite;3,4;int8;42115;0,7358;0,7358;0,0;824,2;10,6;11,4;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 32-16;float16;Curitiba_completo_MLP32-16_float16.tflite;5,3;float32;42115;0,7339;0,7339;0,0;794,7;2,72;2,9;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 32-16;float32;Curitiba_completo_MLP32-16_float32.tflite;6,7;float32;42115;0,7339;0,7339;0,0;794,8;2,5;2,8;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 32-16;int8 dinamico;Curitiba_completo_MLP32-16_int8dinamico.tflite;6,7;float32;42115;0,7339;0,7339;0,0;794,8;2,59;3,2;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;COMPLETO;MLP 32-16;int8 total;Curitiba_completo_MLP32-16_int8total.tflite;4,7;int8;42115;0,7343;0,7343;-0,0;796,7;10,71;11,8;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 16-8;float16;Curitiba_embarcado_MLP16-8_float16.tflite;3,5;float32;42115;0,5283;0,5283;0,0;1139,3;2,53;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 16-8;float32;Curitiba_embarcado_MLP16-8_float32.tflite;3,1;float32;42115;0,5283;0,5283;0,0;1139,3;2,46;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 16-8;int8 dinamico;Curitiba_embarcado_MLP16-8_int8dinamico.tflite;3,1;float32;42115;0,5283;0,5283;0,0;1139,3;2,48;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 16-8;int8 total;Curitiba_embarcado_MLP16-8_int8total.tflite;3,2;int8;42115;0,5051;0,5051;-0,0;1177,9;10,27;14,4;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 32-16;float16;Curitiba_embarcado_MLP32-16_float16.tflite;4,5;float32;42115;0,5272;0,5272;-0,0;1130,5;2,51;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 32-16;float32;Curitiba_embarcado_MLP32-16_float32.tflite;5,1;float32;42115;0,5272;0,5272;-0,0;1130,5;2,51;2,6;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 32-16;int8 dinamico;Curitiba_embarcado_MLP32-16_int8dinamico.tflite;5,1;float32;42115;0,5272;0,5272;-0,0;1130,5;2,52;2,7;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel
+Curitiba;EMBARCADO;MLP 32-16;int8 total;Curitiba_embarcado_MLP32-16_int8total.tflite;4,3;int8;42115;0,518;0,518;-0,0;1157,3;10,42;10,1;Intel64 Family 6 Model 186 Stepping 3, GenuineIntel

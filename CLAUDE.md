@@ -12,8 +12,8 @@ docs and code comments are in Portuguese (code comments without accents) — kee
   2 decimals (-24.83, -53.65). Never reintroduce names or exact coordinates. The name map exists only on the
   Lactec machine (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here).
 - **Authorization:** management cleared academic use (TCC) on 2026-10-05. Ownership/licence follow the
-  project terms (proposal section 10). The MIT `LICENSE` was created with the repo; confirm the licence with
-  Lactec before making anything public.
+  project terms (proposal section 10). There is deliberately **no LICENSE file** (the MIT one created with
+  the repo was removed on 2026-10-05): all rights reserved until Lactec decides. Don't add one.
 - **The 20 houses** (`casas`) come from a dataset of unknown origin/licence, apparently in Europe (northern
   hemisphere, DST). Don't publish them either.
 - Re-syncing from Lactec is done there by rerunning the export script; files here may be overwritten by it.
@@ -69,25 +69,37 @@ Pipeline (run from `scripts/`):
 Environments: four, frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
 expect them in `~/.venvs/<name>` (override with `VENVS`). `previsao` runs almost everything.
 
-### State at export (2026-10-05 10:30)
+### State at export (2026-10-05, ~10:40) — the run moves to the home machine (GPU)
 
-v2 was running on the work laptop (CPU only, ~2–3× slower per fold than v1 because two processes share it).
-Finished in v2: all references, LightGBM and linear physics (A, B, C, B-curto, C-gfs); Chronos-2 and
-TimesFM-2.5 in C; networks LSTM/GRU/NHITS/TiDE/KAN for `casas_prod`, LSTM for `usinas` A.
-Not finished: all other trained networks (TCN, DLinear, iTransformer, PatchTST, SparseTSF, ResNet-1D, the
-B and C networks incl. TFT/TSMixerx, and all of `casas_cons`), then batch 2. `04_redes_treinadas.py` skips
-what is listed in `resultados/tempos_redes_*.json`, so a run here resumes where the snapshot ends.
-**Decide with the user whether the Lactec laptop keeps running too** — don't merge two sets of results for
-the same model without checking they agree.
+v2 ran on the Lactec laptop (CPU) and was **stopped** there; nothing runs at Lactec anymore. This repo has
+everything it finished. Done in v2: all references, LightGBM and linear physics (A, B, C, B-curto, C-gfs);
+Chronos-2 and TimesFM-2.5 in C; networks LSTM/GRU/NHITS/TiDE/KAN/TCN/DLinear for `casas_prod`, LSTM and
+GRU for `usinas` A (all on CPU; `tempos_redes_*.json` has no `dispositivo` field for these = CPU).
+Still to run: `usinas` A — NHITS, TiDE, KAN, TCN, DLinear, iTransformer, PatchTST, SparseTSF, ResNet-1D;
+all `usinas` B and C networks (LSTM, GRU, NHITS, TiDE, KAN, NBEATSx-only-in-batch-2, TFT, TSMixerx);
+`casas_prod` — iTransformer, SparseTSF, ResNet-1D; all of `casas_cons`. Then batch 2. Finished models are skipped (`tempos_*.json`), so just start the queues.
+
+How to resume at home (after creating the envs, `ambientes/LEIA-ME.md`; with a CUDA build of torch):
+
+    cd experimentos/testes_previsao/scripts
+    set DISPOSITIVO=cuda          (PowerShell: $env:DISPOSITIVO="cuda"; bash: export DISPOSITIVO=cuda)
+    python roda_v2.py             # v2 networks; plants and houses in two processes; logs resultados/log_v2_*.txt
+    python roda_lote2.py          # waits for v2's FIM lines, then batch 2 + ensemble + metrics + figures
+    (or: python roda_lote2.py --sem-esperar   to run batch 2 alone)
+
+`DISPOSITIVO=cuda` moves the NeuralForecast networks to the GPU (`accelerator="gpu"`) and puts TabPFN-TS back
+into batch 2. Batches, steps, seeds and folds stay identical, but GPU vs CPU can change results slightly:
+the device is recorded per model in `tempos_redes_*.json`, mention it in the write-up. The networks already
+done on CPU were not redone; if exact hardware parity matters for the TCC, delete their entries from the
+tempos file and rerun (cheap on GPU). The foundation models and SparseTSF/ResNet-1D still run on CPU (fast).
+`torch.set_num_threads(5)` in `04` assumes two processes on a 12-thread CPU — adjust to the home CPU.
 
 Batch 2 (queued after v2): Toto-2.0-22m, Toto-2.0-313m, TiRex-2 (A/B/C), Sundial-128m, Timer-XL-84m,
-Time-MoE-50M, Moirai-MoE-small, N-BEATSx (A/B/C; `04 ... --modelos NBEATSx`). Smoke-tested on 3 windows.
-Dropped: TabPFN-TS (default weights need a Prior Labs account → pinned the open v2 weights, but >10 min for
-9 windows on CPU; **feasible on a GPU** — consider it if the home machine has one), TimeXer (NeuralForecast's
-version can't take future covariates). TiRex-2 needs `torch._dynamo` disabled on Windows without MSVC.
-
-With a GPU: `COMUM` in `04_redes_treinadas.py` hard-codes `accelerator="cpu"` and `torch.set_num_threads`;
-changing it changes run times (and possibly results slightly) — record it if you do.
+Time-MoE-50M, Moirai-MoE-small, N-BEATSx (A/B/C; `04 ... --modelos NBEATSx`); TabPFN-TS (A/B/C) only with
+`DISPOSITIVO=cuda`. Smoke-tested on 3 windows on CPU (not yet on GPU). TabPFN-TS: the default v3.5 weights
+need a Prior Labs account, so the script pins the open v2 weights (keep it that way; LOCAL mode, no data
+leaves the machine). TimeXer dropped: NeuralForecast's version can't take future covariates. TiRex-2 needs
+`torch._dynamo` disabled on Windows without MSVC (done in the script).
 
 ### Findings so far
 

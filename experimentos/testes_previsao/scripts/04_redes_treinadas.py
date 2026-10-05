@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore"); logging.getLogger("pytorch_lightning").setLev
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
-from comum import carrega, grava, janelas, dobras, CASOS, EXOG, H, ENTRADA_NN, RES, REGIMES
+from comum import carrega, grava, janelas, dobras, CASOS, EXOG, H, ENTRADA_NN, RES, REGIMES, DISPOSITIVO
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
 ARGS = sys.argv[1:]
@@ -23,7 +23,8 @@ LOG = RES / ("tempos_redes_%s.json" % "_".join(CASOS_ARG))
 tempos = json.loads(LOG.read_text()) if LOG.exists() else {}
 COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, early_stop_patience_steps=4,
              batch_size=16, windows_batch_size=128, inference_windows_batch_size=128,
-             scaler_type="robust", random_seed=42, accelerator="cpu", enable_progress_bar=False,
+             scaler_type="robust", random_seed=42, accelerator="gpu" if DISPOSITIVO == "cuda" else "cpu",
+             enable_progress_bar=False,
              logger=False, enable_model_summary=False)
 
 
@@ -157,7 +158,8 @@ def roda_nf(df, fab, caso, regime):
 
 
 def anota(chave, t0, n_par, nome, caso, regime):
-    tempos[chave] = dict(segundos=round(time.time() - t0, 1), parametros=int(n_par), dobras=len(dobras(caso)))
+    tempos[chave] = dict(segundos=round(time.time() - t0, 1), parametros=int(n_par), dobras=len(dobras(caso)),
+                         dispositivo=DISPOSITIVO)
     LOG.write_text(json.dumps(tempos, indent=1))
     print("OK    %-12s %-10s %s  %8d parametros  %6.0f s" % (nome, caso, regime, n_par, time.time() - t0), flush=True)
 

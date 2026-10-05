@@ -27,8 +27,13 @@ Origem movel (protocolo v2, 05/10/2026)
   usinas a cada 61 dias (5 dobras), casas a cada 31 dias (3 dobras). Fundacionais nao treinam e ja
   usam todo o historico ate a vespera. Mesmos lotes em todas as redes (COMUM em 04_redes_treinadas.py).
 """
+import os
 from pathlib import Path
 import numpy as np, pandas as pd
+
+# CPU por padrao (como foi rodado no Lactec). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
+# resto do protocolo nao mudam, mas os numeros podem variar um pouco: o dispositivo fica anotado nos tempos.
+DISPOSITIVO = os.environ.get("DISPOSITIVO", "cpu")
 
 RAIZ = Path(__file__).resolve().parents[1]
 DADOS, RES = RAIZ / "dados", RAIZ / "resultados"

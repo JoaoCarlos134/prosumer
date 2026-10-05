@@ -23,5 +23,15 @@
   "segundos": 262.1,
   "parametros": 983040,
   "dobras": 3
+ },
+ "TCN|casas_prod|A": {
+  "segundos": 784.4,
+  "parametros": 152665,
+  "dobras": 3
+ },
+ "DLinear|casas_prod|A": {
+  "segundos": 103.4,
+  "parametros": 8112,
+  "dobras": 3
  }
 }

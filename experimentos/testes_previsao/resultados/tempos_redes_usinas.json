@@ -3,5 +3,10 @@
   "segundos": 1337.4,
   "parametros": 215809,
   "dobras": 5
+ },
+ "GRU|usinas|A": {
+  "segundos": 4722.7,
+  "parametros": 388857,
+  "dobras": 5
  }
 }

@@ -124,8 +124,8 @@ if __name__ == "__main__":
     for nome in escolhidos:
         for caso in so_casos:
             for regime in (REGIMES[caso] if nome in COM_EXOG else ["A"]):
-                if so_regimes and regime not in so_regimes:
-                    continue
+                if (so_regimes and regime not in so_regimes) or f"{nome}|{caso}|{regime}" in tempos:
+                    continue                          # ja feito (nao treina: refazer daria o mesmo)
                 t0 = time.time()
                 try:
                     jan = janelas(carrega(caso, regime), caso, exog=(regime != "A"))

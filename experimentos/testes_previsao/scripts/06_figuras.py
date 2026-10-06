@@ -84,7 +84,10 @@ def ranking(M):
 
 def regimes(M):
     """Usinas: o mesmo modelo em A, C e B. Mostra quanto da distancia entre A e B a previsao real fecha."""
-    U = M[(M.caso == "usinas") & ~M.modelo.isin(FAMILIA.keys() - {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5"})]
+    # Os fundacionais que tem B e C entram: sem isso o TiRex-2 e o TabPFN-TS (lote 2) sairiam da figura
+    # so por estarem em FAMILIA, e a mediana subiria por tirar justamente os dois que fecham menos vao.
+    COM_REGIME = {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5", "TiRex-2", "TabPFN-TS"}
+    U = M[(M.caso == "usinas") & ~M.modelo.isin(FAMILIA.keys() - COM_REGIME)]
     P = U.pivot_table(index="modelo", columns="regime", values="skill")
     P = P[P.get("C").notna()].sort_values("C")
     fig, ax = plt.subplots(figsize=(8, 0.42 * len(P) + 1.8))

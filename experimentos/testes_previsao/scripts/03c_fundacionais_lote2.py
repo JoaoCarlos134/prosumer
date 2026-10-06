@@ -47,6 +47,12 @@ def toto2(hf):
 
 
 def tirex2(jan, exog=False):
+    # Roda em CPU. Com um torch de CUDA instalado, o xlstm (cuda_init.py) monta os caminhos do kernel
+    # sLSTM no import, so porque torch.cuda.is_available() e verdadeiro, e exige CUDA_HOME (nvcc), que
+    # os wheels do pip nao trazem. Esconder a GPU do processo evita isso; o kernel nunca e usado aqui.
+    # CUDA_VISIBLE_DEVICES="" nao basta: o torch ignora string vazia. Precisa ser antes do import.
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     from tirex2 import TimeseriesType, load_model
     # sem compilacao: a FlexAttention e o torch.compile exigem um compilador C++ que a maquina nao tem
     import torch._dynamo
@@ -92,12 +98,12 @@ def tabpfn_ts(jan, exog=False):
 
 
 # ---------------------------------------------------------------- .venvs/lote2_hf
-def hf_causal(hf, amostras=None):
+def hf_causal(hf, amostras=None, n_lote=32):
     def f(jan, exog=False):
         from transformers import AutoModelForCausalLM
         m = AutoModelForCausalLM.from_pretrained(hf, trust_remote_code=True).eval()
         out = []
-        for lote in em_lotes(jan, 32):
+        for lote in em_lotes(jan, n_lote):
             x = np.stack([w["y"] for w in lote]).astype(np.float32)
             mu, sd = x.mean(1, keepdims=True), x.std(1, keepdims=True) + 1e-6
             xn = torch.tensor((x - mu) / sd)
@@ -130,7 +136,10 @@ def moirai_moe(jan, exog=False):
 MODELOS = {"Toto-2.0-22m": toto2("Datadog/Toto-2.0-22m"), "Toto-2.0-313m": toto2("Datadog/Toto-2.0-313m"),
            "TiRex-2": tirex2, "TabPFN-TS": tabpfn_ts,
            "Sundial-128m": hf_causal("thuml/sundial-base-128m", amostras=20),
-           "Timer-XL-84m": hf_causal("thuml/timer-base-84m"), "Time-MoE-50M": hf_causal("Maple728/TimeMoE-50M"),
+           "Timer-XL-84m": hf_causal("thuml/timer-base-84m"),
+           # lote 8: com 32 e contexto de 1024 h o Time-MoE chega a 13 GB de RAM (ativacoes dos
+           # especialistas em todas as posicoes). O lote nao muda a previsao: cada janela e independente.
+           "Time-MoE-50M": hf_causal("Maple728/TimeMoE-50M", n_lote=8),
            "Moirai-MoE-small": moirai_moe}
 
 if __name__ == "__main__":

@@ -22,7 +22,10 @@ MARCA = {"A": ("o", False), "C": ("s", True), "B": ("o", True)}
 FAMILIA = {**{m: "Referencia" for m in ["persist_24h", "semanal_168h", "media_7d", "persist_ceu_claro"]},
            **{m: "Arvore / fisica" for m in ["LightGBM", "linear_fisico"]},
            **{m: "Fundacional" for m in ["Chronos-2", "Chronos-Bolt-small", "TimesFM-2.5", "TiRex", "TTM-r2", "Toto",
-                                         "Moirai-2.0-small"]}}
+                                         "Moirai-2.0-small",
+                                         # lote 2: tambem zero-shot, nao sao redes treinadas nestes dados
+                                         "Toto-2.0-22m", "Toto-2.0-313m", "TiRex-2", "TabPFN-TS", "Sundial-128m",
+                                         "Timer-XL-84m", "Time-MoE-50M", "Moirai-MoE-small"]}}
 TITULO = {"usinas": "Usinas (Cascavel + Curitiba) — ganho sobre a persistência de céu claro",
           "casas_prod": "Geração FV das 10 casas com FV — ganho sobre 'igual a ontem'",
           "casas_cons": "Consumo das 20 casas — ganho sobre 'igual a ontem'"}

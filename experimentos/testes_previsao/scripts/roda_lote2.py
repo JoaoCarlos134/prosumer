@@ -17,14 +17,20 @@ V = Path(os.environ.get("VENVS", Path.home() / ".venvs"))       # pasta dos ambi
 BIN = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")
 PY = {k: str(V / k / BIN[0] / BIN[1]) for k in ("previsao", "lote2", "lote2_hf", "moirai")}
 GPU = os.environ.get("DISPOSITIVO", "cpu") == "cuda"            # com GPU, o TabPFN-TS volta (em CPU leva dias)
+# TiRex-2 roda em CPU. Se o xlstm enxerga uma GPU, ele monta os caminhos do kernel sLSTM no import e
+# exige CUDA_HOME (nvcc), que os wheels do pip nao trazem. Esconder a GPU no ambiente do processo e o
+# unico jeito garantido: dentro do script ja seria tarde se algo tocasse o CUDA antes.
+SEM_GPU = {"CUDA_VISIBLE_DEVICES": "-1"}
 ETAPAS = [
-    ("lote2", ["03c_fundacionais_lote2.py", "Toto-2.0-22m", "Toto-2.0-313m", "TiRex-2"] + (["TabPFN-TS"] if GPU else [])),
-    ("lote2_hf", ["03c_fundacionais_lote2.py", "Sundial-128m", "Timer-XL-84m", "Time-MoE-50M"]),
-    ("moirai", ["03c_fundacionais_lote2.py", "Moirai-MoE-small"]),
-    ("previsao", ["04_redes_treinadas.py", "usinas", "casas_prod", "casas_cons", "--modelos", "NBEATSx"]),
-    ("previsao", ["07_ensemble.py"]),
-    ("previsao", ["05_avalia.py"]),
-    ("previsao", ["06_figuras.py"]),
+    ("lote2", ["03c_fundacionais_lote2.py", "Toto-2.0-22m", "Toto-2.0-313m"], {}),
+    ("lote2", ["03c_fundacionais_lote2.py", "TiRex-2"], SEM_GPU),
+    *([("lote2", ["03c_fundacionais_lote2.py", "TabPFN-TS"], {})] if GPU else []),
+    ("lote2_hf", ["03c_fundacionais_lote2.py", "Sundial-128m", "Timer-XL-84m", "Time-MoE-50M"], {}),
+    ("moirai", ["03c_fundacionais_lote2.py", "Moirai-MoE-small"], {}),
+    ("previsao", ["04_redes_treinadas.py", "usinas", "casas_prod", "casas_cons", "--modelos", "NBEATSx"], {}),
+    ("previsao", ["07_ensemble.py"], {}),
+    ("previsao", ["05_avalia.py"], {}),
+    ("previsao", ["06_figuras.py"], {}),
 ]
 env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1", PYTHONWARNINGS="ignore")
 agora = lambda: datetime.datetime.now().strftime("%d/%m %H:%M")
@@ -44,9 +50,9 @@ with open(LOG, "a", encoding="utf-8") as f:
         f.write("=== %s lote 2 na fila: esperando a v2 ===\n" % agora()); f.flush()
         while not v2_terminou():
             time.sleep(60)
-    for amb, etapa in ETAPAS:
+    for amb, etapa, extra in ETAPAS:
         f.write("=== %s [%s] %s ===\n" % (agora(), amb, " ".join(etapa))); f.flush()
-        r = subprocess.run([PY[amb], "-u"] + etapa, cwd=AQUI, env=env, stdin=subprocess.DEVNULL,
+        r = subprocess.run([PY[amb], "-u"] + etapa, cwd=AQUI, env=dict(env, **extra), stdin=subprocess.DEVNULL,
                            stdout=f, stderr=subprocess.STDOUT)
         f.write("=== codigo de saida %d ===\n" % r.returncode); f.flush()
     f.write("FIM %s\n" % agora())

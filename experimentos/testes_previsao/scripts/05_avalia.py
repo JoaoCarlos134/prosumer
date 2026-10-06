@@ -15,6 +15,8 @@ Diebold-Mariano: perda = erro quadratico; diferenca media por dia (todas as seri
 do dia), variancia de Newey-West com defasagem floor(T^(1/3)), correcao de Harvey-Leybourne-Newbold
 e t de Student com T-1 graus. Holm sobre a familia de cada caso e regime. "Empatado com o melhor":
 p de Holm >= 0,05.
+Uma nao rejeicao nao prova equivalencia; o melhor foi escolhido neste mesmo teste.
+Cada comparacao com a referencia usa as mesmas horas com alvo e previsoes finitos.
 """
 import warnings
 import numpy as np, pandas as pd
@@ -50,6 +52,19 @@ def metricas(df):
                 R2_diario=1 - ((dia.yhat - dia.y) ** 2).sum() / ((dia.y - dia.y.mean()) ** 2).sum())
 
 
+def alinha_previsoes(p, base, ref):
+    """Pareia alvo, modelo e referencia, excluindo horas sem previsao valida."""
+    chaves = ["unique_id", "ds"]
+    r = ref[chaves + ["yhat"]].rename(columns={"yhat": "yhat_ref"})
+    m = p.merge(base, on=chaves, validate="one_to_one").merge(r, on=chaves, validate="one_to_one")
+    m = m[np.isfinite(m[["y", "yhat", "yhat_ref"]]).all(axis=1)]
+    m = m.sort_values(chaves).reset_index(drop=True)
+    if m.empty:
+        raise ValueError("Sem horas finitas em comum entre modelo, alvo e referencia")
+    rr = m[chaves + ["y", "yhat_ref"]].rename(columns={"yhat_ref": "yhat"})
+    return m.drop(columns="yhat_ref"), rr
+
+
 def skill_ic(df, ref):
     """IC do skill reamostrando dias inteiros; df e ref alinhados."""
     k = df.unique_id.astype(str) + "|" + df.ds.dt.normalize().astype(str)
@@ -66,7 +81,7 @@ def skill_ic(df, ref):
 def diebold_mariano(e1, e2):
     """e1, e2: erros quadraticos indexados por (unique_id, ds). Retorna (dif. media relativa, estatistica, p).
     Diferenca positiva = o primeiro erra mais."""
-    j = pd.concat([e1.rename("a"), e2.rename("b")], axis=1, join="inner")
+    j = pd.concat([e1.rename("a"), e2.rename("b")], axis=1, join="inner").dropna()
     d = (j.a - j.b).groupby(j.index.get_level_values("ds").normalize()).mean().sort_index().to_numpy()
     T = len(d)
     if T < 10 or np.allclose(d, 0):
@@ -86,19 +101,18 @@ def holm(p):
 
 
 def avalia():
-    todas = pd.concat([pd.read_parquet(f) for f in PREV.glob("*.parquet")], ignore_index=True)
+    global rng
+    rng = np.random.default_rng(42)
+    todas = pd.concat([pd.read_parquet(f) for f in sorted(PREV.glob("*.parquet"))], ignore_index=True)
     todas["yhat"] = todas.yhat.clip(lower=0)
     linhas, por_serie, por_dobra, erros = [], [], [], {}
     for caso, g in todas.groupby("caso"):
         r = real(caso)
         base = r[r.avalia]
-        ref = g[(g.modelo == REF[caso]) & (g.regime == "A")].merge(base, on=["unique_id", "ds"])
-        chaves = set(zip(ref.unique_id, ref.ds))
+        ref = g[(g.modelo == REF[caso]) & (g.regime == "A")].merge(base, on=["unique_id", "ds"], validate="one_to_one")
         dob = dobras(caso)
         for (modelo, regime), p in g.groupby(["modelo", "regime"]):
-            m = p.merge(base, on=["unique_id", "ds"])
-            m = m[[k in chaves for k in zip(m.unique_id, m.ds)]].sort_values(["unique_id", "ds"]).reset_index(drop=True)
-            rr = ref.set_index(["unique_id", "ds"]).loc[list(zip(m.unique_id, m.ds))].reset_index()
+            m, rr = alinha_previsoes(p, base, ref)
             met = metricas(m)
             met["skill"] = 1 - met["RMSE"] / np.sqrt(((rr.yhat - rr.y) ** 2).mean())
             met["skill_ic95_inf"], met["skill_ic95_sup"] = skill_ic(m, rr)

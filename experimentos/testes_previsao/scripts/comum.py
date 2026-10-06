@@ -151,6 +151,27 @@ def janelas(d, caso, contexto=CONTEXTO_FM, exog=False):
     return out
 
 
+def normaliza_por_treino(df, corte, colunas):
+    """Padroniza por serie usando apenas alvos validos anteriores ao corte.
+
+    O corte deve excluir validacao e teste. Retorna os parametros para inverter
+    a previsao; alterar qualquer valor posterior ao corte nao altera a escala.
+    """
+    out, parametros = df.copy(), {}
+    for uid, g in df.groupby("unique_id", sort=False):
+        valido = g.ds < corte
+        if "available_mask" in g:
+            valido &= g.available_mask > 0
+        treino = g.loc[valido, colunas]
+        if treino.empty or not np.isfinite(treino.to_numpy(float)).all():
+            raise ValueError(f"Treino vazio ou nao finito para normalizacao: {uid}")
+        media = treino.mean()
+        desvio = treino.std(ddof=0).replace(0, 1.0)
+        out.loc[g.index, colunas] = (g[colunas] - media) / desvio
+        parametros[uid] = {c: (float(media[c]), float(desvio[c])) for c in colunas}
+    return out, parametros
+
+
 def grava(modelo, caso, regime, janelas_, previsoes, extra=None):
     """previsoes: array (n_janelas, 24). Grava formato longo em resultados/previsoes/."""
     linhas = []

@@ -9,3 +9,4 @@ catboost_info/
 desktop.ini
 .DS_Store
 experimentos/testes_previsao/resultados/log_*.txt
+graphify-out/

@@ -13,13 +13,15 @@ warnings.filterwarnings("ignore"); logging.getLogger("pytorch_lightning").setLev
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
-from comum import carrega, grava, janelas, dobras, CASOS, EXOG, H, ENTRADA_NN, RES, REGIMES, DISPOSITIVO
+from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
 DEV = torch.device("cuda" if DISPOSITIVO == "cuda" and torch.cuda.is_available() else "cpu")
 ARGS = sys.argv[1:]
 CASOS_ARG = [a for a in ARGS if a in CASOS] or list(CASOS)
 SO_MODELOS = ARGS[ARGS.index("--modelos") + 1].split(",") if "--modelos" in ARGS else None   # lote 2: so os novos
+SO_REGIMES = ARGS[ARGS.index("--regimes") + 1].split(",") if "--regimes" in ARGS else None
+VERSAO_ESCALA = "treino_sem_validacao_2026-10-06"
 LOG = RES / ("tempos_redes_%s.json" % "_".join(CASOS_ARG))
 tempos = json.loads(LOG.read_text()) if LOG.exists() else {}
 COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, early_stop_patience_steps=4,
@@ -32,14 +34,19 @@ COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, earl
 def modelos_nf(regime, n_series, caso):
     # Regime B: a normalizacao por janela (scaler_type) explode quando o clima futuro sai da faixa da janela
     # de entrada (semana nublada seguida de dia limpo -> previsoes de 99 kWh/h numa usina de 4 kW).
-    # Solucao: normalizar cada serie uma vez, globalmente (local_scaler_type no NeuralForecast), sem
-    # normalizacao por janela no modelo.
+    # Solucao: normalizar cada serie usando so o treino anterior a validacao, sem
+    # normalizacao por janela. local_scaler_type no cross_validation incluiria o teste.
     ex = dict(futr_exog_list=EXOG, scaler_type="identity") if regime != "A" else {}
     C = {**COMUM, **ex}
     base = {
         "LSTM": lambda: M.LSTM(**C), "GRU": lambda: M.GRU(**C),
         "NHITS": lambda: M.NHITS(**C),
-        "TiDE": lambda: M.TiDE(**C), "KAN": lambda: M.KAN(**C),
+        # layernorm=False: o MLPResidual do TiDE termina num LayerNorm sobre temporal_width (4 = o numero
+        # de exogenas), aplicado em CADA hora. Isso tira a media e a escala das 4 variaveis de clima hora a
+        # hora, ou seja, apaga a amplitude - exatamente o sinal de "quanto sol faz". Com o default o TiDE
+        # ficava em nRMSE 0,59 no regime B contra 0,29 do NHITS; sem o layernorm vai a 0,28. Medido na
+        # dobra 1 das usinas; temporal_width maior nao resolve, so o layernorm.
+        "TiDE": lambda: M.TiDE(**C, layernorm=False), "KAN": lambda: M.KAN(**C),
         "NBEATSx": lambda: M.NBEATSx(**C),     # lote 2 (05/10/2026); o TimeXer do NeuralForecast nao aceita clima futuro
     }
     if regime == "A":
@@ -153,9 +160,17 @@ def roda_nf(df, fab, caso, regime):
     jan, prev, n_par = [], [], 0
     for ini, fim in dobras(caso):
         n = (fim.normalize() - ini).days + 1
-        nf = NeuralForecast(models=[fab()], freq="h", local_scaler_type="standard" if regime != "A" else None)
-        cv = nf.cross_validation(df=df[df.ds <= fim], n_windows=n, step_size=H, val_size=720, refit=False)
+        entrada = df[df.ds <= fim].copy()
+        escalas = None
+        if regime != "A":
+            entrada, escalas = normaliza_por_treino(entrada, ini - pd.Timedelta(hours=720), ["y"] + EXOG)
+        nf = NeuralForecast(models=[fab()], freq="h")
+        cv = nf.cross_validation(df=entrada, n_windows=n, step_size=H, val_size=720, refit=False)
         col = [c for c in cv.columns if c not in ("unique_id", "ds", "cutoff", "y", "available_mask")][0]
+        if escalas is not None:
+            for uid, (media, desvio) in ((u, e["y"]) for u, e in escalas.items()):
+                sel = cv.unique_id == uid
+                cv.loc[sel, col] = cv.loc[sel, col] * desvio + media
         j, p = para_janelas(cv, col, ini, fim)
         jan += j; prev += p
         n_par = sum(x.numel() for x in nf.models[0].parameters())
@@ -166,18 +181,26 @@ def roda_nf(df, fab, caso, regime):
 def anota(chave, t0, n_par, nome, caso, regime, disp=DISPOSITIVO):
     tempos[chave] = dict(segundos=round(time.time() - t0, 1), parametros=int(n_par), dobras=len(dobras(caso)),
                          dispositivo=disp)
+    if regime != "A":
+        tempos[chave]["normalizacao"] = VERSAO_ESCALA
     LOG.write_text(json.dumps(tempos, indent=1))
     print("OK    %-12s %-10s %s  %8d parametros  %6.0f s" % (nome, caso, regime, n_par, time.time() - t0), flush=True)
 
 
 if __name__ == "__main__":
+    falhas = 0
     for caso in CASOS_ARG:
         for regime in REGIMES[caso]:
+            if SO_REGIMES and regime not in SO_REGIMES:
+                continue
             d = carrega(caso, regime)
             df = df_nf(d, regime)
             for nome, fab in modelos_nf(regime, d.unique_id.nunique(), caso).items():
                 chave = f"{nome}|{caso}|{regime}"
-                if chave in tempos or (SO_MODELOS and nome not in SO_MODELOS):
+                feito = chave in tempos and (PREV / f"{nome}__{caso}__{regime}.parquet").exists()
+                if regime != "A":
+                    feito = feito and tempos[chave].get("normalizacao") == VERSAO_ESCALA
+                if feito or (SO_MODELOS and nome not in SO_MODELOS):
                     continue
                 t0 = time.time()
                 try:
@@ -185,12 +208,15 @@ if __name__ == "__main__":
                     grava(nome, caso, regime, jan, prev)
                     anota(chave, t0, n_par, nome, caso, regime)
                 except Exception as e:
+                    falhas += 1
                     print("FALHA %-12s %-10s %s  %s: %s" % (nome, caso, regime, type(e).__name__, str(e)[:300]), flush=True)
                 gc.collect()
+        if SO_REGIMES and "A" not in SO_REGIMES:
+            continue
         d = carrega(caso)
         for nome, cls in [("SparseTSF", SparseTSF), ("ResNet-1D", ResNet1D)]:
             chave = f"{nome}|{caso}|A"
-            if chave in tempos or (SO_MODELOS and nome not in SO_MODELOS):
+            if (chave in tempos and (PREV / f"{nome}__{caso}__A.parquet").exists()) or (SO_MODELOS and nome not in SO_MODELOS):
                 continue
             t0 = time.time()
             try:
@@ -201,4 +227,6 @@ if __name__ == "__main__":
                 grava(nome, caso, "A", jan, prev)
                 anota(chave, t0, n_par, nome, caso, "A", DEV.type)
             except Exception as e:
+                falhas += 1
                 print("FALHA %-12s %-10s A  %s: %s" % (nome, caso, type(e).__name__, str(e)[:300]), flush=True)
+    sys.exit(1 if falhas else 0)

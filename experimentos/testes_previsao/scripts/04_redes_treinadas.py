@@ -16,6 +16,7 @@ from neuralforecast import models as M
 from comum import carrega, grava, janelas, dobras, CASOS, EXOG, H, ENTRADA_NN, RES, REGIMES, DISPOSITIVO
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
+DEV = torch.device("cuda" if DISPOSITIVO == "cuda" and torch.cuda.is_available() else "cpu")
 ARGS = sys.argv[1:]
 CASOS_ARG = [a for a in ARGS if a in CASOS] or list(CASOS)
 SO_MODELOS = ARGS[ARGS.index("--modelos") + 1].split(",") if "--modelos" in ARGS else None   # lote 2: so os novos
@@ -43,9 +44,9 @@ def modelos_nf(regime, n_series, caso):
     }
     if regime == "A":
         base.update({"TCN": lambda: M.TCN(**COMUM), "DLinear": lambda: M.DLinear(**COMUM),
-                     "iTransformer": lambda: M.iTransformer(n_series=n_series, **COMUM)})
-        if caso == "usinas":                    # o mais lento; como na v1, so nas usinas
-            base["PatchTST"] = lambda: M.PatchTST(**COMUM)
+                     "iTransformer": lambda: M.iTransformer(n_series=n_series, **COMUM),
+                     # era o mais lento e na v1/v2 em CPU rodou so nas usinas; em GPU deixou de ser caro
+                     "PatchTST": lambda: M.PatchTST(**COMUM)})
     else:
         base.update({"TFT": lambda: M.TFT(**C),
                      "TSMixerx": lambda: M.TSMixerx(n_series=n_series, **C)})
@@ -60,8 +61,13 @@ def df_nf(d, regime):
     return x[cols]
 
 
-def para_janelas(cv, nome):
+def para_janelas(cv, nome, ini=None, fim=None):
     cv = cv.copy(); cv["dia"] = cv.ds.dt.normalize()
+    if ini is not None:
+        # So os dias desta dobra. O cross_validation conta as n_windows a partir do fim de CADA serie,
+        # entao uma serie que acaba antes das outras (H14 em casas_cons acaba em 11/12) recua e reemite
+        # dias de uma dobra anterior - com um modelo treinado depois deles (vazamento) e duplicando linhas.
+        cv = cv[(cv.dia >= ini) & (cv.dia <= fim.normalize())]
     jan, prev = [], []
     for (uid, dia), g in cv.groupby(["unique_id", "dia"]):
         if len(g) == H:
@@ -113,11 +119,11 @@ def treina_proprio(d, caso, cls, ini, fim, epocas=30):
             Xs.append(tr[k - ENTRADA_NN:k]); Ys.append(tr[k:k + H])
     X, Y = np.stack(Xs), np.stack(Ys)
     mu, sd = X.mean(1, keepdims=True), X.std(1, keepdims=True) + 1e-3
-    X, Y = torch.tensor((X - mu) / sd), torch.tensor((Y - mu) / sd)
+    X, Y = torch.tensor((X - mu) / sd).to(DEV), torch.tensor((Y - mu) / sd).to(DEV)
     torch.manual_seed(42); rng = np.random.default_rng(42)
     idx = rng.permutation(len(X)); nval = len(X) // 10
     va, trn = idx[:nval], idx[nval:]
-    m = cls(); opt = torch.optim.Adam(m.parameters(), lr=1e-3); melhor, estado, paciencia = 1e9, None, 0
+    m = cls().to(DEV); opt = torch.optim.Adam(m.parameters(), lr=1e-3); melhor, estado, paciencia = 1e9, None, 0
     for ep in range(epocas):
         m.train()
         for i in range(0, len(trn), 256):
@@ -138,7 +144,7 @@ def treina_proprio(d, caso, cls, ini, fim, epocas=30):
     jan = [w for w in janelas(d, caso, contexto=ENTRADA_NN) if ini <= w["dia"] <= fim]
     Xt = np.stack([w["y"] for w in jan]); mu, sd = Xt.mean(1, keepdims=True), Xt.std(1, keepdims=True) + 1e-3
     with torch.no_grad():
-        p = m(torch.tensor((Xt - mu) / sd)).numpy() * sd + mu
+        p = m(torch.tensor((Xt - mu) / sd).to(DEV)).cpu().numpy() * sd + mu
     return jan, list(p), sum(t.numel() for t in m.parameters())
 
 
@@ -150,16 +156,16 @@ def roda_nf(df, fab, caso, regime):
         nf = NeuralForecast(models=[fab()], freq="h", local_scaler_type="standard" if regime != "A" else None)
         cv = nf.cross_validation(df=df[df.ds <= fim], n_windows=n, step_size=H, val_size=720, refit=False)
         col = [c for c in cv.columns if c not in ("unique_id", "ds", "cutoff", "y", "available_mask")][0]
-        j, p = para_janelas(cv, col)
+        j, p = para_janelas(cv, col, ini, fim)
         jan += j; prev += p
         n_par = sum(x.numel() for x in nf.models[0].parameters())
         del nf, cv; gc.collect()
     return jan, prev, n_par
 
 
-def anota(chave, t0, n_par, nome, caso, regime):
+def anota(chave, t0, n_par, nome, caso, regime, disp=DISPOSITIVO):
     tempos[chave] = dict(segundos=round(time.time() - t0, 1), parametros=int(n_par), dobras=len(dobras(caso)),
-                         dispositivo=DISPOSITIVO)
+                         dispositivo=disp)
     LOG.write_text(json.dumps(tempos, indent=1))
     print("OK    %-12s %-10s %s  %8d parametros  %6.0f s" % (nome, caso, regime, n_par, time.time() - t0), flush=True)
 
@@ -193,6 +199,6 @@ if __name__ == "__main__":
                     j, p, n_par = treina_proprio(d, caso, cls, ini, fim)
                     jan += j; prev += p
                 grava(nome, caso, "A", jan, prev)
-                anota(chave, t0, n_par, nome, caso, "A")
+                anota(chave, t0, n_par, nome, caso, "A", DEV.type)
             except Exception as e:
                 print("FALHA %-12s %-10s A  %s: %s" % (nome, caso, type(e).__name__, str(e)[:300]), flush=True)

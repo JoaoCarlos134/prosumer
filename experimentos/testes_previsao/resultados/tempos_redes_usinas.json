@@ -1,12 +1,186 @@
 {
+ "NHITS|usinas|A": {
+  "segundos": 30.8,
+  "parametros": 2817570,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "KAN|usinas|A": {
+  "segundos": 32.2,
+  "parametros": 983040,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "NBEATSx|usinas|A": {
+  "segundos": 37.7,
+  "parametros": 2781666,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TCN|usinas|A": {
+  "segundos": 31.7,
+  "parametros": 152665,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "DLinear|usinas|A": {
+  "segundos": 24.2,
+  "parametros": 8112,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "iTransformer|usinas|A": {
+  "segundos": 37.8,
+  "parametros": 6404632,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "PatchTST|usinas|A": {
+  "segundos": 48.0,
+  "parametros": 466843,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
  "LSTM|usinas|A": {
-  "segundos": 1337.4,
+  "segundos": 45.4,
   "parametros": 215809,
-  "dobras": 5
+  "dobras": 5,
+  "dispositivo": "cuda"
  },
  "GRU|usinas|A": {
-  "segundos": 4722.7,
+  "segundos": 67.3,
   "parametros": 388857,
-  "dobras": 5
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "SparseTSF|usinas|A": {
+  "segundos": 19.2,
+  "parametros": 32,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "ResNet-1D|usinas|A": {
+  "segundos": 57.9,
+  "parametros": 122328,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TiDE|usinas|A": {
+  "segundos": 19.3,
+  "parametros": 1494778,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "LSTM|usinas|B": {
+  "segundos": 33.9,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|B": {
+  "segundos": 58.8,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|B": {
+  "segundos": 29.1,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|B": {
+  "segundos": 26.6,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|B": {
+  "segundos": 27.2,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|B": {
+  "segundos": 28.7,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|B": {
+  "segundos": 105.2,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|B": {
+  "segundos": 25.9,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "LSTM|usinas|C": {
+  "segundos": 35.5,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|C": {
+  "segundos": 60.7,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|C": {
+  "segundos": 31.8,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|C": {
+  "segundos": 28.4,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|C": {
+  "segundos": 29.0,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|C": {
+  "segundos": 33.2,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|C": {
+  "segundos": 100.9,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|C": {
+  "segundos": 24.3,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
  }
 }

@@ -1,0 +1,114 @@
+{
+ "Toto-2.0-22m|usinas|A": {
+  "segundos": 27.4,
+  "janelas": 598
+ },
+ "Toto-2.0-22m|casas_prod|A": {
+  "segundos": 4.0,
+  "janelas": 920
+ },
+ "Toto-2.0-22m|casas_cons|A": {
+  "segundos": 7.3,
+  "janelas": 1820
+ },
+ "Toto-2.0-313m|usinas|A": {
+  "segundos": 143.0,
+  "janelas": 598
+ },
+ "Toto-2.0-313m|casas_prod|A": {
+  "segundos": 43.2,
+  "janelas": 920
+ },
+ "Toto-2.0-313m|casas_cons|A": {
+  "segundos": 91.2,
+  "janelas": 1820
+ },
+ "TiRex-2|usinas|A": {
+  "segundos": 18.0,
+  "janelas": 598
+ },
+ "TiRex-2|usinas|B": {
+  "segundos": 153.2,
+  "janelas": 598
+ },
+ "TiRex-2|usinas|C": {
+  "segundos": 152.6,
+  "janelas": 598
+ },
+ "TiRex-2|casas_prod|A": {
+  "segundos": 23.3,
+  "janelas": 920
+ },
+ "TabPFN-TS|usinas|A": {
+  "segundos": 594.4,
+  "janelas": 598
+ },
+ "TiRex-2|casas_cons|A": {
+  "segundos": 45.4,
+  "janelas": 1820
+ },
+ "TabPFN-TS|usinas|B": {
+  "segundos": 484.1,
+  "janelas": 598
+ },
+ "TabPFN-TS|usinas|C": {
+  "segundos": 483.2,
+  "janelas": 598
+ },
+ "TabPFN-TS|casas_prod|A": {
+  "segundos": 677.9,
+  "janelas": 920
+ },
+ "TabPFN-TS|casas_cons|A": {
+  "segundos": 1275.5,
+  "janelas": 1820
+ },
+ "Sundial-128m|usinas|A": {
+  "segundos": 106.6,
+  "janelas": 598
+ },
+ "Sundial-128m|casas_prod|A": {
+  "segundos": 84.8,
+  "janelas": 920
+ },
+ "Sundial-128m|casas_cons|A": {
+  "segundos": 167.4,
+  "janelas": 1820
+ },
+ "Timer-XL-84m|usinas|A": {
+  "segundos": 36.1,
+  "janelas": 598
+ },
+ "Timer-XL-84m|casas_prod|A": {
+  "segundos": 5.2,
+  "janelas": 920
+ },
+ "Timer-XL-84m|casas_cons|A": {
+  "segundos": 9.6,
+  "janelas": 1820
+ },
+ "Time-MoE-50M|usinas|A": {
+  "segundos": 260.0,
+  "janelas": 598
+ },
+ "Time-MoE-50M|casas_prod|A": {
+  "segundos": 399.4,
+  "janelas": 920
+ },
+ "Time-MoE-50M|casas_cons|A": {
+  "segundos": 791.1,
+  "janelas": 1820
+ },
+ "Moirai-MoE-small|usinas|A": {
+  "segundos": 433.6,
+  "janelas": 598
+ },
+ "Moirai-MoE-small|casas_prod|A": {
+  "segundos": 553.8,
+  "janelas": 920
+ },
+ "Moirai-MoE-small|casas_cons|A": {
+  "segundos": 1085.6,
+  "janelas": 1820
+ }
+}

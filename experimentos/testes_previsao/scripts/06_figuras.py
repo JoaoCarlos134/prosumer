@@ -22,7 +22,10 @@ MARCA = {"A": ("o", False), "C": ("s", True), "B": ("o", True)}
 FAMILIA = {**{m: "Referencia" for m in ["persist_24h", "semanal_168h", "media_7d", "persist_ceu_claro"]},
            **{m: "Arvore / fisica" for m in ["LightGBM", "linear_fisico"]},
            **{m: "Fundacional" for m in ["Chronos-2", "Chronos-Bolt-small", "TimesFM-2.5", "TiRex", "TTM-r2", "Toto",
-                                         "Moirai-2.0-small"]}}
+                                         "Moirai-2.0-small",
+                                         # lote 2: tambem zero-shot, nao sao redes treinadas nestes dados
+                                         "Toto-2.0-22m", "Toto-2.0-313m", "TiRex-2", "TabPFN-TS", "Sundial-128m",
+                                         "Timer-XL-84m", "Time-MoE-50M", "Moirai-MoE-small"]}}
 TITULO = {"usinas": "Usinas (Cascavel + Curitiba) — ganho sobre a persistência de céu claro",
           "casas_prod": "Geração FV das 10 casas com FV — ganho sobre 'igual a ontem'",
           "casas_cons": "Consumo das 20 casas — ganho sobre 'igual a ontem'"}
@@ -81,7 +84,10 @@ def ranking(M):
 
 def regimes(M):
     """Usinas: o mesmo modelo em A, C e B. Mostra quanto da distancia entre A e B a previsao real fecha."""
-    U = M[(M.caso == "usinas") & ~M.modelo.isin(FAMILIA.keys() - {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5"})]
+    # Os fundacionais que tem B e C entram: sem isso o TiRex-2 e o TabPFN-TS (lote 2) sairiam da figura
+    # so por estarem em FAMILIA, e a mediana subiria por tirar justamente os dois que fecham menos vao.
+    COM_REGIME = {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5", "TiRex-2", "TabPFN-TS"}
+    U = M[(M.caso == "usinas") & ~M.modelo.isin(FAMILIA.keys() - COM_REGIME)]
     P = U.pivot_table(index="modelo", columns="regime", values="skill")
     P = P[P.get("C").notna()].sort_values("C")
     fig, ax = plt.subplots(figsize=(8, 0.42 * len(P) + 1.8))

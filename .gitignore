@@ -9,3 +9,21 @@ catboost_info/
 desktop.ini
 .DS_Store
 experimentos/testes_previsao/resultados/log_*.txt
+# graphify: versiona so o grafo e o relatorio. O resto e estado de maquina ou se refaz sozinho:
+# .graphify_python/.graphify_root guardam caminhos absolutos desta maquina, cache/ e manifest.json
+# sao o estado do rebuild incremental, e graph.html sai do graph.json com `graphify export html`.
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
+!graphify-out/graph.json
+# graph.html entra porque os docs de docs/projeto/ e docs/proposta/ linkam para ele, e quem le o
+# TCC nao tem o graphify instalado para refazer.
+!graphify-out/graph.html
+dist/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.xml
+.snakemake/

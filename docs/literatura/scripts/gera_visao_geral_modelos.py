@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Visao geral dos modelos de previsao: o que foi encontrado no levantamento e o que foi testado, SEM
-resultados (os resultados estao em testes_modelos/). Le Modelos_previsao_geracao_consumo.xlsx e grava
-Visao_geral_modelos_previsao.xlsx ao lado dela.
+resultados (os resultados estao em experimentos/testes_previsao/). Le o levantamento original e as
+metricas atuais; grava Visao_geral_modelos_previsao.xlsx sem alterar o levantamento original.
 """
+from datetime import date
 from pathlib import Path
+import json
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -13,12 +15,10 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 AQUI = Path(__file__).resolve().parents[1]
 FONTE = AQUI / "Modelos_previsao_geracao_consumo.xlsx"
 SAIDA = AQUI / "Visao_geral_modelos_previsao.xlsx"
+BENCHMARK = AQUI.parents[1] / "experimentos" / "testes_previsao"
+METRICAS = BENCHMARK / "resultados" / "metricas.csv"
 x = pd.read_excel(FONTE, sheet_name=None)
 M = x["Modelos"].drop(columns=["Skill no teste (dia seguinte)"])
-M["Testado neste projeto"] = M["Testado neste projeto"].fillna("Nao").replace({"Sim": "Sim", "Nao": "Não"})
-
-# ---------------------------------------------------------------- motivo de nao testar (por familia)
-TESTADOS_POR_FAMILIA = M[M["Testado neste projeto"] == "Sim"].groupby("Abordagem").Modelo.apply(lambda s: ", ".join(s))
 MOTIVO = {
     "Imagem de ceu / satelite": "Exige câmera de céu ou série de satélite, que o projeto não tem.",
     "Previsao do tempo por IA": "Produz o clima de entrada, não a geração; entra no lugar da fonte de clima (regime C).",
@@ -44,8 +44,6 @@ def motivo(r):
     return f"Família já representada por {rep}; ficou fora para limitar o tempo de CPU." if rep else "Sem código aberto pronto para estas séries."
 
 
-M["Por que não foi testado"] = M.apply(motivo, axis=1)
-
 # ---------------------------------------------------------------- modelos testados (caracteristicas, sem resultado)
 CASOS = {"usinas": "Usinas", "casas_prod": "FV das casas", "casas_cons": "Consumo das casas"}
 T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, treina, aceita clima, observacao
@@ -68,7 +66,7 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("TSMixerx", "Rede treinada", "MLP / linear", "TSMixer", "NeuralForecast", "≈ 82 mil", "Sim", "Sim", "Versão com variáveis externas; rodou só com clima."),
     ("SparseTSF", "Rede treinada", "MLP / linear", "SparseTSF", "próprio (PyTorch, 04_redes_treinadas.py)", "32", "Sim", "Não",
      "Lin et al. (2024); candidato ao embarcado."),
-    ("PatchTST", "Rede treinada", "Transformer", "PatchTST", "NeuralForecast", "≈ 467 mil", "Sim", "Não", "O mais lento; só nas usinas."),
+    ("PatchTST", "Rede treinada", "Transformer", "PatchTST", "NeuralForecast", "≈ 467 mil", "Sim", "Não", ""),
     ("iTransformer", "Rede treinada", "Transformer", "iTransformer", "NeuralForecast", "≈ 6,4 milhões", "Sim", "Não",
      "Trata as séries como variáveis de um mesmo sistema."),
     ("TFT", "Rede treinada", "Transformer", "Temporal Fusion Transformer (TFT)", "NeuralForecast", "≈ 1,4 milhão", "Sim", "Sim", "Rodou só com clima."),
@@ -80,19 +78,54 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("TiRex", "Fundacional", "Fundacional (zero-shot)", "TiRex", "tirex (NX-AI)", "≈ 35 milhões", "Não", "Não", "Baseado em xLSTM."),
     ("TTM-r2", "Fundacional", "Fundacional (zero-shot)", "Tiny Time Mixers (TTM)", "granite-tsfm (IBM)", "≈ 3 milhões", "Não", "Não",
      "Roda em CPU em segundos; candidato ao embarcado."),
-    ("Toto", "Fundacional", "Fundacional (zero-shot)", "Toto", "toto (Datadog)", "≈ 151 milhões", "Não", "Não", "Só nas usinas."),
+    ("Toto", "Fundacional", "Fundacional (zero-shot)", "Toto", "toto (Datadog)", "≈ 151 milhões", "Não", "Não", ""),
     ("Moirai-2.0-small", "Fundacional", "Fundacional (zero-shot)", "Moirai 2.0", "uni2ts (Salesforce), ambiente separado", "≈ 11 milhões", "Não", "Não",
      "Exige torch antigo; roda num ambiente Python à parte."),
+    ("NBEATSx", "Rede treinada", "MLP / linear", "N-BEATS", "NeuralForecast", "—", "Sim", "Sim",
+     "Variante N-BEATSx com covariáveis; lote 2."),
+    ("Toto-2.0-22m", "Fundacional", "Fundacional (zero-shot)", "Toto 2.0", "toto2 (Datadog), ambiente lote2", "22 milhões", "Não", "Não",
+     "Datadog/Toto-2.0-22m; mediana da distribuição prevista."),
+    ("Toto-2.0-313m", "Fundacional", "Fundacional (zero-shot)", "Toto 2.0", "toto2 (Datadog), ambiente lote2", "313 milhões", "Não", "Não",
+     "Datadog/Toto-2.0-313m; mediana da distribuição prevista."),
+    ("TiRex-2", "Fundacional", "Fundacional (zero-shot)", "TiRex-2", "tirex (NX-AI), ambiente lote2", "Não registrado", "Não", "Sim",
+     "NX-AI/TiRex-2; covariáveis futuras nos regimes B e C."),
+    ("TabPFN-TS", "Fundacional", "Fundacional (zero-shot)", "TabPFN-TS", "tabpfn-time-series, ambiente lote2", "Não registrado", "Não", "Sim",
+     "Pesos abertos v2; modo LOCAL, sem envio dos dados; executado em CUDA."),
+    ("Sundial-128m", "Fundacional", "Fundacional (zero-shot)", "Sundial", "transformers, ambiente lote2_hf", "128 milhões", "Não", "Não",
+     "thuml/sundial-base-128m; média de 20 amostras."),
+    ("Timer-XL-84m", "Fundacional", "Fundacional (zero-shot)", "Timer / Timer-XL", "transformers, ambiente lote2_hf", "84 milhões", "Não", "Não",
+     "Rótulo do benchmark; o checkpoint carregado é thuml/timer-base-84m (Timer base). Não comprova avaliação do Timer-XL."),
+    ("Time-MoE-50M", "Fundacional", "Fundacional (zero-shot)", "Time-MoE", "transformers, ambiente lote2_hf", "50 milhões", "Não", "Não",
+     "Maple728/TimeMoE-50M; previsão determinística."),
+    ("Moirai-MoE-small", "Fundacional", "Fundacional (zero-shot)", "Moirai-MoE", "uni2ts (Salesforce), ambiente moirai", "Não registrado", "Não", "Não",
+     "Salesforce/moirai-moe-1.0-R-small; mediana da distribuição prevista."),
     ("Ensemble-mediana", "Combinação", "Combinação", "—", "próprio (07_ensemble.py)", "—", "Não", "Herda dos membros",
      "Mediana, hora a hora, de todos os modelos não referência do mesmo caso e regime. Regra fixada antes do teste."),
 ]
-v1 = pd.read_csv(AQUI.parent / "testes_modelos/resultados_v1_corte_unico/metricas.csv", sep=";", decimal=",")
-rodou = v1.groupby("modelo").apply(lambda g: set(zip(g.caso, g.regime))).to_dict()
-COM_C = {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5", "LSTM", "GRU", "NHITS", "TiDE", "KAN", "TFT", "TSMixerx", "Ensemble-mediana"}
+metricas = pd.read_csv(METRICAS, sep=";", decimal=",")
+rodou = {nome: set(zip(g.caso, g.regime)) for nome, g in metricas.groupby("modelo")}
+sem_catalogo = set(rodou) - {r[0] for r in T}
+if sem_catalogo:
+    raise ValueError(f"Modelos presentes nas metricas sem descricao no catalogo: {sorted(sem_catalogo)}")
+# Uma entrada bibliografica pode representar mais de uma variante (por exemplo, Toto 2.0).
+testados = {r[3] for r in T if r[0] in rodou and r[3] != "—"}
+M["Testado neste projeto"] = M.Modelo.map(lambda nome: "Sim" if nome in testados else "Não")
+TESTADOS_POR_FAMILIA = M[M["Testado neste projeto"] == "Sim"].groupby("Abordagem").Modelo.apply(lambda s: ", ".join(s))
+M["Por que não foi testado"] = M.apply(motivo, axis=1)
+tempos = {}
+for arquivo in sorted((BENCHMARK / "resultados").glob("tempos_redes*.json")):
+    tempos.update(json.loads(arquivo.read_text(encoding="utf-8")))
+ordem_regimes = {nome: i for i, nome in enumerate(["A", "B", "C", "B-curto", "C-gfs"])}
 linhas = []
 for mod, tipo, fam, lev, impl, par, treina, clima, obs in T:
     r = rodou.get(mod, set())
-    us = sorted({rg for c, rg in r if c == "usinas"} | ({"C"} if mod in COM_C else set()), key="ABC".index)
+    if not r:
+        continue
+    us = sorted({rg for c, rg in r if c == "usinas"}, key=lambda rg: (ordem_regimes.get(rg, 99), rg))
+    contagens = sorted({v["parametros"] for chave, v in tempos.items()
+                        if chave.split("|")[:2] == [mod, "usinas"] and "parametros" in v})
+    if contagens:
+        par = " a ".join(f"{n:,}".replace(",", ".") for n in [contagens[0], contagens[-1]]) if len(contagens) > 1 else f"{contagens[0]:,}".replace(",", ".")
     linhas.append([mod, tipo, fam, lev, impl, par, treina, clima,
                    ", ".join(us) if us else "—",
                    "Sim" if ("casas_prod", "A") in r else "Não", "Sim" if ("casas_cons", "A") in r else "Não", obs])
@@ -134,26 +167,28 @@ def grava_tabela(ws, df, nome, larguras, linha0=1):
 ws = wb.active; ws.title = "Leia-me"
 leia = [
     ("Visão geral dos modelos de previsão de geração solar e consumo", True),
-    ("Projeto Edge AI (GRD-ACS-2026-1-21-1). Gerada em 05/10/2026 por revisao_edge_ai/scripts/gera_visao_geral_modelos.py.", False),
+    (f"Projeto Edge AI (GRD-ACS-2026-1-21-1). Gerada em {date.today():%d/%m/%Y} por docs/literatura/scripts/gera_visao_geral_modelos.py.", False),
     ("", False),
     ("Esta planilha NÃO tem resultados. Ela diz o que existe, o que foi testado e por que o resto ficou de fora.", True),
-    ("Os resultados (skill, erros, testes estatísticos) estão em testes_modelos/resultados/ e em testes_modelos/LEIA-ME.md.", False),
+    ("Os resultados (skill, erros, testes estatísticos) estão em experimentos/testes_previsao/resultados/ e em experimentos/testes_previsao/LEIA-ME.md.", False),
     ("", False),
     ("Abas", True),
     ("Resumo — quantos modelos foram encontrados e testados em cada abordagem (fórmulas sobre a aba Encontrados).", False),
     ("Encontrados — os 127 modelos do levantamento de 28/09/2026: o que cada um tem de diferente, onde achar, se foi testado e, se não, por quê.", False),
-    ("Testados — os 27 modelos e referências que rodaram nos testes: tipo, implementação, tamanho, se treina, se aceita clima e em que casos rodou.", False),
+    (f"Testados — {len(TT)} modelos, variantes e referências presentes nas métricas atuais ({len(metricas)} combinações caso/regime), correspondendo a {len(testados)} entradas do levantamento e 7 referências/combinações.", False),
     ("Bibliotecas — 40 bibliotecas de previsão (versão, licença, situação), conferidas em 28/09/2026.", False),
     ("Benchmarks — 12 benchmarks de referência da área.", False),
     ("", False),
     ("Como ler", True),
     ("Regimes nas usinas: A = só o histórico; B = + clima do próprio dia (NASA, previsão perfeita, é um teto); "
      "C = + previsão do tempo real emitida na véspera (ECMWF). As casas só têm o regime A.", False),
-    ("O regime C entrou no protocolo v2 (05/10/2026), cuja execução estava em andamento quando esta planilha foi gerada.", False),
+    ("Cobertura extraída de resultados/metricas.csv do protocolo v2, incluindo o lote 2; presença nas métricas não substitui a auditoria de cobertura das previsões. Nenhum regime é marcado apenas por estar planejado.", False),
+    ("Diagnósticos das usinas: B-curto = clima NASA com o mesmo período de treino de C; C-gfs = previsão GFS em vez de ECMWF. Redes treinadas usam origem deslizante; fundacionais zero-shot não retreinam.", False),
     ("'?' no levantamento significa que o artigo não deixa claro; nada foi preenchido por suposição.", False),
-    ("Parâmetros dos fundacionais: tamanho publicado pelos autores. Das redes: contados no modelo treinado nas usinas.", False),
-    ("O motivo de não testar é dado por família, como em testes_modelos/LEIA-ME.md (seção 1).", False),
-    ("Fonte: Modelos_previsao_geracao_consumo.xlsx (a planilha original, que tem também a coluna de resultados).", False),
+    ("Parâmetros dos fundacionais: identificação dos checkpoints/levantamento, sem nova medição. Das redes: mínimo e máximo registrados em tempos_redes*.json nas usinas (variam com o regime). 'Aceita clima?' descreve a implementação usada.", False),
+    ("Motivos de exclusão preservam decisões do levantamento; não constituem uma nova verificação de disponibilidade, licença ou hardware. Bibliotecas, links e citações mantêm a data de 28/09/2026.", False),
+    ("Fonte bibliográfica: Modelos_previsao_geracao_consumo.xlsx, preservada como registro histórico com resultados antigos. O status 'Testado' desta visão é recalculado usando as métricas atuais e os nomes/variantes da aba Testados.", False),
+    ("A linha N-BEATS foi representada por N-BEATSx; Timer / Timer-XL foi representada por Timer base (rótulo Timer-XL-84m nos resultados). Toto 2.0 foi testado em dois tamanhos; estas variantes não aumentam o total de entradas bibliográficas.", False),
 ]
 for i, (t, negrito) in enumerate(leia, start=1):
     c = ws.cell(row=i, column=1, value=t)

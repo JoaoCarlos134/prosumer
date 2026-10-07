@@ -1,37 +1,146 @@
 {
+ "NBEATSx|casas_prod|A": {
+  "segundos": 20.2,
+  "parametros": 2781666,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "iTransformer|casas_prod|A": {
+  "segundos": 28.1,
+  "parametros": 6404632,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
  "LSTM|casas_prod|A": {
-  "segundos": 1509.5,
+  "segundos": 40.1,
   "parametros": 215809,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
  },
  "GRU|casas_prod|A": {
-  "segundos": 3098.4,
+  "segundos": 65.3,
   "parametros": 388857,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
  },
  "NHITS|casas_prod|A": {
-  "segundos": 224.8,
+  "segundos": 19.2,
   "parametros": 2817570,
-  "dobras": 3
- },
- "TiDE|casas_prod|A": {
-  "segundos": 716.4,
-  "parametros": 1497340,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
  },
  "KAN|casas_prod|A": {
-  "segundos": 262.1,
+  "segundos": 14.9,
   "parametros": 983040,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
  },
  "TCN|casas_prod|A": {
-  "segundos": 784.4,
+  "segundos": 14.7,
   "parametros": 152665,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
  },
  "DLinear|casas_prod|A": {
-  "segundos": 103.4,
+  "segundos": 11.2,
   "parametros": 8112,
-  "dobras": 3
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "SparseTSF|casas_prod|A": {
+  "segundos": 10.4,
+  "parametros": 32,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "ResNet-1D|casas_prod|A": {
+  "segundos": 22.7,
+  "parametros": 122328,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "SparseTSF|casas_cons|A": {
+  "segundos": 9.1,
+  "parametros": 32,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "ResNet-1D|casas_cons|A": {
+  "segundos": 37.3,
+  "parametros": 122328,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "PatchTST|casas_prod|A": {
+  "segundos": 23.3,
+  "parametros": 466843,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "LSTM|casas_cons|A": {
+  "segundos": 30.1,
+  "parametros": 215809,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "GRU|casas_cons|A": {
+  "segundos": 53.5,
+  "parametros": 388857,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "NHITS|casas_cons|A": {
+  "segundos": 25.0,
+  "parametros": 2817570,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "KAN|casas_cons|A": {
+  "segundos": 22.6,
+  "parametros": 983040,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "NBEATSx|casas_cons|A": {
+  "segundos": 24.6,
+  "parametros": 2781666,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TCN|casas_cons|A": {
+  "segundos": 22.8,
+  "parametros": 152665,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "DLinear|casas_cons|A": {
+  "segundos": 17.5,
+  "parametros": 8112,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "iTransformer|casas_cons|A": {
+  "segundos": 34.1,
+  "parametros": 6404632,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "PatchTST|casas_cons|A": {
+  "segundos": 32.6,
+  "parametros": 466843,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TiDE|casas_prod|A": {
+  "segundos": 13.0,
+  "parametros": 1494778,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TiDE|casas_cons|A": {
+  "segundos": 20.1,
+  "parametros": 1494778,
+  "dobras": 3,
+  "dispositivo": "cuda"
  }
 }

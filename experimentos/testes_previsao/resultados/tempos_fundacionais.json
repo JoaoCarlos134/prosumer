@@ -90,5 +90,13 @@
  "TimesFM-2.5|usinas|C": {
   "segundos": 145.2,
   "janelas": 598
+ },
+ "Toto|casas_prod|A": {
+  "segundos": 69.9,
+  "janelas": 920
+ },
+ "Toto|casas_cons|A": {
+  "segundos": 19.1,
+  "janelas": 1820
  }
 }

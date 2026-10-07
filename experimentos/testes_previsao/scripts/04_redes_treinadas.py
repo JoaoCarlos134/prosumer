@@ -13,12 +13,15 @@ warnings.filterwarnings("ignore"); logging.getLogger("pytorch_lightning").setLev
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
-from comum import carrega, grava, janelas, dobras, CASOS, EXOG, H, ENTRADA_NN, RES, REGIMES, DISPOSITIVO
+from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
+DEV = torch.device("cuda" if DISPOSITIVO == "cuda" and torch.cuda.is_available() else "cpu")
 ARGS = sys.argv[1:]
 CASOS_ARG = [a for a in ARGS if a in CASOS] or list(CASOS)
 SO_MODELOS = ARGS[ARGS.index("--modelos") + 1].split(",") if "--modelos" in ARGS else None   # lote 2: so os novos
+SO_REGIMES = ARGS[ARGS.index("--regimes") + 1].split(",") if "--regimes" in ARGS else None
+VERSAO_ESCALA = "treino_sem_validacao_2026-10-06"
 LOG = RES / ("tempos_redes_%s.json" % "_".join(CASOS_ARG))
 tempos = json.loads(LOG.read_text()) if LOG.exists() else {}
 COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, early_stop_patience_steps=4,
@@ -31,21 +34,26 @@ COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, earl
 def modelos_nf(regime, n_series, caso):
     # Regime B: a normalizacao por janela (scaler_type) explode quando o clima futuro sai da faixa da janela
     # de entrada (semana nublada seguida de dia limpo -> previsoes de 99 kWh/h numa usina de 4 kW).
-    # Solucao: normalizar cada serie uma vez, globalmente (local_scaler_type no NeuralForecast), sem
-    # normalizacao por janela no modelo.
+    # Solucao: normalizar cada serie usando so o treino anterior a validacao, sem
+    # normalizacao por janela. local_scaler_type no cross_validation incluiria o teste.
     ex = dict(futr_exog_list=EXOG, scaler_type="identity") if regime != "A" else {}
     C = {**COMUM, **ex}
     base = {
         "LSTM": lambda: M.LSTM(**C), "GRU": lambda: M.GRU(**C),
         "NHITS": lambda: M.NHITS(**C),
-        "TiDE": lambda: M.TiDE(**C), "KAN": lambda: M.KAN(**C),
+        # layernorm=False: o MLPResidual do TiDE termina num LayerNorm sobre temporal_width (4 = o numero
+        # de exogenas), aplicado em CADA hora. Isso tira a media e a escala das 4 variaveis de clima hora a
+        # hora, ou seja, apaga a amplitude - exatamente o sinal de "quanto sol faz". Com o default o TiDE
+        # ficava em nRMSE 0,59 no regime B contra 0,29 do NHITS; sem o layernorm vai a 0,28. Medido na
+        # dobra 1 das usinas; temporal_width maior nao resolve, so o layernorm.
+        "TiDE": lambda: M.TiDE(**C, layernorm=False), "KAN": lambda: M.KAN(**C),
         "NBEATSx": lambda: M.NBEATSx(**C),     # lote 2 (05/10/2026); o TimeXer do NeuralForecast nao aceita clima futuro
     }
     if regime == "A":
         base.update({"TCN": lambda: M.TCN(**COMUM), "DLinear": lambda: M.DLinear(**COMUM),
-                     "iTransformer": lambda: M.iTransformer(n_series=n_series, **COMUM)})
-        if caso == "usinas":                    # o mais lento; como na v1, so nas usinas
-            base["PatchTST"] = lambda: M.PatchTST(**COMUM)
+                     "iTransformer": lambda: M.iTransformer(n_series=n_series, **COMUM),
+                     # era o mais lento e na v1/v2 em CPU rodou so nas usinas; em GPU deixou de ser caro
+                     "PatchTST": lambda: M.PatchTST(**COMUM)})
     else:
         base.update({"TFT": lambda: M.TFT(**C),
                      "TSMixerx": lambda: M.TSMixerx(n_series=n_series, **C)})
@@ -60,8 +68,13 @@ def df_nf(d, regime):
     return x[cols]
 
 
-def para_janelas(cv, nome):
+def para_janelas(cv, nome, ini=None, fim=None):
     cv = cv.copy(); cv["dia"] = cv.ds.dt.normalize()
+    if ini is not None:
+        # So os dias desta dobra. O cross_validation conta as n_windows a partir do fim de CADA serie,
+        # entao uma serie que acaba antes das outras (H14 em casas_cons acaba em 11/12) recua e reemite
+        # dias de uma dobra anterior - com um modelo treinado depois deles (vazamento) e duplicando linhas.
+        cv = cv[(cv.dia >= ini) & (cv.dia <= fim.normalize())]
     jan, prev = [], []
     for (uid, dia), g in cv.groupby(["unique_id", "dia"]):
         if len(g) == H:
@@ -113,11 +126,11 @@ def treina_proprio(d, caso, cls, ini, fim, epocas=30):
             Xs.append(tr[k - ENTRADA_NN:k]); Ys.append(tr[k:k + H])
     X, Y = np.stack(Xs), np.stack(Ys)
     mu, sd = X.mean(1, keepdims=True), X.std(1, keepdims=True) + 1e-3
-    X, Y = torch.tensor((X - mu) / sd), torch.tensor((Y - mu) / sd)
+    X, Y = torch.tensor((X - mu) / sd).to(DEV), torch.tensor((Y - mu) / sd).to(DEV)
     torch.manual_seed(42); rng = np.random.default_rng(42)
     idx = rng.permutation(len(X)); nval = len(X) // 10
     va, trn = idx[:nval], idx[nval:]
-    m = cls(); opt = torch.optim.Adam(m.parameters(), lr=1e-3); melhor, estado, paciencia = 1e9, None, 0
+    m = cls().to(DEV); opt = torch.optim.Adam(m.parameters(), lr=1e-3); melhor, estado, paciencia = 1e9, None, 0
     for ep in range(epocas):
         m.train()
         for i in range(0, len(trn), 256):
@@ -138,7 +151,7 @@ def treina_proprio(d, caso, cls, ini, fim, epocas=30):
     jan = [w for w in janelas(d, caso, contexto=ENTRADA_NN) if ini <= w["dia"] <= fim]
     Xt = np.stack([w["y"] for w in jan]); mu, sd = Xt.mean(1, keepdims=True), Xt.std(1, keepdims=True) + 1e-3
     with torch.no_grad():
-        p = m(torch.tensor((Xt - mu) / sd)).numpy() * sd + mu
+        p = m(torch.tensor((Xt - mu) / sd).to(DEV)).cpu().numpy() * sd + mu
     return jan, list(p), sum(t.numel() for t in m.parameters())
 
 
@@ -147,31 +160,47 @@ def roda_nf(df, fab, caso, regime):
     jan, prev, n_par = [], [], 0
     for ini, fim in dobras(caso):
         n = (fim.normalize() - ini).days + 1
-        nf = NeuralForecast(models=[fab()], freq="h", local_scaler_type="standard" if regime != "A" else None)
-        cv = nf.cross_validation(df=df[df.ds <= fim], n_windows=n, step_size=H, val_size=720, refit=False)
+        entrada = df[df.ds <= fim].copy()
+        escalas = None
+        if regime != "A":
+            entrada, escalas = normaliza_por_treino(entrada, ini - pd.Timedelta(hours=720), ["y"] + EXOG)
+        nf = NeuralForecast(models=[fab()], freq="h")
+        cv = nf.cross_validation(df=entrada, n_windows=n, step_size=H, val_size=720, refit=False)
         col = [c for c in cv.columns if c not in ("unique_id", "ds", "cutoff", "y", "available_mask")][0]
-        j, p = para_janelas(cv, col)
+        if escalas is not None:
+            for uid, (media, desvio) in ((u, e["y"]) for u, e in escalas.items()):
+                sel = cv.unique_id == uid
+                cv.loc[sel, col] = cv.loc[sel, col] * desvio + media
+        j, p = para_janelas(cv, col, ini, fim)
         jan += j; prev += p
         n_par = sum(x.numel() for x in nf.models[0].parameters())
         del nf, cv; gc.collect()
     return jan, prev, n_par
 
 
-def anota(chave, t0, n_par, nome, caso, regime):
+def anota(chave, t0, n_par, nome, caso, regime, disp=DISPOSITIVO):
     tempos[chave] = dict(segundos=round(time.time() - t0, 1), parametros=int(n_par), dobras=len(dobras(caso)),
-                         dispositivo=DISPOSITIVO)
+                         dispositivo=disp)
+    if regime != "A":
+        tempos[chave]["normalizacao"] = VERSAO_ESCALA
     LOG.write_text(json.dumps(tempos, indent=1))
     print("OK    %-12s %-10s %s  %8d parametros  %6.0f s" % (nome, caso, regime, n_par, time.time() - t0), flush=True)
 
 
 if __name__ == "__main__":
+    falhas = 0
     for caso in CASOS_ARG:
         for regime in REGIMES[caso]:
+            if SO_REGIMES and regime not in SO_REGIMES:
+                continue
             d = carrega(caso, regime)
             df = df_nf(d, regime)
             for nome, fab in modelos_nf(regime, d.unique_id.nunique(), caso).items():
                 chave = f"{nome}|{caso}|{regime}"
-                if chave in tempos or (SO_MODELOS and nome not in SO_MODELOS):
+                feito = chave in tempos and (PREV / f"{nome}__{caso}__{regime}.parquet").exists()
+                if regime != "A":
+                    feito = feito and tempos[chave].get("normalizacao") == VERSAO_ESCALA
+                if feito or (SO_MODELOS and nome not in SO_MODELOS):
                     continue
                 t0 = time.time()
                 try:
@@ -179,12 +208,15 @@ if __name__ == "__main__":
                     grava(nome, caso, regime, jan, prev)
                     anota(chave, t0, n_par, nome, caso, regime)
                 except Exception as e:
+                    falhas += 1
                     print("FALHA %-12s %-10s %s  %s: %s" % (nome, caso, regime, type(e).__name__, str(e)[:300]), flush=True)
                 gc.collect()
+        if SO_REGIMES and "A" not in SO_REGIMES:
+            continue
         d = carrega(caso)
         for nome, cls in [("SparseTSF", SparseTSF), ("ResNet-1D", ResNet1D)]:
             chave = f"{nome}|{caso}|A"
-            if chave in tempos or (SO_MODELOS and nome not in SO_MODELOS):
+            if (chave in tempos and (PREV / f"{nome}__{caso}__A.parquet").exists()) or (SO_MODELOS and nome not in SO_MODELOS):
                 continue
             t0 = time.time()
             try:
@@ -193,6 +225,8 @@ if __name__ == "__main__":
                     j, p, n_par = treina_proprio(d, caso, cls, ini, fim)
                     jan += j; prev += p
                 grava(nome, caso, "A", jan, prev)
-                anota(chave, t0, n_par, nome, caso, "A")
+                anota(chave, t0, n_par, nome, caso, "A", DEV.type)
             except Exception as e:
+                falhas += 1
                 print("FALHA %-12s %-10s A  %s: %s" % (nome, caso, type(e).__name__, str(e)[:300]), flush=True)
+    sys.exit(1 if falhas else 0)

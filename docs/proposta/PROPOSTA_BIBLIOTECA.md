@@ -1,10 +1,18 @@
 # Proposta: biblioteca `prossumidor`
 
+> **Estado em 06/10/2026.** Este estudo de viabilidade descreve uma arquitetura proposta;
+> os oito módulos ainda não formam um pacote instalável. O uso acadêmico para o TCC
+> foi autorizado em 05/10/2026; a licença continua pendente e os dados permanecem
+> privados. O benchmark v2 deve ser concluído e validado antes de atualizar as decisões
+> baseadas nos testes v1 abaixo. Consulte [`CLAUDE.md`](../../CLAUDE.md) e a
+> [revisão atual](../../graphify-out/revisao_projeto.md).
+
 Uma biblioteca Python para prever **geração e consumo** de quem produz e consome
 energia — usina FV, casa com FV e bateria, edificação — do dado bruto do medidor
 ao modelo embarcado. Estudo de viabilidade feito em 30/09/2026 a partir da análise
-de rede do projeto (`REDE_PROJETO.md`) e dos testes de modelos
-(`../testes_modelos/LEIA-ME.md`). Nome livre no PyPI (conferido).
+de rede do projeto ([`REDE_PROJETO.md`](../projeto/REDE_PROJETO.md)) e dos testes de modelos
+([`LEIA-ME.md`](../../experimentos/testes_previsao/LEIA-ME.md)). A disponibilidade do nome no PyPI
+foi conferida durante o estudo; não representa reserva do nome.
 
 **Recomendação em uma frase:** sim, vale fazer — mas como uma **camada de domínio
 fina sobre bibliotecas que já existem**, não como uma biblioteca que "resolve tudo"
@@ -114,12 +122,13 @@ ps.economia.fatura(serie, consumo, distribuidora="copel", conexao="2019-07")
 
 ## 5b. O que os testes decidiram para a biblioteca
 
-Os testes de `../testes_modelos/` (33 modelos, 3 casos) viram escolhas concretas:
+Os testes v1 de [`experimentos/testes_previsao/`](../../experimentos/testes_previsao/)
+(33 modelos, 3 casos) viram escolhas concretas:
 
 | Decisão | Por quê (resultado do teste) |
 |---|---|
 | **Conjunto padrão de `compara()`:** persistência de céu claro, linear físico, LightGBM, TTM, Chronos-2 | cobre o teto (LightGBM/TFT ≈ +0,48–0,50 com clima), o melhor zero-shot consistente (TTM, ranking médio 3,3) e o híbrido físico (+0,42 com uma variável) — em segundos, sem GPU |
-| **Saída padrão = mediana dos modelos**, não "o melhor" | a mediana nunca ficou abaixo do 2º lugar nos 4 cenários; escolher o vencedor pelo teste é vazamento |
+| **Saída padrão = mediana dos modelos**, não "o melhor" | no v1, 1º nas usinas, 2º na geração FV das casas e **5º no consumo**, a 0,012 do primeiro; escolher o vencedor pelo teste é vazamento. O viés no consumo precisa ser reportado e tratado |
 | **Normalização global obrigatória com covariáveis** | a normalização por janela do NeuralForecast fez GRU/LSTM/NHITS/KAN preverem até 2.400 kWh/h numa usina de 4 kW; a biblioteca deve impedir essa combinação, não documentá-la |
 | **Relatório de viés junto do erro** | os fundacionais subestimam o consumo em ~20% (preveem a mediana); um bom RMSE escondia isso |
 | **Detecção de série sem sinal** em `qualidade` | 10 das 20 casas não têm FV; sem a checagem, o erro normalizado dobrou |

@@ -1,7 +1,8 @@
 # CLAUDE.md — starting point for a new session
 
 Snapshot written on 2026-10-05 from the work machine (Lactec), where the project lives in OneDrive
-(`Documentos/2026/Projeto_IA`). This repo is the exported, anonymized subset needed for the TCC, the
+(`Documentos/2026/Projeto_IA`); state, findings and next steps updated on 2026-10-06 after the v2 +
+batch 2 run finished on the home GPU. This repo is the exported, anonymized subset needed for the TCC, the
 future master's and the `prossumidor` library. The user (João) works in English with Claude; all project
 docs and code comments are in Portuguese (code comments without accents) — keep that convention.
 
@@ -29,7 +30,8 @@ docs and code comments are in Portuguese (code comments without accents) — kee
   rest weren't, no results), `Modelos_previsao_geracao_consumo.xlsx` (same survey with a results column),
   references, review draft `smart_buildings.docx`.
 - `experimentos/testes_previsao/` — the forecasting benchmark (details below). `LEIA-ME.md` there is the
-  v1 write-up; it has NOT yet been updated for v2.
+  v2 write-up (rewritten 2026-10-06), with the protocol, the final numbers and the six defects fixed
+  along the way; `ambientes/LEIA-ME.md` has the install deviations each of the four envs needs.
 - `legado/` — the project's original scripts (ia_solar analysis, modelling base, TFLite models, ANEEL
   tariffs, graph scripts). Reference only: raw 5-min data stayed at Lactec, so most won't run here.
   Some file names were changed by the anonymization (e.g. `*_curitiba*` scripts).
@@ -69,69 +71,70 @@ Pipeline (run from `scripts/`):
 Environments: four, frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
 expect them in `~/.venvs/<name>` (override with `VENVS`). `previsao` runs almost everything.
 
-### State at export (2026-10-05, ~10:40) — the run moves to the home machine (GPU)
+### State (2026-10-06) — v2 + lote 2 COMPLETOS na maquina de casa (RTX 4070)
 
-v2 ran on the Lactec laptop (CPU) and was **stopped** there; nothing runs at Lactec anymore. This repo has
-everything it finished. Done in v2: all references, LightGBM and linear physics (A, B, C, B-curto, C-gfs);
-Chronos-2 and TimesFM-2.5 in C; networks LSTM/GRU/NHITS/TiDE/KAN/TCN/DLinear for `casas_prod`, LSTM and
-GRU for `usinas` A (all on CPU; `tempos_redes_*.json` has no `dispositivo` field for these = CPU).
-Still to run: `usinas` A — NHITS, TiDE, KAN, TCN, DLinear, iTransformer, PatchTST, SparseTSF, ResNet-1D;
-all `usinas` B and C networks (LSTM, GRU, NHITS, TiDE, KAN, NBEATSx-only-in-batch-2, TFT, TSMixerx);
-`casas_prod` — iTransformer, SparseTSF, ResNet-1D; all of `casas_cons`. Then batch 2. Finished models are skipped (`tempos_*.json`), so just start the queues.
+A rodada acabou. Tudo o que a v2 e o lote 2 previam esta feito, em GPU, sem falhas pendentes:
+52 entradas de rede treinada (todas com `dispositivo` anotado), 25 fundacionais v1 + 28 do lote 2,
+131 linhas em `resultados/metricas.csv`, 7 figuras e os quatro CSVs de metricas regenerados.
+Os 9 modelos que tinham rodado em CPU no Lactec foram refeitos em GPU para paridade de hardware.
 
-How to resume at home (after creating the envs, `ambientes/LEIA-ME.md`; with a CUDA build of torch):
+Detalhes do protocolo, dos resultados e dos seis defeitos corrigidos no caminho:
+`experimentos/testes_previsao/LEIA-ME.md` (reescrito para a v2 em 06/10/2026).
+Desvios de instalacao dos quatro ambientes: `experimentos/testes_previsao/ambientes/LEIA-ME.md`.
 
-    cd experimentos/testes_previsao/scripts
-    set DISPOSITIVO=cuda          (PowerShell: $env:DISPOSITIVO="cuda"; bash: export DISPOSITIVO=cuda)
-    python roda_v2.py             # v2 networks; plants and houses in two processes; logs resultados/log_v2_*.txt
-    python roda_lote2.py          # waits for v2's FIM lines, then batch 2 + ensemble + metrics + figures
-    (or: python roda_lote2.py --sem-esperar   to run batch 2 alone)
+Dois pontos que mudam numeros e precisam estar no texto do TCC:
 
-`DISPOSITIVO=cuda` moves the NeuralForecast networks to the GPU (`accelerator="gpu"`) and puts TabPFN-TS back
-into batch 2. Batches, steps, seeds and folds stay identical, but GPU vs CPU can change results slightly:
-the device is recorded per model in `tempos_redes_*.json`, mention it in the write-up. The networks already
-done on CPU were not redone; if exact hardware parity matters for the TCC, delete their entries from the
-tempos file and rerun (cheap on GPU). The foundation models and SparseTSF/ResNet-1D still run on CPU (fast).
-`torch.set_num_threads(5)` in `04` assumes two processes on a 12-thread CPU — adjust to the home CPU.
-
-Batch 2 (queued after v2): Toto-2.0-22m, Toto-2.0-313m, TiRex-2 (A/B/C), Sundial-128m, Timer-XL-84m,
-Time-MoE-50M, Moirai-MoE-small, N-BEATSx (A/B/C; `04 ... --modelos NBEATSx`); TabPFN-TS (A/B/C) only with
-`DISPOSITIVO=cuda`. Smoke-tested on 3 windows on CPU (not yet on GPU). TabPFN-TS: the default v3.5 weights
-need a Prior Labs account, so the script pins the open v2 weights (keep it that way; LOCAL mode, no data
-leaves the machine). TimeXer dropped: NeuralForecast's version can't take future covariates. TiRex-2 needs
-`torch._dynamo` disabled on Windows without MSVC (done in the script).
+- **TiDE nao usava o clima** nas versoes anteriores (LayerNorm sobre `temporal_width` apagava a
+  amplitude das exogenas hora a hora). Corrigido com `layernorm=False`: skill em B de +0,07 para
+  +0,487, em C para +0,356. Antes era a unica excecao no teste C x B; agora as 15 comparacoes dao
+  significativas.
+- **Normalizacao ajustada sobre o teste.** O `local_scaler_type` do NeuralForecast normalizava sobre
+  todo o quadro, teste incluido. Trocado por `comum.normaliza_por_treino` (so treino anterior a
+  validacao), com regressoes em `scripts/test_auditoria.py`. Efeito pequeno nos numeros, mas o
+  procedimento anterior nao era defensavel. As entradas de B e C carregam o selo `normalizacao`.
 
 ### Findings so far
 
-v1 (single cut): weather input matters ~10× more than the model (A→B gap ~0.40 vs ~0.03 between models);
-a linear model on one physical variable gets +0.42; zero-shot foundation models tie with trained ones,
-TTM most consistent; SparseTSF (32 params) ties on consumption; LSTM/GRU history-only lose to clear-sky
-persistence on plants. Correction: the median ensemble is 1st on plants, 2nd on house PV but **5th** on
-consumption (tie within 0.012) — not "never below 2nd" as some older docs say.
+**v1 (corte unico):** a entrada de clima importa ~10x mais que o modelo (vao A->B ~0,40 contra ~0,03
+entre modelos); um linear sobre uma variavel fisica chega a +0,42; fundacionais zero-shot empatam com
+os treinados; SparseTSF (32 parametros) empata no consumo; LSTM/GRU so com historico perdem da
+persistencia de ceu claro nas usinas.
 
-v2 early (LightGBM, all p < 0.001 unless noted): A +0.09 → **C +0.33** → B +0.48; the real forecast closes
-~62% of the A→B gap. B with C's short training: +0.47 (n.s. vs B, p = 0.17), so the remaining gap is
-forecast quality, not training length. ECMWF beats GFS (C-gfs +0.27). Rolling origin barely moved the A
-average (+0.085 vs +0.088) but per-fold skill ranges −0.01 to +0.15. ECMWF day-ahead GHI correlates 0.93
-with generation at Cascavel vs 0.96 for NASA.
+**v2 (origem movel, 36 modelos, numeros finais de 06/10/2026):**
+
+- A escada das usinas: melhor em **A +0,141** (TiRex-2) -> **C +0,372** -> **B +0,515** (mediana de
+  todos nos dois ultimos). LightGBM nos cinco regimes: A +0,084, C-gfs +0,274, C +0,330,
+  B-curto +0,469, B +0,480.
+- A previsao real fecha **62%** do vao A->B no LightGBM e **72%** na mediana dos 12 modelos com os tres
+  regimes. (A figura de regimes imprime a mediana; nao confundir com o numero do LightGBM.)
+- O que falta e **qualidade da previsao, nao treino curto**: B-curto x B nao e significativo
+  (Holm 0,081 no LightGBM, 0,070 no linear fisico). ECMWF ganha do GFS (C-gfs x C, p < 0,001).
+  C x A e C x B significativos em todas as comparacoes (13/13 e 15/15).
+- **Fundacionais lideram os tres casos no regime A.** Melhor ranking medio: Toto-2.0-313m (3,0),
+  depois a mediana (4,3) e o TiRex-2 (6,3). TiRex-2 e o melhor modelo individual nas usinas nos tres
+  regimes. Toto-2.0-313m e o 1o na geracao FV das casas; LightGBM o 1o no consumo.
+- **Correcao da correcao sobre a mediana:** ela e 1a nas usinas em B e C, **2a** em A (o TiRex-2
+  passou a frente) e na geracao FV, e **9a de 32** no consumo — ainda empatada com a melhor. Os textos
+  antigos que dizem "5a no consumo" ou "nunca abaixo de 2o" estao desatualizados: o lote 2 acrescentou
+  8 modelos fortes no consumo.
+- Quantos empatam com o melhor (Holm >= 0,05): usinas A 3 de 33, B 1 de 15, **C nenhum de 15**;
+  geracao FV das casas 21 de 32; consumo 9 de 32 (inclusive o SparseTSF de 32 parametros). O poder de
+  separacao do teste muda muito de caso para caso.
 
 ## Next steps
 
-1. Finish v2 + batch 2; run `07 → 05 → 06`; rewrite `experimentos/testes_previsao/LEIA-ME.md` for v2
-   (regime C, folds, DM ties, batch 2) and update `docs/literatura/Visao_geral_modelos_previsao.xlsx`
-   (regenerate with `docs/literatura/scripts/gera_visao_geral_modelos.py`).
-2. TCC step E1 of the proposal: package skeleton (`src/prossumidor/`), data contracts, synthetic data, CI.
-   Start from `scripts/comum.py` (protocol) and `05_avalia.py` (metrics) — they are the seed of
-   `prossumidor.protocolo`.
-3. Still open from the tests: fine-tuning TTM/Chronos-2, probabilistic forecasts (CRPS), consumption bias of
-   foundation models (~−20%), house location for clear-sky, embedded latency/energy on Raspberry Pi 5 / ESP32
-   (proposal step E5).
-5. TFLite (done 2026-10-05 at Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`): the
-   32 `.tflite` files in `legado/ia_solar/base_modelagem/embarcado/` were reloaded from disk and all reproduce
-   their original R² (`verificacao_tflite.csv`). The `.tflite` holds only the network: input imputation and
-   scaling plus output de-normalisation were never saved, so they were rebuilt and stored in
-   `embarcado/preprocessamento_<plant>_<set>.json` — a device needs file + JSON. x86 latency (~2.5 µs float,
-   ~11 µs int8-total) is Python-call overhead, not network cost; it says nothing about an MCU. The verify
-   script needs the 5-min base, which stayed at Lactec — it can't rerun here.
-4. Known project gaps: Curitiba roof geometry unknown (blocks papers A and B); papers A and B have no
-   bibliography yet.
+1. TCC passo E1 da proposta: esqueleto do pacote (`src/prossumidor/`), contratos de dados, dados
+   sinteticos, CI. Comecar de `scripts/comum.py` (protocolo) e `05_avalia.py` (metricas) — sao a
+   semente de `prossumidor.protocolo`.
+2. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (**bloqueado**: o `granite-tsfm` instala sem
+   o subpacote `tsfm_public.toolkit` nesta maquina), previsao probabilistica (CRPS), vies de consumo
+   dos fundacionais (~-20%), localizacao das casas para o ceu claro, latencia/energia no Raspberry
+   Pi 5 / ESP32 (passo E5 da proposta).
+3. TFLite (feito em 05/10/2026 no Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
+   os 32 `.tflite` em `legado/ia_solar/base_modelagem/embarcado/` foram recarregados do disco e todos
+   reproduzem o R2 original (`verificacao_tflite.csv`). O `.tflite` guarda so a rede: imputacao,
+   escala e desnormalizacao foram reconstruidas e salvas em
+   `embarcado/preprocessamento_<usina>_<conjunto>.json` — um dispositivo precisa do arquivo + JSON.
+   A latencia x86 (~2,5 us float, ~11 us int8) e overhead de chamada Python, nao custo de rede.
+4. Lacunas conhecidas do projeto: geometria do telhado de Curitiba desconhecida (travam os artigos A e
+   B); artigos A e B sem bibliografia.

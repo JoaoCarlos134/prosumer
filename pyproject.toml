@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prossumidor"
+description = "Previsao de geracao e consumo de prossumidores de energia, do dado do medidor ao modelo embarcado"
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["version"]
+authors = [{ name = "Joao Jachenski Junior" }]
+keywords = ["fotovoltaico", "previsao", "series temporais", "prossumidor", "edge ai"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
+# Nucleo enxuto de proposito (PROPOSTA_BIBLIOTECA.md secao 6): so o que todo mundo usa.
+# Cada modelo fundacional entra como extra isolado, com versao travada.
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.1",
+  "pyarrow>=14",
+  "pvlib>=0.11",
+  "scipy>=1.11",
+  "pandera>=0.20",
+]
+
+[project.optional-dependencies]
+lightgbm = ["lightgbm>=4.0"]
+# Um extra por fornecedor: quando a API de um deles mudar, quebra um adaptador, nao o projeto.
+chronos = ["chronos-forecasting>=2.0"]
+timesfm = ["timesfm>=3.0"]
+ttm = ["granite-tsfm"]
+redes = ["neuralforecast>=3.1", "torch>=2.2"]
+embarcado = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21"]
+graficos = ["matplotlib>=3.8"]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=5",
+  "pytest-xdist>=3",
+  "hypothesis>=6.100",
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pandas-stubs",
+  "pre-commit>=3.8",
+]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
+
+[project.urls]
+Repository = "https://github.com/JoaoCarlos134/prossumidor"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prossumidor"]
+# py.typed: sem este marcador o mypy de quem usa a biblioteca ignora as anotacoes dela.
+artifacts = ["src/prossumidor/py.typed"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "NPY", "PD"]
+# RUF001/002/003: os comentarios e docstrings sao em portugues, com acento mesmo.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["prossumidor"]
+strict = false
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+filterwarnings = ["error::DeprecationWarning:prossumidor.*"]
+
+[tool.coverage.run]
+source = ["prossumidor"]
+branch = true

@@ -1,239 +1,304 @@
 # Testes de modelos de previsão — geração solar e consumo
 
-Feitos entre 30/09 e 02/10/2026, a partir do levantamento de 127 modelos
-(`../revisao_edge_ai/Modelos_previsao_geracao_consumo.xlsx`). **33 modelos e
-referências, 3 casos, uma tarefa só: prever as 24 horas do dia seguinte, emitindo
-a previsão às 00:00.** Tudo roda em CPU, nesta máquina.
+Primeira rodada (v1) entre 30/09 e 02/10/2026; **protocolo v2** em 05–06/10/2026, a partir do
+levantamento de 127 modelos (`../../docs/literatura/Modelos_previsao_geracao_consumo.xlsx`).
+**36 modelos e referências, 3 casos, uma tarefa só: prever as 24 horas do dia seguinte, emitindo a
+previsão às 00:00.** As redes treinadas rodaram em GPU (RTX 4070); os fundacionais, em CPU.
+
+O que muda da v1 para a v2: **origem móvel** (todo modelo treinado é refeito do zero no início de cada
+dobra), **regime C** (a previsão do tempo real da véspera, não o oráculo), **lotes iguais em todas as
+redes** e **Diebold–Mariano** com correção de Holm para dizer quem empata com o melhor. A v1 (um corte
+único) está guardada em `resultados_v1_corte_unico/`.
 
 ## Em cinco linhas
 
-1. **Nas usinas, quem decide é o clima, não o modelo.** Com o clima do dia dado
-   (regime B, teto), 8 modelos empatam em +47% a +51% sobre a persistência de céu
-   claro; só com o histórico (regime A), o melhor chega a +11%. O vão entre os
-   regimes (~0,40) é dez vezes a diferença entre os algoritmos (~0,03).
-2. **Um modelo linear com uma variável física (`poa_estimada`) já leva +42%** dos
-   ~+50% possíveis — o mesmo achado do `ESTADO_DO_PROJETO.md`, agora na previsão.
-3. **Modelos fundacionais sem nenhum treino empatam com os treinados.** O mais
-   consistente nos três casos é o **TTM** (IBM, 3 milhões de parâmetros, roda em
-   CPU em segundos): ranking médio 3,3, sempre entre os primeiros.
-4. **A mediana de todos os modelos (sem escolher nenhum) é o resultado mais robusto:**
-   1º nas usinas (A e B), 2º na geração das casas, entre os primeiros no consumo.
-5. **Para o embarcado, o SparseTSF com 32 parâmetros** empata com os melhores no
-   consumo das casas (+19%). LSTM e GRU só com histórico perdem da persistência de
-   céu claro nas usinas.
+1. **Nas usinas, quem decide é o clima, não o modelo.** Só com o histórico (regime A) o melhor chega a
+   +14%; com a previsão real da véspera (regime C), +37%; com o clima do próprio dia (regime B, teto),
+   +51%. O vão entre regimes é muito maior que a diferença entre algoritmos — dentro do regime C os 15
+   modelos cabem em 0,09 de skill.
+2. **A previsão real fecha a maior parte do caminho até o teto:** 62% do vão A→B no LightGBM, 72% na
+   mediana dos 12 modelos com os três regimes. E a diferença restante é **qualidade da previsão, não
+   treino mais curto**: o diagnóstico B-curto (B com o treino cortado onde o C começa) empata com o B
+   (p de Holm 0,08 no LightGBM, 0,07 no linear físico).
+3. **ECMWF ganha do GFS.** Trocar o modelo numérico derruba o LightGBM de +0,33 para +0,27
+   (C-gfs, p < 0,001). A fonte da previsão importa mais que a escolha do modelo de previsão de série.
+4. **Modelos fundacionais sem nenhum treino lideram os três casos.** O melhor ranking médio no regime A
+   é do **Toto-2.0-313m** (3,0), e nas casas 8 dos 9 primeiros na geração FV são fundacionais. O
+   **TiRex-2** é o melhor modelo individual nas usinas nos três regimes.
+5. **A mediana de todos os modelos continua a escolha robusta — mas não é sempre a melhor.** É 1ª nas
+   usinas em B e C, 2ª em A e na geração FV das casas, e apenas **9ª de 32** no consumo (ainda assim
+   empatada com o melhor). O **SparseTSF, com 32 parâmetros**, empata com o melhor no consumo (7º).
 
 ![Ranking das usinas](resultados/figuras/ranking_usinas.png)
 
 ---
 
-## 1. O que foi testado, e por quê (minha leitura do levantamento)
+## 1. O que foi testado, e por quê
 
-Dos 127 modelos levantados, testei os que (a) têm código aberto que roda em CPU,
-(b) servem para as séries que o projeto tem — histórico do medidor, com ou sem
-clima — e (c) representam uma família diferente:
+Dos 127 modelos levantados, entraram os que (a) têm código aberto que roda nesta máquina, (b) servem
+para as séries que o projeto tem — histórico do medidor, com ou sem clima — e (c) representam uma
+família diferente. O **lote 2** (05/10/2026) acrescentou a geração de fundacionais lançada depois da v1.
 
 | Família | Testados | Por quê |
 |---|---|---|
 | Referências | persistência de ontem, de 7 dias, média de 7 dias, **persistência de céu claro** | sem elas nenhum número significa nada |
 | Física | linear sobre `poa_estimada` | o achado central do projeto |
 | Árvore | LightGBM global | o mais forte "clássico" e o que o projeto já usa |
-| Recorrentes / convolucionais | **LSTM, GRU, ResNet-1D** (os que você citou), TCN | as referências de rede |
-| MLP / linear | NHITS, TiDE, DLinear, TSMixerx, **SparseTSF (32 parâmetros)** | leves; candidatos ao embarcado |
+| Recorrentes / convolucionais | LSTM, GRU, **ResNet-1D**, TCN | as referências de rede |
+| MLP / linear | NHITS, TiDE, DLinear, TSMixerx, N-BEATSx, **SparseTSF (32 parâmetros)** | leves; candidatos ao embarcado |
 | Transformer | PatchTST, iTransformer, TFT | os mais citados |
 | Kolmogorov-Arnold | KAN | abordagem nova |
-| Fundacionais (zero-shot) | **Chronos-2, Chronos-Bolt, TimesFM-2.5, TiRex, TTM, Toto, Moirai 2.0** | a maior mudança da área; sem treino |
+| Fundacionais v1 (zero-shot) | Chronos-2, Chronos-Bolt, TimesFM-2.5, TiRex, TTM-r2, Toto, Moirai 2.0 | a maior mudança da área; sem treino |
+| **Fundacionais lote 2** | **Toto-2.0 (22m e 313m), TiRex-2, TabPFN-TS, Sundial-128m, Timer-XL-84m, Time-MoE-50M, Moirai-MoE-small** | geração seguinte; TiRex-2 e TabPFN-TS aceitam clima futuro, então rodam em A, B e C |
 | Combinação | mediana de todos | regra fixa, sem escolha a posteriori |
 
-**Não testados, e por quê:**
-
-| Família | Motivo |
-|---|---|
-| Imagem de céu e satélite (SolarSeer, SkyEvo, STARGPT, PVNet) | não há câmera de céu nem série de satélite no projeto |
-| Previsão do tempo por IA (Aurora, GraphCast, WeatherNext 3) | produzem o **clima de entrada**, não a geração; entram no lugar da NASA, ver §6 |
-| Baseados em LLM (Time-LLM, GPT4TS, LLMTime, os de FV com LLM) | exigem LLM grande e GPU; e Tan et al. (NeurIPS 2024, "Are Language Models Actually Useful for Time Series Forecasting?") mostram que remover o LLM desses modelos não piora o resultado |
-| Difusão (TimeGrad, CSDI, PV-MM-diffusion) | previsão probabilística, pesada em CPU; fica para quando o foco for incerteza |
-| xLSTM via NeuralForecast | precisa de kernels compilados para GPU; a família está representada pelo **TiRex** (fundacional baseado em xLSTM) |
-| TimesFM-3 | os pesos são só para uso não comercial e não estão no pacote do PyPI |
-| Mamba e os específicos de FV/consumo dos artigos | sem código aberto pronto para estas séries |
+**Não testados, e por quê:** imagem de céu e satélite (sem câmera nem série de satélite); previsão do
+tempo por IA (produz o clima de entrada, não a geração — é o que entra no regime C); baseados em LLM
+(exigem GPU grande, e Tan et al., NeurIPS 2024, mostram que remover o LLM não piora); difusão
+(probabilística, fica para quando o foco for incerteza); Mamba e os específicos de FV dos artigos (sem
+código aberto pronto); **TimesFM-3** (pesos não comerciais, fora do PyPI); **TimeXer** (a versão do
+NeuralForecast não aceita covariáveis futuras, então não usaria a previsão do tempo).
 
 ## 2. Dados — só a parte necessária
 
 | Caso | De onde | O que entrou |
 |---|---|---|
-| **Usinas** (Cascavel 3,96 kWp e Curitiba ~9,6 kWp) | `ia_solar/analise/*/dados/` (5 min do inversor) + `ia_solar/base_modelagem/*/base_*_horaria.parquet` | energia horária; céu claro, GHI, `poa_estimada` e temperatura da NASA (já com o −55 min) |
-| **FV das casas** | `dados_casas/H*_Wh.csv` | só `Production(Wh)`, somado por hora |
-| **Consumo das casas** | `dados_casas/H*_Wh.csv` (= `dados_casas/consumption_all_houses.csv`) | só `Consumption(Wh)`, somado por hora |
+| **Usinas** (Cascavel 3,96 kWp e Curitiba ~9,6 kWp) | 5 min do inversor + base horária | energia horária; céu claro, GHI, `poa_estimada` e temperatura |
+| **FV das casas** | `H*_Wh.csv` | só `Production(Wh)`, somado por hora |
+| **Consumo das casas** | `H*_Wh.csv` | só `Consumption(Wh)`, somado por hora |
 
-Bateria, rede, estado de carga e os arquivos `_W` não foram usados. Tudo cabe em
-5 MB: `testes_modelos/dados/usinas_horario.parquet` e `casas_horario.parquet`.
+Tudo cabe em 5 MB: `dados/usinas_horario.parquet`, `casas_horario.parquet` e
+`previsao_tempo.parquet` (o arquivo de previsões do regime C).
 
-**Problemas encontrados nos dados (e o que foi feito):**
+**Problemas nos dados (e o que foi feito):**
 
-- **10 das 20 casas não têm FV** (produção zero o ano todo: H6, H8, H9, H12, H14,
-  H15, H16, H18, H19, H20). Ficaram fora do caso de geração; entram no consumo.
-- **As casas são do hemisfério norte**, quase certamente Europa: produção máxima em
-  maio, mínima em dezembro, consumo máximo em dezembro, e um dia de 25 horas no fim
-  do horário de verão. O teste (out–dez) é inverno com pouco sol.
-- **H14 termina em 11/12/2020**; H4 tem 60% do arquivo `_W` corrompido (o `_Wh`,
-  que foi o usado, está 99,99% completo).
-- **Nas usinas, o inversor não registra direito à noite nem nas pontas do dia.**
-  Noite vale zero; pontas do dia (céu claro < 150 W/m²) contam o que foi somado se
-  o dia teve registro normal entre 9 h e 15 h. A energia anual não mudou (5.762 kWh
-  em Cascavel), o que confirma que a regra só completa horas quase nulas.
+- **10 das 20 casas não têm FV** (produção zero o ano todo). Ficam fora da geração; entram no consumo.
+- **As casas são do hemisfério norte**, quase certamente Europa: produção máxima em maio, consumo
+  máximo em dezembro, e um dia de 25 horas no fim do horário de verão. O teste (out–dez) é inverno.
+- **H14 termina em 11/12/2020**, 20 dias antes das outras 19. Isso tem consequência no protocolo:
+  ver o defeito de recorte de dobra em §7.
+- **Nas usinas o inversor não registra direito à noite nem nas pontas do dia.** Noite vale zero;
+  pontas do dia contam o que foi somado se o dia teve registro normal entre 9 h e 15 h.
 
-## 3. Protocolo
+## 3. Protocolo (v2)
 
-- **Tarefa:** 24 valores horários do dia seguinte, emitidos às 00:00, com histórico
-  até 23:00 da véspera. Uma janela por dia de teste; nenhum modelo vê o dia que prevê.
-- **Teste:** usinas 01/08/2025 → 31/05/2026 (fim da NASA horária; 598 dias-usina);
-  casas 01/10 → 31/12/2020 (920 dias-casa na geração, 1.820 no consumo).
-- **Regime A:** só o histórico da própria série. **Regime B (só usinas):** + céu
-  claro + clima NASA do próprio dia. B é um **teto**: supõe previsão do tempo
-  perfeita; uma previsão real fica entre A e B.
-- **Treino:** tudo antes do teste; últimos 30 dias como validação para parada
-  antecipada; entrada de 168 h (redes) ou 1.024 h (fundacionais); semente 42;
-  um modelo global por caso. Fundacionais: nenhum treino.
-- **Métricas:** nas usinas e na geração das casas, só horas de sol. nMAE, nRMSE e
-  viés normalizados pela média real; R²; erro da energia diária; **skill = 1 − RMSE
-  / RMSE da referência** (persistência de céu claro nas usinas, "igual a ontem" nas
-  casas), com IC 95% por bootstrap de dias inteiros.
+Tudo em `scripts/comum.py`: datas, regimes, dobras, janelas.
+
+- **Tarefa:** 24 valores horários do dia seguinte, emitidos às 00:00, com histórico até 23:00 da
+  véspera. Uma janela por dia de teste; nenhum modelo vê o dia que prevê.
+- **Teste:** usinas 01/08/2025 → 31/05/2026 (598 dias-usina, 8.940 horas avaliadas); casas 01/10 →
+  31/12/2020 (920 dias-casa na geração, 12.880 horas; 1.820 no consumo, 43.680 horas).
+- **Origem móvel:** todo modelo treinado é **refeito do zero no início de cada dobra**, só com dados
+  anteriores a ela. Usinas: 5 dobras de 61 dias. Casas: 3 dobras de ~31 dias. Fundacionais não treinam.
+- **Regimes.** **A:** só o histórico da própria série. **B** (só usinas): + céu claro + clima NASA do
+  **próprio dia** — é um **teto**, supõe previsão perfeita. **C** (só usinas): + céu claro + **previsão
+  do tempo real emitida na véspera** (ECMWF IFS 0,25°, Open-Meteo Previous Runs), no treino e no teste.
+  O arquivo de previsões começa em 06/03/2024, então o treino de C começa em 07/03/2024. **C é o regime
+  operacional.** Diagnósticos (só LightGBM e linear físico): **B-curto** = B com o treino cortado onde
+  o C começa, para separar o efeito da previsão do efeito do treino mais curto; **C-gfs** = C com o GFS
+  no lugar do ECMWF.
+- **Treino:** lotes idênticos em todas as redes (168 h de entrada, 500 passos, lote 16, 128 janelas,
+  semente 42, 30 dias de validação para parada antecipada); 1.024 h de contexto nos fundacionais.
+- **Normalização (regimes B e C):** cada série é padronizada **só com o treino anterior à validação**
+  (`comum.normaliza_por_treino`), e a previsão é desnormalizada depois. Não se usa o
+  `local_scaler_type` do NeuralForecast, que ajustaria a escala sobre todo o quadro — teste incluído.
+  As entradas de B e C em `tempos_redes_*.json` carregam o selo `normalizacao`.
+- **Métricas:** nas usinas e na geração das casas, só horas de sol. nMAE, nRMSE e viés normalizados
+  pela média real; R²; erro da energia diária; **skill = 1 − RMSE / RMSE da referência** (persistência
+  de céu claro nas usinas, "igual a ontem" nas casas), com IC 95% por bootstrap de dias inteiros.
+- **Quem empata com o melhor:** Diebold–Mariano por dia (perda quadrática, variância Newey–West,
+  correção Harvey–Leybourne–Newbold) contra o melhor do mesmo caso e regime, com **Holm** na família.
+  "Empatado" = p de Holm ≥ 0,05. Uma não rejeição não prova equivalência, e o melhor foi escolhido
+  neste mesmo teste — é um filtro de leitura, não um teste de superioridade.
+
+Saídas: `resultados/metricas.csv`, `metricas_por_dobra.csv`, `metricas_por_serie.csv`,
+`dm_vs_melhor.csv`, `dm_regimes.csv`.
 
 ## 4. Resultados
 
-Tabela completa: `resultados/metricas.csv` (e `metricas_por_serie.csv`).
+### Usinas — os três regimes
 
-### Usinas
+| | Regime A (só histórico) | skill [IC 95%] | | Regime C (previsão real) | skill | | Regime B (clima do dia, teto) | skill |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **TiRex-2** | **+0,141** [0,100; 0,173] | | **Mediana de todos** | **+0,372** | | **Mediana de todos** | **+0,515** |
+| 2 | Mediana de todos ∘ | +0,125 | | TiDE | +0,356 | | TiRex-2 ∘ | +0,509 |
+| 3 | Toto-2.0-313m ∘ | +0,120 | | TiRex-2 | +0,355 | | TFT | +0,491 |
+| 4 | ResNet-1D ∘ | +0,116 | | N-BEATSx | +0,354 | | TiDE | +0,487 |
+| 5 | Toto-2.0-22m | +0,095 | | NHITS | +0,354 | | TSMixerx | +0,485 |
+| 6 | Chronos-Bolt-small | +0,092 | | KAN | +0,352 | | TabPFN-TS | +0,481 |
+| 7 | TTM-r2 | +0,092 | | TFT | +0,351 | | LightGBM | +0,480 |
+| 8 | LightGBM | +0,084 | | TimesFM-2.5 | +0,344 | | NHITS | +0,479 |
 
-| | Regime B (clima do dia) | skill [IC 95%] | R² | | Regime A (só histórico) | skill [IC 95%] |
-|---|---|---|---|---|---|---|
-| 1 | **Mediana de todos** | **+0,51** [0,47; 0,53] | 0,913 | | **Mediana de todos** | **+0,11** [0,08; 0,14] |
-| 2 | TFT | +0,50 [0,46; 0,53] | 0,910 | | ResNet-1D | +0,10 [0,07; 0,13] |
-| 3 | TSMixerx | +0,49 | 0,906 | | Chronos-Bolt-small | +0,09 |
-| 4 | LSTM | +0,48 | 0,905 | | TTM-r2 | +0,09 |
-| 5 | NHITS / LightGBM / TimesFM-2.5 | +0,48 | 0,90 | | LightGBM | +0,09 |
-| | Chronos-2 | +0,44 | 0,888 | | Toto | +0,07 |
-| | **Linear físico (1 variável)** | **+0,42** | 0,880 | | LSTM / GRU | **−0,14 / −0,13** |
-| | TiDE | +0,08 | 0,696 | | iTransformer | −0,80 |
+∘ = empata com o melhor (Holm ≥ 0,05). **Em A, 3 de 33 empatam com o TiRex-2; em B, 1 de 15; em C,
+nenhum** — a mediana é a melhor do regime operacional de forma estatisticamente distinguível.
 
-- **R² horário 0,90–0,91 no regime B.** O 0,80–0,82 do `ESTADO_DO_PROJETO.md` é
-  em 5 minutos e no mesmo instante; na hora a série é mais lisa. Não são comparáveis
-  diretamente.
-- **TFT e TimesFM-2.5 com covariáveis empatam com o LightGBM** — o TimesFM sem treino
-  nenhum, só regressão linear nas covariáveis + o modelo no resíduo.
-- O iTransformer trata as duas usinas como variáveis de um mesmo sistema e mistura
-  as duas: não serve para séries independentes.
+**A escada do LightGBM** (o mesmo modelo nos cinco regimes, para isolar o efeito da entrada):
 
+| Regime | skill | o que é |
+|---|---|---|
+| A | +0,084 | só histórico |
+| C-gfs | +0,274 | previsão real, GFS |
+| **C** | **+0,330** | previsão real, ECMWF — **o regime operacional** |
+| B-curto | +0,469 | clima do dia, treino curto como o do C |
+| B | +0,480 | clima do dia, treino inteiro (teto) |
+
+- **O C fecha 62% do vão A→B** no LightGBM e **72%** na mediana dos 12 modelos que têm os três regimes.
+- **O que falta é qualidade de previsão, não treino.** B-curto × B não é significativo (p de Holm 0,081
+  no LightGBM, 0,070 no linear físico). Já B-curto × C é (p < 0,001): o treino curto não explica o vão.
+- **ECMWF > GFS:** C-gfs × C significativo (p < 0,001) nos dois modelos.
+- **C × A e C × B são significativos em todas as comparações** (13/13 e 15/15). A ordem A < C < B vale
+  para todo modelo e em todas as 5 dobras.
+
+![Regimes nas usinas](resultados/figuras/regimes_usinas.png)
 ![Dias de exemplo](resultados/figuras/dias_exemplo_cascavel.png)
 
-No dia nublado só o TFT (B), que recebeu o clima do dia, acompanha a queda; os
-modelos de regime A preveem um dia normal. É a diferença entre A e B numa imagem.
+No dia nublado os modelos de regime A preveem um dia normal; só quem recebeu clima acompanha a queda.
 
 ### Geração FV das 10 casas (inverno, sem clima)
 
 | | Modelo | skill [IC 95%] |
 |---|---|---|
-| 1 | KAN | **+0,17** [0,15; 0,19] |
-| 2 | Mediana de todos | +0,16 |
-| 3 | TCN | +0,15 |
-| 4 | NHITS | +0,14 |
-| 5 | TTM-r2 / Chronos-2 | +0,12 |
-| | LightGBM | +0,06 — viés de **+40%** |
-| | LSTM | −0,11 |
+| 1 | **Toto-2.0-313m** | **+0,178** [0,161; 0,196] |
+| 2 | Mediana de todos ∘ | +0,161 |
+| 3 | Timer-XL-84m ∘ | +0,158 |
+| 4 | Toto-2.0-22m ∘ | +0,149 |
+| 5 | TiRex-2 ∘ | +0,145 |
+| 6 | Toto ∘ | +0,126 |
+| 7 | TTM-r2 ∘ | +0,119 |
+| 8 | Chronos-2 ∘ | +0,118 |
 
-O LightGBM aprendeu o verão (treino de janeiro a setembro) e superestima o inverno.
-As redes pequenas, que normalizam cada janela, se adaptam ao nível recente.
+**21 dos 32 empatam com o melhor** — o caso quase não separa modelos. Os ganhos são pequenos (o melhor
++18% sobre "igual a ontem"): a geração de uma casa isolada é pouco previsível sem clima nem localização.
 
 ### Consumo das 20 casas
 
-| | Modelo | skill [IC 95%] | viés |
-|---|---|---|---|
-| 1 | LightGBM | **+0,20** [0,18; 0,22] | 0% |
-| 2 | Chronos-Bolt-small | +0,19 | **−18%** |
-| 3 | TTM-r2 | +0,19 | −2% |
-| 4 | **SparseTSF (32 parâmetros)** | +0,19 | −1% |
-| 5 | Mediana de todos | +0,19 | −20% |
-| | Chronos-2 / TiRex / TimesFM / Moirai | +0,17 a +0,18 | −21 a −23% |
+| | Modelo | skill [IC 95%] |
+|---|---|---|
+| 1 | **LightGBM** | **+0,206** [0,190; 0,222] |
+| 2 | Time-MoE-50M ∘ | +0,203 |
+| 3 | Timer-XL-84m ∘ | +0,202 |
+| 4 | Sundial-128m ∘ | +0,201 |
+| 5 | Toto-2.0-313m ∘ | +0,192 |
+| 6 | Chronos-Bolt-small ∘ | +0,191 |
+| 7 | **SparseTSF (32 parâmetros)** ∘ | +0,191 |
+| 9 | Mediana de todos ∘ | +0,191 |
 
-Empate estatístico entre os quatro primeiros. **Os fundacionais subestimam o
-consumo em ~20%**: preveem a mediana, e o consumo é assimétrico (picos curtos e
-altos). Para balanço de energia, o viés pesa mais que o erro horário.
+**9 dos 32 empatam com o melhor**, e o SparseTSF com **32 parâmetros** é um deles. A mediana cai para
+**9º** — robusta, mas não melhor que os melhores individuais. (Na v1 ela era 5ª; o lote 2 acrescentou
+8 modelos fortes neste caso.)
 
 ### Leitura transversal (regime A, os três casos)
 
-| Modelo | Usinas | FV casas | Consumo | Ranking médio | Parâmetros |
-|---|---|---|---|---|---|
-| **TTM-r2** | +0,09 | +0,12 | +0,19 | **3,3** | 3,0 M |
-| Chronos-Bolt-small | +0,09 | +0,08 | +0,19 | 5,0 | 48 M |
-| Chronos-2 | +0,06 | +0,12 | +0,18 | 5,7 | 120 M |
-| LightGBM | +0,09 | +0,06 | +0,20 | 6,0 | — |
-| KAN | +0,05 | +0,17 | +0,16 | 7,3 | 1,0 M |
-| SparseTSF | +0,05 | +0,02 | +0,19 | 9,7 | **32** |
-| ResNet-1D | +0,10 | +0,07 | +0,06 | 10,3 | 0,1 M |
-| LSTM | −0,14 | −0,11 | +0,14 | 18,3 | 0,2 M |
+| Modelo | Usinas | FV casas | Consumo | Ranking médio |
+|---|---|---|---|---|
+| **Toto-2.0-313m** | +0,120 | +0,178 | +0,192 | **3,0** |
+| Mediana de todos | +0,125 | +0,161 | +0,191 | 4,3 |
+| TiRex-2 | +0,141 | +0,145 | +0,179 | 6,3 |
+| Toto-2.0-22m | +0,095 | +0,149 | +0,183 | 6,7 |
+| Timer-XL-84m | +0,056 | +0,158 | +0,202 | 6,7 |
+| TTM-r2 | +0,092 | +0,119 | +0,191 | 7,3 |
+| LightGBM | +0,084 | +0,074 | +0,206 | 10,0 |
+
+O TTM-r2 era o mais consistente na v1 (3 M parâmetros, segundos em CPU); o lote 2 passou à frente dele,
+mas ele continua o melhor custo-benefício para embarcado entre os fundacionais.
 
 ![Custo x skill](resultados/figuras/custo_x_skill.png)
+![Skill por dobra](resultados/figuras/skill_por_dobra.png)
 
-## 5. Melhorias recomendadas nos modelos
+A figura por dobra é a justificativa da origem móvel: o nível de skill oscila bastante entre dobras
+(nas usinas o regime B vai de ~0,40 a ~0,61), mas a ordem B > C > A não se inverte em nenhuma. Nas
+casas o **ranking entre modelos troca** de dobra para dobra — um corte único escolheria outro vencedor.
 
-Em ordem de ganho esperado:
+## 5. Melhorias recomendadas, em ordem de ganho esperado
 
-1. **Trocar a fonte de clima, não o modelo.** O vão A→B (~0,40) é o que importa.
-   Testar previsão do tempo real (não o oráculo NASA): CAMS (satélite, `pvlib.iotools.get_cams`),
-   ERA5, ou a previsão numérica do Open-Meteo. O regime B é o teto; o objetivo é
-   chegar perto dele com uma previsão que exista às 00:00.
-2. **Modelo híbrido física + resíduo como padrão.** O linear sobre `poa_estimada` dá
-   +0,42; o TimesFM-2.5 no modo "regressão + modelo no resíduo" chega a +0,48 sem
-   treino. É interpretável, barato e não depende de retreino.
-3. **Mediana de vários modelos em vez de escolher um.** Nunca ficou abaixo do 2º
-   lugar; é a escolha segura para uma usina nova, quando não se sabe qual modelo
-   vai funcionar.
-4. **Para o embarcado: TTM e SparseTSF.** TTM é o mais consistente sem treino
-   (3 M parâmetros); SparseTSF empata com os melhores no consumo com 32 parâmetros.
-   Próximo passo: medir latência e energia no Raspberry Pi / ESP32 (hoje só x86).
-5. **Corrigir o viés dos fundacionais no consumo** (−20%): usar a média em vez da
-   mediana, ou uma correção de viés aprendida nos últimos 30 dias.
-6. **Geração das casas: obter a localização** e acrescentar o céu claro. Sem ela, o
-   LightGBM não tem como saber que é inverno. Dá para estimar latitude e longitude
-   pelo próprio perfil diário de produção (nascer, pôr e meio-dia solar).
-7. **Evitar:** LSTM/GRU só com histórico nas usinas (perdem da persistência de céu
-   claro); iTransformer para séries independentes; normalização por janela com
-   covariáveis (ver §7).
+1. **Melhorar a previsão do tempo, não o modelo de série.** O C já fecha 62–72% do vão, e o que resta é
+   qualidade de previsão (B-curto × B empata). Caminhos: ensemble de NWP, mais rodadas por dia, ou a
+   previsão por IA (Aurora, GraphCast, WeatherNext) no lugar do IFS determinístico.
+2. **Usar o regime C como padrão de relato.** O B é teto e não existe às 00:00; o A subestima o que o
+   sistema consegue. Todo número operacional deve ser do C.
+3. **Mediana de vários modelos em vez de escolher um** — 1ª em B e C, nunca abaixo de 9ª, e não exige
+   saber de antemão qual modelo serve para a usina nova.
+4. **Para o embarcado: TTM-r2 e SparseTSF.** O SparseTSF empata com o melhor no consumo com 32
+   parâmetros. Falta medir latência e energia no Raspberry Pi 5 / ESP32 — hoje só há medida em x86, que
+   é overhead de chamada Python, não custo de rede.
+5. **Corrigir o viés dos fundacionais no consumo** (~−20%): média em vez de mediana, ou correção
+   aprendida nos últimos 30 dias.
+6. **Geração das casas: obter a localização** e acrescentar céu claro. Dá para estimar latitude e
+   longitude pelo próprio perfil diário (nascer, pôr e meio-dia solar).
+7. **Evitar:** LSTM/GRU só com histórico nas usinas (perdem da persistência de céu claro);
+   iTransformer para séries independentes; `local_scaler_type` do NeuralForecast com covariáveis
+   (ajusta a escala sobre o teste também — ver §3 e §7).
 
 ## 6. O que não foi testado e deveria ser
 
-- Previsão do tempo real (item 1 acima) — o experimento de maior valor.
-- Ajuste fino (*fine-tuning*) do TTM e do Chronos-2 nos dados de cada usina.
-- Previsão probabilística (quantis) com avaliação por CRPS.
-- Origem móvel (vários cortes de teste) e teste de Diebold–Mariano entre os empatados.
+- Ajuste fino do TTM e do Chronos-2 nos dados de cada usina. **Bloqueado:** o `granite-tsfm` instala
+  incompleto nesta máquina (sem `tsfm_public.toolkit`) — ver `ambientes/LEIA-ME.md`.
+- Previsão probabilística (quantis) com avaliação por CRPS. Vários modelos já entregam quantis; o
+  `05_avalia.py` só avalia o ponto.
+- Regime C nas casas (precisa da localização) e um segundo ano de teste nas usinas.
+- Latência e energia no alvo embarcado real.
 
 ## 7. Limitações e o que aconteceu no caminho
 
-- **Defeito corrigido no regime B.** Na primeira rodada, GRU, LSTM, NHITS e KAN com
-  clima explodiram (até 2.400 kWh/h numa usina de 4 kW). A normalização por janela
-  do NeuralForecast dividia o clima futuro por uma escala da semana anterior; depois
-  de uma semana nublada, um dia de sol virava um valor enorme. Corrigido com
-  normalização global por série; os 7 modelos foram retreinados. A versão com defeito
-  está guardada em `resultados/metricas_antes_da_correcao_B.csv`. O TiDE (B) continua
-  fraco (+0,08) mesmo depois da correção — não investigado.
-- **Lotes diferentes.** As 9 redes do regime A nas usinas usaram lotes padrão (32 séries,
-  1.024 janelas); as demais, lotes menores (16 e 128) por falta de memória.
-- **Toto só nas usinas.** O PatchTST também só nas usinas (o mais lento).
-- **Um corte de teste por caso**, sem origem móvel.
-- **Regime B é um teto**, não uma previsão operacional.
-- **As casas são de outro país** e o teste é um único inverno.
+Seis defeitos encontrados e corrigidos entre 05 e 06/10/2026, dois deles com efeito nos números:
+
+- **Recorte de dobra (vazamento no `casas_cons`).** O `para_janelas` guardava todas as janelas do
+  `cross_validation`, e como o NeuralForecast conta as `n_windows` a partir do fim de **cada** série, a
+  H14 (que acaba 20 dias antes das outras) recuava e reemitia 20 dias de uma dobra anterior — com o
+  modelo da dobra seguinte, treinado com dados posteriores a eles. Também duplicava 480 linhas por
+  modelo e quebrava o `05_avalia`. Atingia as 9 redes do `casas_cons`, que foram refeitas; `usinas` e
+  `casas_prod` têm todas as séries terminando no mesmo dia e não mudaram. Nenhum número publicado antes
+  dependia disso (o `metricas.csv` exportado do Lactec não tinha redes no `casas_cons`).
+- **TiDE não usava o clima.** O `MLPResidual` do TiDE termina num LayerNorm sobre `temporal_width` (4 =
+  o número de exógenas), aplicado em **cada hora**: isso tira média e escala das 4 variáveis de clima
+  hora a hora, ou seja, apaga a amplitude — exatamente o sinal de "quanto sol faz". O TiDE ficava em
+  skill +0,07 em B e C, contra +0,47 a +0,49 dos pares, nas duas versões (v1 e v2). Com
+  `layernorm=False` vai a **+0,487 (B)** e **+0,356 (C)**, e passa a responder ao clima como os outros
+  (medido na dobra 1: nRMSE 0,59 → 0,28; `temporal_width` maior não resolve, só o layernorm). Antes da
+  correção o TiDE era a única exceção no teste C × B; agora as 15 comparações são significativas.
+- **Normalização ajustada sobre o teste.** O `local_scaler_type="standard"` do NeuralForecast ajusta a
+  escala sobre todo o quadro passado ao `cross_validation`, teste incluído. Substituído por
+  `comum.normaliza_por_treino` (só o treino anterior à validação), com teste de regressão em
+  `scripts/test_auditoria.py`. As 16 entradas de B e C foram refeitas. **O efeito nos números foi
+  pequeno** (LightGBM C de +0,3305 para +0,3298), mas o procedimento anterior não era defensável.
+- **Famílias nas figuras.** Os 8 modelos do lote 2 não estavam em `FAMILIA` e apareciam como "rede
+  treinada" nas figuras — justamente a comparação do achado "fundacionais empatam com as treinadas".
+- **Exclusão silenciosa na figura de regimes.** O filtro da figura tira quem está em `FAMILIA`, com
+  quatro exceções nomeadas; ao classificar o lote 2 corretamente, o TiRex-2 e o TabPFN-TS saíram da
+  figura — e eram justamente os dois que fecham menos vão (57,9% e 55,9%), o que inflava a mediana do
+  título em cerca de 3 pontos. Os dois voltaram à lista de exceções.
+- **Memória do Time-MoE-50M.** Um lote de 32 com contexto de 1.024 h leva a RAM de 0,7 para 13,1 GB e
+  derruba a rodada; passou a lote 8. Não muda a previsão (cada janela é independente).
+
+Outras limitações:
+
+- **Regime B é um teto**, não uma previsão operacional; o número operacional é o do C.
+- **Regime C começa em 07/03/2024** (início do arquivo de previsões), então treina com menos história
+  que A e B. O diagnóstico B-curto existe para medir esse efeito — e mostra que ele é pequeno.
+- **As três referências ingênuas são avaliadas em menos horas** que os outros 30 modelos em `usinas|A`
+  (8.800 a 8.933 contra 8.940): elas não têm previsão para os primeiros dias do teste. Os 30 modelos de
+  interesse estão todos no mesmo denominador.
+- **Dispositivo:** as 52 entradas de rede treinada rodaram em GPU (`dispositivo` em
+  `tempos_redes_*.json`). O SparseTSF e o ResNet-1D são implementações próprias e seguem o
+  `DISPOSITIVO`. GPU e CPU podem mudar o último dígito; os fundacionais rodaram em CPU.
+- **As casas são de outro país**, sem localização, e o teste é um único inverno.
+- **`pot_nominal_kWp` de Curitiba é estimada** (~9,6 kWp): todo número por kWp é provisório.
 
 ## 8. Como reproduzir
 
-Ambiente separado, fora do OneDrive: `C:\Users\L08741\.venvs\previsao` (Python 3.12,
-torch CPU) e `C:\Users\L08741\.venvs\moirai` (só para o Moirai, que exige torch antigo).
+Quatro ambientes, descritos em `ambientes/LEIA-ME.md` (leia os desvios de instalação — sem eles a
+montagem falha ou deixa o ambiente errado em silêncio). Rodar de `scripts/`:
 
-    python scripts/01_prepara_dados.py        # dados horarios (python global)
-    python scripts/02_referencias.py          # referencias, fisico, LightGBM
-    python scripts/03_fundacionais.py         # 6 fundacionais; Toto: "Toto --casos usinas"
-    .venvs/moirai/.../python scripts/03b_moirai.py
-    python scripts/04_redes_treinadas.py      # redes; pula as que ja estao em tempos_redes.json
-    python scripts/07_ensemble.py             # mediana de todos
-    python scripts/05_avalia.py               # metricas e IC
-    python scripts/06_figuras.py              # figuras
+    set DISPOSITIVO=cuda        # PowerShell: $env:DISPOSITIVO="cuda"; bash: export DISPOSITIVO=cuda
 
-O protocolo está todo em `scripts/comum.py`: datas, regimes, janelas.
+    python 01_prepara_dados.py        # dados horarios (NAO roda aqui: a base de 5 min ficou no Lactec)
+    python 02_referencias.py          # referencias, linear fisico, LightGBM (todos os regimes)
+    python 03_fundacionais.py         # fundacionais v1
+    <moirai>/python 03b_moirai.py     # Moirai 2.0
+    python roda_v2.py                 # redes treinadas, usinas e casas em dois processos
+    python roda_lote2.py              # lote 2 + ensemble + metricas + figuras
+    python -m unittest discover -s . -p test_auditoria.py   # regressoes do protocolo
+
+Modelos já concluídos são pulados (`resultados/tempos_*.json`), então basta reiniciar as filas. Para
+refazer um modelo, apague a entrada dele do `tempos_*.json` correspondente. O `04_redes_treinadas.py`
+aceita `--modelos` e `--regimes` para rodar um subconjunto.

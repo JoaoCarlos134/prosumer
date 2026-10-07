@@ -1,8 +1,8 @@
 # prossumidor
 
-Base do TCC (e, depois, do mestrado) de João Jachenski Junior: uma biblioteca Python para prever geração
-e consumo de prossumidores de energia — usina FV, casa com FV e bateria — do dado do medidor ao modelo
-embarcado. Nasce do projeto de PD&I Edge AI (GRD-ACS-2026-1-21-1, CC EMBRAPII Lactec), com uso acadêmico
+Base do TCC (e, depois, do mestrado) de João Carlos Jachenski Junior: uma biblioteca Python para prever geração
+e consumo de prossumidores de energia, usina FV, casa com FV e bateria, do dado do medidor ao modelo
+embarcado. Nasce do projeto de PD&I Edge AI (Lactec), com uso acadêmico
 autorizado pela gestão em 05/10/2026.
 
 **Repositório privado.** As séries das usinas são de terceiros e não têm consentimento para publicação.

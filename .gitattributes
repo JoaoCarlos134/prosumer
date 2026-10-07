@@ -1,0 +1,3 @@
+# LF no disco em qualquer maquina. Sem isto o checkout do Windows (core.autocrlf) poe CRLF e o gancho
+# mixed-line-ending do pre-commit converte de volta, derrubando o primeiro commit de cada arquivo.
+* text=auto eol=lf

@@ -31,7 +31,7 @@ def alinha(
     """
     r = referencia[[*CHAVES, "yhat"]].rename(columns={"yhat": "yhat_ref"})
     m = previsao.merge(real, on=CHAVES, validate="one_to_one").merge(r, on=CHAVES, validate="one_to_one")
-    m = m[np.isfinite(m[["y", "yhat", "yhat_ref"]]).all(axis=1)]
+    m = m.loc[m[["y", "yhat", "yhat_ref"]].abs().lt(np.inf).all(axis=1)]  # finito: NaN e inf saem
     m = m.sort_values(CHAVES, kind="stable").reset_index(drop=True)
     if m.empty:
         raise ValueError("Sem horas finitas em comum entre modelo, alvo e referencia")

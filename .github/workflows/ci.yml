@@ -14,19 +14,23 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Instalacao: o setup-uv cria e ativa um venv com a versao pedida. Nao usar `uv pip install --system`:
+# no runner Ubuntu o python do sistema e "externally managed" (PEP 668) e o uv recusa (codigo 2).
 jobs:
   qualidade:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # hatch-vcs precisa do historico para derivar a versao
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
+          python-version: "3.12"
+          activate-environment: true
           enable-cache: true
-      - run: uv python install 3.12
+          cache-dependency-glob: pyproject.toml # nao ha uv.lock
       - name: Instala
-        run: uv pip install --system -e ".[dev,graficos]"
+        run: uv pip install -e ".[dev,graficos]"
       - name: ruff (lint)
         run: ruff check src tests
       - name: ruff (formato)
@@ -41,15 +45,17 @@ jobs:
       matrix:
         python: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ matrix.python }}
+          activate-environment: true
           enable-cache: true
-      - run: uv python install ${{ matrix.python }}
+          cache-dependency-glob: pyproject.toml
       - name: Instala
-        run: uv pip install --system -e ".[dev,graficos]"
+        run: uv pip install -e ".[dev,graficos]"
       - name: pytest
         run: pytest --cov --cov-report=term-missing --cov-report=xml
       - name: Guarda a cobertura
@@ -63,17 +69,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [qualidade, testes]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v5
-      - run: uv python install 3.12
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
       - name: Constroi sdist e wheel
-        run: |
-          uv pip install --system build twine
-          python -m build
+        run: uv build
       - name: Confere os metadados do pacote
-        run: twine check dist/*
+        run: uvx twine check dist/*
       - uses: actions/upload-artifact@v4
         with:
           name: dist

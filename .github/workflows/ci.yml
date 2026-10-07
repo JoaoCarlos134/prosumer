@@ -14,11 +14,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Runner fixo em ubuntu-24.04: o ubuntu-latest passa para o Ubuntu 26 em 19/10/2026, e trocar de sistema
+# deve ser uma mudanca deliberada (subir o numero aqui), nao uma surpresa num push qualquer.
 # Instalacao: o setup-uv cria e ativa um venv com a versao pedida. Nao usar `uv pip install --system`:
 # no runner Ubuntu o python do sistema e "externally managed" (PEP 668) e o uv recusa (codigo 2).
 jobs:
   qualidade:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
@@ -39,7 +41,7 @@ jobs:
         run: mypy
 
   testes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -60,13 +62,13 @@ jobs:
         run: pytest --cov --cov-report=term-missing --cov-report=xml
       - name: Guarda a cobertura
         if: matrix.python == '3.12'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cobertura
           path: coverage.xml
 
   empacota:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [qualidade, testes]
     steps:
       - uses: actions/checkout@v5
@@ -79,7 +81,7 @@ jobs:
         run: uv build
       - name: Confere os metadados do pacote
         run: uvx twine check dist/*
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: dist
           path: dist/

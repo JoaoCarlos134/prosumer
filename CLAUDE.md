@@ -18,7 +18,8 @@ docs and code comments are in Portuguese (code comments without accents) — kee
 - **The 20 houses** (`casas`) come from a dataset of unknown origin/licence, apparently in Europe (northern
   hemisphere, DST). Don't publish them either.
 - Re-syncing from Lactec is done there by rerunning the export script; files here may be overwritten by it.
-  Commit work done here before a re-sync.
+  Commit work done here before a re-sync. Its default destination is the Lactec clone in
+  `OneDrive - Lactec/Documentos/1Projects/prossumidor` (was `~/repos/prossumidor` until 07/10/2026).
 
 ## Layout
 
@@ -121,15 +122,38 @@ persistencia de ceu claro nas usinas.
   geracao FV das casas 21 de 32; consumo 9 de 32 (inclusive o SparseTSF de 32 parametros). O poder de
   separacao do teste muda muito de caso para caso.
 
+## Machines
+
+Duas maquinas, um repositorio. Trabalhar sempre em `main` (o ramo `correcoes-v2-gpu` foi juntado em
+07/10/2026 e so fica como historico).
+
+| | Lactec (trabalho) | Casa |
+|---|---|---|
+| Clone | `OneDrive - Lactec/Documentos/1Projects/prossumidor` (atalho em `2026/Projeto_IA`) | — |
+| GPU | **nenhuma**: os quatro ambientes tem torch `+cpu` | RTX 4070 (torch cu128/cu130) |
+| Ambientes | `~/.venvs/{previsao,lote2,lote2_hf,moirai}` iguais aos `.txt` congelados (conferido 07/10) + `~/.venvs/prossumidor` (biblioteca, `-e .[dev,graficos,lightgbm]`, pre-commit instalado) | os quatro, ver `ambientes/LEIA-ME.md` |
+| TTM (`tsfm_public.toolkit`) | **funciona** | quebrado (instala sem o subpacote) |
+| Dados brutos / exportador | sim (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) | nao |
+
+O que roda em cada uma: biblioteca, avaliacao (`05_avalia.py`, `06_figuras.py`), referencias, LightGBM,
+fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes treinadas em origem
+movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `roda_lote2.py` ja pula o
+TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
+
 ## Next steps
 
-1. TCC passo E1 da proposta: esqueleto do pacote (`src/prossumidor/`), contratos de dados, dados
-   sinteticos, CI. Comecar de `scripts/comum.py` (protocolo) e `05_avalia.py` (metricas) — sao a
-   semente de `prossumidor.protocolo`.
-2. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (**bloqueado**: o `granite-tsfm` instala sem
-   o subpacote `tsfm_public.toolkit` nesta maquina), previsao probabilistica (CRPS), vies de consumo
-   dos fundacionais (~-20%), localizacao das casas para o ceu claro, latencia/energia no Raspberry
-   Pi 5 / ESP32 (passo E5 da proposta).
+1. TCC passo **E2** (versao 0.1). O E1 (esqueleto, contratos, dados sinteticos, CI) esta feito: 47
+   testes, 95% de cobertura, e `prossumidor.metricas` reproduz exatamente skill/nRMSE/MBE do
+   `metricas.csv` a partir das previsoes gravadas (o IC difere ~0,005 porque o `05_avalia.py` usa um
+   unico gerador para todos os modelos, entao o IC de cada um depende da ordem dos arquivos). Falta
+   portar de `comum.py`/`05_avalia.py` para `protocolo`: `normaliza_por_treino`, interpolacao do
+   historico nas janelas, mascara de horas avaliadas e corte de previsoes negativas, exogenas na
+   `Janela`; depois `fisica` (Haurwitz igual ao benchmark), `previsao` (referencias, linear fisico,
+   LightGBM, Chronos-2, TTM), e um teste de regressao local contra `metricas.csv` (pulado sem dados).
+2. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (o `granite-tsfm` esta incompleto na maquina
+   de casa, mas **funciona no Lactec** — fazer la, em CPU), previsao probabilistica (CRPS), vies de
+   consumo dos fundacionais (~-20%), localizacao das casas para o ceu claro, latencia/energia no
+   Raspberry Pi 5 / ESP32 (passo E5 da proposta).
 3. TFLite (feito em 05/10/2026 no Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
    os 32 `.tflite` em `legado/ia_solar/base_modelagem/embarcado/` foram recarregados do disco e todos
    reproduzem o R2 original (`verificacao_tflite.csv`). O `.tflite` guarda so a rede: imputacao,

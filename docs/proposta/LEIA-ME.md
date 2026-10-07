@@ -15,10 +15,10 @@ LICENSE**. Os dados de terceiros não têm autorização para publicação.
 O PDF preserva a proposta apresentada em 05/10/2026; os pedidos de autorização nele são históricos.
 O repositório já contém documentação, experimentos e código legado. A licença MIT inicial foi removida
 em 05/10/2026. A fundação do pacote (`src/prossumidor/`, contratos, dados sintéticos e CI; etapa E1)
-ainda é o próximo trabalho de biblioteca, depois da conclusão dos experimentos v2.
+foi concluída em 06/10/2026; o próximo trabalho de biblioteca é a etapa E2 (versão 0.1).
 
 O exportador `biblioteca_tcc/scripts/exporta_repo_prossumidor.py` fica **somente na máquina do Lactec**:
 contém o mapa de nomes e não deve ser copiado para cá. A sincronização é feita naquela máquina;
 registre as alterações locais antes de uma nova exportação.
 
-Para a revisão atual e as etapas E0–E8, veja [`revisao_projeto.md`](../../graphify-out/revisao_projeto.md).
+Para o estado atual veja [`CLAUDE.md`](../../CLAUDE.md); as etapas E0–E8 estão no PDF da proposta.

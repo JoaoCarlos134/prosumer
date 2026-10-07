@@ -1,11 +1,11 @@
 # Proposta: biblioteca `prossumidor`
 
 > **Estado em 06/10/2026.** Este estudo de viabilidade descreve uma arquitetura proposta;
-> os oito módulos ainda não formam um pacote instalável. O uso acadêmico para o TCC
+> o pacote instalável existe (etapa E1, 06/10/2026), com `contratos`, `protocolo`, `metricas` e `dados`; os outros módulos ainda não foram escritos. O uso acadêmico para o TCC
 > foi autorizado em 05/10/2026; a licença continua pendente e os dados permanecem
 > privados. O benchmark v2 deve ser concluído e validado antes de atualizar as decisões
 > baseadas nos testes v1 abaixo. Consulte [`CLAUDE.md`](../../CLAUDE.md) e a
-> [revisão atual](../../graphify-out/revisao_projeto.md).
+> [estado atual](../../CLAUDE.md).
 
 Uma biblioteca Python para prever **geração e consumo** de quem produz e consome
 energia — usina FV, casa com FV e bateria, edificação — do dado bruto do medidor

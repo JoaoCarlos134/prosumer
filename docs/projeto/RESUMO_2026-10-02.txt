@@ -1,6 +1,13 @@
 PROJETO_IA - SUMMARY OF TESTS, NETWORK ANALYSIS AND LIBRARY PROPOSAL
 2 October 2026
 
+NOTA DE LEITURA (06/10/2026): este resumo e um registro historico dos testes v1
+e da estrutura original no Lactec. Para o estado atual, consulte ../../CLAUDE.md
+e ../../graphify-out/revisao_projeto.md. A rede atual desta exportacao esta em
+../../graphify-out/graph.html. Correcao: a mediana ficou em 5o no consumo,
+a 0,012 do primeiro; os 32 TFLite foram recarregados em 05/10 e tiveram R2
+reproduzido. Os caminhos e as pendencias abaixo nao sao instrucoes atuais.
+
 Everything ran to completion. Two caveats: one test defect was found and fixed
 along the way, and the trained networks did not all run under identical settings
 (see "Problems found along the way").

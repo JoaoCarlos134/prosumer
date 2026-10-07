@@ -1,5 +1,17 @@
 # Análise de rede do projeto
 
+> **Nota de atualização — 06/10/2026.** O texto abaixo preserva a análise histórica de
+> 30/09–02/10/2026 e seus números (1.342 nós, 2.570 arestas), referentes ao projeto completo
+> no Lactec. A rede reconstruída deste repositório exportado está em
+> [`../../graphify-out/graph.html`](../../graphify-out/graph.html); a revisão atual está em
+> [`revisao_projeto.md`](../../graphify-out/revisao_projeto.md). Os caminhos antigos abaixo
+> pertencem à estrutura original. Os 32 TFLite já foram recarregados e verificados em
+> 05/10/2026, com pré-processamento salvo; ainda falta medir em hardware embarcado.
+> `frame5.parquet` e `frame5h.parquet` são intermediários regeneráveis pelos scripts;
+> os dados brutos necessários ficaram no Lactec. Sua ausência nesta exportação não prova
+> que o pipeline original esteja quebrado. O uso acadêmico foi autorizado em 05/10/2026;
+> os dados continuam privados, conforme [`CLAUDE.md`](../../CLAUDE.md).
+
 O projeto inteiro como um grafo: código, dados, documentos, literatura e
 conhecimento (achados, entregas, pendências, resultados). Feita em 30/09–02/10/2026
 no mesmo espírito do [Graphify](https://github.com/Graphify-Labs/graphify) — que foi

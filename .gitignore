@@ -10,3 +10,12 @@ desktop.ini
 .DS_Store
 experimentos/testes_previsao/resultados/log_*.txt
 graphify-out/
+dist/
+*.egg-info/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.hypothesis/
+.coverage
+coverage.xml
+.snakemake/

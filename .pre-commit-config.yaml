@@ -1,0 +1,32 @@
+# Ganchos so para a biblioteca (src/ e tests/). Os scripts do benchmark em experimentos/ ficam
+# fora de proposito: eles sao a versao congelada que produziu os resultados relatados, e reformatar
+# aquilo agora tornaria o diff do TCC ilegivel sem ganho nenhum.
+exclude: '^(experimentos/|legado/|docs/|graphify-out/)'
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        files: ^src/
+        additional_dependencies: [pandas-stubs, numpy, pandera, types-python-dateutil]

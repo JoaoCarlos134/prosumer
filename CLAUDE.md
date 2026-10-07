@@ -70,6 +70,7 @@ Pipeline (run from `scripts/`):
     roda_v2.py                   runs the v2 trained-network queue (plants and houses in two processes)
     roda_lote2.py                waits for v2's FIM lines, then runs batch 2 + ensemble + metrics + figures
     08_previsao_tempo.py         re-downloads the Open-Meteo forecast archive (already in dados/)
+    09_clima_casas.py            measured weather of the houses (Dingle station, figshare CC0) -> dados/clima_casas_horario.parquet
     01_prepara_dados.py          builds dados/*.parquet from Lactec raw data — does NOT run here
 
 Environments: four, frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
@@ -156,10 +157,11 @@ Proximos passos, do mais barato ao mais caro (horas de trabalho, sem contar maqu
 
 | Passo | Horas | Onde | O que |
 |---|---|---|---|
-| ~~Bug do fuso~~ | feito 07/10 | — | `SerieEnergia.de_dataframe(..., fuso_origem="UTC")` le instantes ingenuos noutro fuso; hora repetida resolvida serie a serie; o resto vira `ErroDeContrato` com sugestao. As casas entram como `fuso="Europe/Dublin", fuso_origem="UTC"` |
+| ~~Bug do fuso~~ | feito 07/10 | — | `SerieEnergia.de_dataframe`: `fuso_origem` (arquivo em outro fuso, ex. UTC) e `troca_de_horario="descarta"` (tira linhas em hora local impossivel e avisa); hora repetida resolvida serie a serie; o resto vira `ErroDeContrato` com as duas sugestoes. As casas entram como `fuso="Europe/Dublin", troca_de_horario="descarta"` (40 linhas: 29/03 e 25/10 01:00 x 20 casas) |
 | 9 redes do NeuralForecast (passo T) | 2 + GPU | **casa** | TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM na fila do `04_redes_treinadas.py` |
 | Portar o resto do benchmark para `protocolo` | 3 | qualquer | `normaliza_por_treino`, interpolacao do historico em `janelas()`, mascara de horas avaliadas e corte de negativos (ai o teste de regressao troca a copia em `real_avaliado` pela funcao da biblioteca), exogenas na `Janela`, checar passo regular contra `taxa` |
-| Clima medido das casas | 3 | qualquer | baixar `weather.csv` do figshare (colecao 6829134; 1 min: `soltot`, `drybulb`, vento, chuva), agregar por hora, alinhar com as casas (UTC). Abre o **regime B nas casas**: 6 testes no artigo em vez de 4. Regime C nas casas nao existe (previsoes arquivadas so desde 2024) |
+| ~~Clima medido das casas~~ | feito 07/10 | — | `scripts/09_clima_casas.py` -> `dados/clima_casas_horario.parquet` (GHI, ceu claro Haurwitz, kc, temperatura, vento, chuva, pressao; hora local de Dublin). **As casas estao em hora local de Dublin, nao em UTC** (salto de ~1 h na FV em 29/03 nas 10 casas); o clima (UTC) e convertido para a hora local antes de agregar |
+| **Regime B nas casas** | 4 + GPU | CPU (referencias, LightGBM, fundacionais) e casa (redes) | em `comum.py`: `REGIMES` das casas com "B" e `carrega` juntando o clima das casas (EXOG: `ghi_horario`, `ghi_ceu_claro`, `kc`, `temp_ar_horaria`; nao ha POA porque a orientacao dos paineis nao e publicada). Rodar 02 -> 03/03c (com covariaveis) -> 04 -> 07 -> 05 -> 06; regerar `Comparacao_modelos_regimes_A_B.xlsx`. Da 6 testes no artigo em vez de 4. Regime C nas casas nao existe (previsoes arquivadas so desde 2024) |
 | `ranking()` e `empata_com_melhor()` no `protocolo` | 3 | qualquer | metodo da aba Testaveis e da planilha A x B |
 | Resto do E2 | ~85 | qualquer | `fisica`, `previsao` (+ metadados de GPU/licenca/envio de dados por adaptador), `io` (o `io` dos arquivos brutos so no Lactec), `qualidade` |
 

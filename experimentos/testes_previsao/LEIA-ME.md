@@ -67,14 +67,21 @@ NeuralForecast não aceita covariáveis futuras, então não usaria a previsão 
 | **FV das casas** | `H*_Wh.csv` | só `Production(Wh)`, somado por hora |
 | **Consumo das casas** | `H*_Wh.csv` | só `Consumption(Wh)`, somado por hora |
 
-Tudo cabe em 5 MB: `dados/usinas_horario.parquet`, `casas_horario.parquet` e
-`previsao_tempo.parquet` (o arquivo de previsões do regime C).
+Tudo cabe em 5 MB: `dados/usinas_horario.parquet`, `casas_horario.parquet`,
+`previsao_tempo.parquet` (o arquivo de previsões do regime C) e, desde 07/10/2026,
+`clima_casas_horario.parquet` (clima medido das casas, de `scripts/09_clima_casas.py`; abre o regime B
+nas casas, ainda não rodado).
 
 **Problemas nos dados (e o que foi feito):**
 
 - **10 das 20 casas não têm FV** (produção zero o ano todo). Ficam fora da geração; entram no consumo.
-- **As casas são do hemisfério norte**, quase certamente Europa: produção máxima em maio, consumo
-  máximo em dezembro, e um dia de 25 horas no fim do horário de verão. O teste (out–dez) é inverno.
+- **As casas são da comunidade StoreNet, em Dingle, Irlanda** (identificadas em 07/10/2026): Khadem et al.
+  (2024), *Scientific Data*, doi:10.1038/s41597-024-03454-2, licença **CC0**. Produção máxima em maio,
+  consumo máximo em dezembro. O teste (out–dez) é inverno.
+- **O relógio das casas é a hora local de Dublin** (GMT no inverno, UTC+1 no verão), numa grade horária
+  sem buraco: o horário da geração FV salta ~1 h em 29/03 nas 10 casas, e o dia de 25 horas do fim do
+  horário de verão virou 24 linhas. As linhas de 29/03 01:00 (não existe) e 25/10 01:00 (existiu duas
+  vezes) vêm preenchidas. O clima do conjunto está em UTC e é convertido para a hora local antes de juntar.
 - **H14 termina em 11/12/2020**, 20 dias antes das outras 19. Isso tem consequência no protocolo:
   ver o defeito de recorte de dobra em §7.
 - **Nas usinas o inversor não registra direito à noite nem nas pontas do dia.** Noite vale zero;

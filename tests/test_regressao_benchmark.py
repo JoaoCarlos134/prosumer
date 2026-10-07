@@ -139,14 +139,19 @@ def test_ic95_proximo_do_publicado(caso: str, modelo: str, regime: str) -> None:
 
 
 def test_casas_reais_entram_no_fuso_de_dublin() -> None:
-    """As 20 casas vem em UTC e sao de Dublin: o caso que quebrava o contrato com ValueError (07/10/2026)."""
+    """As 20 casas estao em hora local de Dublin numa grade sem buraco (conferido em 07/10/2026 pelo salto
+    de ~1 h no horario da geracao FV em 29/03). Antes do conserto quebravam com ValueError cru do pandas."""
     from prossumidor import SerieEnergia
 
     c = pd.read_parquet(DADOS / "casas_horario.parquet")
     q = c.rename(columns={"casa": "unique_id", "cons_kWh": "y"})[["unique_id", "ds", "y"]]
-    s = SerieEnergia.de_dataframe(
-        q, unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h", fuso_origem="UTC"
-    )
-    assert len(s) == len(q) and len(s.series) == 20
+    with pytest.warns(UserWarning, match="40 linha"):  # 29/03 01:00 e 25/10 01:00 em cada uma das 20
+        s = SerieEnergia.de_dataframe(
+            q, unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h", troca_de_horario="descarta"
+        )
+    assert len(s) == len(q) - 40 and len(s.series) == 20
     for _, g in s.quadro.groupby("unique_id"):
-        assert (g["ds"].diff().dropna() == pd.Timedelta("1h")).all()
+        passos = g["ds"].diff().dropna().value_counts()
+        # tudo de hora em hora, menos o buraco de 3 h deixado pela linha descartada de 25/10
+        assert passos.get(pd.Timedelta("1h")) == len(g) - 2
+        assert passos.get(pd.Timedelta("3h")) == 1

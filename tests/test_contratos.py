@@ -100,7 +100,8 @@ def _quadro_horario(inicio: str, horas: int, ids: tuple[str, ...] = ("a",)) -> p
 
 
 def test_utc_ingenuo_de_lugar_com_horario_de_verao_precisa_de_fuso_origem() -> None:
-    # O caso real: arquivo em UTC sem fuso, serie de Dublin. Antes do conserto isto saia como ValueError.
+    # Arquivo em UTC sem fuso, serie de Dublin: ler como hora local cria a hora que nao existe. Antes do
+    # conserto isto saia como ValueError cru do pandas.
     q = _quadro_horario("2020-03-28 22:00", 6)
     with pytest.raises(ErroDeContrato, match="fuso_origem='UTC'"):
         SerieEnergia.de_dataframe(q, unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h")
@@ -142,6 +143,42 @@ def test_fuso_ja_declarado_no_dado_so_e_convertido() -> None:
         q, unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h", fuso_origem="America/Sao_Paulo"
     )
     assert (s.quadro["ds"].dt.tz_convert("UTC") == q["ds"]).all()
+
+
+def _grade_local_preenchida() -> pd.DataFrame:
+    """Hora local de Dublin numa grade sem buraco, como as casas de Dingle: 29/03 01:00 (nao existe) e uma
+    linha so em 25/10 01:00 (existiu duas vezes)."""
+    ds = pd.concat(
+        [
+            pd.Series(pd.date_range("2020-03-28 23:00", periods=4, freq="h")),
+            pd.Series(pd.date_range("2020-10-24 23:00", periods=4, freq="h")),
+        ],
+        ignore_index=True,
+    )
+    return pd.DataFrame({"unique_id": "a", "ds": ds, "y": np.arange(8.0)})
+
+
+def test_grade_local_preenchida_e_recusada_por_padrao_com_as_duas_sugestoes() -> None:
+    with pytest.raises(ErroDeContrato, match="troca_de_horario='descarta'"):
+        SerieEnergia.de_dataframe(
+            _grade_local_preenchida(), unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h"
+        )
+
+
+def test_descarta_tira_so_as_horas_impossiveis_e_avisa() -> None:
+    with pytest.warns(UserWarning, match="2 linha"):
+        s = SerieEnergia.de_dataframe(
+            _grade_local_preenchida(),
+            unidade="kWh",
+            grandeza="consumo",
+            fuso="Europe/Dublin",
+            taxa="h",
+            troca_de_horario="descarta",
+        )
+    assert len(s) == 6
+    assert 2.0 not in s.quadro["y"].tolist()  # 29/03 01:00
+    assert 6.0 not in s.quadro["y"].tolist()  # 25/10 01:00, linha unica de uma hora repetida
+    assert s.quadro["ds"].is_unique
 
 
 def test_coluna_ds_que_nao_e_data_vira_erro_de_contrato() -> None:

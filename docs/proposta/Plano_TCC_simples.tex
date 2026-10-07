@@ -1,0 +1,215 @@
+% Plano do TCC em linguagem simples. Fonte editavel do Plano_TCC_simples.pdf.
+% Compilar:  pdflatex Plano_TCC_simples.tex   (rodar duas vezes se mudar o numero de paginas)
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage[scaled=0.95]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[a4paper,left=2cm,right=2cm,top=1.5cm,bottom=1.8cm,footskip=0.8cm]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{array,tabularx,enumitem,fancyhdr,titlesec,needspace}
+\usepackage[hidelinks,pdftitle={Plano do TCC: biblioteca prossumidor},
+            pdfauthor={João Carlos Jachenski Junior}]{hyperref}
+
+% ------------------------------------------------------------------ cores
+\definecolor{acento}{HTML}{0F5C6E}
+\definecolor{claro}{HTML}{E8F1F3}
+\definecolor{cinza}{HTML}{5A6470}
+\definecolor{linha}{HTML}{C9D3D8}
+\definecolor{zebra}{HTML}{F5F8F9}
+\definecolor{escrita}{HTML}{9FC3CC}
+\definecolor{opcional}{HTML}{C9D3D8}
+\definecolor{texto}{HTML}{1D232A}
+\color{texto}
+
+% ------------------------------------------------------------------ aparencia
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\linespread{1.08}
+\titleformat{\section}{\color{acento}\bfseries\large}{\thesection.}{0.4em}{}
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\setlist[itemize]{leftmargin=13pt,itemsep=2pt,topsep=2pt,label=\textbullet}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\scriptsize\color{cinza}prossumidor -- plano do TCC em linguagem simples}
+\fancyfoot[R]{\scriptsize\color{cinza}página \thepage}
+
+% Cabecalho de tabela: fundo da cor de destaque, texto branco e negrito.
+\newcommand{\cab}[1]{\cellcolor{acento}\color{white}\bfseries #1}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.35}
+\newcommand{\nota}[1]{{\small\itshape\color{cinza}#1\par}}
+% Caixa de destaque com filete a esquerda.
+\newcommand{\caixa}[1]{%
+  \noindent\begin{tabular}{!{\color{acento}\vrule width 3pt}>{\columncolor{claro}}p{\dimexpr\linewidth-3pt-2\tabcolsep}}
+  \rule{0pt}{14pt}#1\vspace{6pt}\\
+  \end{tabular}\par\vspace{4pt}}
+% Celula do cronograma: mes ocupado.
+\newcommand{\on}{\cellcolor{acento}}
+\newcommand{\es}{\cellcolor{escrita}}
+\newcommand{\op}{\cellcolor{opcional}}
+
+\begin{document}
+\small
+
+% ================================================================== titulo
+{\color{acento}\bfseries\LARGE Plano do TCC: biblioteca prossumidor\par}
+\vspace{2pt}
+{\color{cinza}O que é, o que já foi feito e o que falta \;|\; João Carlos Jachenski Junior \;|\; Lactec \;|\; outubro de 2026\par}
+\vspace{8pt}
+
+\caixa{\textbf{Em uma frase:} o TCC é uma biblioteca em Python que prevê quanta energia uma casa ou
+usina solar vai \textbf{gerar} e \textbf{consumir} no dia seguinte, desde a leitura do medidor até um
+modelo pequeno que roda num aparelho barato (Raspberry Pi ou ESP32).}
+
+% ================================================================== proposta
+\section{A proposta}
+Hoje o projeto tem dezenas de scripts soltos que repetem as mesmas contas (datas de teste, métricas,
+limpeza de dados). Quando uma coisa muda, é preciso corrigir à mão em muitos lugares, e já houve erros
+por isso. A ideia é juntar tudo numa \textbf{biblioteca única, testada e reaproveitável}. Ela não
+reinventa o que já existe: usa bibliotecas prontas (pvlib, LightGBM, modelos de IA públicos) e só
+acrescenta o que é próprio deste projeto.
+
+\rowcolors{2}{white}{zebra}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}Y@{}}
+\cab{Parte da biblioteca} & \cab{O que faz, em poucas palavras} \\
+io          & Lê os arquivos reais: inversor Fronius, medidores das casas, dados de clima. \\
+qualidade   & Acha dados ruins: buracos, noite, troca de horário, casa sem painel solar. \\
+fisica      & Calcula a posição do sol e quanta luz chegaria num dia sem nuvens. \\
+protocolo   & Regras únicas de teste: que dias prever, como comparar, como medir o erro. \\
+previsao    & Um jeito único de usar qualquer modelo, do mais simples aos modelos de IA. \\
+diagnostico & Descobre painel sujo ou com defeito usando só os dados do inversor. \\
+embarcado   & Encolhe o modelo para caber e rodar num aparelho pequeno. \\
+economia    & Calcula a conta de luz: tarifas da ANEEL, bandeiras e a Lei 14.300. \\
+\end{tabularx}
+
+% ================================================================== feito
+\section{O que já foi feito}
+\begin{itemize}
+  \item \textbf{Teste grande de modelos de previsão (concluído em 06/10/2026).} 36 modelos comparados de
+        forma justa em três casos: 2 usinas solares (Cascavel e Curitiba), geração solar de 10 casas e
+        consumo de 20 casas. Cada modelo foi retreinado a cada período de teste, e as diferenças foram
+        checadas com testes estatísticos.
+  \item \textbf{Principais respostas do teste:} (1) saber o clima do dia pesa cerca de
+        \textbf{10 vezes mais} que escolher o modelo; (2) com a previsão do tempo real, recupera-se cerca
+        de \textbf{70\%} do ganho máximo possível; (3) modelos de IA prontos, sem treino, empatam ou
+        ganham dos treinados; (4) um modelo de só 32 números (SparseTSF) empata com os melhores no consumo.
+  \item \textbf{Seis erros encontrados e corrigidos} no caminho, entre eles um modelo que ignorava o
+        clima e uma normalização que ``espiava'' os dados de teste. Há testes automáticos para eles não
+        voltarem.
+  \item \textbf{Autorização} da gestão para uso acadêmico (05/10/2026) -- etapa E0.
+  \item \textbf{Base da biblioteca} (etapa E1): pacote instalável, checagem dos dados de entrada, dados de
+        exemplo gerados por código, 47 testes automáticos rodando no GitHub a cada mudança. Os 32 modelos
+        pequenos (TFLite) antigos também foram verificados.
+  \item \textbf{Prova de que a base está certa:} as métricas calculadas pela biblioteca batem
+        \textbf{exatamente} com os números publicados no teste grande.
+\end{itemize}
+
+% ================================================================== dados
+\section{Os dados}
+\rowcolors{2}{white}{zebra}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{2.4cm}Y>{\raggedright\arraybackslash}p{4.6cm}@{}}
+\cab{Dados} & \cab{Origem} & \cab{Pode publicar?} \\
+2 usinas solares & Cascavel (3,96 kWp) e Curitiba ($\sim$9,6 kWp), de proprietários particulares.
+                 & \textbf{Não.} Sem consentimento. Nomes trocados pela cidade. \\
+20 casas & Comunidade de energia na península de Dingle, Irlanda, ano de 2020, medição a cada 1 minuto.
+           Khadem et al. (2024), \textit{Scientific Data}, doi:10.1038/s41597-024-03454-2.
+         & \textbf{Sim.} Licença CC0 (domínio público). Basta citar o artigo. \\
+\end{tabularx}
+
+Com isso a biblioteca pode trazer \textbf{dados reais de exemplo}, e o céu claro das casas pode ser calculado.
+
+% ================================================================== modelos que faltam
+\needspace{8cm}
+\section{Testar os modelos que ficaram de fora}
+A pesquisa na literatura achou \textbf{127 modelos}; 28 foram testados. Dos 99 restantes,
+\textbf{70 só existem no artigo} (sem código aberto) e 5 precisam de imagens de satélite ou de um
+supercomputador. Os \textbf{24 que têm código} serão testados agora, na máquina de casa (com GPU).
+Não se espera que mudem as conclusões, mas elas ficam \textbf{mais fortes}: passam a valer para quase
+tudo o que existe pronto, e não só para uma amostra.
+
+\rowcolors{2}{white}{zebra}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{5.6cm}Y@{}}
+\cab{Grupo} & \cab{Modelos} & \cab{Cuidado} \\
+Redes que já estão no NeuralForecast (9) & TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer,
+  Informer, xLSTM, Time-LLM & Entram direto no script atual. Rodar na GPU. \\
+Modelos de IA prontos (8) & Moirai 1, MOMENT, VisionTS, Lag-Llama, FlowState, BuildingsBench,
+  TimesFM-3, TimeGPT & BuildingsBench só no consumo. TimesFM-3 só para pesquisa (licença). TimeGPT é
+  serviço pago na internet: só com as casas, \textbf{nunca} com as usinas. \\
+Código em repositório próprio (5) & CycleNet, DUET, Crossformer, S-Mamba, Mamba & Precisa de adaptador.
+  Mamba pode exigir Linux (WSL). \\
+Outros (2) & LLMTime, TimeGrad & LLM local (lento); TimeGrad prevê uma faixa, não um número. \\
+Previsão do tempo por IA & ECMWF AIFS no regime C, no lugar do IFS & Representa GraphCast e Aurora sem
+  rodar um modelo global. Depende de haver arquivo histórico. \\
+\end{tabularx}
+
+% ================================================================== falta
+\section{O que falta}
+Horas da proposta, descontando o que já foi adiantado. Semanas com cerca de \textbf{15 horas por semana}.
+
+\rowcolors{2}{white}{zebra}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{2.9cm}Y>{\raggedleft\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{2.5cm}@{}}
+\cab{Etapa} & \cab{O que é, em palavras simples} & \cab{Horas} & \cab{Semanas} \\
+E2 -- Versão 0.1 & Montar o miolo: ler e limpar os dados, física do sol, regras de teste e os primeiros
+  modelos (simples, LightGBM, Chronos-2, TTM). & 100 & 7 \\
+T -- Teste ampliado & Testar os 24 modelos da seção 4 e a previsão do tempo por IA; refazer métricas,
+  figuras e a planilha da literatura. & 80 & 5 a 6 \\
+E3 -- Checagem 1 & Refazer o teste grande e a análise de Cascavel usando a biblioteca. Os números
+  precisam bater com os antigos. & 40 & 3 \\
+E4 -- Versão 0.2 & Diagnóstico de painel sujo ou com defeito; encolher os modelos para aparelhos
+  pequenos; ligar o resto dos modelos. & 120 & 8 \\
+E5 -- Checagem 2 & Rodar os modelos pequenos num Raspberry Pi 5 e num ESP32 e medir tamanho, acerto,
+  velocidade e consumo de energia. & 50 & 3 a 4 \\
+E6 -- Versão 0.3 & Conta de luz (tarifas, bandeiras, Lei 14.300), manual com exemplos e publicação da
+  biblioteca. & 80 & 5 a 6 \\
+E7 -- Escrita & Escrever o TCC: fundamentos, como a biblioteca foi feita, as checagens e a discussão.
+  Pode começar já, em paralelo. & 80 & 5 a 6 \\
+\rowcolor{claro}\textbf{Total obrigatório} & & \textbf{550} & \textbf{37 (8--9 meses)} \\
+E8 -- Opcional & Artigo sobre a biblioteca (revista JOSS ou SoftwareX). & 30 & 2 \\
+\end{tabularx}
+
+\nota{Extras que melhoram o trabalho, mas não são obrigatórios: ajustar os modelos de IA aos nossos dados
+($\sim$10 h), prever uma faixa em vez de um número só ($\sim$20 h) e corrigir os modelos de IA que preveem
+cerca de 20\% a menos de consumo ($\sim$10 h).}
+
+% ================================================================== cronograma
+\needspace{9cm}
+\section{Cronograma sugerido}
+\rowcolors{1}{}{}
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1.5}
+\arrayrulecolor{linha}
+\begin{tabular}{|>{\hspace{4pt}}m{3.7cm}|*{10}{>{\centering\arraybackslash}m{1.3cm}|}}
+\hline
+\cab{Etapa} & \cab{out} & \cab{nov} & \cab{dez} & \cab{jan} & \cab{fev} & \cab{mar} & \cab{abr} & \cab{mai} & \cab{jun} & \cab{jul} \\ \hline
+E2 Versão 0.1        & \on & \on &     &     &     &     &     &     &     &     \\ \hline
+T Teste ampliado     &     & \on & \on &     &     &     &     &     &     &     \\ \hline
+E3 Checagem 1        &     &     &     & \on &     &     &     &     &     &     \\ \hline
+E4 Versão 0.2        &     &     &     &     & \on & \on &     &     &     &     \\ \hline
+E5 Hardware real     &     &     &     &     &     &     & \on &     &     &     \\ \hline
+E6 Versão 0.3        &     &     &     &     &     &     &     & \on &     &     \\ \hline
+E7 Escrita do TCC    & \es & \es & \es & \es & \es & \es & \es & \es & \es &     \\ \hline
+E8 Artigo (opcional) &     &     &     &     &     &     &     &     &     & \op \\ \hline
+\end{tabular}
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.35}
+
+\vspace{3pt}
+\nota{Outubro de 2026 a junho de 2027 para o obrigatório; julho para o artigo opcional. O teste ampliado
+roda na máquina de casa (GPU) ao mesmo tempo que o fim da E2. A escrita (cor mais clara) acontece aos
+poucos durante todo o período e se concentra no final.}
+
+% ================================================================== atencao
+\section{O que pode atrasar (resolver logo)}
+\begin{itemize}
+  \item \textbf{Licença da biblioteca:} a Lactec precisa decidir antes da publicação (etapa E6).
+  \item \textbf{Orientador e coorientador} confirmados por escrito, se ainda não estiver feito.
+  \item \textbf{Comprar o Raspberry Pi 5 e o ESP32} com antecedência: a entrega pode levar semanas (etapa E5).
+  \item \textbf{Treinos pesados} e o teste ampliado rodam no computador de casa, que tem placa de vídeo
+        (GPU); o do Lactec não tem.
+\end{itemize}
+
+\end{document}

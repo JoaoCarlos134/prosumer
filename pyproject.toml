@@ -8,7 +8,7 @@ description = "Previsao de geracao e consumo de prossumidores de energia, do dad
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version"]
-authors = [{ name = "Joao Jachenski Junior" }]
+authors = [{ name = "Joao Carlos Jachenski Junior" }]
 keywords = ["fotovoltaico", "previsao", "series temporais", "prossumidor", "edge ai"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",

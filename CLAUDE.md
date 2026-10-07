@@ -15,8 +15,11 @@ docs and code comments are in Portuguese (code comments without accents) — kee
 - **Authorization:** management cleared academic use (TCC) on 2026-10-05. Ownership/licence follow the
   project terms (proposal section 10). There is deliberately **no LICENSE file** (the MIT one created with
   the repo was removed on 2026-10-05): all rights reserved until Lactec decides. Don't add one.
-- **The 20 houses** (`casas`) come from a dataset of unknown origin/licence, apparently in Europe (northern
-  hemisphere, DST). Don't publish them either.
+- **The 20 houses** (`casas`, H1-H20) are the public dataset of Khadem et al. (2024), "Comprehensive Dataset
+  on Electrical Load Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2
+  (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,
+  1-min. Licence **CC0**: they can be published and used as real example data — cite the paper.
+  (Identified 2026-10-07; before that they were treated as unknown origin and kept private.)
 - Re-syncing from Lactec is done there by rerunning the export script; files here may be overwritten by it.
   Commit work done here before a re-sync. Its default destination is the Lactec clone in
   `OneDrive - Lactec/Documentos/1Projects/prossumidor` (was `~/repos/prossumidor` until 07/10/2026).
@@ -150,15 +153,25 @@ TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos si
    historico nas janelas, mascara de horas avaliadas e corte de previsoes negativas, exogenas na
    `Janela`; depois `fisica` (Haurwitz igual ao benchmark), `previsao` (referencias, linear fisico,
    LightGBM, Chronos-2, TTM), e um teste de regressao local contra `metricas.csv` (pulado sem dados).
-2. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (o `granite-tsfm` esta incompleto na maquina
+2. **Teste ampliado (passo T, ~80 h, GPU de casa, nov-dez/2026):** dos 99 modelos do levantamento nao
+   testados, 70 nao tem codigo e 5 pedem satelite ou supercomputador; os 24 com codigo entram agora
+   (mais forca para as conclusoes, nao para muda-las). Redes do NeuralForecast 3.1.9 ja instalado (9):
+   TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM. Fundacionais (8):
+   Moirai 1, MOMENT, VisionTS, Lag-Llama, FlowState (granite-tsfm: so no Lactec), BuildingsBench (so
+   consumo), TimesFM-3 (pesos nao comerciais: so pesquisa), TimeGPT (API paga externa: so casas, NUNCA
+   usinas). Repositorios proprios (5): CycleNet, DUET, Crossformer, S-Mamba, Mamba (mamba_ssm: talvez WSL).
+   Outros (2): LLMTime, TimeGrad. Mais o regime C com o ECMWF AIFS (IA) no lugar do IFS, se a Open-Meteo
+   tiver arquivo historico. Depois: 07 -> 05 -> 06 e atualizar a coluna "Testado" da planilha.
+   Plano completo em `docs/proposta/Plano_TCC_simples.tex` (fonte editavel do PDF).
+3. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (o `granite-tsfm` esta incompleto na maquina
    de casa, mas **funciona no Lactec** — fazer la, em CPU), previsao probabilistica (CRPS), vies de
-   consumo dos fundacionais (~-20%), localizacao das casas para o ceu claro, latencia/energia no
+   consumo dos fundacionais (~-20%), ceu claro das casas (localizacao agora conhecida: peninsula de Dingle, Irlanda), latencia/energia no
    Raspberry Pi 5 / ESP32 (passo E5 da proposta).
-3. TFLite (feito em 05/10/2026 no Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
+4. TFLite (feito em 05/10/2026 no Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
    os 32 `.tflite` em `legado/ia_solar/base_modelagem/embarcado/` foram recarregados do disco e todos
    reproduzem o R2 original (`verificacao_tflite.csv`). O `.tflite` guarda so a rede: imputacao,
    escala e desnormalizacao foram reconstruidas e salvas em
    `embarcado/preprocessamento_<usina>_<conjunto>.json` — um dispositivo precisa do arquivo + JSON.
    A latencia x86 (~2,5 us float, ~11 us int8) e overhead de chamada Python, nao custo de rede.
-4. Lacunas conhecidas do projeto: geometria do telhado de Curitiba desconhecida (travam os artigos A e
+5. Lacunas conhecidas do projeto: geometria do telhado de Curitiba desconhecida (travam os artigos A e
    B); artigos A e B sem bibliografia.

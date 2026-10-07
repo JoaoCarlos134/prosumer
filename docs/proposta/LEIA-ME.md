@@ -4,13 +4,15 @@ A proposta de transformar o código do projeto numa biblioteca Python e de usar 
 TCC (e, depois, mestrado). **Estado em 06/10/2026:** o uso acadêmico para o TCC foi autorizado pela
 gestão em 05/10/2026, conforme [`CLAUDE.md`](../../CLAUDE.md). Titularidade e licença seguem os termos
 do projeto; a decisão de licença continua com o Lactec. O repositório é privado e **não tem arquivo
-LICENSE**. Os dados de terceiros não têm autorização para publicação.
+LICENSE**. Os dados das usinas são de terceiros e não têm autorização para publicação; as 20 casas são o conjunto público CC0 de Khadem et al. (2024), que pode ser publicado com citação.
 
 | Arquivo | O que é |
 |---|---|
 | `Proposta_TCC_prossumidor.pdf` | proposta para a gestão (10 páginas): objetivos, etapas E0–E8, cronograma, decisões pedidas |
 | `PROPOSTA_BIBLIOTECA.md` | estudo de viabilidade técnica (30/09/2026): módulos, de onde vem cada código, riscos |
 | [`gera_proposta_tcc.py`](gera_proposta_tcc.py) | gera o PDF (precisa de `reportlab`) |
+| `Plano_TCC_simples.pdf` | plano em linguagem simples (07/10/2026): proposta, o que foi feito, teste ampliado, etapas com horas e cronograma |
+| [`Plano_TCC_simples.tex`](Plano_TCC_simples.tex) | fonte editável do plano; compilar com `pdflatex Plano_TCC_simples.tex` |
 
 O PDF preserva a proposta apresentada em 05/10/2026; os pedidos de autorização nele são históricos.
 O repositório já contém documentação, experimentos e código legado. A licença MIT inicial foi removida

@@ -27,7 +27,8 @@ MOTIVO = {
     "xLSTM": "Precisa de kernels compilados para GPU; a família está representada pelo TiRex (fundacional baseado em xLSTM).",
     "Espaco de estados (Mamba)": "Sem código aberto pronto para estas séries (horárias, uma a uma) em CPU.",
     "Informado por fisica": "Cada artigo usa a física da sua aplicação; a ideia está coberta pelo linear físico e pelo regime com clima.",
-    "Grafo espaco-temporal": "Precisa de muitas séries vizinhas ligadas por um grafo; o projeto tem 2 usinas e 20 casas sem localização.",
+    "Grafo espaco-temporal": "Precisa de muitas séries vizinhas ligadas por um grafo e de código aberto; o projeto tem 2 usinas e 20 casas "
+                             "de uma só comunidade (Dingle, Irlanda), sem coordenadas de cada casa.",
     "Transferencia / meta-aprendizado": "Sem código aberto pronto para estas séries; os fundacionais cobrem a ideia de transferir sem treino.",
     "Outros (arquitetura propria)": "Sem código aberto pronto para estas séries.",
 }
@@ -133,6 +134,91 @@ TT = pd.DataFrame(linhas, columns=["Modelo", "Tipo", "Família", "Nome no levant
                                    "Treina nos dados?", "Aceita clima?", "Usinas: regimes", "FV das casas", "Consumo das casas",
                                    "Observação"])
 
+# ---------------------------------------------------------------- testaveis: testados (do melhor ao pior) + o que falta
+# GPU: "Sim" = inviavel sem GPU; "Recomendada" = roda em CPU, mas lento (horas); "Não" = CPU basta.
+GPU_RAPIDO = ("Não", "Roda em segundos em CPU.")
+GPU_ZERO_SHOT = ("Não", "Zero-shot: só inferência, minutos em CPU.")
+GPU_REDE = ("Recomendada", "Retreinada a cada dobra; na v2 rodou em CUDA. Em CPU funciona, mas leva horas.")
+GPU_TESTADOS = {
+    "TabPFN-TS": ("Sim", "Em CPU leva dias; rodou em CUDA."),
+    "TiRex-2": ("Não", "Roda em CPU e precisa da GPU ESCONDIDA (CUDA_VISIBLE_DEVICES=-1): o kernel sLSTM exige nvcc."),
+    "DLinear": ("Não", "Rede minúscula; CPU basta."),
+    "SparseTSF": ("Não", "32 parâmetros; CPU basta."),
+}
+for mod, tipo, *_ in T:
+    if mod not in GPU_TESTADOS:
+        GPU_TESTADOS[mod] = {"Fundacional": GPU_ZERO_SHOT, "Rede treinada": GPU_REDE}.get(tipo, GPU_RAPIDO)
+
+# Os 24 do levantamento com codigo aberto que ainda faltam (plano do TCC, passo T). Nome = coluna Modelo do levantamento.
+FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
+    ("TimeMixer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; entra no 04_redes_treinadas.py."),
+    ("TimesNet", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
+    ("DeepAR", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; probabilístico (usar a mediana)."),
+    ("TimeXer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; feito para variáveis externas (regimes B e C)."),
+    ("FEDformer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
+    ("Autoformer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
+    ("Informer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
+    ("xLSTM", "Rede treinada (NeuralForecast)", *GPU_REDE, "Usar a versão do NeuralForecast, que não precisa dos kernels CUDA do NX-AI/xlstm."),
+    ("Time-LLM", "Rede treinada (NeuralForecast)", "Sim", "Tem um LLM dentro (GPT-2 ou maior); inviável em CPU.",
+     "Já no NeuralForecast instalado."),
+    ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.x; o ambiente moirai (uni2ts) já existe."),
+    ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.", "Pacote momentfm; precisa de ambiente próprio."),
+    ("VisionTS", "Fundacional", *GPU_ZERO_SHOT, "Pacote visionts (trata a série como imagem)."),
+    ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Código no GitHub; dependências antigas (gluonts)."),
+    ("FlowState", "Fundacional", *GPU_ZERO_SHOT, "granite-tsfm: completo só na máquina do Lactec."),
+    ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios: só no consumo das casas."),
+    ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),
+    ("TimeGPT", "Fundacional (serviço)", "Não", "Roda nos servidores da Nixtla (API paga).",
+     "Envia os dados para fora: SÓ com as casas (CC0), NUNCA com as usinas."),
+    ("CycleNet", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador."),
+    ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TFB)."),
+    ("Crossformer", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TSLib)."),
+    ("S-Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",
+     "Precisa de adaptador (TSLib); pode exigir Linux (WSL)."),
+    ("Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",
+     "Precisa de adaptador; pode exigir Linux (WSL)."),
+    ("LLMTime", "LLM", "Sim", "Roda um LLM local para gerar a série.", "Lento mesmo em GPU; usar um LLM aberto no lugar do GPT-3."),
+    ("TimeGrad", "Generativo (difusão)", *GPU_REDE, "PyTorchTS; prevê uma faixa (avaliar a mediana e, depois, o CRPS)."),
+]
+sem_levantamento = {f[0] for f in FALTA} - set(M.Modelo)
+if sem_levantamento:
+    raise ValueError(f"Modelos a testar que nao estao no levantamento: {sorted(sem_levantamento)}")
+ja_testados = {f[0] for f in FALTA} & testados
+if ja_testados:
+    raise ValueError(f"Ja testados, tirar da lista FALTA: {sorted(ja_testados)}")
+
+# Posicao: em cada (caso, regime) principal, rank pelo skill; normaliza para 0 (1o) .. 1 (ultimo) e tira a media.
+# Assim um modelo que so rodou com clima (TFT) e comparavel a um que rodou em tudo. O "ranking medio" do
+# LEIA-ME dos testes (regime A, tres casos) vai numa coluna a parte e e reproduzido exatamente.
+principais = metricas[metricas.regime.isin(["A", "B", "C"])].copy()
+grupo = principais.groupby(["caso", "regime"]).skill
+principais["rk"] = grupo.rank(ascending=False, method="min")
+principais["pct"] = (principais.rk - 1) / (grupo.transform("size") - 1)
+pos_rel = principais.groupby("modelo").pct.agg(["mean", "size"])
+noA = principais[principais.regime == "A"].pivot(index="modelo", columns="caso", values="rk")
+rk_medio_A = noA.dropna().mean(axis=1)
+skill = principais.pivot_table(index="modelo", columns=["caso", "regime"], values="skill")
+COLS_SKILL = [("usinas", "A"), ("usinas", "B"), ("usinas", "C"), ("casas_prod", "A"), ("casas_cons", "A")]
+tipo_de = {r[0]: r[1] for r in T}
+obs_de = {r[0]: r[8] for r in T}
+lin_t = []
+for pos, (mod, r) in enumerate(pos_rel.sort_values("mean").iterrows(), start=1):
+    gpu, por_que = GPU_TESTADOS[mod]
+    lin_t.append([pos, mod, "Testado", tipo_de[mod], gpu, por_que, round(r["mean"], 3),
+                  round(rk_medio_A[mod], 1) if mod in rk_medio_A else None, int(r["size"]),
+                  *[round(skill.at[mod, c], 3) if c in skill.columns and pd.notna(skill.at[mod, c]) else None for c in COLS_SKILL],
+                  obs_de.get(mod, "")])
+for nome, grp, gpu, por_que, cuidado in FALTA:
+    lin_t.append([None, nome, "Falta testar", grp, gpu, por_que, None, None, None, *[None] * len(COLS_SKILL), cuidado])
+lin_t.append([None, "ECMWF AIFS (regime C)", "Falta testar", "Previsão do tempo por IA", "Não",
+              "Só baixar o arquivo de previsões (Open-Meteo).", None, None, None, *[None] * len(COLS_SKILL),
+              "Não é um modelo de série: troca o IFS pelo AIFS no regime C. Representa GraphCast/Aurora/WeatherNext, "
+              "que exigem rodar um modelo global. Depende de haver arquivo histórico."])
+TV = pd.DataFrame(lin_t, columns=["Posição", "Modelo", "Situação", "Tipo", "Precisa de GPU?", "Por que (GPU)",
+                                  "Posição relativa média (0 = melhor)", "Ranking médio (regime A, 3 casos)",
+                                  "Combinações avaliadas", "Skill usinas A", "Skill usinas B", "Skill usinas C",
+                                  "Skill FV casas A", "Skill consumo A", "Observação / cuidado"])
+
 # ---------------------------------------------------------------- planilha
 wb = Workbook()
 AZUL, CINZA_CLARO = "0F5C6E", "F2F5F6"
@@ -169,11 +255,19 @@ leia = [
     ("Visão geral dos modelos de previsão de geração solar e consumo", True),
     (f"Projeto Edge AI (GRD-ACS-2026-1-21-1). Gerada em {date.today():%d/%m/%Y} por docs/literatura/scripts/gera_visao_geral_modelos.py.", False),
     ("", False),
-    ("Esta planilha NÃO tem resultados. Ela diz o que existe, o que foi testado e por que o resto ficou de fora.", True),
-    ("Os resultados (skill, erros, testes estatísticos) estão em experimentos/testes_previsao/resultados/ e em experimentos/testes_previsao/LEIA-ME.md.", False),
+    ("Esta planilha diz o que existe, o que foi testado e por que o resto ficou de fora. Só a aba Testáveis traz resultados (posição e skill).", True),
+    ("Os resultados completos (erros, IC, testes estatísticos) estão em experimentos/testes_previsao/resultados/ e em experimentos/testes_previsao/LEIA-ME.md.", False),
     ("", False),
     ("Abas", True),
     ("Resumo — quantos modelos foram encontrados e testados em cada abordagem (fórmulas sobre a aba Encontrados).", False),
+    (f"Testáveis — tudo o que dá para testar com estes dados: os {len(pos_rel)} já testados, do melhor ao pior, e os "
+     f"{len(TV) - len(pos_rel)} que faltam (24 do levantamento com código aberto + a previsão do tempo por IA no regime C), "
+     "com a indicação de quem precisa de GPU.", False),
+    ("   Ordem: em cada caso e regime principal (A, B, C), os modelos são ordenados pelo skill; a posição vira 0 (1º) a 1 (último) "
+     "e tira-se a média. Assim quem só rodou com clima (TFT, TSMixerx, linear físico) se compara com quem rodou em tudo. "
+     "O 'Ranking médio (regime A, 3 casos)' é o mesmo número do LEIA-ME dos testes.", False),
+    ("   GPU: 'Sim' = inviável sem GPU; 'Recomendada' = roda em CPU, mas leva horas; 'Não' = CPU basta. "
+     "A máquina do Lactec não tem GPU; a de casa tem (RTX 4070).", False),
     ("Encontrados — os 127 modelos do levantamento de 28/09/2026: o que cada um tem de diferente, onde achar, se foi testado e, se não, por quê.", False),
     (f"Testados — {len(TT)} modelos, variantes e referências presentes nas métricas atuais ({len(metricas)} combinações caso/regime), correspondendo a {len(testados)} entradas do levantamento e 7 referências/combinações.", False),
     ("Bibliotecas — 40 bibliotecas de previsão (versão, licença, situação), conferidas em 28/09/2026.", False),
@@ -241,6 +335,26 @@ wr.column_dimensions["A"].width = 34
 for L in "BCDE":
     wr.column_dimensions[L].width = 14
 wr.freeze_panes = "A2"
+
+# Testaveis (logo depois do Resumo)
+wv = wb.create_sheet("Testáveis", 2)
+grava_tabela(wv, TV, "Testaveis", [8, 26, 13, 24, 12, 40, 12, 12, 11, 9, 9, 9, 9, 9, 60])
+COR_GPU = {"Sim": "F8D2BE", "Recomendada": "FFF0C2"}
+cinza = Font(name="Arial", size=10, italic=True, color="5A6470")
+for i, row in enumerate(TV.itertuples(index=False), start=2):
+    g = wv.cell(row=i, column=5)
+    if row[4] in COR_GPU:
+        g.fill = PatternFill("solid", fgColor=COR_GPU[row[4]])
+    g.font = Font(name="Arial", size=10, bold=row[4] == "Sim")
+    if row[2] == "Falta testar":
+        for j in (2, 3, 4, 6, 15):
+            wv.cell(row=i, column=j).font = cinza
+    for j in range(10, 15):
+        wv.cell(row=i, column=j).number_format = "+0.000;-0.000;0.000"
+    wv.cell(row=i, column=7).number_format = "0.000"
+    wv.cell(row=i, column=8).number_format = "0.0"
+    wv.cell(row=i, column=1).number_format = "0"
+    wv.cell(row=i, column=9).number_format = "0"
 
 # Bibliotecas e Benchmarks (como no levantamento)
 for aba, larg in [("Bibliotecas", [18, 22, 50, 10, 12, 12, 9, 14, 10, 20, 40]), ("Benchmarks", [16, 60, 7, 30, 40, 11])]:

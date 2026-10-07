@@ -27,3 +27,11 @@ dist/
 .coverage
 coverage.xml
 .snakemake/
+# LaTeX: so o .tex e o .pdf entram
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc

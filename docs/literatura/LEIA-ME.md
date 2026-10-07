@@ -4,7 +4,8 @@
 |---|---|
 | `smart_buildings.docx` | o texto da revisão Edge AI em smart buildings (rascunho) |
 | `1Referencias_projetoIA.xlsx` | planilha-mestre das 71 referências da revisão |
-| `Visao_geral_modelos_previsao.xlsx` | **visão geral, sem resultados:** 127 entradas bibliográficas, 28 representadas nos testes; 36 modelos, variantes e referências nas métricas v2/lote 2, cobertura por caso/regime, bibliotecas e benchmarks |
+| `Comparacao_modelos_regimes_A_B.xlsx` | para o artigo de congresso (07/10/2026): só regimes A e B, explicados em linguagem simples; ranking dos 36 modelos com skill por teste e quem empata com o melhor; ganho com o clima nas usinas. Gerada por `scripts/gera_comparacao_A_B.py` |
+| `Visao_geral_modelos_previsao.xlsx` | **visão geral:** 127 entradas bibliográficas, 28 representadas nos testes; 36 modelos, variantes e referências nas métricas v2/lote 2, cobertura por caso/regime, bibliotecas e benchmarks. A aba **Testáveis** (07/10/2026) lista tudo o que dá para testar com estes dados: os 36 testados do melhor ao pior e os 25 que faltam, marcando quem precisa de GPU |
 | `Modelos_previsao_geracao_consumo.xlsx` | o levantamento original (28/09/2026), preservado como registro histórico; a coluna de resultados e os indicadores de execução estão desatualizados |
 | `Referencias_previsao_consumo_embarcado.xlsx` | 15 artigos de previsão de consumo com IA embarcada |
 | `rede_keywords_vosviewer.json` | rede de palavras-chave (VOSviewer) |

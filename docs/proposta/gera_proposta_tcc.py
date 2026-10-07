@@ -109,7 +109,7 @@ capa = [
                           "artificial embarcada para smart buildings (CC EMBRAPII Lactec)"],
     ["Uso acadêmico proposto", "Trabalho de Conclusão de Curso (TCC), com continuidade possível "
                                "em dissertação de mestrado"],
-    ["Autor", "João Jachenski Junior"],
+    ["Autor", "João Carlos Jachenski Junior"],
     ["Data", "05 de outubro de 2026"],
     ["Situação", "Rascunho para discussão com a gestão — depende de autorização (seção 11)"],
 ]
@@ -518,7 +518,7 @@ def pagina(c, doc):
 doc = BaseDocTemplate(SAIDA, pagesize=A4, leftMargin=2.3 * cm, rightMargin=2.3 * cm,
                       topMargin=2.2 * cm, bottomMargin=2.0 * cm,
                       title="Proposta acadêmica — biblioteca prossumidor",
-                      author="João Jachenski Junior",
+                      author="João Carlos Jachenski Junior",
                       subject="Proposta de TCC no âmbito do projeto GRD-ACS-2026-1-21-1")
 fr = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")
 doc.addPageTemplates([PageTemplate("capa", [fr], onPage=capa_fundo),

@@ -98,5 +98,21 @@
  "Toto|casas_cons|A": {
   "segundos": 19.1,
   "janelas": 1820
+ },
+ "Chronos-2|casas_prod|B": {
+  "segundos": 340.8,
+  "janelas": 920
+ },
+ "Chronos-2|casas_cons|B": {
+  "segundos": 789.0,
+  "janelas": 1820
+ },
+ "TimesFM-2.5|casas_prod|B": {
+  "segundos": 218.2,
+  "janelas": 920
+ },
+ "TimesFM-2.5|casas_cons|B": {
+  "segundos": 407.7,
+  "janelas": 1820
  }
 }

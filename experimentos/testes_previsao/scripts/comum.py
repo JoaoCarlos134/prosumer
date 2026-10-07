@@ -21,6 +21,11 @@ Regimes
      poucas horas depois das 00:00; sao horas de noite, sem efeito na avaliacao (so horas de sol).
   Diagnosticos (so LightGBM e linear fisico): B-curto = B com o treino cortado em INICIO_C (separa o
   efeito da previsao do efeito do treino mais curto); C-gfs = C com o GFS no lugar do ECMWF.
+  B nas casas (07/10/2026): clima MEDIDO na estacao de Dingle (dados/clima_casas_horario.parquet, de
+  09_clima_casas.py), ja na hora local das casas. Usa os mesmos nomes de EXOG das usinas para o resto do
+  pipeline nao mudar: como a orientacao dos paineis nao e publicada, nao ha POA, e os nomes 'poa_*' recebem
+  o plano HORIZONTAL (poa_ceu_claro = GHI de ceu claro; poa_estimada = GHI medido). Nao existe C nas casas:
+  as previsoes arquivadas da Open-Meteo so comecam em 2024.
 
 Origem movel (protocolo v2, 05/10/2026)
   Todo modelo treinado e retreinado no inicio de cada dobra, so com dados anteriores a ela:
@@ -45,7 +50,7 @@ ENTRADA_NN = 168            # horas de historico das redes treinadas (7 dias)
 EXOG = ["poa_ceu_claro", "ghi_horario", "poa_estimada", "temp_ar_horaria"]
 REFIT_DIAS = {"usinas": 61, "casas_prod": 31, "casas_cons": 31}
 INICIO_C = pd.Timestamp("2024-03-07")       # primeiro dia completo com previsao arquivada
-REGIMES = {"usinas": ["A", "B", "C"], "casas_prod": ["A"], "casas_cons": ["A"]}
+REGIMES = {"usinas": ["A", "B", "C"], "casas_prod": ["A", "B"], "casas_cons": ["A", "B"]}
 DIAGNOSTICOS = ["B-curto", "C-gfs"]
 NWP = {"C": "ecmwf_ifs025", "C-gfs": "gfs_seamless"}
 SITIOS = {"Cascavel": (-24.83, -53.65), "Curitiba": (-25.4284, -49.2733)}
@@ -116,6 +121,8 @@ def carrega(caso, regime="A"):
             # 10 das 20 casas nao tem FV (producao zero o ano todo): ficam so as que geram
             com_fv = d.groupby("unique_id").y.sum()
             d = d[d.unique_id.isin(com_fv[com_fv > 0].index)]
+        if regime == "B":
+            d = d.merge(clima_casas(), on="ds", how="left")
     d = d[d.ds <= CASOS[caso]["fim"]]
     if caso == "usinas" and regime in ("C", "C-gfs", "B-curto"):
         d = d[d.ds >= INICIO_C]
@@ -124,6 +131,15 @@ def carrega(caso, regime="A"):
     d["_o"] = d.unique_id.str.extract(r"H(\d+)", expand=False).astype(float).fillna(0)
     d = d.sort_values(["_o", "unique_id", "ds"]).drop(columns="_o")
     return d.reset_index(drop=True)
+
+
+def clima_casas():
+    """Clima medido das casas com os nomes de EXOG das usinas (plano horizontal; ver o cabecalho)."""
+    c = pd.read_parquet(DADOS / "clima_casas_horario.parquet")
+    sol = c.ghi_ceu_claro > 0
+    return pd.DataFrame({"ds": c.ds, "poa_ceu_claro": c.ghi_ceu_claro,
+                         "ghi_horario": c.ghi_horario.where(sol, 0.0), "poa_estimada": c.ghi_horario.where(sol, 0.0),
+                         "temp_ar_horaria": c.temp_ar_horaria})
 
 
 def dias_teste(d, caso):

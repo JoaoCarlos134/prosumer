@@ -5,12 +5,15 @@
   semanal_168h       o mesmo horario de 7 dias atras
   media_7d           media do mesmo horario nos ultimos 7 dias
   persist_ceu_claro  (usinas) indice de ceu claro de ontem x ceu claro de hoje; so geometria
-  linear_fisico      (usinas, B) energia = a + b * poa_estimada, ajustado no treino
-  LightGBM           global; A: defasagens + calendario; B (usinas): + ceu claro e clima do dia;
+  linear_fisico      (usinas e FV das casas, B) energia = a + b * poa_estimada, ajustado no treino
+                     (nas casas e o plano horizontal: GHI medido; ver comum.py)
+  LightGBM           global; A: defasagens + calendario; B: + ceu claro e clima do dia (usinas: NASA;
+                     casas: estacao de Dingle);
                      C: + ceu claro e previsao real da vespera
 LightGBM e linear fisico sao retreinados no inicio de cada dobra (origem movel, comum.dobras).
 Nas usinas rodam tambem os diagnosticos B-curto e C-gfs (ver comum.py).
 """
+import sys
 import numpy as np, pandas as pd, lightgbm as lgb
 from comum import carrega, dias_teste, dobras, grava, CASOS, EXOG, H, REGIMES, DIAGNOSTICOS
 
@@ -35,7 +38,7 @@ def tabela_features(d, caso):
         f["tot_d1"] = pd.DataFrame(np.repeat(tot.shift(1).to_numpy()[:, None], 24, 1), index=Y.index, columns=Y.columns)
         f["tot_media7"] = pd.DataFrame(np.repeat(tot.shift(1).rolling(7, min_periods=5).mean().to_numpy()[:, None], 24, 1),
                                        index=Y.index, columns=Y.columns)
-        if caso == "usinas":
+        if "poa_ceu_claro" in g.columns:          # usinas (todo regime) e casas no regime B
             X = {c: matriz(g, c) for c in EXOG}
             cs = X["poa_ceu_claro"]
             k_ontem = (tot.shift(1) / cs.sum(axis=1).shift(1)).replace([np.inf, -np.inf], np.nan)
@@ -73,10 +76,13 @@ def lgbm(treino, tt, cols):
     return m.predict(tt[cols])
 
 
-def roda(caso):
+def roda(caso, so_regimes=None):
     cal = ["h", "dow", "doy_sin", "doy_cos", "serie_cod"]
     lags = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
     regimes = REGIMES[caso] + (DIAGNOSTICOS if caso == "usinas" else [])
+    regimes = [r for r in regimes if so_regimes is None or r in so_regimes]
+    # linear fisico = energia ~ irradiancia: so faz sentido para geracao, nao para o consumo
+    com_linear = caso != "casas_cons"
     for regime in regimes:
         d = carrega(caso, regime)
         t = tabela_features(d, caso)
@@ -98,14 +104,17 @@ def roda(caso):
             treino = t[(t.dia < ini) & t.y.notna()]
             m = (tt.dia >= ini) & (tt.dia <= fim)
             tt.loc[m, "lgb"] = lgbm(treino, tt[m], cols)
-            if regime != "A":
+            if regime != "A" and com_linear:
                 tt.loc[m, "linear_fisico"] = linear_fisico(treino, tt[m])[m[m].index]
         salva("LightGBM", "lgb")
-        if regime != "A":
+        if regime != "A" and com_linear:
             salva("linear_fisico", "linear_fisico")
         print("%-10s %-7s %4d dias de teste, %d dobras, treino desde %s" % (caso, regime, len(teste), len(dobras(caso)), t.dia.min().date()), flush=True)
 
 
 if __name__ == "__main__":
-    for caso in CASOS:
-        roda(caso)
+    # Uso: python 02_referencias.py [caso ...] [--regimes A,B]   (sem argumentos: tudo, como na v2)
+    args = sys.argv[1:]
+    so_regimes = args[args.index("--regimes") + 1].split(",") if "--regimes" in args else None
+    for caso in [a for a in args if a in CASOS] or list(CASOS):
+        roda(caso, so_regimes)

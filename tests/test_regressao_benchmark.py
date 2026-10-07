@@ -136,3 +136,17 @@ def test_ic95_proximo_do_publicado(caso: str, modelo: str, regime: str) -> None:
     lo, hi = pm.skill_ic95(m, ref)
     assert lo < pm.skill(m, ref) < hi
     assert np.allclose([lo, hi], [pub.skill_ic95_inf, pub.skill_ic95_sup], atol=0.01)
+
+
+def test_casas_reais_entram_no_fuso_de_dublin() -> None:
+    """As 20 casas vem em UTC e sao de Dublin: o caso que quebrava o contrato com ValueError (07/10/2026)."""
+    from prossumidor import SerieEnergia
+
+    c = pd.read_parquet(DADOS / "casas_horario.parquet")
+    q = c.rename(columns={"casa": "unique_id", "cons_kWh": "y"})[["unique_id", "ds", "y"]]
+    s = SerieEnergia.de_dataframe(
+        q, unidade="kWh", grandeza="consumo", fuso="Europe/Dublin", taxa="h", fuso_origem="UTC"
+    )
+    assert len(s) == len(q) and len(s.series) == 20
+    for _, g in s.quadro.groupby("unique_id"):
+        assert (g["ds"].diff().dropna() == pd.Timedelta("1h")).all()

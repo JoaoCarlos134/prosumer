@@ -75,8 +75,16 @@ class SerieEnergia:
         fuso: str,
         taxa: str,
         coluna_valor: str = "y",
+        fuso_origem: str | None = None,
     ) -> SerieEnergia:
-        """Valida e embrulha. `coluna_valor` permite ler um quadro cujo valor nao se chama `y`."""
+        """Valida e embrulha. `coluna_valor` permite ler um quadro cujo valor nao se chama `y`.
+
+        `fuso_origem` diz em que fuso estao os instantes SEM fuso (ingenuos) do quadro; o padrao e o
+        proprio `fuso`. Existe porque e comum o arquivo vir em UTC e a serie ser de um lugar com horario
+        de verao: as casas de Dingle vem em UTC e sao de `Europe/Dublin`. Ler esses instantes como hora
+        local cria horas que nao existem (o adianto do relogio). Nesse caso: `fuso="Europe/Dublin",
+        fuso_origem="UTC"`. Instantes que ja tem fuso so sao convertidos, e `fuso_origem` e ignorado.
+        """
         if quadro.empty:
             raise ErroDeContrato("Serie vazia: nao da para inferir nem validar nada")
         x = quadro.rename(columns={coluna_valor: "y"}).copy()
@@ -87,7 +95,7 @@ class SerieEnergia:
             # Sem mascara explicita, o unico default defensavel e "NaN e invalido, o resto e valido".
             x["valido"] = x["y"].notna()
         x["unique_id"] = x["unique_id"].astype(str)
-        x["ds"] = _com_fuso(x["ds"], fuso)
+        x["ds"] = _com_fuso(x["ds"], fuso, fuso_origem or fuso, x["unique_id"])
         try:
             validado = esquema(fuso).validate(x, lazy=True)
         except (pa.errors.SchemaError, pa.errors.SchemaErrors) as e:
@@ -160,9 +168,34 @@ def passo(taxa: str) -> pd.Timedelta:
         raise ErroDeContrato(f"Taxa de duracao variavel nao serve como passo: {taxa!r}") from e
 
 
-def _com_fuso(ds: pd.Series, fuso: str) -> pd.Series:
-    """Garante datetime com fuso. Serie ingenua e interpretada como ja estando no fuso declarado."""
-    d = pd.to_datetime(ds)
+def _com_fuso(ds: pd.Series, fuso: str, origem: str, ids: pd.Series) -> pd.Series:
+    """Garante datetime com fuso. Instantes ingenuos sao lidos em `origem` e convertidos para `fuso`.
+
+    Horario de verao, quando `origem` tem um:
+    - hora repetida (o relogio atrasa): resolvida pela ordem, serie a serie; a primeira ocorrencia e o
+      horario de verao. Exige que cada serie esteja em ordem cronologica, como um medidor grava.
+    - hora que nao existe (o relogio adianta): nenhum medidor em hora local grava nela, entao o mais
+      provavel e o arquivo estar em UTC. Vira `ErroDeContrato` com essa sugestao, nunca o ValueError cru
+      do pandas: foi o que aconteceu com as casas de Dingle declaradas como `Europe/Dublin`.
+    """
+    try:
+        d = pd.to_datetime(ds)
+    except (ValueError, TypeError) as e:
+        raise ErroDeContrato(f"Coluna ds nao e de datas: {e}") from e
     if isinstance(d.dtype, pd.DatetimeTZDtype):
         return d.dt.tz_convert(fuso)
-    return d.dt.tz_localize(fuso)
+    try:
+        return d.dt.tz_localize(origem).dt.tz_convert(fuso)
+    except ValueError:
+        pass  # alguma hora de troca de horario: resolve serie a serie abaixo
+    partes = []
+    for uid, g in d.groupby(ids, sort=False):
+        try:
+            partes.append(g.dt.tz_localize(origem, ambiguous="infer", nonexistent="raise"))
+        except ValueError as e:
+            raise ErroDeContrato(
+                f"Serie {uid!r}: instantes impossiveis no fuso {origem!r} por causa do horario de verao "
+                f"({e}). Se o arquivo esta em UTC, passe fuso_origem='UTC'. Se esta em hora local, confira "
+                "se a serie esta em ordem cronologica e sem a hora repetida faltando."
+            ) from e
+    return pd.concat(partes).reindex(d.index).dt.tz_convert(fuso)

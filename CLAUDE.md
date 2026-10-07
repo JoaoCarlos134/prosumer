@@ -156,7 +156,7 @@ Proximos passos, do mais barato ao mais caro (horas de trabalho, sem contar maqu
 
 | Passo | Horas | Onde | O que |
 |---|---|---|---|
-| Bug do fuso | 2 | qualquer | `contratos._com_fuso`: com `Europe/Dublin` as casas quebram em 29/03/2020 com `ValueError` cru. Ler em UTC por padrao, tratar `ambiguous`/`nonexistent`, sempre levantar `ErroDeContrato`; teste com as casas |
+| ~~Bug do fuso~~ | feito 07/10 | — | `SerieEnergia.de_dataframe(..., fuso_origem="UTC")` le instantes ingenuos noutro fuso; hora repetida resolvida serie a serie; o resto vira `ErroDeContrato` com sugestao. As casas entram como `fuso="Europe/Dublin", fuso_origem="UTC"` |
 | 9 redes do NeuralForecast (passo T) | 2 + GPU | **casa** | TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM na fila do `04_redes_treinadas.py` |
 | Portar o resto do benchmark para `protocolo` | 3 | qualquer | `normaliza_por_treino`, interpolacao do historico em `janelas()`, mascara de horas avaliadas e corte de negativos (ai o teste de regressao troca a copia em `real_avaliado` pela funcao da biblioteca), exogenas na `Janela`, checar passo regular contra `taxa` |
 | Clima medido das casas | 3 | qualquer | baixar `weather.csv` do figshare (colecao 6829134; 1 min: `soltot`, `drybulb`, vento, chuva), agregar por hora, alinhar com as casas (UTC). Abre o **regime B nas casas**: 6 testes no artigo em vez de 4. Regime C nas casas nao existe (previsoes arquivadas so desde 2024) |

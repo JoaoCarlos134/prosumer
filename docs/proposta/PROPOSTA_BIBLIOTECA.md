@@ -136,6 +136,25 @@ Os testes v1 de [`experimentos/testes_previsao/`](../../experimentos/testes_prev
 | **Regime explícito (histórico × clima conhecido)** | o vão entre regimes (~0,40) é dez vezes a diferença entre algoritmos; misturar os dois numa tabela engana |
 | **Cada fundacional num ambiente isolado** | `uni2ts` exige torch 2.4; `granite-tsfm` do GitHub trouxe torch 2.11 e transformers 5; o Toto quebrou com o `huggingface_hub` novo |
 
+## 5c. O que a v2 e a revisão de 07/10/2026 mudaram
+
+A v2 (origem móvel, 36 modelos, lote 2) e a revisão do repositório em 07/10/2026 confirmam a maior
+parte da 5b e mudam o resto. Cada linha diz o que fazer na biblioteca e de onde veio.
+
+| Decisão | Por quê |
+|---|---|
+| **Prioridade: `io.clima` antes de mais adaptadores de modelo** | o clima pesa ~10× mais que o modelo: nas usinas, o ganho mediano com o clima (A→B) é +0,489 de skill, e o 1º e o 5º modelo em A diferem 0,046 (`Comparacao_modelos_regimes_A_B.xlsx`). Fontes a cobrir: NASA (já usada), **estação local medida** (as casas de Dingle têm uma, a cada minuto), previsão ECMWF IFS (regime C) e ECMWF AIFS (IA). `io.clima` deve dizer se o arquivo de previsões cobre as datas pedidas: o da Open-Meteo só começa em 06/03/2024 |
+| **Conjunto padrão de `compara()` atualizado**: persistência de céu claro, linear físico, LightGBM, **Toto-2.0-313m**, **TiRex-2**, TTM, + mediana | na v2 o Toto-2.0-313m tem o melhor ranking médio no regime A (3,0) e o TiRex-2 é o melhor modelo individual nas usinas nos três regimes; o TTM continua o candidato do embarcado (3 M parâmetros, segundos em CPU). Chronos-2 sai do padrão |
+| **Saída padrão = mediana** (reforçado) | empata com o melhor nos **4 de 4** testes A e B (Diebold–Mariano com Holm); é 1ª nas usinas em B e C |
+| **Fuso: trabalhar em UTC e tratar o horário de verão de forma explícita** | bug confirmado em 07/10: as casas estão em UTC, e declarar o fuso real (`Europe/Dublin`) quebra `SerieEnergia.de_dataframe` em 29/03/2020 com um `ValueError` do pandas, não com `ErroDeContrato`. No Brasil não aparece (sem horário de verão desde 2019); na Europa e nos EUA, sempre |
+| **Proveniência no contrato**: fonte, licença e local em toda série | as casas foram tratadas como "origem desconhecida, não publicar" até 07/10; são o conjunto **CC0** de Khadem et al. (2024), *Scientific Data*, doi:10.1038/s41597-024-03454-2. O que pode ser publicado depende disso |
+| **Dados reais de exemplo**: `dados.casas_dingle()` baixa do figshare, com a citação | CC0 permite. Não embutir no pacote (dezenas de MB); baixar e guardar em cache. Os sintéticos continuam para os testes |
+| **Cada adaptador declara o que exige e o que pode fazer**: `requer_gpu` (não / recomendada / sim), licença dos pesos, se envia dados para fora | GPU: TabPFN-TS, Time-LLM, Mamba e LLMTime são inviáveis sem GPU; o TiRex-2 precisa da GPU **escondida** (`CUDA_VISIBLE_DEVICES=-1`). Licença: TimesFM-3 só para pesquisa. Dados: o TimeGPT roda nos servidores da Nixtla — a biblioteca deve **recusar** série privada nesses adaptadores sem permissão explícita (as usinas nunca podem ir) |
+| **`ranking()` e `empata_com_melhor()` no `protocolo`** | posição de 0 (1º) a 1 (último) em cada caso e regime, média nos testes em que o modelo rodou, sempre informando quantos foram; empate = Diebold–Mariano com Holm, p ≥ 0,05. Posições próximas quase nunca são diferenças reais (na FV das casas, 21 de 32 empatam com o melhor) |
+| **Gerador aleatório por chamada no IC** | o `05_avalia.py` usa um gerador único para todos os modelos: o IC de cada um depende da ordem dos arquivos (diferença de ~0,005). A biblioteca já semeia cada chamada |
+| **Teste de regressão contra o benchmark** (feito em 07/10) | `tests/test_regressao_benchmark.py` recalcula as 131 linhas de `metricas.csv` com a biblioteca e exige igualdade; quebrar a referência ou o corte de negativos derruba 99 delas. A máscara de horas avaliadas ainda é uma cópia no teste, até ser portada |
+| **O repositório é a cópia principal** | o exportador do Lactec copia arquivos antigos por cima dos novos (planilhas, `comum.py`, resultados da GPU). Trabalho da biblioteca não depende dele |
+
 ## 6. Princípios de projeto
 
 - **Adaptadores finos, dependências opcionais.** `pip install prossumidor` traz só

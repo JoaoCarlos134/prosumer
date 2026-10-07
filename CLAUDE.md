@@ -143,16 +143,35 @@ fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes t
 movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `roda_lote2.py` ja pula o
 TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
 
+## Where to continue (handoff de 07/10/2026, maquina do Lactec)
+
+Feito em 07/10: ramo juntado em `main`; CI consertada (venv do setup-uv, nao `--system`); pre-commit com
+mypy 2.4 e `.gitattributes` LF; **teste de regressao** `tests/test_regressao_benchmark.py` (recalcula as 131
+linhas de `metricas.csv` com a biblioteca, igualdade numerica; 184 testes no total); plano do TCC em
+`docs/proposta/Plano_TCC_simples.tex`; aba Testaveis e `Comparacao_modelos_regimes_A_B.xlsx` em
+`docs/literatura/`; casas identificadas (CC0, Dingle). **O que isso muda na biblioteca** esta na secao 5c
+de `docs/proposta/PROPOSTA_BIBLIOTECA.md` — ler antes de mexer em `contratos`, `protocolo` ou adaptadores.
+
+Proximos passos, do mais barato ao mais caro (horas de trabalho, sem contar maquina rodando sozinha):
+
+| Passo | Horas | Onde | O que |
+|---|---|---|---|
+| Bug do fuso | 2 | qualquer | `contratos._com_fuso`: com `Europe/Dublin` as casas quebram em 29/03/2020 com `ValueError` cru. Ler em UTC por padrao, tratar `ambiguous`/`nonexistent`, sempre levantar `ErroDeContrato`; teste com as casas |
+| 9 redes do NeuralForecast (passo T) | 2 + GPU | **casa** | TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM na fila do `04_redes_treinadas.py` |
+| Portar o resto do benchmark para `protocolo` | 3 | qualquer | `normaliza_por_treino`, interpolacao do historico em `janelas()`, mascara de horas avaliadas e corte de negativos (ai o teste de regressao troca a copia em `real_avaliado` pela funcao da biblioteca), exogenas na `Janela`, checar passo regular contra `taxa` |
+| Clima medido das casas | 3 | qualquer | baixar `weather.csv` do figshare (colecao 6829134; 1 min: `soltot`, `drybulb`, vento, chuva), agregar por hora, alinhar com as casas (UTC). Abre o **regime B nas casas**: 6 testes no artigo em vez de 4. Regime C nas casas nao existe (previsoes arquivadas so desde 2024) |
+| `ranking()` e `empata_com_melhor()` no `protocolo` | 3 | qualquer | metodo da aba Testaveis e da planilha A x B |
+| Resto do E2 | ~85 | qualquer | `fisica`, `previsao` (+ metadados de GPU/licenca/envio de dados por adaptador), `io` (o `io` dos arquivos brutos so no Lactec), `qualidade` |
+
+Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
+arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.
+No Windows, editar arquivos com Python grava CRLF: o gancho `mixed-line-ending` conserta e derruba o
+commit uma vez, e so adicionar de novo.
+
 ## Next steps
 
-1. TCC passo **E2** (versao 0.1). O E1 (esqueleto, contratos, dados sinteticos, CI) esta feito: 47
-   testes, 95% de cobertura, e `prossumidor.metricas` reproduz exatamente skill/nRMSE/MBE do
-   `metricas.csv` a partir das previsoes gravadas (o IC difere ~0,005 porque o `05_avalia.py` usa um
-   unico gerador para todos os modelos, entao o IC de cada um depende da ordem dos arquivos). Falta
-   portar de `comum.py`/`05_avalia.py` para `protocolo`: `normaliza_por_treino`, interpolacao do
-   historico nas janelas, mascara de horas avaliadas e corte de previsoes negativas, exogenas na
-   `Janela`; depois `fisica` (Haurwitz igual ao benchmark), `previsao` (referencias, linear fisico,
-   LightGBM, Chronos-2, TTM), e um teste de regressao local contra `metricas.csv` (pulado sem dados).
+1. TCC passo **E2** (versao 0.1). O E1 (esqueleto, contratos, dados sinteticos, CI) esta feito e o teste de
+   regressao contra `metricas.csv` tambem (07/10). O que falta do E2 esta na tabela acima.
 2. **Teste ampliado (passo T, ~80 h, GPU de casa, nov-dez/2026):** dos 99 modelos do levantamento nao
    testados, 70 nao tem codigo e 5 pedem satelite ou supercomputador; os 24 com codigo entram agora
    (mais forca para as conclusoes, nao para muda-las). Redes do NeuralForecast 3.1.9 ja instalado (9):

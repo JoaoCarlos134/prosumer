@@ -105,7 +105,7 @@ persistencia de ceu claro nas usinas.
 - A escada das usinas: melhor em **A +0,141** (TiRex-2) -> **C +0,372** -> **B +0,515** (mediana de
   todos nos dois ultimos). LightGBM nos cinco regimes: A +0,084, C-gfs +0,274, C +0,330,
   B-curto +0,469, B +0,480.
-- A previsao real fecha **62%** do vao A->B no LightGBM e **71%** na mediana dos 12 modelos com os tres
+- A previsao real fecha **62%** do vao A->B no LightGBM e **72%** na mediana dos 12 modelos com os tres
   regimes. (A figura de regimes imprime a mediana; nao confundir com o numero do LightGBM.)
 - O que falta e **qualidade da previsao, nao treino curto**: B-curto x B nao e significativo
   (Holm 0,081 no LightGBM, 0,070 no linear fisico). ECMWF ganha do GFS (C-gfs x C, p < 0,001).

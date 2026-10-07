@@ -16,7 +16,7 @@ redes** e **Diebold–Mariano** com correção de Holm para dizer quem empata co
    +14%; com a previsão real da véspera (regime C), +37%; com o clima do próprio dia (regime B, teto),
    +51%. O vão entre regimes é muito maior que a diferença entre algoritmos — dentro do regime C os 15
    modelos cabem em 0,09 de skill.
-2. **A previsão real fecha a maior parte do caminho até o teto:** 62% do vão A→B no LightGBM, 71% na
+2. **A previsão real fecha a maior parte do caminho até o teto:** 62% do vão A→B no LightGBM, 72% na
    mediana dos 12 modelos com os três regimes. E a diferença restante é **qualidade da previsão, não
    treino mais curto**: o diagnóstico B-curto (B com o treino cortado onde o C começa) empata com o B
    (p de Holm 0,08 no LightGBM, 0,07 no linear físico).
@@ -142,7 +142,7 @@ nenhum** — a mediana é a melhor do regime operacional de forma estatisticamen
 | B-curto | +0,469 | clima do dia, treino curto como o do C |
 | B | +0,480 | clima do dia, treino inteiro (teto) |
 
-- **O C fecha 62% do vão A→B** no LightGBM e **71%** na mediana dos 12 modelos que têm os três regimes.
+- **O C fecha 62% do vão A→B** no LightGBM e **72%** na mediana dos 12 modelos que têm os três regimes.
 - **O que falta é qualidade de previsão, não treino.** B-curto × B não é significativo (p de Holm 0,081
   no LightGBM, 0,070 no linear físico). Já B-curto × C é (p < 0,001): o treino curto não explica o vão.
 - **ECMWF > GFS:** C-gfs × C significativo (p < 0,001) nos dois modelos.
@@ -211,7 +211,7 @@ casas o **ranking entre modelos troca** de dobra para dobra — um corte único 
 
 ## 5. Melhorias recomendadas, em ordem de ganho esperado
 
-1. **Melhorar a previsão do tempo, não o modelo de série.** O C já fecha 62–71% do vão, e o que resta é
+1. **Melhorar a previsão do tempo, não o modelo de série.** O C já fecha 62–72% do vão, e o que resta é
    qualidade de previsão (B-curto × B empata). Caminhos: ensemble de NWP, mais rodadas por dia, ou a
    previsão por IA (Aurora, GraphCast, WeatherNext) no lugar do IFS determinístico.
 2. **Usar o regime C como padrão de relato.** O B é teto e não existe às 00:00; o A subestima o que o
@@ -265,8 +265,8 @@ Seis defeitos encontrados e corrigidos entre 05 e 06/10/2026, dois deles com efe
   treinada" nas figuras — justamente a comparação do achado "fundacionais empatam com as treinadas".
 - **Exclusão silenciosa na figura de regimes.** O filtro da figura tira quem está em `FAMILIA`, com
   quatro exceções nomeadas; ao classificar o lote 2 corretamente, o TiRex-2 e o TabPFN-TS saíram da
-  figura — e eram justamente os dois que fecham menos vão, o que subia a mediana do título de 71% para
-  74%. Os dois voltaram à lista de exceções.
+  figura — e eram justamente os dois que fecham menos vão (57,9% e 55,9%), o que inflava a mediana do
+  título em cerca de 3 pontos. Os dois voltaram à lista de exceções.
 - **Memória do Time-MoE-50M.** Um lote de 32 com contexto de 1.024 h leva a RAM de 0,7 para 13,1 GB e
   derruba a rodada; passou a lote 8. Não muda a previsão (cada janela é independente).
 

@@ -390,5 +390,237 @@
   "dispositivo": "cpu",
   "patch": "32",
   "nota": "parquet sobrescrito pela rodada com patch 16; numeros copiados da avaliacao original"
+ },
+ "CycleNet-linear-W168|casas_cons|A": {
+  "modelo": "CycleNet-linear-W168",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1667,
+  "ic95": [
+   0.1484,
+   0.1847
+  ],
+  "R2": 0.3096,
+  "nRMSE": 0.9324,
+  "MBE": -0.1948,
+  "posicao": "24o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-mlp-W168|casas_cons|A": {
+  "modelo": "CycleNet-mlp-W168",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1619,
+  "ic95": [
+   0.1432,
+   0.1808
+  ],
+  "R2": 0.3017,
+  "nRMSE": 0.9377,
+  "MBE": -0.2076,
+  "posicao": "24o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-linear-W24|casas_cons|A": {
+  "modelo": "CycleNet-linear-W24",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1661,
+  "ic95": [
+   0.1475,
+   0.184
+  ],
+  "R2": 0.3086,
+  "nRMSE": 0.9331,
+  "MBE": -0.2019,
+  "posicao": "24o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-mlp-W24|casas_cons|A": {
+  "modelo": "CycleNet-mlp-W24",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1583,
+  "ic95": [
+   0.1387,
+   0.1779
+  ],
+  "R2": 0.2956,
+  "nRMSE": 0.9418,
+  "MBE": -0.2182,
+  "posicao": "25o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-linear-W168-mse|casas_cons|A": {
+  "modelo": "CycleNet-linear-W168-mse",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1554,
+  "ic95": [
+   0.1403,
+   0.169
+  ],
+  "R2": 0.2908,
+  "nRMSE": 0.945,
+  "MBE": 0.0462,
+  "posicao": "28o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda",
+  "perda": "mse"
+ },
+ "CycleNet-mlp-W168-mse|casas_cons|A": {
+  "modelo": "CycleNet-mlp-W168-mse",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1667,
+  "ic95": [
+   0.1516,
+   0.1808
+  ],
+  "R2": 0.3096,
+  "nRMSE": 0.9324,
+  "MBE": 0.0324,
+  "posicao": "24o de 50",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda",
+  "perda": "mse"
+ },
+ "CycleNet-linear-W24|usinas|A": {
+  "modelo": "CycleNet-linear-W24",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0617,
+  "ic95": [
+   0.0352,
+   0.0872
+  ],
+  "R2": 0.6881,
+  "nRMSE": 0.6173,
+  "MBE": 0.0284,
+  "posicao": "17o de 51",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-mlp-W24|usinas|A": {
+  "modelo": "CycleNet-mlp-W24",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0914,
+  "ic95": [
+   0.0622,
+   0.1177
+  ],
+  "R2": 0.7075,
+  "nRMSE": 0.5977,
+  "MBE": 0.0509,
+  "posicao": "11o de 51",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0002,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-linear-W24|casas_prod|A": {
+  "modelo": "CycleNet-linear-W24",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1386,
+  "ic95": [
+   0.1116,
+   0.1661
+  ],
+  "R2": 0.3764,
+  "nRMSE": 1.2131,
+  "MBE": -0.0645,
+  "posicao": "6o de 49",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.132,
+  "grupo_da_frente": true,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-mlp-W24|casas_prod|A": {
+  "modelo": "CycleNet-mlp-W24",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.0909,
+  "ic95": [
+   0.0609,
+   0.1196
+  ],
+  "R2": 0.3055,
+  "nRMSE": 1.2802,
+  "MBE": 0.0693,
+  "posicao": "25o de 49",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0068,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "CycleNet-linear-W24-s0|casas_prod|A": {
+  "modelo": "CycleNet-linear-W24-s0",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1378,
+  "ic95": [
+   0.1117,
+   0.1657
+  ],
+  "R2": 0.3753,
+  "nRMSE": 1.2142,
+  "MBE": -0.0561,
+  "posicao": "6o de 49",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.1272,
+  "grupo_da_frente": true,
+  "dispositivo": "cuda",
+  "semente": "0"
+ },
+ "CycleNet-linear-W24-s1|casas_prod|A": {
+  "modelo": "CycleNet-linear-W24-s1",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1375,
+  "ic95": [
+   0.1107,
+   0.1653
+  ],
+  "R2": 0.3748,
+  "nRMSE": 1.2146,
+  "MBE": -0.0583,
+  "posicao": "7o de 49",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.1324,
+  "grupo_da_frente": true,
+  "dispositivo": "cuda",
+  "semente": "1"
  }
 }

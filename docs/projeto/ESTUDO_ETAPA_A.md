@@ -19,7 +19,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | VisionTS | **não passa** (estudado e testado, 3 casos) | 9º–23º; nunca empata (FV das casas p = 0,022) |
 | VisionTS++ | **PASSA** (FV das casas) | 9º de 48 na FV das casas, empata com o Toto-2.0-313m (p = 0,14); devolve 9 quantis |
 | Moirai 1.1 | **não passa** (2 tamanhos, 2 patches válidos, A e B) | usa mal o clima: em B fica em último (24º de 24) |
-| CycleNet, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| CycleNet | **PASSA** (FV das casas) | Linear, ciclo de 24 h: 6º de 49 na FV das casas com **4.296 parâmetros**, empata (p = 0,13; estável em 3 sementes) |
+| MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -107,3 +108,53 @@ muda nada: o vão A → B é de +0,02 (small) e **negativo** (base), contra ~+0,
 any-variate attention zero-shot não aprende a relação "mais sol, mais geração" a partir das covariáveis. O
 large (311 M) não foi testado: o base já piora com o clima em relação ao small, então não há sinal de que
 tamanho resolva.
+
+---
+
+## CycleNet (09/10/2026)
+
+**Como funciona.** Lin et al., *CycleNet: Enhancing Time Series Forecasting through Modeling Periodic
+Patterns* (NeurIPS 2024, spotlight), do mesmo grupo do SparseTSF. Técnica *Residual Cycle Forecasting*
+(RCF): cada canal tem um ciclo aprendível Q de comprimento W (o período: 24 h ou 168 h), iniciado em zero e
+aprendido junto com a rede. Na janela normalizada (RevIN), subtrai-se o trecho de Q alinhado com a fase da
+janela (hora do dia ou da semana do primeiro ponto); um backbone **Linear** (L → H) ou **MLP** (L → 512 → H)
+prevê só o resíduo; soma-se de volta o trecho de Q das H horas seguintes. O ciclo tira da rede o trabalho de
+reaprender a forma do dia; a rede só cuida do desvio.
+
+**O que pode acrescentar.** Tamanho de embarcado: na versão Linear são W × séries + L × H + H parâmetros
+(4.296 na FV das casas). Cabe num ESP32 com folga, como o SparseTSF (32 parâmetros), mas com um ciclo
+explícito por série.
+
+**Como rodar.** Não há pacote: a implementação oficial (github.com/ACAT-SCUT/CycleNet) é um módulo de ~40
+linhas, reescrito em `scripts/piloto_cyclenet.py` sem dependência nova (cada casa ou usina é um canal com o
+seu ciclo, como os clientes no conjunto Electricity do artigo). Protocolo **igual ao do SparseTSF** no
+`04_redes_treinadas.py`: 168 h de entrada, retreino do zero em cada dobra só com o passado, janelas de treino
+a cada 6 h, 10% para parada antecipada, até 30 épocas, L1, Adam 1e-3, lote 256, semente 42. Única diferença:
+o modelo recebe a fase e o índice da série. Tempo na RTX 4070: 7–16 s por caso (todas as dobras).
+Uso: `piloto_cyclenet.py <caso> [W=24|168] [linear|mlp] [mse] [semente=N]`. Licença do código oficial: MIT
+(reescrito aqui, sem cópia).
+
+**Piloto (regime A).**
+
+| Caso | Configuração | Skill | Posição | p contra o melhor | SparseTSF |
+|---|---|---|---|---|---|
+| consumo | Linear, W 168, L1 | +0,167 | 24º/50 | < 0,001 | +0,191 (13º) |
+| consumo | MLP, W 168, L1 | +0,162 | 24º/50 | < 0,001 | |
+| consumo | Linear, W 24, L1 | +0,166 | 24º/50 | < 0,001 | |
+| consumo | MLP, W 24, L1 | +0,158 | 25º/50 | < 0,001 | |
+| consumo | Linear, W 168, **MSE** | +0,155 | 28º/50 | < 0,001 | |
+| consumo | MLP, W 168, **MSE** | +0,167 | 24º/50 | < 0,001 | |
+| usinas | Linear, W 24 | +0,062 | 17º/51 | < 0,001 | +0,055 |
+| usinas | MLP, W 24 | +0,091 | 11º/51 | < 0,001 | |
+| **FV das casas** | **Linear, W 24** | **+0,139** | **6º/49** | **0,132: empata** | +0,033 |
+| FV das casas | Linear, W 24, sementes 0 e 1 | +0,138 / +0,138 | 6º / 7º | 0,127 / 0,132 | |
+| FV das casas | MLP, W 24 | +0,091 | 25º/49 | 0,007 | |
+
+No consumo, com L1, o CycleNet fica com viés de −20% (o mesmo dos fundacionais; o SparseTSF não tem); com
+MSE, a perda do artigo, o viés vira +3% a +5% mas o skill não melhora.
+
+**Decisão. Passa no portão** (empata na FV das casas, estável em três sementes, com 4.296 parâmetros) e
+traz o que se procurava: um modelo de embarcado que, na geração solar, fica muito acima do SparseTSF
+(+0,139 contra +0,033 na FV das casas). Vai para o teste completo em A nos três casos, no
+`04_redes_treinadas.py` ao lado do SparseTSF, com W = 24 na geração e W = 168 no consumo, backbone Linear.
+No consumo não ganha do SparseTSF, que continua sendo o candidato pequeno para consumo.

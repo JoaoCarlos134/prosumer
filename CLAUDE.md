@@ -198,8 +198,9 @@ pacote de cada modelo com `--no-deps`). Feitos: **VisionTS++ PASSA** (FV das cas
 Toto-2.0-313m, p 0,14; devolve quantis) -> **entrou no benchmark em 09/10** (`03_fundacionais.py VisionTS++`,
 no ~/.venvs/etapa_a, GPU; previsoes identicas as do piloto): **54 modelos, 251 linhas**; so as medianas do A
 mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **VisionTS nao passa**; **Moirai 1.1 nao passa**
-(usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). Faltam 11:
-CycleNet, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
+(usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). **CycleNet PASSA** (Linear, ciclo de 24 h: 6o de 49 na FV das casas com 4.296 parametros,
+empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> teste completo pendente. Faltam 10:
+MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 
 **AutoARIMA (F1 d):** medicao de `usinas|B` com a configuracao reduzida iniciada 09/10 as 12:42 no

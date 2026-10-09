@@ -194,8 +194,12 @@ Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispyt
 
 **AutoARIMA (F1 d):** medicao de `usinas|B` com a configuracao reduzida iniciada 09/10 as 12:42 no
 `classicos`; o Claude Code matou o processo por falta de memoria da maquina por volta das 13:10
-(~28 min, sem nenhuma dobra gravada; usava ~17 GB). Refeito as 15:13 com a maquina vazia (22,7 GB livres):
-resultado PENDENTE.
+(~28 min, sem nenhuma dobra gravada; usava ~17 GB). Refeito as 15:13 com a maquina vazia (22,7 GB livres, so o
+VS Code aberto): morto de novo por falta de memoria antes das 15:43, sem nenhuma dobra gravada. Ja roda com
+`n_jobs=1`, entao e o proprio ARIMAX (com as exogenas de clima, ~60 mil pontos por serie) que passa de
+~20 GB em menos de 30 min. **Leitura para o portao (< 2 h/caso):** nesta maquina o AutoARIMA com exogenas
+nao cabe nem na configuracao reduzida; nao soltar os seis. Proximo passo possivel, antes de declarar
+inviavel: um piloto de memoria (uma serie, uma dobra, medindo o pico) ou rodar no Lactec.
 
 ### Estado em 09/10/2026 (fim da sessao na maquina de casa)
 

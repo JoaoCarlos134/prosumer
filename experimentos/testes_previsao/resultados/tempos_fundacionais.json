@@ -126,5 +126,17 @@
  "FlowState|usinas|A": {
   "segundos": 194.0,
   "janelas": 598
+ },
+ "VisionTS++|usinas|A": {
+  "segundos": 4.1,
+  "janelas": 598
+ },
+ "VisionTS++|casas_prod|A": {
+  "segundos": 3.2,
+  "janelas": 920
+ },
+ "VisionTS++|casas_cons|A": {
+  "segundos": 5.7,
+  "janelas": 1820
  }
 }

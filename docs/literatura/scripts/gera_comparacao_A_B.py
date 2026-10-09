@@ -55,6 +55,7 @@ TIPO = {  # modelo: (tipo, parametros) — copiado do catalogo T de docs/literat
     'TiRex': ('Fundacional', '≈ 35 milhões'),
     'TTM-r2': ('Fundacional', '≈ 3 milhões'),
     'FlowState': ('Fundacional', '≈ 9,1 milhões'),
+    'VisionTS++': ('Fundacional', '≈ 115 milhões'),
     'Ensemble-mediana-corrigida': ('Combinação', '—'),
     'Toto': ('Fundacional', '≈ 151 milhões'),
     'Moirai-2.0-small': ('Fundacional', '≈ 11 milhões'),
@@ -479,7 +480,8 @@ PREVISTOS = [  # modelo, grupo, testes (UsA, UsB, FVA, FVB, ConsA, ConsB), gpu, 
     ("Moirai 1", "Fundacional (levantamento)", A_E_B, "Não", "uni2ts (ambiente moirai já existe)",
      "Aceita covariáveis passadas e futuras."),
     ("MOMENT", "Fundacional (levantamento)", SO_A, "Recomendada", "momentfm", "~385 milhões de parâmetros."),
-    ("VisionTS", "Fundacional (levantamento)", SO_A, "Não", "visionts", "Trata a série como imagem."),
+    ("VisionTS", "Fundacional (levantamento)", SO_A, "Não", "visionts",
+     "Trata a série como imagem. Entra como VisionTS++ (empatou na FV das casas no piloto); o original não passou."),
     ("Lag-Llama", "Fundacional (levantamento)", SO_A, "Não", "lag-llama (GitHub)", ""),
     ("FlowState", "Fundacional (levantamento)", SO_A, "Não", "granite-tsfm", "Completo só na máquina do Lactec."),
     ("BuildingsBench", "Fundacional (levantamento)", [NA, NA, NA, NA, P, AC], "Não", "BuildingsBench (NREL)",
@@ -515,10 +517,12 @@ COR = {"feito": VERDE, "falta": CLARO, "falta (GPU)": PatternFill("solid", fgCol
        "fora": FORA_COR}
 COR_GPU = {"Sim": PatternFill("solid", fgColor="F8D2BE"), "Recomendada": PatternFill("solid", fgColor="FFF0C2")}
 # Nome na lista acima -> nome em metricas.csv
-ALIAS = {"Random Forest": "RandomForest", "k-NN": "kNN", "Time-LLM": "TimeLLM"}
+ALIAS = {"Random Forest": "RandomForest", "k-NN": "kNN", "Time-LLM": "TimeLLM", "VisionTS": "VisionTS++"}
 # Decisoes medidas na rodada do passo T (maquina de casa, 07-09/10/2026; ver CLAUDE.md e 04_redes_treinadas.py).
 FORA = {  # so com evidencia (teste). Inviabilidade tecnica nao e "fora": vai para a etapa A do plano.
     "TimesNet": ({"B"}, "Aceita o clima mas o IGNORA (previsão idêntica com o clima embaralhado): fica só no A."),
+    "Moirai 1": (None, "Piloto da etapa A (09/10/2026): último em B nas usinas, quase não usa o clima; no A fica "
+                 "abaixo do Moirai-MoE e do Moirai 2. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
 }
 A_ESTUDAR = {  # nao rodaram por viabilidade, nao por falta de valor (etapa A do plano)
     "xLSTM": "A estudar (etapa A): exige mlstm_kernels/ninja; rota: Linux/WSL com compilador.",

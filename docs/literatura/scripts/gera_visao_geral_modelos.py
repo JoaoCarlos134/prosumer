@@ -82,6 +82,9 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("FlowState", "Fundacional", "Fundacional (zero-shot)", "FlowState", "granite-tsfm (IBM)", "≈ 9,1 milhões", "Não", "Não",
      "Codificador S5 + base funcional; entrou em 09/10/2026 depois do piloto. Melhor que o TTM na geração solar; "
      "devolve quantis. Só no Lactec (granite-tsfm completo)."),
+    ("VisionTS++", "Fundacional", "Fundacional (zero-shot)", "VisionTS", "visionts (pacote), ambiente etapa_a", "≈ 115 milhões", "Não", "Não",
+     "Série dobrada em imagem (24 h x dias) e reconstruída por um MAE de imagens; entrou em 09/10/2026 depois do piloto "
+     "(empatou na FV das casas). O VisionTS original foi pilotado e não passou. Devolve quantis."),
     ("Toto", "Fundacional", "Fundacional (zero-shot)", "Toto", "toto (Datadog)", "≈ 151 milhões", "Não", "Não", ""),
     ("Moirai-2.0-small", "Fundacional", "Fundacional (zero-shot)", "Moirai 2.0", "uni2ts (Salesforce), ambiente separado", "≈ 11 milhões", "Não", "Não",
      "Exige torch antigo; roda num ambiente Python à parte."),
@@ -198,9 +201,9 @@ FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
      "O ninja precisa de compilador C++, que a máquina de casa não tem. Fica para o Linux (WSL)."),
     ("Time-LLM", "Rede treinada (NeuralForecast)", "Sim", "Tem um LLM dentro (GPT-2 ou maior); inviável em CPU.",
      "Já no NeuralForecast instalado."),
-    ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.x; o ambiente moirai (uni2ts) já existe."),
+    ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.1 pilotado em 09/10/2026 (etapa A): NÃO passou; em B ficou em último "
+     "nas usinas (quase não usa o clima). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.", "Pacote momentfm; precisa de ambiente próprio."),
-    ("VisionTS", "Fundacional", *GPU_ZERO_SHOT, "Pacote visionts (trata a série como imagem)."),
     ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Código no GitHub; dependências antigas (gluonts)."),
     ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios: só no consumo das casas."),
     ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),

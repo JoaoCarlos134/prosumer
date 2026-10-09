@@ -195,7 +195,9 @@ Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispyt
 **Etapa A (iniciada 09/10 a tarde):** registro em `docs/projeto/ESTUDO_ETAPA_A.md` (como funciona, o que
 acrescenta, como rodar, piloto, decisao, para cada modelo). Ambiente `~/.venvs/etapa_a` (= previsao_gpu + o
 pacote de cada modelo com `--no-deps`). Feitos: **VisionTS++ PASSA** (FV das casas, 9o/48, empata com o
-Toto-2.0-313m, p 0,14; devolve quantis) -> teste completo; **VisionTS nao passa**; **Moirai 1.1 nao passa**
+Toto-2.0-313m, p 0,14; devolve quantis) -> **entrou no benchmark em 09/10** (`03_fundacionais.py VisionTS++`,
+no ~/.venvs/etapa_a, GPU; previsoes identicas as do piloto): **54 modelos, 251 linhas**; so as medianas do A
+mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **VisionTS nao passa**; **Moirai 1.1 nao passa**
 (usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). Faltam 11:
 CycleNet, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.

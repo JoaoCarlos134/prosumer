@@ -127,8 +127,30 @@ def flowstate(jan, exog=False):
     return out
 
 
+def visiontspp(jan, exog=False):
+    """VisionTS++ (MAE de imagens com pre-treino continuado em series, ~115 M param.): dobra a serie em
+    24 linhas x N dias e reconstroi a parte mascarada da imagem. Entrou em 09/10/2026 depois de passar no
+    piloto (piloto_visionts.py, mesmo codigo; empatou na FV das casas). Previsao pontual: a saida de ponto
+    do modelo (os 9 quantis ficam de fora aqui). Roda no ~/.venvs/etapa_a, em GPU na maquina de casa (o
+    torch do `previsao` foi bloqueado pelo Smart App Control). Pesos em ~/.cache/visionts/pp."""
+    from pathlib import Path
+    from visionts import VisionTSpp
+    disp = "cuda" if torch.cuda.is_available() else "cpu"
+    m = VisionTSpp(arch="mae_base", finetune_type="ln", ckpt_dir=str(Path.home() / ".cache" / "visionts" / "pp"),
+                   quantile=True)
+    m.update_config(context_len=len(jan[0]["y"]), pred_len=H, periodicity=24)
+    m = m.to(disp).eval()
+    out = []
+    with torch.no_grad():
+        for lote in em_lotes(jan, 64):
+            x = torch.tensor(np.stack([w["y"] for w in lote]))[:, :, None].to(disp)
+            y = m(x)[0]  # [ponto, lista de quantis]
+            out += list(y[:, :H, 0].float().cpu().numpy())
+    return out
+
+
 MODELOS = {"Chronos-2": chronos2, "Chronos-Bolt-small": chronos_bolt, "TimesFM-2.5": timesfm25,
-           "TiRex": tirex, "TTM-r2": ttm, "Toto": toto, "FlowState": flowstate}
+           "TiRex": tirex, "TTM-r2": ttm, "Toto": toto, "FlowState": flowstate, "VisionTS++": visiontspp}
 COM_EXOG = {"Chronos-2", "TimesFM-2.5"}
 
 if __name__ == "__main__":

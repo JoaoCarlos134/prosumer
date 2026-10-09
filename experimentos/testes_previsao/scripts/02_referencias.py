@@ -15,13 +15,14 @@ Nas usinas rodam tambem os diagnosticos B-curto e C-gfs (ver comum.py).
 """
 import sys
 import numpy as np, pandas as pd, lightgbm as lgb
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from comum import carrega, dias_teste, dobras, grava, CASOS, EXOG, H, REGIMES, DIAGNOSTICOS
 
 
@@ -87,20 +88,29 @@ def lgbm(treino, tt, cols):
 # Duas diferencas obrigatorias em relacao a ele: o LightGBM aceita NaN e nao precisa de escala; estes
 # precisam dos dois, entao cada um vai num pipeline com imputacao pela mediana (os atributos de
 # defasagem sao NaN no inicio da serie) e, menos a floresta, padronizacao.
+# `serie_cod` e uma CATEGORIA (qual usina/casa), nao um numero: o LightGBM a recebe como categorica. Nos
+# modelos que usam distancia ou combinacao linear (Ridge, MLP, kNN) ela vai em one-hot; antes de 09/10/2026
+# entrava como numero, o que punha a casa 3 "entre" a 2 e a 4 e entrava na distancia do kNN. A floresta
+# separa os codigos por cortes e fica como estava.
 def classicos():
     imp = lambda: SimpleImputer(strategy="median")
+
+    def com_serie(modelo):
+        prep = ColumnTransformer([("serie", OneHotEncoder(handle_unknown="ignore", sparse_output=False), ["serie_cod"])],
+                                 remainder=make_pipeline(imp(), StandardScaler()))
+        return make_pipeline(prep, modelo)
+
     return {
-        "Ridge": lambda: make_pipeline(imp(), StandardScaler(), Ridge(alpha=1.0)),
+        "Ridge": lambda: com_serie(Ridge(alpha=1.0)),
         "RandomForest": lambda: make_pipeline(
             imp(), RandomForestRegressor(n_estimators=300, min_samples_leaf=5, n_jobs=-1, random_state=42)),
-        "MLP": lambda: make_pipeline(
-            imp(), StandardScaler(),
+        "MLP": lambda: com_serie(
             MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=600, early_stopping=True, random_state=42)),
-        "kNN": lambda: make_pipeline(imp(), StandardScaler(), KNeighborsRegressor(n_neighbors=25, weights="distance")),
+        "kNN": lambda: com_serie(KNeighborsRegressor(n_neighbors=25, weights="distance")),
     }
 
 
-def roda(caso, so_regimes=None):
+def roda(caso, so_regimes=None, so_modelos=None):
     cal = ["h", "dow", "doy_sin", "doy_cos", "serie_cod"]
     lags = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
     regimes = REGIMES[caso] + (DIAGNOSTICOS if caso == "usinas" else [])
@@ -118,36 +128,42 @@ def roda(caso, so_regimes=None):
         def salva(nome, col):
             grava(nome, caso, regime, jan, tt[col].to_numpy().reshape(-1, H))
 
-        if regime == "A":                          # referencias: nao treinam, uma vez so
+        # --modelos: refaz so esses classicos, sem tocar nas referencias, no LightGBM e no linear fisico
+        so_classicos = so_modelos is not None
+        if regime == "A" and not so_classicos:     # referencias: nao treinam, uma vez so
             salva("persist_24h", "y_d1"); salva("semanal_168h", "y_d7"); salva("media_7d", "y_media7")
             if caso == "usinas":
                 salva("persist_ceu_claro", "persist_ceu_claro")
         cols = cal + lags + (["persist_ceu_claro"] + EXOG if regime != "A" else [])
-        cls = classicos()
+        cls = {k: f for k, f in classicos().items() if not so_classicos or k in so_modelos}
         tt["lgb"], tt["linear_fisico"] = np.nan, np.nan
         for nome in cls:
             tt[nome] = np.nan
         for ini, fim in dobras(caso):
             treino = t[(t.dia < ini) & t.y.notna()]
             m = (tt.dia >= ini) & (tt.dia <= fim)
-            tt.loc[m, "lgb"] = lgbm(treino, tt[m], cols)
+            if not so_classicos:
+                tt.loc[m, "lgb"] = lgbm(treino, tt[m], cols)
             for nome, fab in cls.items():
                 mod = fab()
                 mod.fit(treino[cols], treino.y)
                 tt.loc[m, nome] = mod.predict(tt.loc[m, cols])
-            if regime != "A" and com_linear:
+            if regime != "A" and com_linear and not so_classicos:
                 tt.loc[m, "linear_fisico"] = linear_fisico(treino, tt[m])[m[m].index]
-        salva("LightGBM", "lgb")
+        if not so_classicos:
+            salva("LightGBM", "lgb")
         for nome in cls:
             salva(nome, nome)
-        if regime != "A" and com_linear:
+        if regime != "A" and com_linear and not so_classicos:
             salva("linear_fisico", "linear_fisico")
         print("%-10s %-7s %4d dias de teste, %d dobras, treino desde %s" % (caso, regime, len(teste), len(dobras(caso)), t.dia.min().date()), flush=True)
 
 
 if __name__ == "__main__":
-    # Uso: python 02_referencias.py [caso ...] [--regimes A,B]   (sem argumentos: tudo, como na v2)
+    # Uso: python 02_referencias.py [caso ...] [--regimes A,B] [--modelos Ridge,MLP,kNN]
+    # Sem argumentos: tudo, como na v2. Com --modelos: so esses classicos (o resto nao e refeito).
     args = sys.argv[1:]
     so_regimes = args[args.index("--regimes") + 1].split(",") if "--regimes" in args else None
+    so_modelos = args[args.index("--modelos") + 1].split(",") if "--modelos" in args else None
     for caso in [a for a in args if a in CASOS] or list(CASOS):
-        roda(caso, so_regimes)
+        roda(caso, so_regimes, so_modelos)

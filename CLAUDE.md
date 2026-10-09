@@ -255,6 +255,11 @@ Feito em 09/10 (F1 b e c), com o codigo na BIBLIOTECA primeiro:
   que o da hora (FV casas 0,36 x 0,43; usinas A 0,48 x 0,74): por hora a forma do dia de sol e previsivel, o
   total do dia depende das nuvens. Aba "Por resolucao" da planilha do congresso; 5c da PROPOSTA.
 
+Pendente NO LACTEC (so la roda o FlowState): piloto F2c de faixas com os quantis do FlowState,
+`piloto_quantis.py gera usinas` (ambiente previsao) e depois `piloto_quantis.py avalia usinas` (ambiente da
+biblioteca). Forma da saida ja corrigida: (janelas, 9 quantis, 24 h). Portao: cobertura de 80% e 60% dentro de
++-5 pontos e CRPS melhor que os quantis dos 14 dias anteriores.
+
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
 | F0 Decisoes | 0 | — | Idioma DECIDIDO (internacional + camada BR, ver Ground rules). Pendentes: licenca (do autor, antes da E6); permissao por escrito do professor para os dados das usinas; comprar Raspberry Pi 5 + ESP32 |

@@ -220,7 +220,7 @@ leia = [
     ("O relógio das casas é a hora local de Dublin (com horário de verão), conferido contra o sol; o clima, que vem em "
      "UTC, foi convertido para a hora local antes de juntar.", None),
     ("Abas por teste com skill, IC 95%, R², nRMSE e viés, para o leitor ver o tamanho das diferenças e não só a ordem.", None),
-    ("Aba Modelos previstos: tudo o que ainda vai entrar neste artigo (do levantamento e clássicos), com os testes de cada um.", None),
+    ("Aba Modelos previstos: o que entrou depois dos 36 originais, o que ainda falta e o que ficou de fora, com o motivo.", None),
 ]
 pend = [f"{CASO[c]}: {', '.join(m if m in RODA_EM_CPU else m + '*' for m in v)}" for c, v in faltam_b_casas.items() if v]
 if pend:
@@ -442,13 +442,24 @@ PREVISTOS = [  # modelo, grupo, testes (UsA, UsB, FVA, FVB, ConsA, ConsB), gpu, 
     ("k-NN", "Clássico (scikit-learn)", A_E_B, "Não", SK, "Dias parecidos no histórico."),
 ]
 wp = wb.create_sheet("Modelos previstos")
-texto(wp, 1, "Modelos que ainda vão entrar neste artigo (sem resultado ainda)", "h")
+texto(wp, 1, "Modelos deste artigo além dos 36 originais: o que já foi feito, o que falta e o que ficou de fora", "h")
 cols = ["Modelo", "Grupo", *[ABA[t] for t in TESTES], "Precisa de GPU?", "Biblioteca", "Observação"]
-cabecalho(wp, 3, cols, [16, 24, 10, 10, 10, 10, 10, 10, 12, 26, 52])
-COR = {"feito": VERDE, "falta": CLARO, "falta (GPU)": PatternFill("solid", fgColor="FFF0C2"), P: CLARO, AC: CLARO}
+cabecalho(wp, 3, cols, [16, 24, 10, 10, 10, 10, 10, 10, 12, 26, 60])
+FORA_COR = PatternFill("solid", fgColor="EDEDED")
+COR = {"feito": VERDE, "falta": CLARO, "falta (GPU)": PatternFill("solid", fgColor="FFF0C2"), P: CLARO, AC: CLARO,
+       "fora": FORA_COR}
 COR_GPU = {"Sim": PatternFill("solid", fgColor="F8D2BE"), "Recomendada": PatternFill("solid", fgColor="FFF0C2")}
+# Nome na lista acima -> nome em metricas.csv
+ALIAS = {"Random Forest": "RandomForest", "k-NN": "kNN", "Time-LLM": "TimeLLM"}
+# Decisoes medidas na rodada do passo T (maquina de casa, 07-09/10/2026; ver CLAUDE.md e 04_redes_treinadas.py).
+FORA = {  # modelo: (regimes afetados ou None = todos, motivo)
+    "TimesNet": ({"B"}, "Aceita o clima mas o IGNORA (previsão idêntica com o clima embaralhado): fica só no A."),
+    "xLSTM": (None, "Exige mlstm_kernels/ninja (compilador C++), que as máquinas do projeto não têm."),
+    "Time-LLM": (None, "Estoura a memória (derrubou a máquina 4 vezes); a família LLM já era excluída por princípio "
+                       "(Tan et al., 2024)."),
+}
 blocos = []
-# 1) ja testados que ainda faltam nas casas B (os que precisam de GPU)
+# 1) ja testados que ainda faltam nas casas B
 pend = sorted(set().union(*faltam_b_casas.values()))
 for mod in pend:
     marc = []
@@ -463,13 +474,33 @@ for mod in pend:
     blocos.append((mod, "Já testado: falta casas B", marc,
                    "Não" if cpu else ("Sim" if mod == "TabPFN-TS" else "Recomendada"), "já no benchmark",
                    "Roda em CPU (máquina do Lactec)." if cpu else "Roda na máquina de casa (GPU)."))
-blocos += PREVISTOS
+# 2) os previstos, com a situacao tirada dos resultados (nao da lista)
+feitos = falta = fora = 0
+for mod, grupo, marc, gpu, lib, obs in PREVISTOS:
+    nome = ALIAS.get(mod, mod)
+    regs_fora, motivo = FORA.get(mod, (set(), ""))
+    novo = []
+    for (c, r), v in zip(TESTES, marc):
+        if ((M.caso == c) & (M.regime == r) & (M.modelo == nome)).any():
+            novo.append("feito")
+        elif v != NA and mod in FORA and (regs_fora is None or r in regs_fora):
+            novo.append("fora")
+        else:
+            novo.append(v)
+    validos = [v for v in novo if v != NA]
+    if validos and all(v == "fora" for v in validos):
+        fora += 1
+    elif any(v in (P, AC) for v in validos):
+        falta += 1
+    else:
+        feitos += 1
+    blocos.append((mod, grupo, novo, gpu, lib, " ".join(x for x in (motivo, obs) if x)))
 i = 4
 for mod, grupo, marc, gpu, lib, obs in blocos:
     celula(wp, i, 1, mod, negrito=True)
     celula(wp, i, 2, grupo)
     for j, v in enumerate(marc, start=3):
-        cel = celula(wp, i, j, v, cor=CINZA if v == NA else None)
+        cel = celula(wp, i, j, v, cor=CINZA if v in (NA, "fora") else None)
         if v in COR:
             cel.fill = COR[v]
     g = celula(wp, i, 9, gpu, negrito=gpu == "Sim")
@@ -478,21 +509,16 @@ for mod, grupo, marc, gpu, lib, obs in blocos:
     celula(wp, i, 10, lib)
     celula(wp, i, 11, obs)
     i += 1
-n_novos = len(PREVISTOS)
-n_lev = sum(1 for p in PREVISTOS if "levantamento" in p[1])
-n_cla = n_novos - n_lev
 i += 1
 for t in [
-    f"Hoje o artigo tem {len(media)} modelos. Vão entrar mais {n_novos}: {n_lev} do levantamento da literatura (os que têm "
-    f"código aberto) e {n_cla} clássicos. Total previsto: {len(media) + n_novos}. Mais {len(pend)} modelos já testados "
-    "ganham o regime B nas casas.",
+    f"Hoje o artigo tem {len(media)} modelos. Dos {len(PREVISTOS)} previstos além dos 36 originais (do levantamento e "
+    f"clássicos): {feitos} prontos, {falta} com algum teste ainda por fazer, {fora} fora (motivo na linha).",
+    "A situação de cada célula sai dos resultados (metricas.csv), não desta lista: rodou, vira 'feito'.",
     "Fica de fora deste artigo: a previsão do tempo por IA (ECMWF AIFS), que é do regime C.",
-    "Clássicos: não estavam no levantamento (que buscou modelos novos), mas são a linha de base que um revisor espera. "
-    "São rápidos em CPU; Ridge, Random Forest, MLP e k-NN usam os mesmos atributos do LightGBM.",
     "'a confirmar' = o artigo do modelo diz aceitar variáveis externas, mas ainda não foi verificado no código se aceita "
     "o clima do PRÓPRIO dia (o que o regime B exige).",
-    "Cores: verde = feito; amarelo = falta e precisa da GPU; azul-claro = previsto. GPU: laranja = inviável sem GPU; "
-    "amarelo = roda em CPU, mas leva horas.",
+    "Cores: verde = feito; azul-claro = previsto; amarelo = falta e precisa da GPU; cinza = fora. GPU: laranja = "
+    "inviável sem GPU; amarelo = roda em CPU, mas leva horas.",
 ]:
     texto(wp, i, t, "nota")
     i += 1

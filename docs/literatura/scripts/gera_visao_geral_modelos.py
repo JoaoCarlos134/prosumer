@@ -186,9 +186,6 @@ for mod, tipo, *_ in T:
 
 # Os 24 do levantamento com codigo aberto que ainda faltam (plano do TCC, passo T). Nome = coluna Modelo do levantamento.
 FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
-    ("TimeMixer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; entra no 04_redes_treinadas.py."),
-    ("TimesNet", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
-    ("TimeXer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; feito para variáveis externas (regimes B e C)."),
     ("xLSTM", "Rede treinada (NeuralForecast)", *GPU_REDE,
      "A versão do NeuralForecast TAMBÉM exige os kernels: testada em 07/10, levanta "
      "'Please install xlstm. You also need mlstm_kernels for backend=mLSTM and ninja for backend=sLSTM'. "

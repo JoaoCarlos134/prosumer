@@ -5,6 +5,13 @@ levantamento de 127 modelos (`../../docs/literatura/Modelos_previsao_geracao_con
 **36 modelos e referências, 3 casos, uma tarefa só: prever as 24 horas do dia seguinte, emitindo a
 previsão às 00:00.** As redes treinadas rodaram em GPU (RTX 4070); os fundacionais, em CPU.
 
+> **Atualização de 09/10/2026 (passo T):** agora são **51 modelos e 243 linhas de métricas**, e as casas também têm
+> o regime B (clima medido da estação de Dingle). As tabelas da §4 abaixo são da v2 (06/10) e ficam como registro.
+> Números atuais: `resultados/metricas.csv` e `docs/literatura/Comparacao_modelos_regimes_A_B.xlsx`. O que mudou
+> nas conclusões: a mediana de todos passou a 2ª nas usinas em B (+0,508, a 0,001 do TiRex-2, empatada) e segue 1ª
+> em C; continua empatada com o melhor em todos os 6 testes A e B. O clima medido ajuda a FV das casas (ganho
+> mediano +0,072 de skill) e não ajuda o consumo (+0,002).
+
 O que muda da v1 para a v2: **origem móvel** (todo modelo treinado é refeito do zero no início de cada
 dobra), **regime C** (a previsão do tempo real da véspera, não o oráculo), **lotes iguais em todas as
 redes** e **Diebold–Mariano** com correção de Holm para dizer quem empata com o melhor. A v1 (um corte
@@ -223,7 +230,8 @@ casas o **ranking entre modelos troca** de dobra para dobra — um corte único 
    previsão por IA (Aurora, GraphCast, WeatherNext) no lugar do IFS determinístico.
 2. **Usar o regime C como padrão de relato.** O B é teto e não existe às 00:00; o A subestima o que o
    sistema consegue. Todo número operacional deve ser do C.
-3. **Mediana de vários modelos em vez de escolher um** — 1ª em B e C, nunca abaixo de 9ª, e não exige
+3. **Mediana de vários modelos em vez de escolher um** — empata com o melhor nos 6 testes A e B, é 1ª nas usinas em C
+   e 2ª em B (09/10/2026), nunca abaixo de 10ª, e não exige
    saber de antemão qual modelo serve para a usina nova.
 4. **Para o embarcado: TTM-r2 e SparseTSF.** O SparseTSF empata com o melhor no consumo com 32
    parâmetros. Falta medir latência e energia no Raspberry Pi 5 / ESP32 — hoje só há medida em x86, que

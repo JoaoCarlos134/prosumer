@@ -32,7 +32,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: pyproject.toml # nao ha uv.lock
       - name: Instala
-        run: uv pip install -e ".[dev,graficos]"
+        run: uv pip install -e ".[dev,plots]"
       - name: ruff (lint)
         run: ruff check src tests
       - name: ruff (formato)
@@ -57,7 +57,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
       - name: Instala
-        run: uv pip install -e ".[dev,graficos]"
+        run: uv pip install -e ".[dev,plots]"
       - name: pytest
         run: pytest --cov --cov-report=term-missing --cov-report=xml
       - name: Guarda a cobertura

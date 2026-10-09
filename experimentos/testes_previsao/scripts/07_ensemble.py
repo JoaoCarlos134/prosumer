@@ -7,7 +7,7 @@ para a escolha dos membros. Grava como modelo 'Ensemble-mediana' em cada caso e 
 Desde 09/10/2026 grava tambem 'Ensemble-mediana-corrigida', SO no consumo das casas: a mesma mediana
 multiplicada pelo fator real/previsto dos 14 dias anteriores com dados (minimo 7; antes disso, fator 1;
 limitado a 0,5-2,0), por casa. So usa o passado: o fator do dia D sai dos dias ate D-1. E o mesmo
-algoritmo de `prossumidor.posprocessamento.corrige_vies` (os scripts do benchmark rodam sem a
+algoritmo de `prosumer.postprocessing.correct_bias` (os scripts do benchmark rodam sem a
 biblioteca; um teste confere que os dois dao o mesmo resultado). Na geracao solar a correcao piora
 (piloto de 09/10/2026), por isso nao e aplicada la.
 """
@@ -21,7 +21,7 @@ DIAS, MINIMO, LIMITES = 14, 7, (0.5, 2.0)
 
 
 def corrige_vies(prev, real):
-    """prev: unique_id, ds, yhat; real: unique_id, ds, y. Mesma regra de posprocessamento.corrige_vies."""
+    """prev: unique_id, ds, yhat; real: unique_id, ds, y. Mesma regra de prosumer.postprocessing.correct_bias."""
     j = prev.merge(real, on=["unique_id", "ds"], how="left")
     j["dia"] = j.ds.dt.normalize()
     ok = j.y.notna() & j.yhat.notna()

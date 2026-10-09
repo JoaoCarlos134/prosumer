@@ -3,8 +3,10 @@
 Snapshot written on 2026-10-05 from the work machine (Lactec), where the project lives in OneDrive
 (`Documentos/2026/Projeto_IA`); state, findings and next steps updated on 2026-10-06 after the v2 +
 batch 2 run finished on the home GPU. This repo is the exported, anonymized subset needed for the TCC, the
-future master's and the `prossumidor` library. The user (João) works in English with Claude; all project
-docs and code comments are in Portuguese (code comments without accents) — keep that convention.
+future master's and the `prosumer` library (called `prossumidor` until 2026-10-09; the GitHub repo and
+the folder keep the old name). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
+`tests/`, README, pyproject) is in English since 2026-10-09; project docs, benchmark scripts and their
+comments stay in Portuguese (code comments without accents) — keep that convention there.
 
 ## Ground rules
 
@@ -20,8 +22,9 @@ docs and code comments are in Portuguese (code comments without accents) — kee
 - **Audience (decided 2026-10-09): international core + Brazilian layer.** English code and main docs (power
   sector worldwide + research/dev community), plus a Brazilian economics module (ANEEL, bandeiras, tarifa
   branca, Lei 14.300) and a Portuguese guide. The user wants the option of a master's/doctorate abroad. The
-  rename to English (package `prosumer` was free on PyPI on 2026-10-09) happens at the START of E2. Until
-  then, existing code and docs stay in Portuguese.
+  rename to English was DONE on 2026-10-09 (package `prosumer`, free on PyPI that day; recheck before
+  publishing). Name map old -> new: top of `docs/proposta/PROPOSTA_BIBLIOTECA.md`. New library code is
+  written in English; the benchmark keeps its Portuguese files and CSV columns (`metricas.csv` unchanged).
 - **The 20 houses** (`casas`, H1-H20) are the public dataset of Khadem et al. (2024), "Comprehensive Dataset
   on Electrical Load Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2
   (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,
@@ -75,7 +78,7 @@ Pipeline (run from `scripts/`):
     03c_fundacionais_lote2.py    batch 2 foundation models (lote2 / lote2_hf / moirai envs)
     07_ensemble.py → 05_avalia.py → 06_figuras.py
     05b_resolucao.py             metricas em 4 resolucoes (hora, dia/noite, pico 17-21 h, dia); roda no ambiente da
-                                 BIBLIOTECA (usa prossumidor.metricas.por_resolucao) e confere o skill por hora
+                                 BIBLIOTECA (usa prosumer.metrics.by_resolution) e confere o skill por hora
     roda_v2.py                   runs the v2 trained-network queue (plants and houses in two processes)
     roda_lote2.py                waits for v2's FIM lines, then runs batch 2 + ensemble + metrics + figures
     08_previsao_tempo.py         re-downloads the Open-Meteo forecast archive (already in dados/)
@@ -145,7 +148,7 @@ Duas maquinas, um repositorio. Trabalhar sempre em `main` (o ramo `correcoes-v2-
 |---|---|---|
 | Clone | `OneDrive - Lactec/Documentos/1Projects/prossumidor` (atalho em `2026/Projeto_IA`) | — |
 | GPU | **nenhuma**: os quatro ambientes tem torch `+cpu` | RTX 4070 (torch cu128/cu130) |
-| Ambientes | `~/.venvs/{previsao,lote2,lote2_hf,moirai}` iguais aos `.txt` congelados (conferido 07/10) + `~/.venvs/prossumidor` (biblioteca, `-e .[dev,graficos,lightgbm]`, pre-commit instalado) | os quatro, ver `ambientes/LEIA-ME.md` |
+| Ambientes | `~/.venvs/{previsao,lote2,lote2_hf,moirai}` iguais aos `.txt` congelados (conferido 07/10) + `~/.venvs/prossumidor` (biblioteca; **reinstalar** apos o nome novo: `uv pip install -e ".[dev,plots,lightgbm]"`, os extras mudaram de nome; os scripts agora citam `~/.venvs/prosumer`) | os quatro, ver `ambientes/LEIA-ME.md` |
 | TTM (`tsfm_public.toolkit`) | **funciona** | quebrado (instala sem o subpacote) |
 | Dados brutos / exportador | sim (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) | nao |
 
@@ -153,6 +156,42 @@ O que roda em cada uma: biblioteca, avaliacao (`05_avalia.py`, `06_figuras.py`),
 fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes treinadas em origem
 movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `roda_lote2.py` ja pula o
 TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
+
+### Estado em 09/10/2026 a tarde (maquina de casa): Smart App Control e o nome em ingles
+
+Feito: reset para o `origin/main` reescrito (o HEAD antigo ficou no ramo local
+`backup-pre-reescrita-2026-10-09`, mesmo conteudo do `c6b5726`); identidade git = endereco noreply do GitHub;
+`classicos.txt` congelado e `previsao.txt` recongelado (torch `2.14.1+cu130`, + openpyxl, packaging 26.3);
+**biblioteca renomeada para `prosumer` com a API em ingles** (mapa no topo da PROPOSTA_BIBLIOTECA.md);
+`05b_resolucao.py`, `07_ensemble.py` e `piloto_comum.py` atualizados para a API nova; o
+`metricas_por_resolucao.csv` regerado sai identico. Testes: 320 de 321 passam aqui (todo o teste de
+regressao contra o `metricas.csv` incluido); o unico de fora e o de propriedade do hypothesis.
+
+**O Smart App Control passou a bloquear (09/10, ~12:30) coisas que rodavam no dia anterior:**
+
+- o `python.exe` do CPython 3.12.13 do uv (`~/AppData/Roaming/uv/python/cpython-3.12.13...`): todo venv 3.12
+  parou. **Conserto aplicado:** Python 3.12.10 oficial (assinado, `winget install Python.Python.3.12`, em
+  `~/AppData/Local/Programs/Python/Python312`). Nos venvs `previsao`, `lote2`, `lote2_hf` e `classicos` o
+  `home` do `pyvenv.cfg` aponta para ele e o `Scripts/python(w).exe` foi trocado pelo lancador oficial
+  (`Lib/venv/scripts/nt/`), porque o lancador do uv traz o caminho do interpretador antigo gravado dentro.
+  Originais guardados como `pyvenv.cfg.uv31213.bak` e `Scripts/python.exe.uv.bak`. O `.venv` do repositorio
+  foi recriado sobre o 3.12.10. O 3.11 (moirai) e o 3.14 do uv continuam rodando.
+- **`torch 2.14.1+cu130` (`torch/lib/c10.dll`) em `previsao` e `lote2`: a GPU esta INUTILIZAVEL nativamente.**
+  O `torch 2.8.0+cpu` do `lote2_hf` carrega. Testado num venv descartavel: **`torch 2.9.1+cu128` carrega e
+  roda na GPU**; `2.14.1+cu126` tambem e bloqueado (`shm.dll`). Opcoes: (1) um ambiente novo com torch
+  2.9.1+cu128 para a etapa A (terceira versao de torch no benchmark, declarar; as 52 + passo T ficam como
+  estao); (2) WSL2 (a nota da memoria dizia "adiar ate o TTM/embarcado": este e o gatilho). Nunca desligar
+  o Smart App Control (irreversivel). Decisao do usuario pendente.
+- `pyarrow 26.0.0`: bloqueado; o `.venv` usa `pyarrow==25.0.1` (o `classicos` ja tinha 25.0.1).
+- `mypy` (compilado com mypyc, e o `librt` que ele usa): bloqueado. Rodar o mypy na CI ou no Lactec.
+- `hypothesis._native`: continua bloqueado (so o teste de propriedade de `test_contracts.py`).
+
+Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispytest --ignore=tests/test_contracts.py`.
+
+**AutoARIMA (F1 d):** medicao de `usinas|B` com a configuracao reduzida iniciada 09/10 as 12:42 no
+`classicos`; o Claude Code matou o processo por falta de memoria da maquina por volta das 13:10
+(~28 min, sem nenhuma dobra gravada; usava ~17 GB). Medicao NAO concluida: refazer sozinho na maquina,
+sem outro processo pesado aberto, ou no Lactec.
 
 ### Estado em 09/10/2026 (fim da sessao na maquina de casa)
 
@@ -245,8 +284,9 @@ Pilotos feitos no Lactec em 09/10 a tarde (scripts `piloto_*.py`; saidas em `res
   aplicativo rodam SO EM CPU; a GPU so serve ao benchmark (etapa A e redes).
 
 Feito em 09/10 (F1 b e c), com o codigo na BIBLIOTECA primeiro:
-- `prossumidor.metricas.por_resolucao` (+ `por_dia`, `por_blocos`, `janela`, `NIVEIS_PADRAO`; blocos configuraveis
-  para a tarifa branca) e `prossumidor.posprocessamento.corrige_vies` (bloqueada para geracao). 321 testes.
+- `prosumer.metrics.by_resolution` (+ `daily`, `by_blocks`, `hour_window`, `DEFAULT_LEVELS`; blocos configuraveis
+  para a tarifa branca) e `prosumer.postprocessing.correct_bias` (bloqueada para geracao). 321 testes.
+  (Nomes atuais; na epoca eram `prossumidor.metricas.por_resolucao` e `posprocessamento.corrige_vies`.)
 - Benchmark: `05b_resolucao.py` -> `resultados/metricas_por_resolucao.csv`; `07_ensemble.py` grava
   `Ensemble-mediana-corrigida` so no consumo (mesmo algoritmo; teste confere biblioteca == benchmark).
   53 modelos, 248 linhas. A corrigida e a 1a no consumo A (+0,207) e B (+0,208), vies ~-0,5%.
@@ -263,11 +303,11 @@ biblioteca). Forma da saida ja corrigida: (janelas, 9 quantis, 24 h). Portao: co
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
 | F0 Decisoes | 0 | — | Idioma DECIDIDO (internacional + camada BR, ver Ground rules). Pendentes: licenca (do autor, antes da E6); permissao por escrito do professor para os dados das usinas; comprar Raspberry Pi 5 + ESP32 |
-| F1 Fechar o teste | 17 | ver linha | (a) **casa:** congelar `classicos` e atualizar `previsao.txt` (torch 2.14.1+cu130), 0,5 h. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (Lactec), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
+| F1 Fechar o teste | 17 | ver linha | (a) ~~casa: congelar `classicos` e atualizar `previsao.txt`~~ **feito 09/10**. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (Lactec), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
 | **A Modelos pendentes** | 40 | casa (GPU) e Lactec | Os 13 pendentes (Moirai 1, CycleNet, VisionTS, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT): para CADA um, estudar como funciona (artigo, matematica), o que pode acrescentar e como fazer rodar; depois piloto num caso. **Regra do usuario (09/10): nao descartar modelo sem estudo + evidencia.** PORTAO para o teste completo: empatar com o melhor num caso ou trazer algo que nenhum outro traz (clima sem treino, tamanho de embarcado, faixa, dependencia entre series). Tabela com o porque de cada um: secao 7 do plano |
 | F2 Pilotos de melhoria | 22 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (Lactec, granite-tsfm completo); (f) modelo direto para o total do dia (consumo) |
 | F2b Levar para a biblioteca | ~40 | qualquer | so os pilotos que passaram |
-| E2 Versao 0.1 | 130 | qualquer | PRIMEIRO trocar nomes e API para ingles (~10 h); depois portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `dados.casas_dingle()` |
+| E2 Versao 0.1 | 120 | qualquer | ~~Trocar nomes e API para ingles~~ **feito 09/10** (`prosumer`). Portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `data.dingle_houses()` |
 | E3 Checagem 1 | 30 | qualquer | o benchmark refeito so com a biblioteca bate com as 243 linhas |
 | E4 Versao 0.2 | 130 | qualquer | diagnostico; embarcado (TTM, SparseTSF, Ridge/RandomForest via emlearn, previsao do dia e por bloco de tarifa) |
 | E5 Hardware | 50 | — | Raspberry Pi 5 e ESP32 |
@@ -279,7 +319,7 @@ Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instave
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).
 Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras (nenhuma origem
 afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre maquinas (<= 0,0006);
-redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~769 h (~12 meses, ate out/2027), com o
+redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~759 h (~12 meses, ate out/2027), com o
 aplicativo (o TCC) no fim.
 
 Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia

@@ -3,13 +3,13 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prossumidor"
-description = "Previsao de geracao e consumo de prossumidores de energia, do dado do medidor ao modelo embarcado"
+name = "prosumer"
+description = "Day-ahead forecasting of energy prosumers' generation and consumption, from meter data to embedded models"
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version"]
 authors = [{ name = "Joao Carlos Jachenski Junior" }]
-keywords = ["fotovoltaico", "previsao", "series temporais", "prossumidor", "edge ai"]
+keywords = ["photovoltaic", "forecasting", "time series", "prosumer", "energy", "edge ai"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Science/Research",
@@ -17,8 +17,8 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
 ]
-# Nucleo enxuto de proposito (PROPOSTA_BIBLIOTECA.md secao 6): so o que todo mundo usa.
-# Cada modelo fundacional entra como extra isolado, com versao travada.
+# Deliberately lean core (PROPOSTA_BIBLIOTECA.md section 6): only what everyone uses.
+# Each foundation model is an isolated extra, with a pinned version.
 dependencies = [
   "numpy>=1.26",
   "pandas>=2.1",
@@ -30,13 +30,13 @@ dependencies = [
 
 [project.optional-dependencies]
 lightgbm = ["lightgbm>=4.0"]
-# Um extra por fornecedor: quando a API de um deles mudar, quebra um adaptador, nao o projeto.
+# One extra per vendor: when one of their APIs changes, one adapter breaks, not the project.
 chronos = ["chronos-forecasting>=2.0"]
 timesfm = ["timesfm>=3.0"]
 ttm = ["granite-tsfm"]
-redes = ["neuralforecast>=3.1", "torch>=2.2"]
-embarcado = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21"]
-graficos = ["matplotlib>=3.8"]
+networks = ["neuralforecast>=3.1", "torch>=2.2"]
+embedded = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21"]
+plots = ["matplotlib>=3.8"]
 dev = [
   "pytest>=8",
   "pytest-cov>=5",
@@ -50,15 +50,15 @@ dev = [
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 
 [project.urls]
-Repository = "https://github.com/JoaoCarlos134/prossumidor"
+Repository = "https://github.com/JoaoCarlos134/prossumidor"  # GitHub repository not renamed yet
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/prossumidor"]
-# py.typed: sem este marcador o mypy de quem usa a biblioteca ignora as anotacoes dela.
-artifacts = ["src/prossumidor/py.typed"]
+packages = ["src/prosumer"]
+# py.typed: without this marker, mypy in downstream projects ignores the library's annotations.
+artifacts = ["src/prosumer/py.typed"]
 
 [tool.ruff]
 line-length = 110
@@ -67,12 +67,12 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "NPY", "PD"]
-# RUF001/002/003: os comentarios e docstrings sao em portugues, com acento mesmo.
+# RUF001/002/003: some comments and docstrings keep Portuguese text with accents.
 ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 python_version = "3.11"
-packages = ["prossumidor"]
+packages = ["prosumer"]
 strict = false
 warn_unused_ignores = true
 warn_redundant_casts = true
@@ -82,8 +82,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --strict-config"
-filterwarnings = ["error::DeprecationWarning:prossumidor.*"]
+filterwarnings = ["error::DeprecationWarning:prosumer.*"]
 
 [tool.coverage.run]
-source = ["prossumidor"]
+source = ["prosumer"]
 branch = true

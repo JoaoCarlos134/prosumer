@@ -1,4 +1,31 @@
-# Proposta: biblioteca `prossumidor`
+# Proposta: biblioteca `prossumidor` (hoje `prosumer`)
+
+> **09/10/2026: o pacote passou a se chamar `prosumer`, com interface, docstrings e README em inglês.**
+> Este documento mantém os nomes antigos onde descreve a arquitetura proposta. Correspondência do que
+> já existe (os arquivos do benchmark, como `metricas.csv`, não mudaram):
+>
+> | Antes | Agora |
+> |---|---|
+> | `prossumidor` | `prosumer` |
+> | `contratos`, `protocolo`, `metricas`, `posprocessamento`, `dados` | `contracts`, `protocol`, `metrics`, `postprocessing`, `data` |
+> | `SerieEnergia.de_dataframe(quadro, unidade, grandeza, fuso, taxa, coluna_valor, fuso_origem, troca_de_horario="erro"/"descarta")` | `EnergySeries.from_dataframe(frame, unit, quantity, tz, freq, value_column, source_tz, dst="raise"/"drop")` |
+> | atributos `quadro`, `unidade`, `grandeza`, `fuso`, `taxa`; coluna `valido`; grandezas `geracao`, `consumo`, `irradiancia`, `temperatura` | `frame`, `unit`, `quantity`, `tz`, `freq`; coluna `valid`; `generation`, `consumption`, `irradiance`, `temperature` |
+> | `em_kwh`, `apenas_validos`, `cobertura`, `fim_por_serie`, `termina_junto`, `horas_por_passo`, `passo`, `esquema` | `to_kwh`, `valid_only`, `coverage`, `end_per_series`, `ends_together`, `hours_per_step`, `step`, `schema` |
+> | `ErroDeContrato`, `AvisoDeSuporte` | `ContractError`, `SupportError` |
+> | `DiaSeguinte(serie, teste_de, teste_ate, retreino_dias, contexto, semente)` | `DayAhead(series, test_start, test_end, refit_days, context, seed)` |
+> | `dobras`, `dobra_de`, `dias_teste`, `janelas`, `verifica_suporte` | `folds`, `fold_of`, `test_days`, `windows`, `check_support` |
+> | `Dobra(indice, inicio, fim, dias)`, `Janela(unique_id, dia, historico, instantes)` | `Fold(index, start, end, days)`, `Window(unique_id, day, history, timestamps)` |
+> | `Regime.HISTORICO`, `CLIMA_CONHECIDO`, `PREVISAO_REAL` | `Regime.HISTORY`, `KNOWN_WEATHER`, `REAL_FORECAST` (mesmos valores A, B, C) |
+> | `alinha(previsao, real, referencia)`, `metricas`, `skill_ic95(reamostragens, semente)`, `erros_quadraticos` | `align(forecast, actual, reference)`, `metrics`, `skill_ci95(resamples, seed)`, `squared_errors` |
+> | chaves `nMAE_diario`, `R2_diario` | `nMAE_daily`, `R2_daily` |
+> | `por_resolucao`, `por_blocos`, `por_dia`, `janela`, `agrega`, `NIVEIS_PADRAO`, `BLOCOS_DIA_NOITE` | `by_resolution`, `by_blocks`, `daily`, `hour_window`, `aggregate`, `DEFAULT_LEVELS`, `DAY_NIGHT_BLOCKS` |
+> | níveis `hora`, `dia_noite`, `pico_17_21`, `dia`; colunas `nivel`, `blocos`, `R2_referencia` | `hour`, `day_night`, `peak_17_21`, `day`; `level`, `blocks`, `R2_reference` |
+> | `corrige_vies(previsao, real, grandeza, dias, minimo, limites, permitir_geracao)`; coluna `fator` | `correct_bias(forecast, actual, quantity, days, min_days, bounds, allow_generation)`; coluna `factor` |
+> | `exemplo_usina`, `exemplo_casa`, `com_buracos`, `previsao_perfeita`, `previsao_persistencia` | `example_plant`, `example_house`, `with_gaps`, `perfect_forecast`, `persistence_forecast` |
+> | extras `graficos`, `redes`, `embarcado` | `plots`, `networks`, `embedded` |
+>
+> Os módulos ainda não escritos nascem com nome em inglês: `io`, `quality`, `physics`, `diagnostics`,
+> `forecast`, `embedded`, `economics`.
 
 > **Estado em 06/10/2026.** Este estudo de viabilidade descreve uma arquitetura proposta;
 > o pacote instalável existe (etapa E1, 06/10/2026), com `contratos`, `protocolo`, `metricas` e `dados`; os outros módulos ainda não foram escritos. O uso acadêmico para o TCC

@@ -10,7 +10,7 @@
 \usepackage[a4paper,left=2cm,right=2cm,top=1.5cm,bottom=1.8cm,footskip=0.8cm]{geometry}
 \usepackage[table]{xcolor}
 \usepackage{array,tabularx,enumitem,fancyhdr,titlesec,needspace}
-\usepackage[hidelinks,pdftitle={Plano do TCC: biblioteca prossumidor},
+\usepackage[hidelinks,pdftitle={Plano do TCC: biblioteca prosumer},
             pdfauthor={João Carlos Jachenski Junior}]{hyperref}
 
 % ------------------------------------------------------------------ cores
@@ -34,7 +34,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
-\fancyfoot[L]{\scriptsize\color{cinza}prossumidor -- plano do TCC em linguagem simples}
+\fancyfoot[L]{\scriptsize\color{cinza}prosumer -- plano do TCC em linguagem simples}
 \fancyfoot[R]{\scriptsize\color{cinza}página \thepage}
 
 % Cabecalho de tabela: fundo da cor de destaque, texto branco e negrito.
@@ -56,7 +56,7 @@
 \small
 
 % ================================================================== titulo
-{\color{acento}\bfseries\LARGE Plano do TCC: biblioteca prossumidor\par}
+{\color{acento}\bfseries\LARGE Plano do TCC: biblioteca prosumer\par}
 \vspace{2pt}
 {\color{cinza}O que é, o que já foi feito e o que falta \;|\; João Carlos Jachenski Junior \;|\; Lactec \;|\; revisão de 09/10/2026\par}
 \vspace{8pt}
@@ -172,8 +172,10 @@ Pesquisa e desenvolvimento & comparar modelos de forma justa, reproduzir resulta
   benchmark aberto (casas de Dingle), adaptadores, artigo de software (JOSS ou SoftwareX) \\
 \end{tabularx}
 
-\nota{O nome passa a ser em inglês (\texttt{prosumer} está livre no PyPI em 09/10/2026; conferir de novo
-na hora). A troca de nomes no código entra no começo da E2, antes de o núcleo crescer.}
+\nota{O nome passou a ser em inglês em 09/10/2026: o pacote é \texttt{prosumer} (livre no PyPI nessa data;
+conferir de novo antes de publicar), e o código, a interface e o README da biblioteca já estão em inglês.
+O repositório no GitHub ainda se chama \texttt{prossumidor}. Os documentos do projeto e do benchmark
+seguem em português.}
 
 % ================================================================== plano
 \needspace{8cm}
@@ -199,10 +201,10 @@ F2 -- Pilotos de melhoria & (a) combinar 2--3 previsões do tempo; (b) estimar a
   (f) modelo direto para o total do dia. (c) com o FlowState: script pronto, rodar no Lactec. & cada um: skill $+$0,02 ou mais num caso, ou faixa bem
   calibrada (c). & 18 \\
 F2b -- Levar para a biblioteca & Só os pilotos que passaram viram funções da biblioteca. & estimativa & 40 \\
-E2 -- Versão 0.1 & Troca dos nomes para inglês; núcleo: ler e limpar dados (com o relógio verificado
+E2 -- Versão 0.1 & \textit{Feito em 09/10:} troca dos nomes para inglês. Núcleo: ler e limpar dados (com o relógio verificado
   pelo sol), física do sol, regras de teste em várias resoluções, ranking e empate, modelos com o que
   exigem declarado, mediana como saída, dados reais de exemplo (Dingle). & testes automáticos;
-  cobertura $\geq$80\% & 130 \\
+  cobertura $\geq$80\% & 120 \\
 E3 -- Checagem 1 & Refazer o teste grande usando só a biblioteca. & os 248 resultados batem & 30 \\
 E4 -- Versão 0.2 & Diagnóstico de painel sujo ou com defeito; modelos pequenos para aparelhos
   (TTM, SparseTSF, Ridge, Random Forest e o que a etapa A indicar). & diagnóstico de Cascavel

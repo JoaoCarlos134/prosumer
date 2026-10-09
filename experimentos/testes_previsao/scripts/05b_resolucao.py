@@ -5,14 +5,14 @@ Por que: o consumo de uma casa hora a hora e em grande parte imprevisivel, mas o
 decisao do usuario raramente e por hora (fatura mensal, bateria olhando o pico da noite, tarifa por
 bloco). Cada uso escolhe a resolucao da sua decisao.
 
-Roda no AMBIENTE DA BIBLIOTECA (~/.venvs/prossumidor): usa `prossumidor.metricas.por_resolucao`. As horas
+Roda no AMBIENTE DA BIBLIOTECA (~/.venvs/prosumer): usa `prosumer.metrics.by_resolution`. As horas
 avaliadas sao as mesmas do 05_avalia.py (importado daqui), entao o nivel "hora" reproduz exatamente o
 skill do metricas.csv; o script confere isso e para se nao bater. Os niveis somam as previsoes e o real
 nessas horas (na geracao, as horas fora da mascara tem energia ~0, entao o total do dia praticamente nao
 muda). O skill de cada nivel e contra a referencia somada no mesmo nivel.
 
 Blocos: dia = 08-23 h, noite = 23-08 h (tarifa dia/noite da Irlanda, onde estao as casas); pico = 17-21 h.
-Para a tarifa branca brasileira, a biblioteca aceita outros blocos (`metricas.por_blocos`).
+Para a tarifa branca brasileira, a biblioteca aceita outros blocos (`metrics.by_blocks`).
 
 Saida: resultados/metricas_por_resolucao.csv.  Uso: python 05b_resolucao.py
 """
@@ -25,7 +25,7 @@ from comum import RES
 
 warnings.filterwarnings("ignore")
 av = importlib.import_module("05_avalia")
-from prossumidor import metricas as pm  # noqa: E402
+from prosumer import metrics as pm  # noqa: E402
 
 KW = dict(sep=";", decimal=",", encoding="utf-8-sig")
 M = pd.read_csv(RES / "metricas.csv", **KW)
@@ -43,8 +43,11 @@ for caso, g in M.groupby("caso"):
     base = base[base.avalia][["unique_id", "ds", "y"]]
     ref = previsao(av.REF[caso], caso, "A").merge(base, on=["unique_id", "ds"])
     for r in g.itertuples():
-        m, rr = pm.alinha(previsao(r.modelo, caso, r.regime), base, ref)
-        res = pm.por_resolucao(m, rr)
+        m, rr = pm.align(previsao(r.modelo, caso, r.regime), base, ref)
+        # a biblioteca devolve colunas em ingles; o CSV do benchmark fica com os nomes de antes
+        res = pm.by_resolution(m, rr).rename(columns={"level": "nivel", "blocks": "blocos",
+                                                      "R2_reference": "R2_referencia"})
+        res["nivel"] = res["nivel"].replace({"hour": "hora", "day_night": "dia_noite", "peak_17_21": "pico_17_21", "day": "dia"})
         hora = res.loc[res.nivel == "hora", "skill"].iloc[0]
         if abs(hora - r.skill) > 1e-9:
             raise AssertionError(f"{r.modelo}|{caso}|{r.regime}: skill por hora {hora} != metricas.csv {r.skill}")

@@ -18,7 +18,7 @@ import pandas as pd
 
 from comum import RES
 
-# A avaliacao usa a biblioteca (ambiente ~/.venvs/prossumidor); a geracao das previsoes roda no ambiente
+# A avaliacao usa a biblioteca (ambiente ~/.venvs/prosumer); a geracao das previsoes roda no ambiente
 # do modelo (previsao), que nao tem a biblioteca. Por isso os imports da avaliacao ficam dentro dela.
 
 PILOTOS = RES / "pilotos"
@@ -37,19 +37,19 @@ def grava_piloto(nome, caso, regime, janelas_, previsoes):
 def avalia_piloto(nome, caso, regime="A", extra=None):
     """Skill, metricas e DM contra o melhor do teste; grava o resumo em resultados/pilotos/resumo.json."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tests"))
-    import test_regressao_benchmark as T
-    from prossumidor import metricas as pm
+    import test_benchmark_regression as T
+    from prosumer import metrics as pm
 
     p = pd.read_parquet(PILOTOS / f"{nome}__{caso}__{regime}.parquet")[["unique_id", "ds", "yhat"]]
     p["yhat"] = p["yhat"].clip(lower=0)
-    m, ref = pm.alinha(p, T.real_avaliado(caso), T.referencia(caso))
-    met = pm.metricas(m)
-    M = T.PUBLICADO[(T.PUBLICADO.caso == caso) & (T.PUBLICADO.regime == regime)].sort_values("skill", ascending=False)
+    m, ref = pm.align(p, T.evaluated_actual(caso), T.reference(caso))
+    met = pm.metrics(m)
+    M = T.PUBLISHED[(T.PUBLISHED.caso == caso) & (T.PUBLISHED.regime == regime)].sort_values("skill", ascending=False)
     melhor = M.iloc[0]
-    mb, _ = T._alinhado(caso, melhor.modelo, regime)
-    _, est, pval = pm.diebold_mariano(pm.erros_quadraticos(m), pm.erros_quadraticos(mb))
+    mb, _ = T._aligned(caso, melhor.modelo, regime)
+    _, est, pval = pm.diebold_mariano(pm.squared_errors(m), pm.squared_errors(mb))
     sk = pm.skill(m, ref)
-    lo, hi = pm.skill_ic95(m, ref)
+    lo, hi = pm.skill_ci95(m, ref)
     pos = int((M.skill > sk).sum()) + 1
     r = dict(modelo=nome, caso=caso, regime=regime, skill=round(sk, 4), ic95=[round(lo, 4), round(hi, 4)],
              R2=round(met["R2"], 4), nRMSE=round(met["nRMSE"], 4), MBE=round(met["MBE"], 4),

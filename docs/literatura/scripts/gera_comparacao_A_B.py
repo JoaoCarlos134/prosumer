@@ -452,11 +452,12 @@ COR_GPU = {"Sim": PatternFill("solid", fgColor="F8D2BE"), "Recomendada": Pattern
 # Nome na lista acima -> nome em metricas.csv
 ALIAS = {"Random Forest": "RandomForest", "k-NN": "kNN", "Time-LLM": "TimeLLM"}
 # Decisoes medidas na rodada do passo T (maquina de casa, 07-09/10/2026; ver CLAUDE.md e 04_redes_treinadas.py).
-FORA = {  # modelo: (regimes afetados ou None = todos, motivo)
+FORA = {  # so com evidencia (teste). Inviabilidade tecnica nao e "fora": vai para a etapa A do plano.
     "TimesNet": ({"B"}, "Aceita o clima mas o IGNORA (previsão idêntica com o clima embaralhado): fica só no A."),
-    "xLSTM": (None, "Exige mlstm_kernels/ninja (compilador C++), que as máquinas do projeto não têm."),
-    "Time-LLM": (None, "Estoura a memória (derrubou a máquina 4 vezes); a família LLM já era excluída por princípio "
-                       "(Tan et al., 2024)."),
+}
+A_ESTUDAR = {  # nao rodaram por viabilidade, nao por falta de valor (etapa A do plano)
+    "xLSTM": "A estudar (etapa A): exige mlstm_kernels/ninja; rota: Linux/WSL com compilador.",
+    "Time-LLM": "A estudar (etapa A): estourou a memória com o LLM padrão; rota: base menor (GPT-2) ou mais memória.",
 }
 blocos = []
 # 1) ja testados que ainda faltam nas casas B
@@ -494,7 +495,7 @@ for mod, grupo, marc, gpu, lib, obs in PREVISTOS:
         falta += 1
     else:
         feitos += 1
-    blocos.append((mod, grupo, novo, gpu, lib, " ".join(x for x in (motivo, obs) if x)))
+    blocos.append((mod, grupo, novo, gpu, lib, " ".join(x for x in (motivo, A_ESTUDAR.get(mod, ""), obs) if x)))
 i = 4
 for mod, grupo, marc, gpu, lib, obs in blocos:
     celula(wp, i, 1, mod, negrito=True)
@@ -517,6 +518,8 @@ for t in [
     "Fica de fora deste artigo: a previsão do tempo por IA (ECMWF AIFS), que é do regime C.",
     "'a confirmar' = o artigo do modelo diz aceitar variáveis externas, mas ainda não foi verificado no código se aceita "
     "o clima do PRÓPRIO dia (o que o regime B exige).",
+    "Nenhum modelo sai sem estudo e evidência: os que não rodaram por viabilidade (xLSTM, Time-LLM) seguem previstos, "
+    "com a rota para rodar. Fora = só o que um teste mostrou não funcionar.",
     "Cores: verde = feito; azul-claro = previsto; amarelo = falta e precisa da GPU; cinza = fora. GPU: laranja = "
     "inviável sem GPU; amarelo = roda em CPU, mas leva horas.",
 ]:

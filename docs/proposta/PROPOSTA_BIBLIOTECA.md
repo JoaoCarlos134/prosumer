@@ -2,8 +2,9 @@
 
 > **Estado em 06/10/2026.** Este estudo de viabilidade descreve uma arquitetura proposta;
 > o pacote instalável existe (etapa E1, 06/10/2026), com `contratos`, `protocolo`, `metricas` e `dados`; os outros módulos ainda não foram escritos. O uso acadêmico para o TCC
-> foi autorizado em 05/10/2026; a licença continua pendente e os dados permanecem
-> privados. O benchmark v2 deve ser concluído e validado antes de atualizar as decisões
+> foi liberado em 05/10/2026; a licença é decisão do autor (a Lactec só entra se o projeto for ligado
+> formalmente a ela) e os dados das usinas dependem da permissão do professor. Público decidido em
+> 09/10/2026: núcleo internacional (inglês) com camada brasileira; ver `CLAUDE.md`. O benchmark v2 deve ser concluído e validado antes de atualizar as decisões
 > baseadas nos testes v1 abaixo. Consulte [`CLAUDE.md`](../../CLAUDE.md) e a
 > [estado atual](../../CLAUDE.md).
 

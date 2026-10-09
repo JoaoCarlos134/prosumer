@@ -8,13 +8,20 @@ docs and code comments are in Portuguese (code comments without accents) — kee
 
 ## Ground rules
 
-- **Private repo, third-party data.** Plant series belong to two private owners; no consent to publish.
-  Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba"); Cascavel coordinates rounded to
+- **Private repo; plant data needs the teacher's permission.** The plant series came to the user through his
+  teacher, who is responsible for them; publishing needs only the teacher's permission (he is open to it, but
+  until he gives it explicitly — in writing — they stay private). Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba"); Cascavel coordinates rounded to
   2 decimals (-24.83, -53.65). Never reintroduce names or exact coordinates. The name map exists only on the
   Lactec machine (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here).
-- **Authorization:** management cleared academic use (TCC) on 2026-10-05. Ownership/licence follow the
-  project terms (proposal section 10). There is deliberately **no LICENSE file** (the MIT one created with
-  the repo was removed on 2026-10-05): all rights reserved until Lactec decides. Don't add one.
+- **Licence is the author's decision (updated 2026-10-09).** Lactec is involved ONLY if the user formally
+  ties the project to a Lactec project; otherwise licence and publication are the user's call (with the
+  teacher's permission for the plant data). There is still **no LICENSE file**: don't add one until the user
+  picks a licence (due before E6).
+- **Audience (decided 2026-10-09): international core + Brazilian layer.** English code and main docs (power
+  sector worldwide + research/dev community), plus a Brazilian economics module (ANEEL, bandeiras, tarifa
+  branca, Lei 14.300) and a Portuguese guide. The user wants the option of a master's/doctorate abroad. The
+  rename to English (package `prosumer` was free on PyPI on 2026-10-09) happens at the START of E2. Until
+  then, existing code and docs stay in Portuguese.
 - **The 20 houses** (`casas`, H1-H20) are the public dataset of Khadem et al. (2024), "Comprehensive Dataset
   on Electrical Load Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2
   (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,
@@ -220,23 +227,23 @@ Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver P
 
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
-| F0 Decisoes | 0 | — | **Idioma** (nacional `prossumidor` x internacional `prosumer`): decidir ate fim de out/2026, antes do grosso da E2; criterios na secao 5 do plano. Licenca (Lactec). Comprar Raspberry Pi 5 + ESP32 |
+| F0 Decisoes | 0 | — | Idioma DECIDIDO (internacional + camada BR, ver Ground rules). Pendentes: licenca (do autor, antes da E6); permissao por escrito do professor para os dados das usinas; comprar Raspberry Pi 5 + ESP32 |
 | F1 Fechar o teste | 17 | ver linha | (a) **casa:** congelar `classicos` e atualizar `previsao.txt` (torch 2.14.1+cu130), 0,5 h. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (Lactec), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
-| F2 Pilotos de melhoria | 20 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (Lactec, granite-tsfm completo) |
+| **A Modelos pendentes** | 40 | casa (GPU) e Lactec | Os 13 pendentes (Moirai 1, CycleNet, VisionTS, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT): para CADA um, estudar como funciona (artigo, matematica), o que pode acrescentar e como fazer rodar; depois piloto num caso. **Regra do usuario (09/10): nao descartar modelo sem estudo + evidencia.** PORTAO para o teste completo: empatar com o melhor num caso ou trazer algo que nenhum outro traz (clima sem treino, tamanho de embarcado, faixa, dependencia entre series). Tabela com o porque de cada um: secao 7 do plano |
+| F2 Pilotos de melhoria | 22 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (Lactec, granite-tsfm completo); (f) modelo direto para o total do dia (consumo) |
 | F2b Levar para a biblioteca | ~40 | qualquer | so os pilotos que passaram |
-| E2 Versao 0.1 | 120 | qualquer | portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `dados.casas_dingle()` |
+| E2 Versao 0.1 | 130 | qualquer | PRIMEIRO trocar nomes e API para ingles (~10 h); depois portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `dados.casas_dingle()` |
 | E3 Checagem 1 | 30 | qualquer | o benchmark refeito so com a biblioteca bate com as 243 linhas |
 | E4 Versao 0.2 | 130 | qualquer | diagnostico; embarcado (TTM, SparseTSF, Ridge/RandomForest via emlearn, previsao do dia e por bloco de tarifa) |
 | E5 Hardware | 50 | — | Raspberry Pi 5 e ESP32 |
-| E6 Versao 0.3 | 80 (+30 se internacional) | qualquer | economia (tarifa branca, bandeiras, Lei 14.300), manual, publicacao |
+| E6 Versao 0.3 | 110 | qualquer | economia: tarifas por horario genericas + modulo brasileiro (tarifa branca, bandeiras, Lei 14.300); documentacao em ingles + guia em portugues; licenca escolhida pelo autor; publicacao |
 | E7 Escrita | 80 | — | em paralelo |
 
-Fora do plano (testado ou sem valor; motivos na secao 7 do plano): escolher "o melhor modelo"; correcao de
-vies na geracao solar; Lag-Llama, MOMENT, VisionTS, Moirai 1, CycleNet, DUET, Crossformer, Mamba,
-S-Mamba, LLMTime, Time-LLM, TimeGPT, xLSTM; TimeGrad so se o piloto F2c passar; modelo diario separado
-para o consumo. Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras
-(nenhuma origem afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre
-maquinas (<= 0,0006); redes em duas versoes de torch (2.11 e 2.14.1).
+Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
+solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).
+Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras (nenhuma origem
+afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre maquinas (<= 0,0006);
+redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~649 h (~10 meses, ate ago/2027).
 
 Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
 arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.

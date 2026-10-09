@@ -2,9 +2,9 @@
 
 A proposta de transformar o código do projeto numa biblioteca Python e de usar esse trabalho como
 TCC (e, depois, mestrado). **Estado em 06/10/2026:** o uso acadêmico para o TCC foi autorizado pela
-gestão em 05/10/2026, conforme [`CLAUDE.md`](../../CLAUDE.md). Titularidade e licença seguem os termos
-do projeto; a decisão de licença continua com o Lactec. O repositório é privado e **não tem arquivo
-LICENSE**. Os dados das usinas são de terceiros e não têm autorização para publicação; as 20 casas são o conjunto público CC0 de Khadem et al. (2024), que pode ser publicado com citação.
+gestão em 05/10/2026, conforme [`CLAUDE.md`](../../CLAUDE.md). A licença é decisão do autor (a Lactec só entra
+se o projeto for ligado formalmente a um projeto dela). O repositório é privado e **não tem arquivo
+LICENSE**. Os dados das usinas só podem ser publicados com a permissão do professor responsável por eles; as 20 casas são o conjunto público CC0 de Khadem et al. (2024), que pode ser publicado com citação.
 
 | Arquivo | O que é |
 |---|---|

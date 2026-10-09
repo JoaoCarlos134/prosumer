@@ -205,20 +205,38 @@ linhas de `metricas.csv` com a biblioteca, igualdade numerica; 184 testes no tot
 `docs/literatura/`; casas identificadas (CC0, Dingle). **O que isso muda na biblioteca** esta na secao 5c
 de `docs/proposta/PROPOSTA_BIBLIOTECA.md` — ler antes de mexer em `contratos`, `protocolo` ou adaptadores.
 
-Proximos passos, do mais barato ao mais caro (horas de trabalho, sem contar maquina rodando sozinha):
+**PLANO (revisao de 09/10/2026, Lactec). Fonte: `docs/proposta/Plano_TCC_simples.tex` (secoes 4-8).**
+Prioridade: a BIBLIOTECA. Artigos sao subprodutos e nao atrasam a E2. Regra: toda melhoria comeca por um
+PILOTO curto (1-4 h, um caso) e so vira trabalho completo se passar no PORTAO. Nada de rodada longa as cegas.
 
-| Passo | Horas | Onde | O que |
+Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver PROPOSTA 5c):
+- Correcao de vies causal (fator = real/previsto dos ultimos 14 dias, por serie): no CONSUMO leva o vies
+  dos fundacionais de ~-20% a <1% e sobe a mediana de +0,191 para +0,207 (empata com o LightGBM); na
+  GERACAO SOLAR piora ate -0,10 (Chronos-2 casas_prod B de +0,214 para +0,113). => so para consumo.
+- Como combinar: escolher o melhor da dobra anterior piora em todos os 7 testes (ate -0,23); top-5/top-10
+  instavel. => mediana de todos como saida; a biblioteca NAO escolhe modelo.
+- Resolucao (consumo, LightGBM): hora R2 0,37 / skill +0,21; pico 17-20h 0,35 / +0,16; noite-dia 0,69 /
+  +0,12; dia 0,58 / +0,10 (mediana +0,01; media 7 dias +0,04). 20 casas somadas: R2 0,64.
+
+| Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
-| ~~Bug do fuso~~ | feito 07/10 | — | `SerieEnergia.de_dataframe`: `fuso_origem` (arquivo em outro fuso, ex. UTC) e `troca_de_horario="descarta"` (tira linhas em hora local impossivel e avisa); hora repetida resolvida serie a serie; o resto vira `ErroDeContrato` com as duas sugestoes. As casas entram como `fuso="Europe/Dublin", troca_de_horario="descarta"` (40 linhas: 29/03 e 25/10 01:00 x 20 casas) |
-| 9 redes do NeuralForecast (passo T) | 2 + GPU | **casa** | TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM na fila do `04_redes_treinadas.py` |
-| Portar o resto do benchmark para `protocolo` | 3 | qualquer | `normaliza_por_treino`, interpolacao do historico em `janelas()`, mascara de horas avaliadas e corte de negativos (ai o teste de regressao troca a copia em `real_avaliado` pela funcao da biblioteca), exogenas na `Janela`, checar passo regular contra `taxa` |
-| ~~Clima medido das casas~~ | feito 07/10 | — | `scripts/09_clima_casas.py` -> `dados/clima_casas_horario.parquet` (GHI, ceu claro Haurwitz, kc, temperatura, vento, chuva, pressao; hora local de Dublin). **As casas estao em hora local de Dublin, nao em UTC** (salto de ~1 h na FV em 29/03 nas 10 casas); o clima (UTC) e convertido para a hora local antes de agregar |
-| ~~Regime B nas casas~~ | feito 09/10 | — | completo nas duas casas (24 redes + TiRex-2 + TabPFN-TS + classicos); ver "Estado em 09/10/2026" acima. Planilhas regeradas no Lactec em 09/10 depois da rodada final |
-| Classicos para o artigo | quase feito | — | Ridge, RandomForest, MLP, kNN, AutoETS, AutoTheta e MSTL feitos (09/10). Falta o **AutoARIMA** em 6 combinacoes (ver "Estado em 09/10/2026") |
-| **Revisao de 09/10 (Lactec): consertos pendentes** | ~2 | qualquer (CPU) | (1) ~~`serie_cod` numerico no Ridge/MLP/kNN~~ feito 09/10: one-hot (`com_serie` no `02_referencias.py`, refeito com `--modelos Ridge,MLP,kNN`; so esses 27 arquivos mudaram). kNN melhorou nas casas, Ridge quase igual, **MLP piorou e e instavel na FV das casas** (B de +0,035 para -0,084; ja era negativo em A): no artigo, tratar como linha de base sem ajuste fino, ou ajustar (~1 h: mais regularizacao e validacao temporal no lugar do `early_stopping` com linhas sorteadas); (2) AutoARIMA: o `usinas|A` publicado e da configuracao PADRAO e os outros 6 serao da REDUZIDA — refazer o `usinas|A` com a reduzida ou rotular as duas; (3) `02b_classicos.prepara` interpola a serie inteira antes de cortar as dobras (hoje nenhuma origem e afetada, mas a biblioteca nao pode copiar isso); (4) **so na maquina de casa:** congelar o ambiente `classicos` em `ambientes/classicos.txt` e atualizar `previsao.txt` para o torch 2.14.1+cu130 (`uv pip freeze`) |
-| Decidir o nome/idioma | 0 (decisao) | — | `prosumer` e `prossumidor` livres no PyPI (07/10). Recomendacao: manter `prossumidor` (API toda em portugues; foco brasileiro). Se for internacional (JOSS), trocar nome E API para ingles ANTES do grosso do E2 (~6-10 h agora, bem mais depois). Nao reservar nome no PyPI com pacote vazio |
-| `ranking()` e `empata_com_melhor()` no `protocolo` | 3 | qualquer | metodo da aba Testaveis e da planilha A x B |
-| Resto do E2 | ~85 | qualquer | `fisica`, `previsao` (+ metadados de GPU/licenca/envio de dados por adaptador), `io` (o `io` dos arquivos brutos so no Lactec), `qualidade` |
+| F0 Decisoes | 0 | — | **Idioma** (nacional `prossumidor` x internacional `prosumer`): decidir ate fim de out/2026, antes do grosso da E2; criterios na secao 5 do plano. Licenca (Lactec). Comprar Raspberry Pi 5 + ESP32 |
+| F1 Fechar o teste | 17 | ver linha | (a) **casa:** congelar `classicos` e atualizar `previsao.txt` (torch 2.14.1+cu130), 0,5 h. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (Lactec), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
+| F2 Pilotos de melhoria | 20 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (Lactec, granite-tsfm completo) |
+| F2b Levar para a biblioteca | ~40 | qualquer | so os pilotos que passaram |
+| E2 Versao 0.1 | 120 | qualquer | portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `dados.casas_dingle()` |
+| E3 Checagem 1 | 30 | qualquer | o benchmark refeito so com a biblioteca bate com as 243 linhas |
+| E4 Versao 0.2 | 130 | qualquer | diagnostico; embarcado (TTM, SparseTSF, Ridge/RandomForest via emlearn, previsao do dia e por bloco de tarifa) |
+| E5 Hardware | 50 | — | Raspberry Pi 5 e ESP32 |
+| E6 Versao 0.3 | 80 (+30 se internacional) | qualquer | economia (tarifa branca, bandeiras, Lei 14.300), manual, publicacao |
+| E7 Escrita | 80 | — | em paralelo |
+
+Fora do plano (testado ou sem valor; motivos na secao 7 do plano): escolher "o melhor modelo"; correcao de
+vies na geracao solar; Lag-Llama, MOMENT, VisionTS, Moirai 1, CycleNet, DUET, Crossformer, Mamba,
+S-Mamba, LLMTime, Time-LLM, TimeGPT, xLSTM; TimeGrad so se o piloto F2c passar; modelo diario separado
+para o consumo. Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras
+(nenhuma origem afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre
+maquinas (<= 0,0006); redes em duas versoes de torch (2.11 e 2.14.1).
 
 Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
 arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.

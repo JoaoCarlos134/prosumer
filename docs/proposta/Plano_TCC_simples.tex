@@ -58,7 +58,7 @@
 % ================================================================== titulo
 {\color{acento}\bfseries\LARGE Plano do TCC: biblioteca prossumidor\par}
 \vspace{2pt}
-{\color{cinza}O que é, o que já foi feito e o que falta \;|\; João Carlos Jachenski Junior \;|\; Lactec \;|\; outubro de 2026\par}
+{\color{cinza}O que é, o que já foi feito e o que falta \;|\; João Carlos Jachenski Junior \;|\; Lactec \;|\; revisão de 09/10/2026\par}
 \vspace{8pt}
 
 \caixa{\textbf{Em uma frase:} o TCC é uma biblioteca em Python que prevê quanta energia uma casa ou
@@ -89,23 +89,21 @@ economia    & Calcula a conta de luz: tarifas da ANEEL, bandeiras e a Lei 14.300
 % ================================================================== feito
 \section{O que já foi feito}
 \begin{itemize}
-  \item \textbf{Teste grande de modelos de previsão (concluído em 06/10/2026).} 36 modelos comparados de
-        forma justa em três casos: 2 usinas solares (Cascavel e Curitiba), geração solar de 10 casas e
-        consumo de 20 casas. Cada modelo foi retreinado a cada período de teste, e as diferenças foram
-        checadas com testes estatísticos.
-  \item \textbf{Principais respostas do teste:} (1) saber o clima do dia pesa cerca de
-        \textbf{10 vezes mais} que escolher o modelo; (2) com a previsão do tempo real, recupera-se cerca
-        de \textbf{70\%} do ganho máximo possível; (3) modelos de IA prontos, sem treino, empatam ou
-        ganham dos treinados; (4) um modelo de só 32 números (SparseTSF) empata com os melhores no consumo.
-  \item \textbf{Seis erros encontrados e corrigidos} no caminho, entre eles um modelo que ignorava o
-        clima e uma normalização que ``espiava'' os dados de teste. Há testes automáticos para eles não
-        voltarem.
+  \item \textbf{Teste grande de modelos de previsão.} \textbf{51 modelos} em 6 testes para o artigo (usinas,
+        geração FV das casas e consumo das casas, cada um sem e com o clima do dia) e mais o regime com a
+        previsão do tempo real nas usinas: 243 resultados. Cada modelo é retreinado a cada período de teste,
+        e as diferenças são checadas com testes estatísticos. Entraram também os clássicos (ARIMA, ETS,
+        Theta, MSTL, Ridge, Random Forest, MLP, k-NN).
+  \item \textbf{As 20 casas foram identificadas} (Dingle, Irlanda, domínio público) e ganharam o clima
+        medido da estação local. O relógio delas (hora local com horário de verão) foi descoberto
+        comparando a geração solar com a posição do sol.
   \item \textbf{Autorização} da gestão para uso acadêmico (05/10/2026) -- etapa E0.
-  \item \textbf{Base da biblioteca} (etapa E1): pacote instalável, checagem dos dados de entrada, dados de
-        exemplo gerados por código, 47 testes automáticos rodando no GitHub a cada mudança. Os 32 modelos
-        pequenos (TFLite) antigos também foram verificados.
-  \item \textbf{Prova de que a base está certa:} as métricas calculadas pela biblioteca batem
-        \textbf{exatamente} com os números publicados no teste grande.
+  \item \textbf{Base da biblioteca} (etapa E1): pacote instalável, checagem dos dados de entrada (com
+        horário de verão), dados de exemplo, \textbf{304 testes automáticos} no GitHub, incluindo um que
+        recalcula os 243 resultados publicados e exige que batam exatamente.
+  \item \textbf{Revisão de 09/10/2026:} erros de método achados e corrigidos (código da casa tratado como
+        número em três modelos; planilhas geradas no meio de uma rodada), e \textbf{testes-piloto} que
+        decidiram dois comportamentos da biblioteca (seção 4).
 \end{itemize}
 
 % ================================================================== dados
@@ -115,65 +113,110 @@ economia    & Calcula a conta de luz: tarifas da ANEEL, bandeiras e a Lei 14.300
 \cab{Dados} & \cab{Origem} & \cab{Pode publicar?} \\
 2 usinas solares & Cascavel (3,96 kWp) e Curitiba ($\sim$9,6 kWp), de proprietários particulares.
                  & \textbf{Não.} Sem consentimento. Nomes trocados pela cidade. \\
-20 casas & Comunidade de energia na península de Dingle, Irlanda, ano de 2020, medição a cada 1 minuto.
-           Khadem et al. (2024), \textit{Scientific Data}, doi:10.1038/s41597-024-03454-2.
-         & \textbf{Sim.} Licença CC0 (domínio público). Basta citar o artigo. \\
+20 casas & Comunidade de energia em Dingle, Irlanda, 2020, medição a cada minuto, com estação
+           meteorológica. Khadem et al. (2024), \textit{Scientific Data}, doi:10.1038/s41597-024-03454-2.
+         & \textbf{Sim.} Domínio público (CC0). Basta citar o artigo. \\
 \end{tabularx}
 
-Com isso a biblioteca pode trazer \textbf{dados reais de exemplo}, e o céu claro das casas pode ser calculado.
-
-% ================================================================== modelos que faltam
+% ================================================================== licoes
 \needspace{8cm}
-\section{Testar os modelos que ficaram de fora}
-A pesquisa na literatura achou \textbf{127 modelos}; 28 foram testados. Dos 99 restantes,
-\textbf{70 só existem no artigo} (sem código aberto) e 5 precisam de imagens de satélite ou de um
-supercomputador. Os \textbf{24 que têm código} serão testados agora, na máquina de casa (com GPU).
-Não se espera que mudem as conclusões, mas elas ficam \textbf{mais fortes}: passam a valer para quase
-tudo o que existe pronto, e não só para uma amostra.
+\section{O que os testes ensinaram para a biblioteca}
+\begin{itemize}
+  \item \textbf{O clima pesa cerca de 10 vezes mais que o modelo.} Nas usinas, dar o clima ao modelo
+        sobe o skill em +0,46 (mediana); trocar o 1º pelo 5º modelo muda 0,04. Por isso o maior
+        investimento vai para \textbf{obter clima e previsão do tempo melhores}, não para mais modelos.
+  \item \textbf{A mediana de todos os modelos empata com o melhor nos 6 testes.} Vira a saída padrão.
+        \textit{Testado:} escolher o melhor da rodada anterior piora em todos os casos (até $-$0,23),
+        e ficar só com os 5 ou 10 melhores não é estável. A biblioteca \textbf{não} escolhe modelo.
+  \item \textbf{Correção de viés só no consumo.} \textit{Testado:} os modelos de IA preveem $\sim$20\% a
+        menos de consumo; corrigir pelo viés dos últimos 14 dias leva o erro médio a $<$1\% e sobe a
+        mediana de +0,191 para +0,207 (empata com o melhor). Na geração solar a mesma correção
+        \textbf{piora} até $-$0,10: lá ela fica desligada.
+  \item \textbf{O consumo de uma casa, hora a hora, é em grande parte imprevisível} (R² 0,37); somando as
+        20 casas sobe para 0,64, e o total do dia para 0,58. A biblioteca mede o erro em várias
+        resoluções (hora, blocos de tarifa, pico da noite, dia), para cada uso escolher a sua. No total do
+        dia, a média dos últimos 7 dias quase empata com os modelos.
+  \item \textbf{Medir, não supor.} O fuso das casas estava errado e só apareceu comparando a geração com o
+        sol. Isso vira uma verificação automática do relógio no módulo de qualidade.
+  \item \textbf{Cada modelo declara o que exige}: GPU, licença dos pesos e se envia dados para fora (um
+        deles roda em servidor pago; dados privados nunca vão para lá sem permissão).
+\end{itemize}
+
+% ================================================================== idioma
+\needspace{6cm}
+\section{Decisão pendente: biblioteca nacional ou internacional}
+\caixa{\textbf{Decidir até o fim de outubro de 2026, antes do grosso da etapa E2.} Trocar depois custa
+várias vezes mais, porque cada módulo escrito teria de ser traduzido.}
 
 \rowcolors{2}{white}{zebra}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{5.6cm}Y@{}}
-\cab{Grupo} & \cab{Modelos} & \cab{Cuidado} \\
-Redes que já estão no NeuralForecast (9) & TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer,
-  Informer, xLSTM, Time-LLM & Entram direto no script atual. Rodar na GPU. \\
-Modelos de IA prontos (8) & Moirai 1, MOMENT, VisionTS, Lag-Llama, FlowState, BuildingsBench,
-  TimesFM-3, TimeGPT & BuildingsBench só no consumo. TimesFM-3 só para pesquisa (licença). TimeGPT é
-  serviço pago na internet: só com as casas, \textbf{nunca} com as usinas. \\
-Código em repositório próprio (5) & CycleNet, DUET, Crossformer, S-Mamba, Mamba & Precisa de adaptador.
-  Mamba pode exigir Linux (WSL). \\
-Outros (2) & LLMTime, TimeGrad & LLM local (lento); TimeGrad prevê uma faixa, não um número. \\
-Previsão do tempo por IA & ECMWF AIFS no regime C, no lugar do IFS & Representa GraphCast e Aurora sem
-  rodar um modelo global. Depende de haver arquivo histórico. \\
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.0cm}YY@{}}
+\cab{} & \cab{Nacional (\texttt{prossumidor}, em português)} & \cab{Internacional (\texttt{prosumer}, em inglês)} \\
+Para quem & distribuidoras, integradores e pesquisadores no Brasil & qualquer pesquisador ou empresa \\
+Destaque & tarifas da ANEEL, Lei 14.300, Copel: ninguém mais faz & a parte de previsão e o embarcado \\
+Custo extra & nenhum & $\sim$10 h agora (nomes e código) + $\sim$20 h de documentação em inglês \\
+Publicação & SoftwareX ou revista nacional & JOSS ou SoftwareX \\
 \end{tabularx}
 
-% ================================================================== falta
-\section{O que falta}
-Horas da proposta, descontando o que já foi adiantado. Semanas com cerca de \textbf{15 horas por semana}.
+Três perguntas decidem: (1) quem vai usar primeiro, a Lactec e o setor elétrico brasileiro ou a
+comunidade científica? (2) há plano de mestrado fora do Brasil? (3) a licença que a Lactec decidir
+permite publicar aberto? Os dois caminhos usam o mesmo plano abaixo; só muda a E6.
+
+% ================================================================== plano
+\needspace{8cm}
+\section{O plano: testar antes de investir}
+Toda melhoria começa por um \textbf{piloto curto} (1 a 4 horas, num caso só). Só vira trabalho completo
+se passar no critério da coluna ``Portão''. Assim nenhuma etapa longa é feita às cegas. Horas com
+cerca de 15 horas por semana.
 
 \rowcolors{2}{white}{zebra}
-\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{2.9cm}Y>{\raggedleft\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{2.5cm}@{}}
-\cab{Etapa} & \cab{O que é, em palavras simples} & \cab{Horas} & \cab{Semanas} \\
-E2 -- Versão 0.1 & Montar o miolo: ler e limpar os dados, física do sol, regras de teste e os primeiros
-  modelos (simples, LightGBM, Chronos-2, TTM). & 100 & 7 \\
-T -- Teste ampliado & Testar os 24 modelos da seção 4 e a previsão do tempo por IA; refazer métricas,
-  figuras e a planilha da literatura. & 80 & 5 a 6 \\
-E3 -- Checagem 1 & Refazer o teste grande e a análise de Cascavel usando a biblioteca. Os números
-  precisam bater com os antigos. & 40 & 3 \\
-E4 -- Versão 0.2 & Diagnóstico de painel sujo ou com defeito; encolher os modelos para aparelhos
-  pequenos; ligar o resto dos modelos. & 120 & 8 \\
-E5 -- Checagem 2 & Rodar os modelos pequenos num Raspberry Pi 5 e num ESP32 e medir tamanho, acerto,
-  velocidade e consumo de energia. & 50 & 3 a 4 \\
-E6 -- Versão 0.3 & Conta de luz (tarifas, bandeiras, Lei 14.300), manual com exemplos e publicação da
-  biblioteca. & 80 & 5 a 6 \\
-E7 -- Escrita & Escrever o TCC: fundamentos, como a biblioteca foi feita, as checagens e a discussão.
-  Pode começar já, em paralelo. & 80 & 5 a 6 \\
-\rowcolor{claro}\textbf{Total obrigatório} & & \textbf{550} & \textbf{37 (8--9 meses)} \\
-E8 -- Opcional & Artigo sobre a biblioteca (revista JOSS ou SoftwareX). & 30 & 2 \\
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{2.7cm}Y>{\raggedright\arraybackslash}p{4.0cm}>{\raggedleft\arraybackslash}p{0.9cm}@{}}
+\cab{Etapa} & \cab{O que é} & \cab{Portão (piloto)} & \cab{Horas} \\
+F0 -- Decisões & Idioma da biblioteca; licença (Lactec); comprar Raspberry Pi 5 e ESP32. & -- & 0 \\
+F1 -- Fechar o teste & Congelar os ambientes; avaliação por resolução (hora, tarifa, pico, dia);
+  correção de viés do consumo (já testada); ARIMA, MLP e 3 modelos novos que valem a pena
+  (TimesFM-3, FlowState, BuildingsBench). & ARIMA: 1 caso em menos de 2 h; MLP: ganho $\geq$0,05;
+  modelos novos: entrar no grupo da frente num caso. & 17 \\
+F2 -- Pilotos de melhoria & (a) combinar 2--3 previsões do tempo; (b) estimar a inclinação e a direção
+  de cada telhado pelos dados; (c) prever uma faixa (quantis); (d) atualizar a previsão ao meio-dia;
+  (e) ajuste fino de um modelo de IA nos nossos dados. & cada um: skill $+$0,02 ou mais num caso, ou
+  faixa bem calibrada (c). & 20 \\
+F2b -- Levar para a biblioteca & Só os pilotos que passaram viram funções da biblioteca. & estimativa & 40 \\
+E2 -- Versão 0.1 & Núcleo: ler e limpar dados (com o relógio verificado pelo sol), física do sol,
+  regras de teste em várias resoluções, ranking e empate, modelos com o que exigem declarado, mediana
+  como saída, dados reais de exemplo (Dingle). & testes automáticos; cobertura $\geq$80\% & 120 \\
+E3 -- Checagem 1 & Refazer o teste grande usando só a biblioteca. & os 243 resultados batem & 30 \\
+E4 -- Versão 0.2 & Diagnóstico de painel sujo ou com defeito; modelos pequenos para aparelhos
+  (TTM, SparseTSF, Ridge, Random Forest; previsão do dia e por bloco de tarifa). & diagnóstico de
+  Cascavel reproduzido & 130 \\
+E5 -- Checagem 2 & Medir tamanho, acerto, velocidade e energia no Raspberry Pi 5 e no ESP32. & tabela
+  medida no aparelho & 50 \\
+E6 -- Versão 0.3 & Conta de luz (tarifa branca, bandeiras, Lei 14.300), manual e publicação. & licença
+  decidida & 80 \\
+E7 -- Escrita & O TCC. Começa já, em paralelo. & aprovação do orientador & 80 \\
+\rowcolor{claro}\textbf{Total} & & & \textbf{567} \\
 \end{tabularx}
 
-\nota{Extras que melhoram o trabalho, mas não são obrigatórios: ajustar os modelos de IA aos nossos dados
-($\sim$10 h), prever uma faixa em vez de um número só ($\sim$20 h) e corrigir os modelos de IA que preveem
-cerca de 20\% a menos de consumo ($\sim$10 h).}
+\nota{Total de $\sim$38 semanas (9 meses). Se a decisão for internacional: $+$30 h. Subprodutos, depois da
+biblioteca e sem atrasar a E2: artigo de congresso com os regimes A e B ($\sim$25 h; a planilha já está
+pronta) e artigo de software ($\sim$30 h).}
+
+% ================================================================== cortes
+\needspace{6cm}
+\section{O que não vale a pena (e por quê)}
+\begin{itemize}
+  \item \textbf{Escolher automaticamente ``o melhor modelo''}: testado, piora ou é instável.
+  \item \textbf{Correção de viés na geração solar}: testado, piora.
+  \item \textbf{Os outros 13 modelos da lista de pendentes}: Lag-Llama, MOMENT, VisionTS e Moirai 1 ficam
+        atrás dos modelos de IA mais novos já testados nos benchmarks públicos; CycleNet, DUET e
+        Crossformer são de famílias já cobertas por 24 redes, e nenhuma rede passou da mediana; Mamba e
+        S-Mamba exigem Linux e GPU; LLMTime e Time-LLM são da família LLM, que não ganha dos modelos sem
+        LLM e estoura a memória; TimeGPT é pago e envia os dados para fora; TimeGrad só volta se o
+        piloto de faixas (F2c) passar.
+  \item \textbf{Um modelo separado para o consumo do dia}: a soma das previsões por hora já dá o total
+        do dia, e nele os modelos quase não passam da média de 7 dias.
+  \item \textbf{Mais modelos em geral}: o clima pesa 10 vezes mais. O tempo vai para clima, física e a
+        biblioteca.
+\end{itemize}
 
 % ================================================================== cronograma
 \needspace{9cm}
@@ -182,34 +225,35 @@ cerca de 20\% a menos de consumo ($\sim$10 h).}
 \setlength{\tabcolsep}{0pt}
 \renewcommand{\arraystretch}{1.5}
 \arrayrulecolor{linha}
-\begin{tabular}{|>{\hspace{4pt}}m{3.7cm}|*{10}{>{\centering\arraybackslash}m{1.3cm}|}}
+\begin{tabular}{|>{\hspace{4pt}}m{3.4cm}|*{11}{>{\centering\arraybackslash}m{1.2cm}|}}
 \hline
-\cab{Etapa} & \cab{out} & \cab{nov} & \cab{dez} & \cab{jan} & \cab{fev} & \cab{mar} & \cab{abr} & \cab{mai} & \cab{jun} & \cab{jul} \\ \hline
-E2 Versão 0.1        & \on & \on &     &     &     &     &     &     &     &     \\ \hline
-T Teste ampliado     &     & \on & \on &     &     &     &     &     &     &     \\ \hline
-E3 Checagem 1        &     &     &     & \on &     &     &     &     &     &     \\ \hline
-E4 Versão 0.2        &     &     &     &     & \on & \on &     &     &     &     \\ \hline
-E5 Hardware real     &     &     &     &     &     &     & \on &     &     &     \\ \hline
-E6 Versão 0.3        &     &     &     &     &     &     &     & \on &     &     \\ \hline
-E7 Escrita do TCC    & \es & \es & \es & \es & \es & \es & \es & \es & \es &     \\ \hline
-E8 Artigo (opcional) &     &     &     &     &     &     &     &     &     & \op \\ \hline
+\cab{Etapa} & \cab{out} & \cab{nov} & \cab{dez} & \cab{jan} & \cab{fev} & \cab{mar} & \cab{abr} & \cab{mai} & \cab{jun} & \cab{jul} & \cab{ago} \\ \hline
+F0 Decisões            & \on &     &     &     &     &     &     &     &     &     &     \\ \hline
+F1 Fechar o teste      & \on &     &     &     &     &     &     &     &     &     &     \\ \hline
+F2 Pilotos             & \on & \on &     &     &     &     &     &     &     &     &     \\ \hline
+E2 Versão 0.1          &     & \on & \on & \on &     &     &     &     &     &     &     \\ \hline
+E3 Checagem 1          &     &     &     &     & \on &     &     &     &     &     &     \\ \hline
+E4 Versão 0.2          &     &     &     &     & \on & \on & \on &     &     &     &     \\ \hline
+E5 Hardware real       &     &     &     &     &     &     &     & \on &     &     &     \\ \hline
+E6 Versão 0.3          &     &     &     &     &     &     &     &     & \on &     &     \\ \hline
+E7 Escrita do TCC      & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es &     \\ \hline
+Artigos (subprodutos)  &     & \op & \op &     &     &     &     &     &     &     & \op \\ \hline
 \end{tabular}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.35}
 
 \vspace{3pt}
-\nota{Outubro de 2026 a junho de 2027 para o obrigatório; julho para o artigo opcional. O teste ampliado
-roda na máquina de casa (GPU) ao mesmo tempo que o fim da E2. A escrita (cor mais clara) acontece aos
-poucos durante todo o período e se concentra no final.}
+\nota{Outubro de 2026 a julho de 2027 para a biblioteca e o TCC. Os artigos (cinza) são subprodutos: o de
+congresso aproveita a planilha pronta em nov--dez; o de software, depois da publicação.}
 
 % ================================================================== atencao
 \section{O que pode atrasar (resolver logo)}
 \begin{itemize}
-  \item \textbf{Licença da biblioteca:} a Lactec precisa decidir antes da publicação (etapa E6).
+  \item \textbf{Decisão de idioma} (seção 5) e \textbf{licença} (Lactec): travam a E2 e a E6.
   \item \textbf{Orientador e coorientador} confirmados por escrito, se ainda não estiver feito.
-  \item \textbf{Comprar o Raspberry Pi 5 e o ESP32} com antecedência: a entrega pode levar semanas (etapa E5).
-  \item \textbf{Treinos pesados} e o teste ampliado rodam no computador de casa, que tem placa de vídeo
-        (GPU); o do Lactec não tem.
+  \item \textbf{Comprar o Raspberry Pi 5 e o ESP32} com antecedência (etapa E5).
+  \item \textbf{Memória da máquina de casa}: três rodadas morreram por falta de RAM. Rodar em lotes
+        pequenos e não misturar filas de CPU e GPU.
 \end{itemize}
 
 \end{document}

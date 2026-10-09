@@ -135,5 +135,260 @@
   "grupo_da_frente": false,
   "segundos": "194",
   "parametros": "9069312"
+ },
+ "VisionTS|usinas|A": {
+  "modelo": "VisionTS",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.042,
+  "ic95": [
+   0.0171,
+   0.0637
+  ],
+  "R2": 0.6748,
+  "nRMSE": 0.6302,
+  "MBE": -0.0005,
+  "posicao": "22o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "VisionTS++|usinas|A": {
+  "modelo": "VisionTS++",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0596,
+  "ic95": [
+   0.006,
+   0.1085
+  ],
+  "R2": 0.6867,
+  "nRMSE": 0.6187,
+  "MBE": 0.1399,
+  "posicao": "18o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0001,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "VisionTS|casas_cons|A": {
+  "modelo": "VisionTS",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1647,
+  "ic95": [
+   0.1513,
+   0.1789
+  ],
+  "R2": 0.3063,
+  "nRMSE": 0.9346,
+  "MBE": -0.0988,
+  "posicao": "23o de 49",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "VisionTS++|casas_cons|A": {
+  "modelo": "VisionTS++",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1762,
+  "ic95": [
+   0.157,
+   0.1959
+  ],
+  "R2": 0.3254,
+  "nRMSE": 0.9217,
+  "MBE": -0.2127,
+  "posicao": "21o de 49",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2073,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "VisionTS|casas_prod|A": {
+  "modelo": "VisionTS",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1301,
+  "ic95": [
+   0.1164,
+   0.1442
+  ],
+  "R2": 0.3641,
+  "nRMSE": 1.225,
+  "MBE": -0.0911,
+  "posicao": "9o de 48",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0216,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "VisionTS++|casas_prod|A": {
+  "modelo": "VisionTS++",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1274,
+  "ic95": [
+   0.0935,
+   0.1611
+  ],
+  "R2": 0.36,
+  "nRMSE": 1.2289,
+  "MBE": -0.2247,
+  "posicao": "9o de 48",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.1439,
+  "grupo_da_frente": true,
+  "dispositivo": "cuda"
+ },
+ "Moirai-1.1-small-p64|usinas|A": {
+  "modelo": "Moirai-1.1-small-p64",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0352,
+  "ic95": [
+   0.005,
+   0.0657
+  ],
+  "R2": 0.6702,
+  "nRMSE": 0.6347,
+  "MBE": -0.0917,
+  "posicao": "22o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "64"
+ },
+ "Moirai-1.1-small-p64|usinas|B": {
+  "modelo": "Moirai-1.1-small-p64",
+  "caso": "usinas",
+  "regime": "B",
+  "skill": 0.0538,
+  "ic95": [
+   0.0138,
+   0.0916
+  ],
+  "R2": 0.6828,
+  "nRMSE": 0.6224,
+  "MBE": -0.0561,
+  "posicao": "24o de 24",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.5089,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "64"
+ },
+ "Moirai-1.1-base-p64|usinas|A": {
+  "modelo": "Moirai-1.1-base-p64",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0547,
+  "ic95": [
+   0.0165,
+   0.0918
+  ],
+  "R2": 0.6834,
+  "nRMSE": 0.6219,
+  "MBE": -0.0711,
+  "posicao": "21o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "64"
+ },
+ "Moirai-1.1-base-p64|usinas|B": {
+  "modelo": "Moirai-1.1-base-p64",
+  "caso": "usinas",
+  "regime": "B",
+  "skill": 0.0265,
+  "ic95": [
+   -0.0117,
+   0.0601
+  ],
+  "R2": 0.6643,
+  "nRMSE": 0.6404,
+  "MBE": -0.1439,
+  "posicao": "24o de 24",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.5089,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "64"
+ },
+ "Moirai-1.1-small-p16|usinas|A": {
+  "modelo": "Moirai-1.1-small-p16",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": -1.1961,
+  "ic95": [
+   -1.3171,
+   -1.0742
+  ],
+  "R2": -0.7087,
+  "nRMSE": 1.4448,
+  "MBE": -0.9466,
+  "posicao": "49o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "16"
+ },
+ "Moirai-1.1-small-p32|usinas|B": {
+  "modelo": "Moirai-1.1-small-p32",
+  "caso": "usinas",
+  "regime": "B",
+  "skill": -0.1536,
+  "ic95": [
+   -0.206,
+   -0.1037
+  ],
+  "R2": 0.5285,
+  "nRMSE": 0.7589,
+  "MBE": -0.315,
+  "posicao": "24o de 24",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.5089,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "32"
+ },
+ "Moirai-1.1-small-p32|usinas|A": {
+  "modelo": "Moirai-1.1-small-p32",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": -0.057,
+  "ic95": [
+   -0.101,
+   -0.0143
+  ],
+  "R2": 0.6042,
+  "nRMSE": 0.6954,
+  "MBE": -0.241,
+  "posicao": "37o de 50",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cpu",
+  "patch": "32",
+  "nota": "parquet sobrescrito pela rodada com patch 16; numeros copiados da avaliacao original"
  }
 }

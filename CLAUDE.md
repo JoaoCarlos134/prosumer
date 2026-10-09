@@ -181,7 +181,11 @@ regressao contra o `metricas.csv` incluido); o unico de fora e o de propriedade 
   roda na GPU**; `2.14.1+cu126` tambem e bloqueado (`shm.dll`). Opcoes: (1) um ambiente novo com torch
   2.9.1+cu128 para a etapa A (terceira versao de torch no benchmark, declarar; as 52 + passo T ficam como
   estao); (2) WSL2 (a nota da memoria dizia "adiar ate o TTM/embarcado": este e o gatilho). Nunca desligar
-  o Smart App Control (irreversivel). Decisao do usuario pendente.
+  o Smart App Control (irreversivel). **Decidido 09/10: opcao (1).** Ambiente `~/.venvs/previsao_gpu`
+  (= `previsao` com `torch==2.9.1+cu128`, congelado em `ambientes/previsao_gpu.txt`) e o que roda redes e
+  modelos na GPU daqui para frente; `torch.cuda.is_available()` True, imports do benchmark ok (o
+  `tsfm_public.toolkit` falta, como no `previsao`). Os scripts escolhem o ambiente pelo `VENVS`/nome: para a
+  etapa A, chamar `~/.venvs/previsao_gpu/Scripts/python.exe` direto.
 - `pyarrow 26.0.0`: bloqueado; o `.venv` usa `pyarrow==25.0.1` (o `classicos` ja tinha 25.0.1).
 - `mypy` (compilado com mypyc, e o `librt` que ele usa): bloqueado. Rodar o mypy na CI ou no Lactec.
 - `hypothesis._native`: continua bloqueado (so o teste de propriedade de `test_contracts.py`).
@@ -190,8 +194,8 @@ Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispyt
 
 **AutoARIMA (F1 d):** medicao de `usinas|B` com a configuracao reduzida iniciada 09/10 as 12:42 no
 `classicos`; o Claude Code matou o processo por falta de memoria da maquina por volta das 13:10
-(~28 min, sem nenhuma dobra gravada; usava ~17 GB). Medicao NAO concluida: refazer sozinho na maquina,
-sem outro processo pesado aberto, ou no Lactec.
+(~28 min, sem nenhuma dobra gravada; usava ~17 GB). Refeito as 15:13 com a maquina vazia (22,7 GB livres):
+resultado PENDENTE.
 
 ### Estado em 09/10/2026 (fim da sessao na maquina de casa)
 

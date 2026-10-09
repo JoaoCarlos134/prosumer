@@ -7,6 +7,12 @@ Versões exatas congeladas em 05/10/2026 (`uv pip freeze`).
 Aplicativo bloqueou o 2.11.0; ver CLAUDE.md). As 52 redes originais rodaram em 2.11.0, as do passo T em
 2.14.1. Para CPU, troque `+cu130` por `+cpu`. `classicos.txt` congelado na mesma data.
 
+`previsao_gpu.txt` (09/10/2026): o Smart App Control passou a bloquear o `c10.dll`/`shm.dll` do torch 2.14.1
+(cu130 e cu126), e o 2.9.1+cu128 carrega. Mesmos pacotes do `previsao`, mesma receita (`--no-deps`, índice
+`whl/cu128`, o `granite-tsfm` com `--no-build-isolation` e incompleto como no item 2 abaixo). Python 3.12.10
+oficial (assinado) como base: o 3.12.13 do uv também passou a ser bloqueado. Terceira versão de torch no
+benchmark (2.11 nas 52 redes originais, 2.14.1 no passo T, 2.9.1 na etapa A): declarar no texto.
+
 | Ambiente | Python | Para quê |
 |---|---|---|
 | `previsao.txt` | 3.12 | quase tudo: referências, LightGBM, redes (NeuralForecast), Chronos, TimesFM, TiRex, TTM, Toto 1.0, avaliação e figuras |
@@ -14,6 +20,7 @@ Aplicativo bloqueou o 2.11.0; ver CLAUDE.md). As 52 redes originais rodaram em 2
 | `lote2_hf.txt` | 3.12 | Sundial, Timer-XL, Time-MoE (`transformers==4.40.1`, `trust_remote_code`) |
 | `moirai.txt` | 3.11 | Moirai 2.0 e Moirai-MoE (`uni2ts`, torch 2.4) |
 | `classicos.txt` | 3.12 | AutoARIMA, AutoETS, AutoTheta, MSTL (StatsForecast 2.1.1; sem torch) |
+| `previsao_gpu.txt` | 3.12 | igual ao `previsao`, só com `torch==2.9.1+cu128`: o que roda na GPU da máquina de casa desde 09/10/2026 (etapa A) |
 
 Criar (com [uv](https://docs.astral.sh/uv/)), na pasta `~/.venvs` (ou defina `VENVS` para outra):
 

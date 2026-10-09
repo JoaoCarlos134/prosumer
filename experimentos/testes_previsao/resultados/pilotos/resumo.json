@@ -549,18 +549,18 @@
   "modelo": "CycleNet-linear-W24",
   "caso": "casas_prod",
   "regime": "A",
-  "skill": 0.1386,
+  "skill": 0.1376,
   "ic95": [
-   0.1116,
-   0.1661
+   0.1106,
+   0.165
   ],
-  "R2": 0.3764,
-  "nRMSE": 1.2131,
-  "MBE": -0.0645,
-  "posicao": "6o de 49",
+  "R2": 0.375,
+  "nRMSE": 1.2145,
+  "MBE": -0.063,
+  "posicao": "7o de 49",
   "melhor": "Toto-2.0-313m",
   "skill_melhor": 0.1779,
-  "dm_p_vs_melhor": 0.132,
+  "dm_p_vs_melhor": 0.1242,
   "grupo_da_frente": true,
   "dispositivo": "cuda"
  },

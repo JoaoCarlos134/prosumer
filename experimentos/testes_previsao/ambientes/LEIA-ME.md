@@ -74,7 +74,7 @@ rodam em CPU e são rápidos.
 
 - **TiRex-2 precisa rodar sem GPU visível.** Com um torch de CUDA instalado, o `xlstm` monta os
   caminhos do kernel sLSTM no import só porque `torch.cuda.is_available()` é verdadeiro, e exige
-  `CUDA_HOME` (nvcc), que os wheels do pip não trazem. O `roda_lote2.py` já isola essa etapa com
+  `CUDA_HOME` (nvcc), que os wheels do pip não trazem. O `historico/roda_lote2.py` isolava essa etapa com
   `CUDA_VISIBLE_DEVICES=-1`; string vazia não serve, o torch ignora.
 - **Time-MoE-50M em lotes de 8.** Com 32 e contexto de 1024 h a RAM vai de 0,7 para 13,1 GB e a
   rodada morre por falta de memória. Já está no `03c_fundacionais_lote2.py`.

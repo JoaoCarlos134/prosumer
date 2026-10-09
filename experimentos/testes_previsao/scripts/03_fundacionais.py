@@ -10,7 +10,7 @@ TimesFM, TTM e Toto). Uso: python 03_fundacionais.py [modelo ...] [--casos c1,c2
 import gc, sys, time, json
 import numpy as np, torch
 import truststore; truststore.inject_into_ssl()
-from comum import carrega, janelas, grava, CASOS, H, RES, REGIMES
+from comum import carrega, janelas, grava, grava_tempos, CASOS, H, RES, REGIMES
 
 torch.set_num_threads(10)
 LOG = RES / "tempos_fundacionais.json"
@@ -131,7 +131,7 @@ def visiontspp(jan, exog=False):
     """VisionTS++ (MAE de imagens com pre-treino continuado em series, ~115 M param.): dobra a serie em
     24 linhas x N dias e reconstroi a parte mascarada da imagem. Entrou em 09/10/2026 depois de passar no
     piloto (piloto_visionts.py, mesmo codigo; empatou na FV das casas). Previsao pontual: a saida de ponto
-    do modelo (os 9 quantis ficam de fora aqui). Roda no ~/.venvs/etapa_a, em GPU na maquina de casa (o
+    do modelo (os 9 quantis ficam de fora aqui). Roda no ~/.venvs/previsao_gpu, em GPU na maquina de casa (o
     torch do `previsao` foi bloqueado pelo Smart App Control). Pesos em ~/.cache/visionts/pp."""
     from pathlib import Path
     from visionts import VisionTSpp
@@ -173,5 +173,5 @@ if __name__ == "__main__":
                     print("OK    %-20s %-10s %s  %5d janelas  %6.0f s" % (nome, caso, regime, len(jan), dt), flush=True)
                 except Exception as e:
                     print("FALHA %-20s %-10s %s  %s: %s" % (nome, caso, regime, type(e).__name__, str(e)[:300]), flush=True)
-                LOG.write_text(json.dumps(tempos, indent=1))
+                grava_tempos(LOG, tempos)
                 gc.collect()

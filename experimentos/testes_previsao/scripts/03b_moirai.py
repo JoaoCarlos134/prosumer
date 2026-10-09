@@ -5,7 +5,7 @@ import time, json
 import numpy as np, torch
 import truststore; truststore.inject_into_ssl()
 from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
-from comum import carrega, janelas, grava, CASOS, H, RES
+from comum import carrega, janelas, grava, grava_tempos, CASOS, H, RES
 
 torch.set_num_threads(10)
 m = Moirai2Forecast(module=Moirai2Module.from_pretrained("Salesforce/moirai-2.0-R-small"), prediction_length=H,
@@ -23,4 +23,4 @@ for caso in CASOS:
     grava("Moirai-2.0-small", caso, "A", jan, prev)
     tempos[f"Moirai-2.0-small|{caso}|A"] = dict(segundos=round(time.time() - t0, 1), janelas=len(jan))
     print("OK    Moirai-2.0-small %-10s A  %5d janelas  %6.0f s" % (caso, len(jan), time.time() - t0), flush=True)
-LOG.write_text(json.dumps(tempos, indent=1))
+grava_tempos(LOG, tempos)

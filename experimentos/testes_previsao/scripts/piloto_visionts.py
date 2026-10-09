@@ -10,7 +10,7 @@ Interesse: a sazonalidade diaria forte da geracao FV e o caso ideal de um modelo
 como uma coluna de pixels. Portao: grupo da frente num caso (ver piloto_comum.py).
 
 Mesmas janelas dos outros fundacionais (1024 h de historico, 24 h a frente). Pesos fora do repositorio,
-em ~/.cache/visionts. Ambiente: ~/.venvs/etapa_a (previsao_gpu + visionts/timm/torchvision sem deps).
+em ~/.cache/visionts. Ambiente: ~/.venvs/previsao_gpu (visionts/timm/torchvision instalados com --no-deps).
 
 Uso: python piloto_visionts.py [VisionTS|VisionTS++] [caso ...]   (padrao: os dois, usinas)
 Depois: python piloto_comum.py <modelo> <caso> A   (ambiente da biblioteca)
@@ -29,27 +29,22 @@ CKPT = Path.home() / ".cache" / "visionts"
 DISP = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def modelo(nome):
-    from visionts import VisionTS, VisionTSpp
-    if nome == "VisionTS":
-        m = VisionTS(arch="mae_base", finetune_type="ln", ckpt_dir=str(CKPT))
-    else:
-        m = VisionTSpp(arch="mae_base", finetune_type="ln", ckpt_dir=str(CKPT / "pp"), quantile=True)
-    m.update_config(context_len=CONTEXTO_FM, pred_len=H, periodicity=24)
-    return m.to(DISP).eval()
-
-
 def preve(nome, jan):
-    m = modelo(nome)
+    """VisionTS++ usa a funcao do benchmark (03_fundacionais.visiontspp), sem copia; o VisionTS original,
+    que nao passou no piloto, so existe aqui."""
+    if nome == "VisionTS++":
+        import importlib
+        return importlib.import_module("03_fundacionais").visiontspp(jan), 115059712
+    from visionts import VisionTS
+    m = VisionTS(arch="mae_base", finetune_type="ln", ckpt_dir=str(CKPT))
+    m.update_config(context_len=CONTEXTO_FM, pred_len=H, periodicity=24)
+    m = m.to(DISP).eval()
     n_par = sum(p.numel() for p in m.parameters())
     out = []
     with torch.no_grad():
         for i in range(0, len(jan), 64):
             x = torch.tensor(np.stack([w["y"] for w in jan[i:i + 64]]))[:, :, None].to(DISP)
-            y = m(x)
-            if isinstance(y, list):  # VisionTS++: [ponto, lista de quantis]
-                y = y[0]
-            out += list(y[:, :H, 0].float().cpu().numpy())
+            out += list(m(x)[:, :H, 0].float().cpu().numpy())
     return out, n_par
 
 

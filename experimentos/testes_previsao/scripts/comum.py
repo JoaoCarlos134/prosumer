@@ -201,3 +201,13 @@ def grava(modelo, caso, regime, janelas_, previsoes, extra=None):
     nome = f"{modelo}__{caso}__{regime}.parquet".replace(" ", "_").replace("/", "-")
     df.to_parquet(PREV / nome, index=False)
     return PREV / nome
+
+
+def grava_tempos(log, tempos):
+    """Junta `tempos` ao que ja esta no arquivo e grava. Dois processos podem escrever no mesmo log (o 03 e o
+    03b dividem o tempos_fundacionais.json): gravar so o que este processo leu no inicio apagava as entradas
+    do outro (armadilha de 08/10/2026)."""
+    import json
+    atual = json.loads(log.read_text()) if log.exists() else {}
+    atual.update(tempos)
+    log.write_text(json.dumps(atual, indent=1))

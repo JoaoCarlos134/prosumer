@@ -10,8 +10,9 @@ Avaliação: `scripts/piloto_comum.py` (mesmas horas avaliadas, mesmo corte de n
 `05_avalia.py`). Saídas em `resultados/pilotos/` (fora de `previsoes/`: não entram na mediana nem no
 `metricas.csv`); números em `resultados/pilotos/resumo.json`.
 
-Ambiente da etapa A na máquina de casa: `~/.venvs/etapa_a` = `previsao_gpu` (torch 2.9.1+cu128) + o pacote
-de cada modelo instalado com `--no-deps` (resolver puxaria o torch 2.14.1, bloqueado pelo Smart App Control).
+Ambiente da etapa A na máquina de casa: `~/.venvs/previsao_gpu` (torch 2.9.1+cu128), com o pacote de cada
+modelo novo instalado com `--no-deps` (resolver puxaria o torch 2.14.1, bloqueado pelo Smart App Control) e o
+congelamento refeito em `ambientes/previsao_gpu.txt`. (Até 09/10 havia um `etapa_a` separado; foi juntado.)
 Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 
 | Modelo | Situação | Resultado em uma linha |
@@ -158,3 +159,9 @@ traz o que se procurava: um modelo de embarcado que, na geração solar, fica mu
 (+0,139 contra +0,033 na FV das casas). Vai para o teste completo em A nos três casos, no
 `04_redes_treinadas.py` ao lado do SparseTSF, com W = 24 na geração e W = 168 no consumo, backbone Linear.
 No consumo não ganha do SparseTSF, que continua sendo o candidato pequeno para consumo.
+
+**Entrou no benchmark em 09/10/2026** (`04_redes_treinadas.py --modelos CycleNet`, código em
+`redes_proprias.py`, rodado em **CPU** de propósito: na GPU o `torch.gather` do ciclo tem retropropagação não
+determinística e duas rodadas iguais diferem em até 0,06; em CPU o resultado é bit a bit reprodutível e leva
+6–14 s por caso). Resultado no benchmark: usinas +0,062 (17º/51), FV das casas **+0,138 (7º/49, empata com o
+melhor também com a correção de Holm, p ajustado 0,82)**, consumo +0,166 (24º/50).

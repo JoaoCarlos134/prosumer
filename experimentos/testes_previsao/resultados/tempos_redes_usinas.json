@@ -280,5 +280,12 @@
   "parametros": 4720193,
   "dobras": 5,
   "dispositivo": "cuda"
+ },
+ "CycleNet|usinas|A": {
+  "segundos": 13.1,
+  "parametros": 4104,
+  "dobras": 5,
+  "dispositivo": "cpu",
+  "torch": "2.9.1+cu128"
  }
 }

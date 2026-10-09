@@ -65,8 +65,11 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("TiDE", "Rede treinada", "MLP / linear", "TiDE", "NeuralForecast", "≈ 1,5 milhão", "Sim", "Sim", ""),
     ("DLinear", "Rede treinada", "MLP / linear", "DLinear / NLinear", "NeuralForecast", "≈ 8 mil", "Sim", "Não", ""),
     ("TSMixerx", "Rede treinada", "MLP / linear", "TSMixer", "NeuralForecast", "≈ 82 mil", "Sim", "Sim", "Versão com variáveis externas; rodou só com clima."),
-    ("SparseTSF", "Rede treinada", "MLP / linear", "SparseTSF", "próprio (PyTorch, 04_redes_treinadas.py)", "32", "Sim", "Não",
+    ("SparseTSF", "Rede treinada", "MLP / linear", "SparseTSF", "próprio (PyTorch, redes_proprias.py)", "32", "Sim", "Não",
      "Lin et al. (2024); candidato ao embarcado."),
+    ("CycleNet", "Rede treinada", "MLP / linear", "CycleNet", "próprio (PyTorch, redes_proprias.py)", "≈ 4 a 7 mil", "Sim", "Não",
+     "Lin et al. (NeurIPS 2024): ciclo aprendível por série + linear no resíduo (24 h na geração, 168 h no consumo). "
+     "Entrou em 09/10/2026 depois do piloto (empatou na FV das casas); candidato ao embarcado para geração."),
     ("PatchTST", "Rede treinada", "Transformer", "PatchTST", "NeuralForecast", "≈ 467 mil", "Sim", "Não", ""),
     ("iTransformer", "Rede treinada", "Transformer", "iTransformer", "NeuralForecast", "≈ 6,4 milhões", "Sim", "Não",
      "Trata as séries como variáveis de um mesmo sistema."),
@@ -82,7 +85,7 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("FlowState", "Fundacional", "Fundacional (zero-shot)", "FlowState", "granite-tsfm (IBM)", "≈ 9,1 milhões", "Não", "Não",
      "Codificador S5 + base funcional; entrou em 09/10/2026 depois do piloto. Melhor que o TTM na geração solar; "
      "devolve quantis. Só no Lactec (granite-tsfm completo)."),
-    ("VisionTS++", "Fundacional", "Fundacional (zero-shot)", "VisionTS", "visionts (pacote), ambiente etapa_a", "≈ 115 milhões", "Não", "Não",
+    ("VisionTS++", "Fundacional", "Fundacional (zero-shot)", "VisionTS", "visionts (pacote), ambiente previsao_gpu", "≈ 115 milhões", "Não", "Não",
      "Série dobrada em imagem (24 h x dias) e reconstruída por um MAE de imagens; entrou em 09/10/2026 depois do piloto "
      "(empatou na FV das casas). O VisionTS original foi pilotado e não passou. Devolve quantis."),
     ("Toto", "Fundacional", "Fundacional (zero-shot)", "Toto", "toto (Datadog)", "≈ 151 milhões", "Não", "Não", ""),
@@ -209,7 +212,6 @@ FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
     ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),
     ("TimeGPT", "Fundacional (serviço)", "Não", "Roda nos servidores da Nixtla (API paga).",
      "Envia os dados para fora: SÓ com as casas (CC0), NUNCA com as usinas."),
-    ("CycleNet", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador."),
     ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TFB)."),
     ("Crossformer", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TSLib)."),
     ("S-Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",

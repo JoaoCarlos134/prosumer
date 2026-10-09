@@ -17,7 +17,7 @@ Tempos em resultados/tempos_fundacionais_lote2.json.
 import gc, sys, time, json
 import numpy as np, pandas as pd, torch
 import truststore; truststore.inject_into_ssl()
-from comum import carrega, janelas, grava, CASOS, EXOG, H, RES, REGIMES
+from comum import carrega, janelas, grava, grava_tempos, CASOS, EXOG, H, RES, REGIMES
 
 torch.set_num_threads(10)
 LOG = RES / "tempos_fundacionais_lote2.json"
@@ -168,7 +168,7 @@ if __name__ == "__main__":
                     grava(nome, caso, regime, jan, prev)
                     tempos = json.loads(LOG.read_text()) if LOG.exists() else {}
                     tempos[chave] = dict(segundos=round(dt, 1), janelas=len(jan))
-                    LOG.write_text(json.dumps(tempos, indent=1))
+                    grava_tempos(LOG, tempos)
                     print("OK    %-17s %-10s %s  %5d janelas  %6.0f s" % (nome, caso, regime, len(jan), dt), flush=True)
                 except Exception as e:
                     print("FALHA %-17s %-10s %s  %s: %s" % (nome, caso, regime, type(e).__name__, str(e)[:300]), flush=True)

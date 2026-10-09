@@ -394,5 +394,19 @@
   "parametros": 4720193,
   "dobras": 3,
   "dispositivo": "cuda"
+ },
+ "CycleNet|casas_prod|A": {
+  "segundos": 6.4,
+  "parametros": 4296,
+  "dobras": 3,
+  "dispositivo": "cpu",
+  "torch": "2.9.1+cu128"
+ },
+ "CycleNet|casas_cons|A": {
+  "segundos": 14.1,
+  "parametros": 7416,
+  "dobras": 3,
+  "dispositivo": "cpu",
+  "torch": "2.9.1+cu128"
  }
 }

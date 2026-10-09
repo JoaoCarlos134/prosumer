@@ -79,8 +79,11 @@ Pipeline (run from `scripts/`):
     07_ensemble.py → 05_avalia.py → 06_figuras.py
     05b_resolucao.py             metricas em 4 resolucoes (hora, dia/noite, pico 17-21 h, dia); roda no ambiente da
                                  BIBLIOTECA (usa prosumer.metrics.by_resolution) e confere o skill por hora
-    roda_v2.py                   runs the v2 trained-network queue (plants and houses in two processes)
-    roda_lote2.py                waits for v2's FIM lines, then runs batch 2 + ensemble + metrics + figures
+    atualiza.py                  ONE command for everything derived from saved forecasts: 07 -> 05 -> 06 -> 05b ->
+                                 both spreadsheets -> regression test, each in its env (~1 min). Use after any new model
+    redes_proprias.py            SparseTSF, ResNet-1D, CycleNet + their training loop, shared by 04 and the pilots
+    piloto_*.py, piloto_comum.py step-A / F2 pilots; outputs in resultados/pilotos/, never in metricas.csv
+    historico/                   finished one-off queues (roda_v2, roda_lote2, roda_B, ...): record only, don't rerun
     08_previsao_tempo.py         re-downloads the Open-Meteo forecast archive (already in dados/)
     09_clima_casas.py            measured weather of the houses (Dingle station, figshare CC0) -> dados/clima_casas_horario.parquet
     01_prepara_dados.py          builds dados/*.parquet from Lactec raw data — does NOT run here
@@ -154,7 +157,7 @@ Duas maquinas, um repositorio. Trabalhar sempre em `main` (o ramo `correcoes-v2-
 
 O que roda em cada uma: biblioteca, avaliacao (`05_avalia.py`, `06_figuras.py`), referencias, LightGBM,
 fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes treinadas em origem
-movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `roda_lote2.py` ja pula o
+movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `historico/roda_lote2.py` pulava o
 TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
 
 ### Estado em 09/10/2026 a tarde (maquina de casa): Smart App Control e o nome em ingles
@@ -193,15 +196,27 @@ regressao contra o `metricas.csv` incluido); o unico de fora e o de propriedade 
 Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispytest --ignore=tests/test_contracts.py`.
 
 **Etapa A (iniciada 09/10 a tarde):** registro em `docs/projeto/ESTUDO_ETAPA_A.md` (como funciona, o que
-acrescenta, como rodar, piloto, decisao, para cada modelo). Ambiente `~/.venvs/etapa_a` (= previsao_gpu + o
-pacote de cada modelo com `--no-deps`). Feitos: **VisionTS++ PASSA** (FV das casas, 9o/48, empata com o
+acrescenta, como rodar, piloto, decisao, para cada modelo). Ambiente: `~/.venvs/previsao_gpu` (+ o pacote de
+cada modelo com `--no-deps`, refazendo o freeze). Feitos: **VisionTS++ PASSA** (FV das casas, 9o/48, empata com o
 Toto-2.0-313m, p 0,14; devolve quantis) -> **entrou no benchmark em 09/10** (`03_fundacionais.py VisionTS++`,
-no ~/.venvs/etapa_a, GPU; previsoes identicas as do piloto): **54 modelos, 251 linhas**; so as medianas do A
+no ~/.venvs/previsao_gpu, GPU; previsoes identicas as do piloto): **54 modelos, 251 linhas**; so as medianas do A
 mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **VisionTS nao passa**; **Moirai 1.1 nao passa**
 (usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). **CycleNet PASSA** (Linear, ciclo de 24 h: 6o de 49 na FV das casas com 4.296 parametros,
-empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> teste completo pendente. Faltam 10:
+empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> **entrou no benchmark em 09/10** (em CPU: na GPU o gather nao e determinístico): **55 modelos, 254 linhas**.
+Faltam 10:
 MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
+
+**Revisao de eficiencia (09/10):** (1) `04_redes_treinadas.py` decidia o que pular olhando so o
+`tempos_redes_<casos da linha de comando>.json`: `04 casas_cons` sozinho retreinaria ~30 redes. Agora le todos
+os `tempos_redes_*.json`; os logs compartilhados (03/03b/03c/04) releem o arquivo antes de gravar
+(`comum.grava_tempos`). (2) Redes proprias e o laco de treino num modulo so, `redes_proprias.py`, usado pelo 04 e
+pelos pilotos (conferido em CPU: previsoes identicas as do codigo antigo); o piloto do VisionTS++ chama a funcao
+do benchmark. (3) `atualiza.py`: um comando para 07 -> 05 -> 06 -> 05b -> planilhas -> regressao, cada um no seu
+ambiente, ~50 s (eram seis comandos em tres ambientes). (4) Filas antigas em `scripts/historico/`. (5) Um ambiente
+de GPU so (`previsao_gpu`; o `etapa_a` foi juntado). O pos-processamento nunca foi gargalo (~50 s); o custo real
+e treino, memoria e retrabalho. Ainda duplicado de proposito: a mascara de horas avaliadas existe no 05_avalia e
+na copia do teste de regressao (o teste e a checagem independente; sai quando a mascara for para a biblioteca).
 
 **AutoARIMA (F1 d):** medicao de `usinas|B` com a configuracao reduzida iniciada 09/10 as 12:42 no
 `classicos`; o Claude Code matou o processo por falta de memoria da maquina por volta das 13:10

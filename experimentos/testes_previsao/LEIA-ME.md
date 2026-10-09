@@ -330,8 +330,10 @@ montagem falha ou deixa o ambiente errado em silêncio). Rodar de `scripts/`:
     python 02_referencias.py          # referencias, linear fisico, LightGBM (todos os regimes)
     python 03_fundacionais.py         # fundacionais v1
     <moirai>/python 03b_moirai.py     # Moirai 2.0
-    python roda_v2.py                 # redes treinadas, usinas e casas em dois processos
-    python roda_lote2.py              # lote 2 + ensemble + metricas + figuras
+    python 04_redes_treinadas.py <caso> [--modelos X,Y]   # redes treinadas, um processo por lote
+    python 03c_fundacionais_lote2.py  # lote 2 de fundacionais
+    python atualiza.py                # ensemble + metricas + figuras + resolucoes + planilhas + regressao (~1 min)
+    # as filas antigas (roda_v2.py, roda_lote2.py...) estao em scripts/historico/, so como registro
     python -m unittest discover -s . -p test_auditoria.py   # regressoes do protocolo
 
 Modelos já concluídos são pulados (`resultados/tempos_*.json`), então basta reiniciar as filas. Para

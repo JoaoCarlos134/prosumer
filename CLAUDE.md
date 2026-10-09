@@ -203,8 +203,8 @@ no ~/.venvs/previsao_gpu, GPU; previsoes identicas as do piloto): **54 modelos, 
 mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **VisionTS nao passa**; **Moirai 1.1 nao passa**
 (usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). **CycleNet PASSA** (Linear, ciclo de 24 h: 6o de 49 na FV das casas com 4.296 parametros,
 empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> **entrou no benchmark em 09/10** (em CPU: na GPU o gather nao e determinístico): **55 modelos, 254 linhas**.
-Faltam 10:
-MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
+**MOMENT nao passa** (3 tamanhos x 3 casos: terco de baixo; cabeca linear sobre codificador congelado). Faltam 9:
+Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 
 **Revisao de eficiencia (09/10):** (1) `04_redes_treinadas.py` decidia o que pular olhando so o

@@ -622,5 +622,119 @@
   "grupo_da_frente": true,
   "dispositivo": "cuda",
   "semente": "1"
+ },
+ "MOMENT-small|casas_prod|A": {
+  "modelo": "MOMENT-small",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.023,
+  "ic95": [
+   -0.0138,
+   0.0596
+  ],
+  "R2": 0.1978,
+  "nRMSE": 1.3759,
+  "MBE": 0.2702,
+  "posicao": "38o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "MOMENT-small|usinas|A": {
+  "modelo": "MOMENT-small",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0205,
+  "ic95": [
+   -0.0147,
+   0.0538
+  ],
+  "R2": 0.6601,
+  "nRMSE": 0.6444,
+  "MBE": -0.0393,
+  "posicao": "26o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "MOMENT-small|casas_cons|A": {
+  "modelo": "MOMENT-small",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1484,
+  "ic95": [
+   0.1289,
+   0.1665
+  ],
+  "R2": 0.279,
+  "nRMSE": 0.9529,
+  "MBE": -0.0151,
+  "posicao": "29o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "MOMENT-base|casas_prod|A": {
+  "modelo": "MOMENT-base",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.0446,
+  "ic95": [
+   0.0097,
+   0.0785
+  ],
+  "R2": 0.2329,
+  "nRMSE": 1.3455,
+  "MBE": 0.2833,
+  "posicao": "36o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "MOMENT-base|casas_cons|A": {
+  "modelo": "MOMENT-base",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1439,
+  "ic95": [
+   0.1241,
+   0.1625
+  ],
+  "R2": 0.2714,
+  "nRMSE": 0.9579,
+  "MBE": -0.0104,
+  "posicao": "31o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "MOMENT-large|casas_prod|A": {
+  "modelo": "MOMENT-large",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.0205,
+  "ic95": [
+   -0.0173,
+   0.0526
+  ],
+  "R2": 0.1936,
+  "nRMSE": 1.3795,
+  "MBE": 0.3029,
+  "posicao": "38o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
  }
 }

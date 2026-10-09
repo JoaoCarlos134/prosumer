@@ -21,7 +21,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | VisionTS++ | **PASSA** (FV das casas) | 9º de 48 na FV das casas, empata com o Toto-2.0-313m (p = 0,14); devolve 9 quantis |
 | Moirai 1.1 | **não passa** (2 tamanhos, 2 patches válidos, A e B) | usa mal o clima: em B fica em último (24º de 24) |
 | CycleNet | **PASSA** (FV das casas) | Linear, ciclo de 24 h: 6º de 49 na FV das casas com **4.296 parâmetros**, empata (p = 0,13; estável em 3 sementes) |
-| MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| MOMENT | **não passa** (3 tamanhos, 3 casos) | cabeça linear sobre o codificador congelado: 26º–38º; na FV superestima 27–30% |
+|  Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -165,3 +166,40 @@ No consumo não ganha do SparseTSF, que continua sendo o candidato pequeno para 
 determinística e duas rodadas iguais diferem em até 0,06; em CPU o resultado é bit a bit reprodutível e leva
 6–14 s por caso). Resultado no benchmark: usinas +0,062 (17º/51), FV das casas **+0,138 (7º/49, empata com o
 melhor também com a correção de Holm, p ajustado 0,82)**, consumo +0,166 (24º/50).
+
+---
+
+## MOMENT (09/10/2026)
+
+**Como funciona.** Goswami et al., *MOMENT: A Family of Open Time-series Foundation Models* (ICML 2024).
+Codificador T5 pré-treinado por reconstrução de patches mascarados no *Time-series Pile* (13 domínios, ~1,2
+bilhão de pontos). Entrada fixa de 512 pontos, cortada em 64 patches de 8, com normalização por janela
+(RevIN). Não prevê de fábrica: a cabeça de previsão (64 × d_model → 24) tem de ser treinada. O caminho do
+artigo para previsão é o *linear probing*: codificador congelado, só a cabeça linear é treinada.
+
+**O que podia acrescentar.** Testa a ideia "modelo grande congelado + cabeça pequena = ajuste fino barato"
+(a cabeça tem 0,8 a 1,6 milhão de parâmetros, treinada em segundos).
+
+**Como rodar.** `momentfm 0.1.4` com `--no-deps` no `previsao_gpu` (ele fixa transformers 4.33 e numpy 1.25;
+com o transformers 5.17 do ambiente o codificador carrega e roda igual). Pesos `AutonLab/MOMENT-1-{small,base,
+large}` (36 M, 111 M, 343 M). Script: `scripts/piloto_moment.py [small|base|large] [caso ...]`. Protocolo das
+redes próprias, com entrada de 512 h (exigência do modelo) e perda MSE (a do artigo). **Eficiência:** como o
+codificador é congelado, as saídas dele são calculadas uma vez por dobra e guardadas na GPU em fp16 (~1,4 GB no
+consumo); a cabeça treina sobre o cache. Tempo na RTX 4070: 20–36 s (small), ~90 s (base), 265 s (large) por
+caso. Licença dos pesos: MIT.
+
+**Piloto (regime A).**
+
+| Caso | small | base | large | Melhor do teste |
+|---|---|---|---|---|
+| usinas | +0,021 (26º/52), MBE −4% | | | TiRex-2 +0,141 |
+| FV das casas | +0,023 (38º/50), MBE +27% | +0,045 (36º/50), MBE +28% | +0,021 (38º/50), MBE +30% | Toto-2.0-313m +0,178 |
+| consumo | +0,148 (29º/51), MBE −2% | +0,144 (31º/51), MBE −1% | | mediana corrigida +0,208 |
+
+Em todos, p < 0,001 contra o melhor.
+
+**Decisão. Não passa, descartado com evidência.** Fica no terço de baixo em todos os casos, e o tamanho do
+codificador não ajuda (o large é igual ao small na FV das casas). Na geração das casas superestima 27–30%. O
+resultado bate com o do ajuste fino do TTM (F2e, reprovado): nestes dados, um codificador pré-treinado
+congelado com uma cabeça treinada por cima não chega perto dos fundacionais zero-shot nem das redes pequenas
+treinadas do zero.

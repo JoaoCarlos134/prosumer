@@ -204,7 +204,11 @@ mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **Visi
 (usa mal o clima: ultimo em B nas usinas; patch 16 da ~zero, so 32/64 valem no horario). **CycleNet PASSA** (Linear, ciclo de 24 h: 6o de 49 na FV das casas com 4.296 parametros,
 empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> **entrou no benchmark em 09/10** (em CPU: na GPU o gather nao e determinístico): **55 modelos, 254 linhas**.
 **MOMENT nao passa** (3 tamanhos x 3 casos: terco de baixo; cabeca linear sobre codificador congelado). Faltam 9:
-Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
+Lag-Llama (**EM ANDAMENTO, parado a pedido em 09/10 a noite**: `scripts/piloto_lagllama.py` pronto; precisa do
+ambiente proprio `~/.venvs/lagllama` = previsao_gpu com gluonts 0.14.4, pandas 2.1.4, numpy 1.26.4, scipy 1.13.1,
+porque o gluonts 0.16 tirou `modules.loss` e o pandas novo recusa a frequencia 'Q'. A primeira rodada (ctx=32,
+casas_prod) passou dos imports e foi interrompida antes de terminar: o tempo dela e desconhecido, medir antes
+de soltar os outros casos. Codigo do GitHub em ~/.cache/lag-llama-repo/src, commit df7531a),  DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 
 **Revisao de eficiencia (09/10):** (1) `04_redes_treinadas.py` decidia o que pular olhando so o

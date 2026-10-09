@@ -225,6 +225,22 @@ Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver P
 - Resolucao (consumo, LightGBM): hora R2 0,37 / skill +0,21; pico 17-20h 0,35 / +0,16; noite-dia 0,69 /
   +0,12; dia 0,58 / +0,10 (mediana +0,01; media 7 dias +0,04). 20 casas somadas: R2 0,64.
 
+Pilotos feitos no Lactec em 09/10 a tarde (scripts `piloto_*.py`; saidas em `resultados/pilotos/`, FORA de
+`previsoes/`: nao entram na mediana nem no metricas.csv; resumo em `resultados/pilotos/resumo.json`):
+- **FlowState** (IBM, 9,1 M param., zero-shot, CPU): consumo A +0,192 (8o/47, empata com o melhor, p 0,098);
+  FV casas A +0,134 (7o/47); usinas A +0,114 (5o/49). PASSOU o portao -> entra no benchmark (copiar as 3
+  previsoes para `previsoes/` e refazer 07 -> 05 -> 06 + planilhas; isso muda a mediana publicada). Melhor que
+  o TTM na geracao solar (+0,134 x +0,119; +0,114 x +0,092): segundo candidato pequeno (Raspberry Pi; nao cabe
+  no ESP32). ~0,4 s por janela em CPU. Devolve quantis (util no piloto F2c). So roda no Lactec.
+- **Ajuste fino do TTM-r2** (F2e, origem movel, so dados anteriores a dobra): PIORA nos 3 casos. So a cabeca,
+  lr 1e-4: consumo +0,181 (zero-shot +0,191), FV +0,100 (+0,119), usinas +0,075 (+0,092). Decoder + cabeca,
+  lr 1e-3: consumo +0,148. => F2e REPROVADO com evidencia para o TTM: a biblioteca usa o TTM sem ajuste.
+  (Ajuste fino do Chronos nao foi testado.)
+- **GPU x CPU** (sobre as previsoes gravadas): o MELHOR modelo de cada teste roda em CPU (TiRex-2, Toto-2.0-313m,
+  Chronos-2, LightGBM). A mediana so dos modelos de CPU (sem redes treinadas e TabPFN-TS) fica igual ou melhor
+  em 4 dos 7 testes (consumo A +0,200 x +0,191) e no maximo 0,016 abaixo (usinas B). => a biblioteca e o
+  aplicativo rodam SO EM CPU; a GPU so serve ao benchmark (etapa A e redes).
+
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
 | F0 Decisoes | 0 | — | Idioma DECIDIDO (internacional + camada BR, ver Ground rules). Pendentes: licenca (do autor, antes da E6); permissao por escrito do professor para os dados das usinas; comprar Raspberry Pi 5 + ESP32 |
@@ -237,13 +253,15 @@ Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver P
 | E4 Versao 0.2 | 130 | qualquer | diagnostico; embarcado (TTM, SparseTSF, Ridge/RandomForest via emlearn, previsao do dia e por bloco de tarifa) |
 | E5 Hardware | 50 | — | Raspberry Pi 5 e ESP32 |
 | E6 Versao 0.3 | 110 | qualquer | economia: tarifas por horario genericas + modulo brasileiro (tarifa branca, bandeiras, Lei 14.300); documentacao em ingles + guia em portugues; licenca escolhida pelo autor; publicacao |
-| E7 Escrita | 80 | — | em paralelo |
+| **App: o TCC (ultimo passo)** | 120 | qualquer | So com a biblioteca pronta. Aplicativo facil de usar que recebe os dados do usuario (inversor, medidor, conta de luz) e faz a analise completa: qualidade (com relogio pelo sol), diagnostico, previsao comparada (mediana, regimes, resolucoes), economia, modelo para aparelho, e um relatorio. Duas formas, ambas ja feitas pelo autor: pagina web local em Streamlit como `1Projects/Keyword_map` (SciKeywordMap) ou programa de computador como `1Projects/Loom` (FastAPI + pywebview, sem servidor nem admin). Usa so a interface publica da biblioteca. PORTAO: um usuario sem programar faz a analise do comeco ao fim. Por isso a E2 ja desenha a API pensando nele: uma chamada que faz a analise completa e devolve um relatorio |
+| E7 Escrita | 80 | — | em paralelo; o TCC descreve o APLICATIVO, a biblioteca por tras dele e as checagens |
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).
 Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras (nenhuma origem
 afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre maquinas (<= 0,0006);
-redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~649 h (~10 meses, ate ago/2027).
+redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~769 h (~12 meses, ate out/2027), com o
+aplicativo (o TCC) no fim.
 
 Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
 arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.

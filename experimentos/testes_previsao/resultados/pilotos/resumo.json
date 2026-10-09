@@ -1,0 +1,139 @@
+{
+ "FlowState|casas_cons|A": {
+  "modelo": "FlowState",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1919,
+  "ic95": [
+   0.174,
+   0.2092
+  ],
+  "R2": 0.3508,
+  "nRMSE": 0.9042,
+  "MBE": -0.1752,
+  "posicao": "8o de 47",
+  "melhor": "LightGBM",
+  "skill_melhor": 0.206,
+  "dm_p_vs_melhor": 0.0982,
+  "grupo_da_frente": true,
+  "segundos": "739",
+  "parametros": "9069312"
+ },
+ "TTM-r2-ajustado|casas_cons|A": {
+  "modelo": "TTM-r2-ajustado",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1479,
+  "ic95": [
+   0.1286,
+   0.1653
+  ],
+  "R2": 0.2781,
+  "nRMSE": 0.9534,
+  "MBE": 0.0038,
+  "posicao": "25o de 47",
+  "melhor": "LightGBM",
+  "skill_melhor": 0.206,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "segundos": "274"
+ },
+ "TTM-r2-ajustado-cabeca|casas_cons|A": {
+  "modelo": "TTM-r2-ajustado-cabeca",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1806,
+  "ic95": [
+   0.1617,
+   0.198
+  ],
+  "R2": 0.3324,
+  "nRMSE": 0.9169,
+  "MBE": -0.0048,
+  "posicao": "16o de 47",
+  "melhor": "LightGBM",
+  "skill_melhor": 0.206,
+  "dm_p_vs_melhor": 0.0059,
+  "grupo_da_frente": false,
+  "segundos": "492",
+  "variante": "cabeca"
+ },
+ "TTM-r2-ajustado-cabeca|casas_prod|A": {
+  "modelo": "TTM-r2-ajustado-cabeca",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.0997,
+  "ic95": [
+   0.0643,
+   0.1358
+  ],
+  "R2": 0.3187,
+  "nRMSE": 1.2679,
+  "MBE": 0.0745,
+  "posicao": "18o de 47",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0073,
+  "grupo_da_frente": false,
+  "variante": "cabeca"
+ },
+ "TTM-r2-ajustado-cabeca|usinas|A": {
+  "modelo": "TTM-r2-ajustado-cabeca",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0751,
+  "ic95": [
+   0.0358,
+   0.1122
+  ],
+  "R2": 0.6969,
+  "nRMSE": 0.6085,
+  "MBE": -0.0541,
+  "posicao": "14o de 49",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0011,
+  "grupo_da_frente": false,
+  "variante": "cabeca"
+ },
+ "FlowState|casas_prod|A": {
+  "modelo": "FlowState",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1344,
+  "ic95": [
+   0.1135,
+   0.1548
+  ],
+  "R2": 0.3703,
+  "nRMSE": 1.219,
+  "MBE": -0.0687,
+  "posicao": "7o de 47",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0225,
+  "grupo_da_frente": false,
+  "segundos": "337",
+  "parametros": "9069312"
+ },
+ "FlowState|usinas|A": {
+  "modelo": "FlowState",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.1141,
+  "ic95": [
+   0.0834,
+   0.1425
+  ],
+  "R2": 0.7219,
+  "nRMSE": 0.5828,
+  "MBE": 0.0413,
+  "posicao": "5o de 49",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.016,
+  "grupo_da_frente": false,
+  "segundos": "194",
+  "parametros": "9069312"
+ }
+}

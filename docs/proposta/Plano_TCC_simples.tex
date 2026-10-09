@@ -61,9 +61,10 @@
 {\color{cinza}O que é, o que já foi feito e o que falta \;|\; João Carlos Jachenski Junior \;|\; Lactec \;|\; revisão de 09/10/2026\par}
 \vspace{8pt}
 
-\caixa{\textbf{Em uma frase:} o TCC é uma biblioteca em Python que prevê quanta energia uma casa ou
-usina solar vai \textbf{gerar} e \textbf{consumir} no dia seguinte, desde a leitura do medidor até um
-modelo pequeno que roda num aparelho barato (Raspberry Pi ou ESP32).}
+\caixa{\textbf{Em uma frase:} o TCC é um \textbf{aplicativo fácil de usar} que recebe os dados do
+usuário (inversor, medidor, conta de luz) e faz a \textbf{análise completa}: qualidade dos dados,
+diagnóstico, previsão de \textbf{geração} e \textbf{consumo}, economia e um modelo pequeno para um
+aparelho barato. Por trás dele está uma \textbf{biblioteca} em Python, o motor, que é feita primeiro.}
 
 % ================================================================== proposta
 \section{A proposta}
@@ -71,7 +72,8 @@ Hoje o projeto tem dezenas de scripts soltos que repetem as mesmas contas (datas
 limpeza de dados). Quando uma coisa muda, é preciso corrigir à mão em muitos lugares, e já houve erros
 por isso. A ideia é juntar tudo numa \textbf{biblioteca única, testada e reaproveitável}. Ela não
 reinventa o que já existe: usa bibliotecas prontas (pvlib, LightGBM, modelos de IA públicos) e só
-acrescenta o que é próprio deste projeto.
+acrescenta o que é próprio deste projeto. Com a biblioteca pronta, o último passo é o
+\textbf{aplicativo} (seção 6, etapa App), que usa a biblioteca como motor e é o TCC.
 
 \rowcolors{2}{white}{zebra}
 \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.2cm}Y@{}}
@@ -201,12 +203,21 @@ E5 -- Checagem 2 & Medir tamanho, acerto, velocidade e energia no Raspberry Pi 5
   medida no aparelho & 50 \\
 E6 -- Versão 0.3 & Economia: tarifas por horário genéricas e o módulo brasileiro (tarifa branca,
   bandeiras, Lei 14.300); documentação em inglês, guia em português; publicação. & licença escolhida & 110 \\
-E7 -- Escrita & O TCC. Começa já, em paralelo. & aprovação do orientador & 80 \\
-\rowcolor{claro}\textbf{Total} & & & \textbf{649} \\
+App -- O TCC & \textbf{Último passo, com a biblioteca pronta.} Aplicativo fácil de usar que recebe os
+  dados do usuário e faz a análise completa (qualidade, diagnóstico, previsão comparada, economia,
+  modelo para aparelho) e entrega um relatório. Duas formas possíveis, já usadas pelo autor: página web
+  local (como o SciKeywordMap, em Streamlit) ou programa de computador (como o Loom: FastAPI numa
+  janela, sem servidor nem permissão de administrador). Usa só a interface pública da biblioteca. &
+  um usuário sem programar faz a análise do começo ao fim & 120 \\
+E7 -- Escrita & O TCC: o aplicativo, a biblioteca por trás dele e as checagens. Começa já, em
+  paralelo. & aprovação do orientador & 80 \\
+\rowcolor{claro}\textbf{Total} & & & \textbf{769} \\
 \end{tabularx}
 
-\nota{Total de $\sim$43 semanas (10 meses). Subprodutos, sem atrasar a biblioteca: artigo de congresso com
-os regimes A e B ($\sim$25 h; a planilha já está pronta) e artigo de software ($\sim$30 h).}
+\nota{Total de $\sim$51 semanas (12 meses). Subprodutos, sem atrasar a biblioteca: artigo de congresso com
+os regimes A e B ($\sim$25 h; a planilha já está pronta) e artigo de software ($\sim$30 h). Para a
+biblioteca servir bem ao aplicativo, a E2 já desenha a interface pensando nele: uma chamada que faz a
+análise completa e devolve um relatório.}
 
 % ================================================================== pendentes
 \needspace{8cm}
@@ -257,26 +268,28 @@ instável) e corrigir o viés da geração solar (piora até $-$0,10). O TimesNe
 \setlength{\tabcolsep}{0pt}
 \renewcommand{\arraystretch}{1.5}
 \arrayrulecolor{linha}
-\begin{tabular}{|>{\hspace{4pt}}m{3.4cm}|*{11}{>{\centering\arraybackslash}m{1.2cm}|}}
+\begin{tabular}{|>{\hspace{4pt}}m{3.3cm}|*{13}{>{\centering\arraybackslash}m{1.0cm}|}}
 \hline
-\cab{Etapa} & \cab{out} & \cab{nov} & \cab{dez} & \cab{jan} & \cab{fev} & \cab{mar} & \cab{abr} & \cab{mai} & \cab{jun} & \cab{jul} & \cab{ago} \\ \hline
-F0 Decisões            & \on &     &     &     &     &     &     &     &     &     &     \\ \hline
-F1 Fechar o teste      & \on &     &     &     &     &     &     &     &     &     &     \\ \hline
-A Modelos pendentes    &     & \on & \on &     &     &     &     &     &     &     &     \\ \hline
-F2 Pilotos             & \on & \on &     &     &     &     &     &     &     &     &     \\ \hline
-E2 Versão 0.1          &     & \on & \on & \on &     &     &     &     &     &     &     \\ \hline
-E3 Checagem 1          &     &     &     &     & \on &     &     &     &     &     &     \\ \hline
-E4 Versão 0.2          &     &     &     &     & \on & \on & \on &     &     &     &     \\ \hline
-E5 Hardware real       &     &     &     &     &     &     &     & \on &     &     &     \\ \hline
-E6 Versão 0.3          &     &     &     &     &     &     &     &     & \on & \on &     \\ \hline
-E7 Escrita do TCC      & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es \\ \hline
-Artigos (subprodutos)  &     & \op & \op &     &     &     &     &     &     &     & \op \\ \hline
+\cab{Etapa} & \cab{out} & \cab{nov} & \cab{dez} & \cab{jan} & \cab{fev} & \cab{mar} & \cab{abr} & \cab{mai} & \cab{jun} & \cab{jul} & \cab{ago} & \cab{set} & \cab{out} \\ \hline
+F0 Decisões & \on &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+F1 Fechar o teste & \on &  &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+A Modelos pendentes &  & \on & \on &  &  &  &  &  &  &  &  &  &  \\ \hline
+F2 Pilotos & \on & \on &  &  &  &  &  &  &  &  &  &  &  \\ \hline
+E2 Versão 0.1 &  & \on & \on & \on &  &  &  &  &  &  &  &  &  \\ \hline
+E3 Checagem 1 &  &  &  &  & \on &  &  &  &  &  &  &  &  \\ \hline
+E4 Versão 0.2 &  &  &  &  & \on & \on & \on &  &  &  &  &  &  \\ \hline
+E5 Hardware real &  &  &  &  &  &  &  & \on &  &  &  &  &  \\ \hline
+E6 Versão 0.3 &  &  &  &  &  &  &  &  & \on & \on &  &  &  \\ \hline
+App: o TCC &  &  &  &  &  &  &  &  &  &  & \on & \on & \on \\ \hline
+E7 Escrita do TCC & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es & \es \\ \hline
+Artigos (subprodutos) &  & \op & \op &  &  &  &  &  &  &  & \op &  &  \\ \hline
 \end{tabular}
 \setlength{\tabcolsep}{6pt}
 \renewcommand{\arraystretch}{1.35}
 
 \vspace{3pt}
-\nota{Outubro de 2026 a agosto de 2027. A etapa A roda em paralelo com a E2, na máquina de casa (GPU).
+\nota{Outubro de 2026 a outubro de 2027; o aplicativo (o TCC) fica para o fim, com a biblioteca pronta.
+A etapa A roda em paralelo com a E2, na máquina de casa (GPU).
 Os artigos (cinza) são subprodutos: o de congresso aproveita a planilha pronta; o de software, depois da
 publicação.}
 

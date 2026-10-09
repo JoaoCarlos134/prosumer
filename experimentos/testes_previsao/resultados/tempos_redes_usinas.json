@@ -182,5 +182,103 @@
   "dobras": 5,
   "dispositivo": "cuda",
   "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|A": {
+  "segundos": 42.3,
+  "parametros": 199560,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "FEDformer|usinas|A": {
+  "segundos": 272.1,
+  "parametros": 642817,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "Autoformer|usinas|A": {
+  "segundos": 158.9,
+  "parametros": 290561,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "Informer|usinas|A": {
+  "segundos": 65.4,
+  "parametros": 341985,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TimeMixer|usinas|A": {
+  "segundos": 50.6,
+  "parametros": 323606,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TimeXer|usinas|A": {
+  "segundos": 66.6,
+  "parametros": 8640024,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "DeepAR|usinas|B": {
+  "segundos": 53.8,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|B": {
+  "segundos": 298.3,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|B": {
+  "segundos": 182.7,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|B": {
+  "segundos": 74.0,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|C": {
+  "segundos": 47.4,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|C": {
+  "segundos": 302.1,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|C": {
+  "segundos": 183.8,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|C": {
+  "segundos": 75.1,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TimesNet|usinas|A": {
+  "segundos": 714.9,
+  "parametros": 4720193,
+  "dobras": 5,
+  "dispositivo": "cuda"
  }
 }

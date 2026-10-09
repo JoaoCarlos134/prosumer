@@ -142,5 +142,257 @@
   "parametros": 1494778,
   "dobras": 3,
   "dispositivo": "cuda"
+ },
+ "LSTM|casas_prod|B": {
+  "segundos": 43.6,
+  "parametros": 218369,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|casas_prod|B": {
+  "segundos": 77.4,
+  "parametros": 391769,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|casas_prod|B": {
+  "segundos": 30.9,
+  "parametros": 3604002,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|casas_prod|B": {
+  "segundos": 31.1,
+  "parametros": 2288926,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|casas_prod|B": {
+  "segundos": 27.6,
+  "parametros": 4915200,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|casas_prod|B": {
+  "segundos": 31.5,
+  "parametros": 3961314,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|casas_prod|B": {
+  "segundos": 123.4,
+  "parametros": 201608,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|casas_prod|B": {
+  "segundos": 247.5,
+  "parametros": 643841,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|casas_prod|B": {
+  "segundos": 182.2,
+  "parametros": 291585,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|casas_prod|B": {
+  "segundos": 95.7,
+  "parametros": 343009,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|casas_prod|B": {
+  "segundos": 125.1,
+  "parametros": 1373230,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|casas_prod|B": {
+  "segundos": 19.6,
+  "parametros": 91582,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "LSTM|casas_cons|B": {
+  "segundos": 61.1,
+  "parametros": 218369,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|casas_cons|B": {
+  "segundos": 84.1,
+  "parametros": 391769,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|casas_cons|B": {
+  "segundos": 43.5,
+  "parametros": 3604002,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|casas_cons|B": {
+  "segundos": 39.1,
+  "parametros": 2288926,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|casas_cons|B": {
+  "segundos": 41.5,
+  "parametros": 4915200,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|casas_cons|B": {
+  "segundos": 43.9,
+  "parametros": 3961314,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|casas_cons|B": {
+  "segundos": 183.8,
+  "parametros": 201608,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|casas_cons|B": {
+  "segundos": 255.4,
+  "parametros": 643841,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|casas_cons|B": {
+  "segundos": 242.9,
+  "parametros": 291585,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|casas_cons|B": {
+  "segundos": 137.1,
+  "parametros": 343009,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|casas_cons|B": {
+  "segundos": 167.7,
+  "parametros": 1373230,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|casas_cons|B": {
+  "segundos": 20.9,
+  "parametros": 103772,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|casas_prod|A": {
+  "segundos": 55.7,
+  "parametros": 199560,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "FEDformer|casas_prod|A": {
+  "segundos": 192.9,
+  "parametros": 642817,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "DeepAR|casas_cons|A": {
+  "segundos": 98.1,
+  "parametros": 199560,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "FEDformer|casas_cons|A": {
+  "segundos": 241.5,
+  "parametros": 642817,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "Autoformer|casas_prod|A": {
+  "segundos": 109.9,
+  "parametros": 290561,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "Informer|casas_prod|A": {
+  "segundos": 44.7,
+  "parametros": 341985,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "Autoformer|casas_cons|A": {
+  "segundos": 181.1,
+  "parametros": 290561,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "Informer|casas_cons|A": {
+  "segundos": 74.1,
+  "parametros": 341985,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimeMixer|casas_prod|A": {
+  "segundos": 31.4,
+  "parametros": 324670,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimeXer|casas_prod|A": {
+  "segundos": 214.4,
+  "parametros": 8644120,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimesNet|casas_prod|A": {
+  "segundos": 533.6,
+  "parametros": 4720193,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimeMixer|casas_cons|A": {
+  "segundos": 31.2,
+  "parametros": 326000,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimeXer|casas_cons|A": {
+  "segundos": 3788.1,
+  "parametros": 8649240,
+  "dobras": 3,
+  "dispositivo": "cuda"
+ },
+ "TimesNet|casas_cons|A": {
+  "segundos": 693.8,
+  "parametros": 4720193,
+  "dobras": 3,
+  "dispositivo": "cuda"
  }
 }

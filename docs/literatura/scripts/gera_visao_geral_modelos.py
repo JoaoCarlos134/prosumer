@@ -102,6 +102,41 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
      "Salesforce/moirai-moe-1.0-R-small; mediana da distribuição prevista."),
     ("Ensemble-mediana", "Combinação", "Combinação", "—", "próprio (07_ensemble.py)", "—", "Não", "Herda dos membros",
      "Mediana, hora a hora, de todos os modelos não referência do mesmo caso e regime. Regra fixada antes do teste."),
+    # --- Passo T (07/10/2026). Antes de entrar na fila, cada rede foi testada embaralhando o clima
+    # futuro para ver se a previsão muda; o resultado está na coluna de observação de cada uma.
+    ("DeepAR", "Rede treinada", "Recorrente / convolucional", "DeepAR", "NeuralForecast", "≈ 202 mil", "Sim", "Sim",
+     "Passo T. Probabilístico (amostra a distribuição); usa o clima futuro de fato (previsão muda ao trocar o clima)."),
+    ("FEDformer", "Rede treinada", "Transformer", "FEDformer", "NeuralForecast", "≈ 644 mil", "Sim", "Sim",
+     "Passo T. Decomposição em frequência; usa o clima futuro de fato."),
+    ("Autoformer", "Rede treinada", "Transformer", "Autoformer", "NeuralForecast", "≈ 292 mil", "Sim", "Sim",
+     "Passo T. Auto-correlação no lugar da atenção; é a mais sensível ao clima das quatro."),
+    ("Informer", "Rede treinada", "Transformer", "Informer", "NeuralForecast", "≈ 343 mil", "Sim", "Sim",
+     "Passo T. Atenção esparsa (ProbSparse); usa o clima futuro de fato."),
+    ("TimeMixer", "Rede treinada", "MLP / linear", "TimeMixer", "NeuralForecast", "—", "Sim", "Não",
+     "Passo T, só no regime A: o NeuralForecast 3.1.9 levanta 'does not support future exogenous variables'."),
+    ("TimeXer", "Rede treinada", "Transformer", "TimeXer", "NeuralForecast", "—", "Sim", "Não",
+     "Passo T, só no regime A: mesma recusa do TimeMixer. Confirma a nota da v1 de que esta versão não aceita clima futuro."),
+    ("TimeLLM", "Rede treinada", "LLM", "Time-LLM", "NeuralForecast", "—", "Sim", "Não",
+     "Passo T, só no regime A: mesma recusa. É o único da família LLM que entrou, e só porque já vem no NeuralForecast."),
+    ("TimesNet", "Rede treinada", "Transformer", "TimesNet", "NeuralForecast", "—", "Sim", "Aceita e ignora",
+     "Passo T, só no regime A. Aceita futr_exog_list mas IGNORA o conteúdo: embaralhar o clima futuro dá previsão "
+     "idêntica (mesmo defeito do TiDE antes do layernorm=False). Um resultado em B ou C seria 'rede com clima' sem usar o clima."),
+    ("Ridge", "Clássico", "Regressão linear", "—", "scikit-learn", "—", "Sim", "Sim",
+     "Passo T. Mesmos atributos do LightGBM, com imputação pela mediana e padronização (o LightGBM aceita NaN e não precisa de escala)."),
+    ("RandomForest", "Clássico", "Árvore", "Random Forest", "scikit-learn", "—", "Sim", "Sim",
+     "Passo T. 300 árvores, mínimo de 5 amostras por folha; mesmos atributos do LightGBM."),
+    ("MLP", "Clássico", "MLP / linear", "MLP", "scikit-learn", "—", "Sim", "Sim",
+     "Passo T. Camadas 64-32, parada antecipada; mesmos atributos do LightGBM."),
+    ("kNN", "Clássico", "Vizinhos", "k-NN", "scikit-learn", "—", "Sim", "Sim",
+     "Passo T. 25 vizinhos ponderados pela distância; mesmos atributos do LightGBM."),
+    ("AutoARIMA", "Clássico", "Estatístico", "ARIMA / SARIMAX", "StatsForecast, ambiente classicos", "—", "Sim", "Sim",
+     "Passo T. Sazonalidade de 24 h; no regime com clima vira ARIMAX (único dos quatro estatísticos que aceita exógenas)."),
+    ("AutoETS", "Clássico", "Estatístico", "ETS / Holt-Winters", "StatsForecast, ambiente classicos", "—", "Sim", "Não",
+     "Passo T, só no regime A. Univariado, sazonalidade de 24 h."),
+    ("AutoTheta", "Clássico", "Estatístico", "Theta", "StatsForecast, ambiente classicos", "—", "Sim", "Não",
+     "Passo T, só no regime A. Univariado, sazonalidade de 24 h."),
+    ("MSTL", "Clássico", "Estatístico", "STL / MSTL", "StatsForecast, ambiente classicos", "—", "Sim", "Não",
+     "Passo T, só no regime A. Decomposição com as duas sazonalidades da série horária (24 h e 168 h)."),
 ]
 metricas = pd.read_csv(METRICAS, sep=";", decimal=",")
 rodou = {nome: set(zip(g.caso, g.regime)) for nome, g in metricas.groupby("modelo")}
@@ -153,12 +188,11 @@ for mod, tipo, *_ in T:
 FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
     ("TimeMixer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; entra no 04_redes_treinadas.py."),
     ("TimesNet", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
-    ("DeepAR", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; probabilístico (usar a mediana)."),
     ("TimeXer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado; feito para variáveis externas (regimes B e C)."),
-    ("FEDformer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
-    ("Autoformer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
-    ("Informer", "Rede treinada (NeuralForecast)", *GPU_REDE, "Já no NeuralForecast instalado."),
-    ("xLSTM", "Rede treinada (NeuralForecast)", *GPU_REDE, "Usar a versão do NeuralForecast, que não precisa dos kernels CUDA do NX-AI/xlstm."),
+    ("xLSTM", "Rede treinada (NeuralForecast)", *GPU_REDE,
+     "A versão do NeuralForecast TAMBÉM exige os kernels: testada em 07/10, levanta "
+     "'Please install xlstm. You also need mlstm_kernels for backend=mLSTM and ninja for backend=sLSTM'. "
+     "O ninja precisa de compilador C++, que a máquina de casa não tem. Fica para o Linux (WSL)."),
     ("Time-LLM", "Rede treinada (NeuralForecast)", "Sim", "Tem um LLM dentro (GPT-2 ou maior); inviável em CPU.",
      "Já no NeuralForecast instalado."),
     ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.x; o ambiente moirai (uni2ts) já existe."),

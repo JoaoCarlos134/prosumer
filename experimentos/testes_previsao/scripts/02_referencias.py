@@ -15,6 +15,13 @@ Nas usinas rodam tambem os diagnosticos B-curto e C-gfs (ver comum.py).
 """
 import sys
 import numpy as np, pandas as pd, lightgbm as lgb
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import Ridge
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from comum import carrega, dias_teste, dobras, grava, CASOS, EXOG, H, REGIMES, DIAGNOSTICOS
 
 
@@ -76,6 +83,23 @@ def lgbm(treino, tt, cols):
     return m.predict(tt[cols])
 
 
+# Classicos de aprendizado de maquina (passo T, 07/10/2026), com os MESMOS atributos do LightGBM.
+# Duas diferencas obrigatorias em relacao a ele: o LightGBM aceita NaN e nao precisa de escala; estes
+# precisam dos dois, entao cada um vai num pipeline com imputacao pela mediana (os atributos de
+# defasagem sao NaN no inicio da serie) e, menos a floresta, padronizacao.
+def classicos():
+    imp = lambda: SimpleImputer(strategy="median")
+    return {
+        "Ridge": lambda: make_pipeline(imp(), StandardScaler(), Ridge(alpha=1.0)),
+        "RandomForest": lambda: make_pipeline(
+            imp(), RandomForestRegressor(n_estimators=300, min_samples_leaf=5, n_jobs=-1, random_state=42)),
+        "MLP": lambda: make_pipeline(
+            imp(), StandardScaler(),
+            MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=600, early_stopping=True, random_state=42)),
+        "kNN": lambda: make_pipeline(imp(), StandardScaler(), KNeighborsRegressor(n_neighbors=25, weights="distance")),
+    }
+
+
 def roda(caso, so_regimes=None):
     cal = ["h", "dow", "doy_sin", "doy_cos", "serie_cod"]
     lags = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
@@ -99,14 +123,23 @@ def roda(caso, so_regimes=None):
             if caso == "usinas":
                 salva("persist_ceu_claro", "persist_ceu_claro")
         cols = cal + lags + (["persist_ceu_claro"] + EXOG if regime != "A" else [])
+        cls = classicos()
         tt["lgb"], tt["linear_fisico"] = np.nan, np.nan
+        for nome in cls:
+            tt[nome] = np.nan
         for ini, fim in dobras(caso):
             treino = t[(t.dia < ini) & t.y.notna()]
             m = (tt.dia >= ini) & (tt.dia <= fim)
             tt.loc[m, "lgb"] = lgbm(treino, tt[m], cols)
+            for nome, fab in cls.items():
+                mod = fab()
+                mod.fit(treino[cols], treino.y)
+                tt.loc[m, nome] = mod.predict(tt.loc[m, cols])
             if regime != "A" and com_linear:
                 tt.loc[m, "linear_fisico"] = linear_fisico(treino, tt[m])[m[m].index]
         salva("LightGBM", "lgb")
+        for nome in cls:
+            salva(nome, nome)
         if regime != "A" and com_linear:
             salva("linear_fisico", "linear_fisico")
         print("%-10s %-7s %4d dias de teste, %d dobras, treino desde %s" % (caso, regime, len(teste), len(dobras(caso)), t.dia.min().date()), flush=True)

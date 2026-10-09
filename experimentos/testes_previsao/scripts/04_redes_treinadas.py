@@ -31,6 +31,12 @@ COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, earl
              logger=False, enable_model_summary=False)
 
 
+# Passo T (07/10/2026). As cinco redes abaixo exigem `devices=1` explicito: sem ele o Lightning
+# levanta "devices selected with CPUAccelerator should be an int > 0". Nao entra no COMUM de proposito,
+# para nao mexer na configuracao das 52 entradas que ja rodaram.
+COMUM_T = {**COMUM, "devices": 1}
+
+
 def modelos_nf(regime, n_series, caso):
     # Regime B: a normalizacao por janela (scaler_type) explode quando o clima futuro sai da faixa da janela
     # de entrada (semana nublada seguida de dia limpo -> previsoes de 99 kWh/h numa usina de 4 kW).
@@ -48,12 +54,33 @@ def modelos_nf(regime, n_series, caso):
         # dobra 1 das usinas; temporal_width maior nao resolve, so o layernorm.
         "TiDE": lambda: M.TiDE(**C, layernorm=False), "KAN": lambda: M.KAN(**C),
         "NBEATSx": lambda: M.NBEATSx(**C),     # lote 2 (05/10/2026); o TimeXer do NeuralForecast nao aceita clima futuro
+        # Passo T: estas quatro aceitam E usam o clima futuro (verificado embaralhando as exogenas e
+        # vendo a previsao mudar), entao valem em A, B e C.
+        "DeepAR": lambda: M.DeepAR(**{**COMUM_T, **ex}),
+        "FEDformer": lambda: M.FEDformer(**{**COMUM_T, **ex}),
+        "Autoformer": lambda: M.Autoformer(**{**COMUM_T, **ex}),
+        "Informer": lambda: M.Informer(**{**COMUM_T, **ex}),
     }
     if regime == "A":
         base.update({"TCN": lambda: M.TCN(**COMUM), "DLinear": lambda: M.DLinear(**COMUM),
                      "iTransformer": lambda: M.iTransformer(n_series=n_series, **COMUM),
                      # era o mais lento e na v1/v2 em CPU rodou so nas usinas; em GPU deixou de ser caro
-                     "PatchTST": lambda: M.PatchTST(**COMUM)})
+                     "PatchTST": lambda: M.PatchTST(**COMUM),
+                     # Passo T, so no regime A. As tres primeiras levantam
+                     # "does not support future exogenous variables" no NeuralForecast 3.1.9.
+                     "TimeMixer": lambda: M.TimeMixer(n_series=n_series, **COMUM_T),
+                     "TimeXer": lambda: M.TimeXer(n_series=n_series, **COMUM_T),
+                     # TimeLLM FORA (08/10/2026). Tres motivos que se somam: (1) derrubou a maquina
+                     # quatro vezes por falta de memoria - carrega um LLM e estoura o commit charge,
+                     # que aqui tem so ~13 GB de folga (limite 40,8 GB = 31,8 de RAM + 9 de paginacao);
+                     # (2) recusa covariavel futura, entao renderia so o regime A; (3) a familia LLM
+                     # ja estava excluida por principio no levantamento, citando Tan et al. (NeurIPS
+                     # 2024): tirar o LLM desses modelos nao piora o resultado. Para voltar, precisa de
+                     # mais arquivo de paginacao ou de uma maquina com mais RAM.
+                     # TimesNet aceita futr_exog_list mas IGNORA o conteudo: embaralhar o clima futuro
+                     # nao muda a previsao (mesmo defeito do TiDE antes do layernorm=False). Fica so em A
+                     # porque um resultado em B ou C seria "rede com clima" sem usar o clima.
+                     "TimesNet": lambda: M.TimesNet(**COMUM_T)})
     else:
         base.update({"TFT": lambda: M.TFT(**C),
                      "TSMixerx": lambda: M.TSMixerx(n_series=n_series, **C)})

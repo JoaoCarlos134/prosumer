@@ -110,5 +110,21 @@
  "Moirai-MoE-small|casas_cons|A": {
   "segundos": 1085.6,
   "janelas": 1820
+ },
+ "TiRex-2|casas_prod|B": {
+  "segundos": 221.1,
+  "janelas": 920
+ },
+ "TiRex-2|casas_cons|B": {
+  "segundos": 364.1,
+  "janelas": 1820
+ },
+ "TabPFN-TS|casas_prod|B": {
+  "segundos": 733.6,
+  "janelas": 920
+ },
+ "TabPFN-TS|casas_cons|B": {
+  "segundos": 2074.7,
+  "janelas": 1820
  }
 }

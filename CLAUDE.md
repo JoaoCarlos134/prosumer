@@ -144,6 +144,57 @@ fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes t
 movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `roda_lote2.py` ja pula o
 TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
 
+### Estado em 09/10/2026 (fim da sessao na maquina de casa)
+
+`metricas.csv` tem **243 linhas e 51 modelos**. Entraram nesta sessao: regime B das casas (completo),
+8 redes do passo T, 4 classicos do sklearn e 3 dos 4 classicos estatisticos.
+
+**O que esta COMPLETO:** regime B das casas (24 redes + TiRex-2 + TabPFN-TS); as redes do passo T
+(DeepAR, FEDformer, Autoformer e Informer em A/B/C; TimeMixer, TimeXer e TimesNet so em A);
+Ridge, RandomForest, MLP e kNN em todos os casos e regimes; AutoETS, AutoTheta e MSTL nos tres casos.
+
+**O que FALTA, e e a unica coisa pendente do passo T:** `AutoARIMA` em 6 combinacoes
+(usinas B e C, casas_prod A e B, casas_cons A e B). Com os padroes do StatsForecast levou 15,2 h em
+usinas|A; a configuracao reduzida (`approximation=True`, ordens limitadas) esta no `02b_classicos.py`
+mas **nunca foi medida ate o fim** — a medicao em usinas|B foi interrompida. Medir UM caso antes de
+soltar os seis. Rodar com `python 02b_classicos.py <caso> --regimes <A|B> --modelos AutoARIMA`,
+um por processo.
+
+**Custo dos classicos estatisticos nesta serie horaria (vale como resultado):** AutoETS cobre os tres
+casos em 250 s; AutoTheta precisa de 4,8 h em usinas|A (139 s e 622 s nas casas); MSTL 2,3 h em
+usinas|A; AutoARIMA 15,2 h em usinas|A no padrao. A familia e pouco pratica nesta resolucao.
+
+**Bloqueios desta maquina (nao existem no Lactec):**
+
+- O App Control bloqueia o `_native` do `hypothesis`, e o plugin do pytest carrega o hypothesis
+  sempre: **a suite da biblioteca nao roda aqui**, nem com `-p no:hypothesis`. Ja esta na ultima
+  versao, entao reinstalar nao muda os bytes. Rodar `pytest` no Lactec ou deixar para a CI. O teste de
+  regressao contra o `metricas.csv` nao foi executado nesta ultima rodada por causa disso.
+- O mesmo bloqueio tirou o `torch 2.11.0+cu128` do ambiente `previsao`, que foi para `2.14.1+cu130`.
+- TimeLLM saiu do conjunto de redes: estoura o commit charge (limite 40,8 GB, folga ~13 GB) e derrubou
+  a maquina quatro vezes. Ver o comentario no `04_redes_treinadas.py`.
+
+**Armadilha de automacao, para nao repetir:** `subprocess.run(timeout=...)` marcou as etapas como
+canceladas mas **nao matou os processos filhos** — AutoTheta e MSTL seguiram rodando soltos e
+terminaram horas depois. Dois efeitos: um runner que espera `FIM` de outro pode esperar para sempre (foi
+o que deixou 13 h sem produzir nada), e dois processos do mesmo script sobrescreviam o
+`tempos_classicos.json` (corrigido: agora rele o arquivo antes de gravar).
+
+### Cuidados novos de 08/10/2026 (maquina de casa)
+
+- **O ambiente `previsao` esta com `torch 2.14.1+cu130`, nao mais 2.11.0+cu128.** A politica de
+  Controle de Aplicativo do Windows passou a bloquear o `torch/lib/shm.dll` da versao antiga de forma
+  persistente (`WinError 4551`; nao e o bloqueio transitorio de primeiro acesso, e reescrever o arquivo
+  nao resolve). As 52 entradas originais de rede treinada sao de 2.11.0 e as do passo T sao de 2.14.1 —
+  confundimento de versao a declarar. Nao desliguei o Smart App Control: no Windows e irreversivel e
+  havia alternativa. Se um dia faltar alternativa, o caminho e o WSL2, nao desligar a protecao.
+- **AutoARIMA so roda com configuracao reduzida.** Com o padrao levou 15,2 h em `usinas|A`. Agora usa
+  `approximation=True` e ordens limitadas; a configuracao fica em cada entrada de
+  `tempos_classicos.json`. Medir um caso antes de soltar os seis.
+- **Memoria e o gargalo desta maquina, nao a GPU.** Tres rodadas morreram por falta de RAM (lote de 32
+  do Time-MoE = 13 GB; redes do passo T junto com os classicos; o TimeLLM carrega um LLM). Rodar em
+  lotes pequenos, um processo por lote, e nao misturar fila de CPU com fila de GPU.
+
 ## Where to continue (handoff de 07/10/2026, maquina do Lactec)
 
 Feito em 07/10: ramo juntado em `main`; CI consertada (venv do setup-uv, nao `--system`); pre-commit com

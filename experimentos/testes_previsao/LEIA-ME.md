@@ -279,6 +279,24 @@ Seis defeitos encontrados e corrigidos entre 05 e 06/10/2026, dois deles com efe
 
 Outras limitações:
 
+- **Duas versoes de torch nas redes treinadas (08/10/2026).** As 52 entradas originais treinaram com
+  `torch 2.11.0+cu128`. No dia 08/10 a politica de Controle de Aplicativo do Windows passou a bloquear
+  o `torch/lib/shm.dll` desse ambiente (`WinError 4551`), de forma persistente: nao e o bloqueio
+  transitorio de primeiro acesso, e reescrever o arquivo nao resolve (a decisao e pelo conteudo). O
+  mesmo torch funciona nos ambientes `lote2`, `lote2_hf` e `moirai`, e o Smart App Control nao mudou de
+  estado — era bloqueio de um arquivo, nao de politica. O `previsao` foi atualizado para
+  `torch 2.14.1+cu130` (a versao que ja rodava no `lote2`), e por isso **as redes do passo T treinaram
+  com 2.14.1 e as 52 originais com 2.11.0**. E um confundimento de versao menor que o de CPU x GPU, mas
+  precisa ser dito ao comparar as duas gerações de redes. A alternativa seria desligar o Smart App
+  Control, que no Windows e irreversivel; nao foi feito porque havia alternativa funcionando.
+- **AutoARIMA com configuracao propria.** Com os padroes do StatsForecast
+  (`approximation=False`, `nmodels=94`) o AutoARIMA levou **54.554 s = 15,2 h** so em `usinas|A`, com
+  duas series: faz selecao de ordem por maxima verossimilhanca em 94 candidatos sobre uma serie horaria
+  de ~60 mil pontos, uma vez por dobra. Os outros seis casos seriam dias de maquina. Passou a rodar com
+  `approximation=True`, `stepwise=True`, `max_p=3`, `max_q=3`, `max_P=1`, `max_Q=1` e `nmodels=24`. A
+  ordem escolhida pode diferir da que o padrao escolheria; a configuracao usada fica gravada em cada
+  entrada de `resultados/tempos_classicos.json`, no campo `config`. Os outros tres classicos
+  estatisticos (AutoETS, AutoTheta, MSTL) rodam com o padrao — o AutoETS leva 146 s no mesmo caso.
 - **Regime B é um teto**, não uma previsão operacional; o número operacional é o do C.
 - **Regime C começa em 07/03/2024** (início do arquivo de previsões), então treina com menos história
   que A e B. O diagnóstico B-curto existe para medir esse efeito — e mostra que ele é pequeno.

@@ -103,6 +103,9 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
      "Maple728/TimeMoE-50M; previsão determinística."),
     ("Moirai-MoE-small", "Fundacional", "Fundacional (zero-shot)", "Moirai-MoE", "uni2ts (Salesforce), ambiente moirai", "Não registrado", "Não", "Não",
      "Salesforce/moirai-moe-1.0-R-small; mediana da distribuição prevista."),
+    ("Ensemble-mediana-corrigida", "Combinação", "Combinação", "—", "próprio (07_ensemble.py)", "—", "Não",
+     "Herda dos membros", "Só no consumo: a mediana × (real ÷ previsto dos 14 dias anteriores), por casa, só com o "
+     "passado. Tira o viés de ~−20% dos fundacionais. Na geração solar piora, por isso não existe lá (09/10/2026)."),
     ("Ensemble-mediana", "Combinação", "Combinação", "—", "próprio (07_ensemble.py)", "—", "Não", "Herda dos membros",
      "Mediana, hora a hora, de todos os modelos não referência do mesmo caso e regime. Regra fixada antes do teste."),
     # --- Passo T (07/10/2026). Antes de entrar na fila, cada rede foi testada embaralhando o clima

@@ -74,6 +74,8 @@ Pipeline (run from `scripts/`):
     04_redes_treinadas.py        trained networks; skips anything already in resultados/tempos_redes_*.json
     03c_fundacionais_lote2.py    batch 2 foundation models (lote2 / lote2_hf / moirai envs)
     07_ensemble.py → 05_avalia.py → 06_figuras.py
+    05b_resolucao.py             metricas em 4 resolucoes (hora, dia/noite, pico 17-21 h, dia); roda no ambiente da
+                                 BIBLIOTECA (usa prossumidor.metricas.por_resolucao) e confere o skill por hora
     roda_v2.py                   runs the v2 trained-network queue (plants and houses in two processes)
     roda_lote2.py                waits for v2's FIM lines, then runs batch 2 + ensemble + metrics + figures
     08_previsao_tempo.py         re-downloads the Open-Meteo forecast archive (already in dados/)
@@ -241,6 +243,17 @@ Pilotos feitos no Lactec em 09/10 a tarde (scripts `piloto_*.py`; saidas em `res
   Chronos-2, LightGBM). A mediana so dos modelos de CPU (sem redes treinadas e TabPFN-TS) fica igual ou melhor
   em 4 dos 7 testes (consumo A +0,200 x +0,191) e no maximo 0,016 abaixo (usinas B). => a biblioteca e o
   aplicativo rodam SO EM CPU; a GPU so serve ao benchmark (etapa A e redes).
+
+Feito em 09/10 (F1 b e c), com o codigo na BIBLIOTECA primeiro:
+- `prossumidor.metricas.por_resolucao` (+ `por_dia`, `por_blocos`, `janela`, `NIVEIS_PADRAO`; blocos configuraveis
+  para a tarifa branca) e `prossumidor.posprocessamento.corrige_vies` (bloqueada para geracao). 321 testes.
+- Benchmark: `05b_resolucao.py` -> `resultados/metricas_por_resolucao.csv`; `07_ensemble.py` grava
+  `Ensemble-mediana-corrigida` so no consumo (mesmo algoritmo; teste confere biblioteca == benchmark).
+  53 modelos, 248 linhas. A corrigida e a 1a no consumo A (+0,207) e B (+0,208), vies ~-0,5%.
+- **O melhor modelo muda com a resolucao.** Consumo A: corrigida na hora, mas Timer-XL-84m no dia/noite (+0,143),
+  no pico (+0,202) e no dia (+0,146). Consumo B: Ridge no dia/noite e no dia. Geracao solar: o R2 do DIA e MENOR
+  que o da hora (FV casas 0,36 x 0,43; usinas A 0,48 x 0,74): por hora a forma do dia de sol e previsivel, o
+  total do dia depende das nuvens. Aba "Por resolucao" da planilha do congresso; 5c da PROPOSTA.
 
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|

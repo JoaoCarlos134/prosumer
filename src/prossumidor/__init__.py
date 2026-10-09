@@ -1,7 +1,8 @@
 """prossumidor: previsao de geracao e consumo de prossumidores de energia.
 
 Estado: esqueleto do passo E1 da proposta (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). Por enquanto
-existem `contratos`, `protocolo`, `metricas` e `dados`; os modulos `io`, `qualidade`, `fisica`,
+existem `contratos`, `protocolo`, `metricas` (com metricas em varias resolucoes), `posprocessamento`
+(correcao de vies do consumo) e `dados`; os modulos `io`, `qualidade`, `fisica`,
 `diagnostico`, `previsao`, `embarcado` e `economia` ainda nao foram escritos.
 
 O protocolo e as metricas foram portados da versao congelada do benchmark v2
@@ -12,7 +13,7 @@ a partir dos dados de exemplo.
 
 from __future__ import annotations
 
-from . import contratos, dados, metricas, protocolo
+from . import contratos, dados, metricas, posprocessamento, protocolo
 from .contratos import ErroDeContrato, SerieEnergia
 from .protocolo import AvisoDeSuporte, DiaSeguinte, Dobra, Janela, Regime
 
@@ -35,5 +36,6 @@ __all__ = [
     "contratos",
     "dados",
     "metricas",
+    "posprocessamento",
     "protocolo",
 ]

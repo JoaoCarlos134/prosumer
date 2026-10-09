@@ -55,6 +55,7 @@ TIPO = {  # modelo: (tipo, parametros) — copiado do catalogo T de docs/literat
     'TiRex': ('Fundacional', '≈ 35 milhões'),
     'TTM-r2': ('Fundacional', '≈ 3 milhões'),
     'FlowState': ('Fundacional', '≈ 9,1 milhões'),
+    'Ensemble-mediana-corrigida': ('Combinação', '—'),
     'Toto': ('Fundacional', '≈ 151 milhões'),
     'Moirai-2.0-small': ('Fundacional', '≈ 11 milhões'),
     'NBEATSx': ('Rede treinada', '—'),
@@ -222,6 +223,10 @@ leia = [
      "UTC, foi convertido para a hora local antes de juntar.", None),
     ("Abas por teste com skill, IC 95%, R², nRMSE e viés, para o leitor ver o tamanho das diferenças e não só a ordem.", None),
     ("Aba Modelos previstos: o que entrou depois dos 36 originais, o que ainda falta e o que ficou de fora, com o motivo.", None),
+    ("Aba Por resolução: o mesmo teste medido por hora, por bloco dia/noite, no pico da noite (17–21 h) e no total do "
+     "dia. Cada decisão tem a sua resolução (fatura: dia; bateria: pico; tarifa: blocos).", None),
+    ("Ensemble-mediana-corrigida (só no consumo): a mediana com o viés dos 14 dias anteriores removido, só com o "
+     "passado. Os modelos de IA preveem ~20% a menos de consumo; a correção tira isso.", None),
 ]
 pend = [f"{CASO[c]}: {', '.join(m if m in RODA_EM_CPU else m + '*' for m in v)}" for c, v in faltam_b_casas.items() if v]
 if pend:
@@ -389,6 +394,65 @@ for t in [
     texto(wab, i, t, "nota")
     i += 1
 wab.freeze_panes = "C4"
+
+# ---------------------------------------------------------------- Por resolucao (09/10/2026)
+ARQ_RES = RES / "metricas_por_resolucao.csv"
+if ARQ_RES.exists():
+    PR = pd.read_csv(ARQ_RES, sep=";", decimal=",", encoding="utf-8-sig")
+    PR = PR[[(c, r) in TESTES for c, r in zip(PR.caso, PR.regime)]]
+    wres = wb.create_sheet("Por resolução")
+    texto(wres, 1, "O mesmo teste em quatro resoluções: hora, blocos dia/noite, pico da noite e total do dia", "h")
+    NIV = [("hora", "hora"), ("dia_noite", "dia/noite"), ("pico_17_21", "pico 17–21 h"), ("dia", "dia")]
+    cols = ["Teste", "Modelo", "Tipo", *[f"Skill {n}" for _, n in NIV], "R² hora", "R² dia", "Viés"]
+    cabecalho(wres, 3, cols, [14, 26, 13, 10, 11, 12, 10, 9, 9, 9])
+    i = 4
+    for t in TESTES:
+        x = PR[(PR.caso == t[0]) & (PR.regime == t[1])]
+        if x.empty:
+            continue
+        piv = x.pivot(index="modelo", columns="nivel", values="skill")
+        r2 = x.pivot(index="modelo", columns="nivel", values="R2")
+        vies = x[x.nivel == "hora"].set_index("modelo").MBE
+        for mod in piv.sort_values("hora", ascending=False).index:
+            celula(wres, i, 1, ABA[t])
+            celula(wres, i, 2, mod, negrito=True, italico=mod == REFERENCIA_DE[t[0]])
+            celula(wres, i, 3, tipo_de(mod)[0])
+            for j, (n, _) in enumerate(NIV, start=4):
+                celula(wres, i, j, float(piv.at[mod, n]), F_SKILL)
+            celula(wres, i, 8, float(r2.at[mod, "hora"]), F_R2)
+            celula(wres, i, 9, float(r2.at[mod, "dia"]), F_R2)
+            celula(wres, i, 10, float(vies[mod]), "+0.0%;-0.0%;0.0%")
+            i += 1
+        for j in range(1, 11):
+            wres.cell(row=i - 1, column=j).border = Border(bottom=Side(style="medium", color=AZUL))
+    i += 1
+    for nt in [
+        "Skill de cada resolução = contra a referência somada na MESMA resolução (no dia, 'igual a ontem' vira 'o total "
+        "de ontem'). Por isso o skill cai ao agregar mesmo com o erro relativo caindo: a referência também melhora.",
+        "O melhor modelo MUDA com a resolução (lista abaixo, calculada dos resultados): por isso a biblioteca mede em "
+        "todas e o usuário escolhe a da sua decisão.",
+        "Geração solar: o R² do dia é MENOR que o da hora. Por hora o modelo ganha crédito pela forma do dia de sol, "
+        "que é previsível; o total do dia depende quase só das nuvens.",
+        "Blocos: dia = 08–23 h, noite = 23–08 h (tarifa dia/noite da Irlanda); pico = 17–21 h. Horas avaliadas = as do "
+        "teste principal. Fonte: resultados/metricas_por_resolucao.csv (05b_resolucao.py).",
+    ]:
+        texto(wres, i, nt, "nota")
+        i += 1
+    i += 1
+    texto(wres, i, "Melhor modelo em cada resolução (sem as referências)", "h")
+    i += 1
+    for t in TESTES:
+        x = PR[(PR.caso == t[0]) & (PR.regime == t[1]) & ~PR.modelo.isin(REFERENCIA_DE.values())]
+        if x.empty:
+            continue
+        partes = []
+        for n, rotulo in NIV:
+            m = x[x.nivel == n].sort_values("skill", ascending=False).iloc[0]
+            partes.append(f"{rotulo}: {m.modelo} ({m.skill:+.3f})")
+        texto(wres, i, f"{ABA[t]} — " + " | ".join(partes))
+        i += 1
+    wres.freeze_panes = "C4"
+
 
 # ---------------------------------------------------------------- Modelos previstos (ainda sem resultado)
 # O que vai entrar neste artigo (regimes A e B). Por teste: "previsto", "a confirmar" (o modelo diz aceitar

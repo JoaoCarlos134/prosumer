@@ -14,6 +14,8 @@ Duas decisoes vieram dos resultados e estao embutidas de proposito:
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -155,3 +157,89 @@ def erros_quadraticos(df: pd.DataFrame) -> pd.Series:
         ((df["yhat"] - df["y"]) ** 2).to_numpy(),
         index=pd.MultiIndex.from_arrays([df["unique_id"], df["ds"]], names=CHAVES),
     )
+
+
+# ---------------------------------------------------------------------- varias resolucoes
+# Por que: o consumo de uma casa hora a hora e em grande parte imprevisivel (R2 0,37 no benchmark), mas o
+# total do dia nao (0,58), e a decisao do usuario raramente e por hora: a fatura e mensal, a bateria olha o
+# pico da noite, a tarifa e por bloco. Cada uso escolhe a resolucao da sua decisao. Um nivel e uma funcao
+# que leva o instante (`ds`) a chave do bloco; NaN tira a hora do nivel (ex.: fora da janela de pico).
+Nivel = Callable[[pd.Series], pd.Series] | None
+
+
+def por_dia(ds: pd.Series) -> pd.Series:
+    """Um bloco por dia (energia do dia)."""
+    return ds.dt.strftime("%Y-%m-%d")
+
+
+def por_blocos(blocos: dict[int, str]) -> Callable[[pd.Series], pd.Series]:
+    """Blocos de tarifa: `blocos` leva a hora (0-23) ao nome do bloco. Cada dia tem os seus blocos."""
+    faltam = set(range(24)) - set(blocos)
+    if faltam:
+        raise ValueError(f"Blocos sem as horas {sorted(faltam)}: toda hora precisa de um bloco")
+
+    def f(ds: pd.Series) -> pd.Series:
+        return ds.dt.strftime("%Y-%m-%d") + "_" + ds.dt.hour.map(blocos)
+
+    return f
+
+
+def janela(horas: range | list[int]) -> Callable[[pd.Series], pd.Series]:
+    """So as horas da janela, somadas por dia (ex.: o pico da noite). As outras horas saem do nivel."""
+    dentro = set(horas)
+
+    def f(ds: pd.Series) -> pd.Series:
+        return por_dia(ds).where(ds.dt.hour.isin(dentro))
+
+    return f
+
+
+# Padrao: tarifa dia/noite como a da Irlanda (dia 08-23 h). Para a tarifa branca brasileira, passe
+# por_blocos com ponta, intermediario e fora de ponta da distribuidora.
+BLOCOS_DIA_NOITE: dict[int, str] = {h: ("dia" if 8 <= h < 23 else "noite") for h in range(24)}
+NIVEIS_PADRAO: dict[str, Nivel] = {
+    "hora": None,
+    "dia_noite": por_blocos(BLOCOS_DIA_NOITE),
+    "pico_17_21": janela(range(17, 21)),
+    "dia": por_dia,
+}
+
+
+def agrega(df: pd.DataFrame, nivel: Nivel) -> pd.DataFrame:
+    """Soma, por serie e bloco, as colunas numericas de previsao (`y`, `yhat`, e `yhat_ref` se houver)."""
+    if nivel is None:
+        return df
+    cols = [c for c in ("y", "yhat", "yhat_ref") if c in df.columns]
+    chave = nivel(df["ds"])
+    x = df.assign(_bloco=chave).dropna(subset=["_bloco"])
+    return x.groupby(["unique_id", "_bloco"], sort=True)[cols].sum().reset_index()
+
+
+def por_resolucao(
+    previsao: pd.DataFrame, referencia: pd.DataFrame, niveis: dict[str, Nivel] | None = None
+) -> pd.DataFrame:
+    """Skill, R2, nRMSE e vies em cada nivel. Entradas: a saida de `alinha` (mesmas horas, mesma ordem).
+
+    O skill e contra a referencia somada no MESMO nivel: no dia, "igual a ontem" vira "o total de ontem".
+    Por isso o skill cai quando se agrega, mesmo com o erro relativo caindo: a referencia tambem melhora.
+    """
+    niveis = NIVEIS_PADRAO if niveis is None else niveis
+    base = previsao[[*CHAVES, "y", "yhat"]].assign(yhat_ref=referencia["yhat"].to_numpy())
+    linhas = []
+    for nome, nivel in niveis.items():
+        g = agrega(base, nivel)
+        e, er = g["yhat"] - g["y"], g["yhat_ref"] - g["y"]
+        mu = float(g["y"].mean())
+        rmse, rmse_ref = float(np.sqrt((e**2).mean())), float(np.sqrt((er**2).mean()))
+        linhas.append(
+            {
+                "nivel": nome,
+                "blocos": len(g),
+                "skill": 1 - rmse / rmse_ref if rmse_ref > 0 else float("nan"),
+                "R2": _r2(e, g["y"]),
+                "R2_referencia": _r2(er, g["y"]),
+                "nRMSE": rmse / mu if mu else float("nan"),
+                "MBE": float(e.mean()) / mu if mu else float("nan"),
+            }
+        )
+    return pd.DataFrame(linhas)

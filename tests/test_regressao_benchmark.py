@@ -155,3 +155,23 @@ def test_casas_reais_entram_no_fuso_de_dublin() -> None:
         # tudo de hora em hora, menos o buraco de 3 h deixado pela linha descartada de 25/10
         assert passos.get(pd.Timedelta("1h")) == len(g) - 2
         assert passos.get(pd.Timedelta("3h")) == 1
+
+
+@pytest.mark.parametrize("regime", ["A", "B"])
+def test_mediana_corrigida_do_benchmark_e_a_da_biblioteca(regime: str) -> None:
+    """O 07_ensemble.py repete o algoritmo de posprocessamento.corrige_vies (roda sem a biblioteca).
+    Os dois precisam dar a mesma previsao, senao o numero publicado nao e o que a biblioteca entrega."""
+    from prossumidor import posprocessamento
+
+    med = pd.read_parquet(PREV / f"Ensemble-mediana__casas_cons__{regime}.parquet")[[*CHAVES, "yhat"]]
+    gravada = pd.read_parquet(PREV / f"Ensemble-mediana-corrigida__casas_cons__{regime}.parquet")[
+        [*CHAVES, "yhat"]
+    ]
+    c = pd.read_parquet(DADOS / "casas_horario.parquet").rename(
+        columns={"casa": "unique_id", "cons_kWh": "y"}
+    )
+    real = c.loc[c["ds"] <= CASOS["casas_cons"][1], [*CHAVES, "y"]]
+    lib = posprocessamento.corrige_vies(med, real, grandeza="consumo")
+    j = gravada.merge(lib, on=CHAVES, suffixes=("_bench", "_lib"), validate="one_to_one")
+    assert len(j) == len(gravada) == len(med)
+    assert np.allclose(j["yhat_bench"], j["yhat_lib"], rtol=1e-12, atol=1e-12)

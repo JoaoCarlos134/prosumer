@@ -67,7 +67,7 @@ def ranking(M):
         g = g.sort_values("skill").reset_index(drop=True)
         fig, ax = plt.subplots(figsize=(8, 0.26 * len(g) + 2.0))
         for i, r in g.iterrows():
-            ens = r.modelo == "Ensemble-mediana"
+            ens = r.modelo.startswith("Ensemble-mediana")
             c = INK if ens else COR[familia(r.modelo)]
             ax.plot([r.skill_ic95_inf, r.skill_ic95_sup], [i, i], color=c, lw=2, solid_capstyle="round", alpha=0.55)
             if ens:

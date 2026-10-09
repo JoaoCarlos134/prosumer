@@ -114,5 +114,17 @@
  "TimesFM-2.5|casas_cons|B": {
   "segundos": 407.7,
   "janelas": 1820
+ },
+ "FlowState|casas_cons|A": {
+  "segundos": 739.0,
+  "janelas": 1820
+ },
+ "FlowState|casas_prod|A": {
+  "segundos": 337.0,
+  "janelas": 920
+ },
+ "FlowState|usinas|A": {
+  "segundos": 194.0,
+  "janelas": 598
  }
 }

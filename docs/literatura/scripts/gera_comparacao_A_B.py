@@ -54,6 +54,7 @@ TIPO = {  # modelo: (tipo, parametros) — copiado do catalogo T de docs/literat
     'TimesFM-2.5': ('Fundacional', '≈ 200 milhões'),
     'TiRex': ('Fundacional', '≈ 35 milhões'),
     'TTM-r2': ('Fundacional', '≈ 3 milhões'),
+    'FlowState': ('Fundacional', '≈ 9,1 milhões'),
     'Toto': ('Fundacional', '≈ 151 milhões'),
     'Moirai-2.0-small': ('Fundacional', '≈ 11 milhões'),
     'NBEATSx': ('Rede treinada', '—'),

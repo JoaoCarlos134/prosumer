@@ -5,7 +5,7 @@ levantamento de 127 modelos (`../../docs/literatura/Modelos_previsao_geracao_con
 **36 modelos e referências, 3 casos, uma tarefa só: prever as 24 horas do dia seguinte, emitindo a
 previsão às 00:00.** As redes treinadas rodaram em GPU (RTX 4070); os fundacionais, em CPU.
 
-> **Atualização de 09/10/2026 (passo T):** agora são **51 modelos e 243 linhas de métricas**, e as casas também têm
+> **Atualização de 09/10/2026 (passo T + FlowState):** agora são **52 modelos e 246 linhas de métricas**, e as casas também têm
 > o regime B (clima medido da estação de Dingle). As tabelas da §4 abaixo são da v2 (06/10) e ficam como registro.
 > Números atuais: `resultados/metricas.csv` e `docs/literatura/Comparacao_modelos_regimes_A_B.xlsx`. O que mudou
 > nas conclusões: a mediana de todos passou a 2ª nas usinas em B (+0,508, a 0,001 do TiRex-2, empatada) e segue 1ª

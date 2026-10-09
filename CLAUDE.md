@@ -228,8 +228,9 @@ Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver P
 Pilotos feitos no Lactec em 09/10 a tarde (scripts `piloto_*.py`; saidas em `resultados/pilotos/`, FORA de
 `previsoes/`: nao entram na mediana nem no metricas.csv; resumo em `resultados/pilotos/resumo.json`):
 - **FlowState** (IBM, 9,1 M param., zero-shot, CPU): consumo A +0,192 (8o/47, empata com o melhor, p 0,098);
-  FV casas A +0,134 (7o/47); usinas A +0,114 (5o/49). PASSOU o portao -> entra no benchmark (copiar as 3
-  previsoes para `previsoes/` e refazer 07 -> 05 -> 06 + planilhas; isso muda a mediana publicada). Melhor que
+  FV casas A +0,134 (7o/47); usinas A +0,114 (5o/49). PASSOU o portao e ENTROU no benchmark em 09/10
+  (`03_fundacionais.py FlowState`; as 3 previsoes do piloto foram gravadas com o mesmo `comum.grava`, janelas
+  conferidas): 52 modelos, 246 linhas; mediana em A subiu 0,0003-0,0017; 3o no ranking geral do congresso. Melhor que
   o TTM na geracao solar (+0,134 x +0,119; +0,114 x +0,092): segundo candidato pequeno (Raspberry Pi; nao cabe
   no ESP32). ~0,4 s por janela em CPU. Devolve quantis (util no piloto F2c). So roda no Lactec.
 - **Ajuste fino do TTM-r2** (F2e, origem movel, so dados anteriores a dobra): PIORA nos 3 casos. So a cabeca,

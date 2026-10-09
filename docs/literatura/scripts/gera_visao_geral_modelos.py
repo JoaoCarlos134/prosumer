@@ -79,6 +79,9 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("TiRex", "Fundacional", "Fundacional (zero-shot)", "TiRex", "tirex (NX-AI)", "≈ 35 milhões", "Não", "Não", "Baseado em xLSTM."),
     ("TTM-r2", "Fundacional", "Fundacional (zero-shot)", "Tiny Time Mixers (TTM)", "granite-tsfm (IBM)", "≈ 3 milhões", "Não", "Não",
      "Roda em CPU em segundos; candidato ao embarcado."),
+    ("FlowState", "Fundacional", "Fundacional (zero-shot)", "FlowState", "granite-tsfm (IBM)", "≈ 9,1 milhões", "Não", "Não",
+     "Codificador S5 + base funcional; entrou em 09/10/2026 depois do piloto. Melhor que o TTM na geração solar; "
+     "devolve quantis. Só no Lactec (granite-tsfm completo)."),
     ("Toto", "Fundacional", "Fundacional (zero-shot)", "Toto", "toto (Datadog)", "≈ 151 milhões", "Não", "Não", ""),
     ("Moirai-2.0-small", "Fundacional", "Fundacional (zero-shot)", "Moirai 2.0", "uni2ts (Salesforce), ambiente separado", "≈ 11 milhões", "Não", "Não",
      "Exige torch antigo; roda num ambiente Python à parte."),
@@ -196,7 +199,6 @@ FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
     ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.", "Pacote momentfm; precisa de ambiente próprio."),
     ("VisionTS", "Fundacional", *GPU_ZERO_SHOT, "Pacote visionts (trata a série como imagem)."),
     ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Código no GitHub; dependências antigas (gluonts)."),
-    ("FlowState", "Fundacional", *GPU_ZERO_SHOT, "granite-tsfm: completo só na máquina do Lactec."),
     ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios: só no consumo das casas."),
     ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),
     ("TimeGPT", "Fundacional (serviço)", "Não", "Roda nos servidores da Nixtla (API paga).",

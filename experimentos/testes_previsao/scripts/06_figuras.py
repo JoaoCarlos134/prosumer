@@ -15,7 +15,8 @@ from comum import RES, PREV, carrega, dobras, CASOS, DIAGNOSTICOS
 
 FIG = RES / "figuras"; FIG.mkdir(exist_ok=True)
 INK, INK2, GRADE, FUNDO = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
-COR = {"Referencia": "#8a8984", "Arvore / fisica": "#2a78d6", "Rede treinada": "#eb6834", "Fundacional": "#1baf7a"}
+COR = {"Referencia": "#8a8984", "Arvore / fisica": "#2a78d6", "Rede treinada": "#eb6834", "Fundacional": "#1baf7a",
+       "Classico": "#8e5bb5"}
 COR_REGIME = {"A": "#8a8984", "C": "#2a78d6", "B": INK}
 NOME_REGIME = {"A": "A: só histórico", "C": "C: + previsão do tempo real", "B": "B: + clima do dia (teto)"}
 MARCA = {"A": ("o", False), "C": ("s", True), "B": ("o", True)}
@@ -25,7 +26,11 @@ FAMILIA = {**{m: "Referencia" for m in ["persist_24h", "semanal_168h", "media_7d
                                          "Moirai-2.0-small",
                                          # lote 2: tambem zero-shot, nao sao redes treinadas nestes dados
                                          "Toto-2.0-22m", "Toto-2.0-313m", "TiRex-2", "TabPFN-TS", "Sundial-128m",
-                                         "Timer-XL-84m", "Time-MoE-50M", "Moirai-MoE-small"]}}
+                                         "Timer-XL-84m", "Time-MoE-50M", "Moirai-MoE-small",
+                                         "FlowState"]},  # entrou em 09/10/2026
+           # classicos (passo T): antes caiam no padrao "Rede treinada" e saiam com a cor errada
+           **{m: "Classico" for m in ["Ridge", "RandomForest", "MLP", "kNN",
+                                      "AutoARIMA", "AutoETS", "AutoTheta", "MSTL"]}}
 TITULO = {"usinas": "Usinas (Cascavel + Curitiba) — ganho sobre a persistência de céu claro",
           "casas_prod": "Geração FV das 10 casas com FV — ganho sobre 'igual a ontem'",
           "casas_cons": "Consumo das 20 casas — ganho sobre 'igual a ontem'"}

@@ -112,8 +112,23 @@ def toto(jan, exog=False):
     return out
 
 
+def flowstate(jan, exog=False):
+    """FlowState (IBM, ~9,1 M param.): codificador S5 + decodificador de base funcional. Entrou em 09/10/2026
+    depois de passar no piloto (piloto_flowstate.py, mesmo codigo). scale_factor 1,0 = serie horaria
+    (tsfm_public.models.flowstate.utils.get_fixed_factor("H")). Precisa do granite-tsfm completo (Lactec)."""
+    from tsfm_public import FlowStateForPrediction
+    m = FlowStateForPrediction.from_pretrained("ibm-granite/granite-timeseries-flowstate-r1").eval()
+    out = []
+    with torch.no_grad():
+        for lote in em_lotes(jan, 128):
+            x = torch.tensor(np.stack([w["y"] for w in lote]))[:, :, None]
+            r = m(past_values=x, scale_factor=1.0, prediction_length=H, batch_first=True)
+            out += list(r.prediction_outputs[:, :H, 0].numpy())
+    return out
+
+
 MODELOS = {"Chronos-2": chronos2, "Chronos-Bolt-small": chronos_bolt, "TimesFM-2.5": timesfm25,
-           "TiRex": tirex, "TTM-r2": ttm, "Toto": toto}
+           "TiRex": tirex, "TTM-r2": ttm, "Toto": toto, "FlowState": flowstate}
 COM_EXOG = {"Chronos-2", "TimesFM-2.5"}
 
 if __name__ == "__main__":

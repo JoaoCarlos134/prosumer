@@ -881,5 +881,59 @@
   "skill_melhor": 0.1779,
   "dm_p_vs_melhor": 0.035,
   "grupo_da_frente": false
+ },
+ "xLSTM|casas_prod|A": {
+  "modelo": "xLSTM",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.035,
+  "ic95": [
+   -0.0013,
+   0.0736
+  ],
+  "R2": 0.2174,
+  "nRMSE": 1.359,
+  "MBE": -0.0536,
+  "posicao": "36o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0002,
+  "grupo_da_frente": false
+ },
+ "xLSTM|casas_cons|A": {
+  "modelo": "xLSTM",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1593,
+  "ic95": [
+   0.1398,
+   0.1781
+  ],
+  "R2": 0.2974,
+  "nRMSE": 0.9406,
+  "MBE": -0.2253,
+  "posicao": "26o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "xLSTM|usinas|A": {
+  "modelo": "xLSTM",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": -0.5512,
+  "ic95": [
+   -0.6492,
+   -0.4533
+  ],
+  "R2": 0.1475,
+  "nRMSE": 1.0205,
+  "MBE": -0.263,
+  "posicao": "48o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
  }
 }

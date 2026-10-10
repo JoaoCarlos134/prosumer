@@ -24,6 +24,7 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | MOMENT | **não passa** (3 tamanhos, 3 casos) | cabeça linear sobre o codificador congelado: 26º–38º; na FV superestima 27–30% |
 | Lag-Llama | **não passa** (contexto 32 em 2 casos; contexto 256 inviável) | FV das casas −0,037 (43º/50), consumo +0,084 (42º/51); subestima ~35% |
 | DUET | **não passa** (2 tamanhos; 3 casos no oficial) | oficial 26º–36º; menor (dm 64) 16º/50 na FV das casas, p = 0,035; consumo 36º |
+| xLSTM | **não passa** (3 casos) | consumo +0,159 (26º/51), FV das casas +0,035 (36º/50), usinas −0,551 (48º/52) |
 | Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
@@ -281,3 +282,39 @@ de treino para 5,6 milhões de parâmetros. Não foram tentados mais tamanhos ne
 das casas com o modelo menor (p = 0,035). Onde a dependência entre casas mais deveria ajudar, o consumo, fica
 no terço de baixo nos dois tamanhos. E a FV das casas já tem o CycleNet (+0,139 com 4.296 parâmetros). Nestes
 dados, agrupar as séries não traz ganho que apareça na previsão de cada uma.
+
+---
+
+## xLSTM (10/10/2026)
+
+**Como funciona.** Beck et al., *xLSTM: Extended Long Short-Term Memory* (NeurIPS 2024). Duas células novas:
+sLSTM (memória escalar com porta exponencial e normalização; recorrente) e mLSTM (memória em matriz com regra de
+atualização de covariância, sem recorrência entre os estados ocultos: treina em paralelo, como atenção linear).
+Blocos residuais empilhados. No NeuralForecast é um codificador (pilha de blocos) com decodificador MLP, como o
+LSTM e o GRU do benchmark.
+
+**O que podia acrescentar.** É a versão moderna do LSTM, que no benchmark perde da persistência de céu claro
+nas usinas. Se o xLSTM corrigisse isso, a família recorrente voltava ao jogo (e redes recorrentes pequenas são
+fáceis de embarcar).
+
+**Como rodar.** `neuralforecast.models.xLSTM` (NeuralForecast 3.1.9 já instalado) + `xlstm==2.0.6` com
+`--no-deps` no `previsao_gpu`. Armadilha: o pacote `xlstm` monta os caminhos do kernel CUDA do sLSTM já no import,
+só porque a GPU existe, e exige `CUDA_HOME` (o mesmo problema do TiRex-2). Basta apontar `CUDA_HOME` para a pasta
+do torch: com o backbone mLSTM (o padrão) nada é compilado. Script: `scripts/piloto_xlstm.py [caso ...]`, com o
+protocolo IDÊNTICO ao das redes do `04` (mesmo `COMUM_T` e `roda_nf`: entrada de 168 h, origem móvel, 30 dias de
+validação, semente 42). 243 mil parâmetros; 116–175 s por caso na RTX 4070.
+
+**Piloto (regime A).**
+
+| Caso | xLSTM | LSTM | GRU | Melhor do teste |
+|---|---|---|---|---|
+| usinas | −0,551 (48º/52), MBE −26% | −0,171 | −0,129 | TiRex-2 +0,141 |
+| FV das casas | +0,035 (36º/50), MBE −5% | +0,012 | +0,066 | Toto-2.0-313m +0,178 |
+| consumo | +0,159 (26º/51), MBE −23% | +0,131 | +0,132 | mediana corrigida +0,208 |
+
+Em todos, p < 0,001 contra o melhor.
+
+**Decisão. Não passa, descartado com evidência.** Melhora o LSTM no consumo (+0,159 x +0,131), mas fica fora do
+grupo da frente; na FV das casas fica entre o LSTM e o GRU; nas usinas é bem pior que os dois (−0,55). Não
+resolve o problema da família recorrente só com histórico, e o CycleNet (4.296 parâmetros) já cobre o lugar de
+rede pequena embarcável com resultado melhor nos três casos.

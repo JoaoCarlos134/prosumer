@@ -217,8 +217,8 @@ dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo 
 **Mamba PASSA** na FV das casas (10/10; TSLib MambaSimple, bloco em PyTorch puro no lugar do `mamba_ssm`; +0,133,
 10o/51, p 0,064; 0,24 M param.; lento: varredura sequencial) -> ja no dicionario `MULTIVARIADAS` do 04; a rodada do
 benchmark, as sementes 1 e 2 e o determinismo estao na `scripts/fila_noite.sh` (conferir o log
-`resultados/log_fila_noite_*.txt` e so entao rodar o atualiza.py e commitar). Faltam 4: TimeGrad,
-Time-LLM, LLMTime, TimeGPT. **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts,
+`resultados/log_fila_noite_*.txt` e so entao rodar o atualiza.py e commitar). TimeGrad: estudado, `scripts/piloto_timegrad.py` (pytorch-ts oficial no
+`~/.venvs/lagllama`) conferido no modo teste e na fila da noite. Faltam: Time-LLM, LLMTime, TimeGPT. **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts,
 testes leves); rodadas pesadas de GPU/CPU vao para a fila da noite.** Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
 (consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.

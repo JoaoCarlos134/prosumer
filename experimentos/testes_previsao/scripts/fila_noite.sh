@@ -25,5 +25,9 @@ for c in ("casas_prod", "casas_cons"):
     m = a.merge(b, on=["unique_id", "ds"], suffixes=("_b", "_p"))
     print(c, len(a), len(b), len(m), "max diff", float((m.yhat_b - m.yhat_p).abs().max()))
 EOF
+date
+# 4. TimeGrad (etapa A; ambiente lagllama, GPU): FV das casas, consumo, usinas
+~/.venvs/lagllama/Scripts/python.exe -u piloto_timegrad.py casas_prod casas_cons usinas 2>&1 | grep -E "^OK|Error|Traceback"
+for c in casas_prod casas_cons usinas; do nota TimeGrad $c; nota TimeGrad-media $c; done
 echo FIM; date
 } >> "$LOG" 2>&1

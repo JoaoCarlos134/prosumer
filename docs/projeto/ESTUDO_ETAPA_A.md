@@ -28,7 +28,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | Crossformer | **PASSA** (usinas e FV das casas; 3 sementes) | **1º de 52 nas usinas** (+0,150, à frente do TiRex-2) e 2º de 50 na FV das casas (+0,166); consumo 15º (p = 0,030) |
 | S-Mamba | **não passa** (3 casos) | 19º–27º; FV das casas +0,108, p = 0,043 |
 | Mamba | **PASSA** (FV das casas; sementes e usinas na rodada noturna) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; consumo 25º |
-| TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| TimeGrad | estudado; piloto na fila da noite | — |
+| Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -420,3 +421,30 @@ só, sem procurar outra configuração). **Mamba PASSA** na FV das casas (empata
 de espaço de estados, com 0,24 M parâmetros. O p está perto do corte: a rodada do benchmark confere a estabilidade
 com as sementes 1 e 2 na FV das casas (relatar como sair, sem trocar configuração) e o determinismo na GPU antes de
 entrar no `04_redes_treinadas.py` (dicionário `MULTIVARIADAS`, regime A).
+
+## TimeGrad (estudo 10/10/2026; piloto na fila da noite)
+
+**Como funciona.** Rasul, Seward, Schuster e Vollgraf, *Autoregressive Denoising Diffusion Models for Multivariate
+Probabilistic Time Series Forecasting* (ICML 2021). Uma RNN (GRU) lê o passado de todas as séries juntas (valores
+defasados em 1, 24 e 168 h, um embedding do índice de cada série e calendário em seno/cosseno) e resume tudo num
+estado h_t. Em cada hora futura, a distribuição do VETOR de valores (todas as séries) é um modelo de difusão (DDPM)
+condicionado em h_t: no treino, soma-se ruído gaussiano em um de 100 níveis e uma rede convolucional dilatada
+(ε_θ) aprende a prever o ruído; na previsão, parte-se de ruído puro e removem-se os 100 níveis, uma hora de cada
+vez (a amostra de uma hora entra como defasagem da seguinte). Saída: amostras, sem supor forma da distribuição nem
+da dependência entre séries.
+
+**O que podia acrescentar.** Faixa com dependência entre séries, aprendida nestes dados (o Lag-Llama, a outra
+opção de amostras, era zero-shot e não passou). Útil ao piloto F2c de faixas, se o ponto central empatar.
+
+**Como rodar.** Código oficial pytorch-ts (zalandoresearch/pytorch-ts, commit 7860c96, MIT) em
+`~/.cache/pytorch-ts-repo`, posto no `sys.path`; nada instalado. Roda no `~/.venvs/lagllama` (gluonts 0.14.4) com
+três ajustes de compatibilidade, nenhum no modelo: apelido `gluonts.torch.distributions.output` ->
+`distribution_output` (mesmas classes); o `PyTorchPredictor` do gluonts 0.14 não aceita `freq` (descartado);
+`prefetch_factor=None` (o torch novo recusa prefetch sem workers). E um no protocolo: o amostrador de janelas de
+treino passa de 1 para 100 janelas esperadas por passada (com UMA série multivariada longa, quase toda passada
+saía vazia e o gluonts desistia; as janelas continuam sorteadas). Hiperparâmetros do exemplo oficial de
+eletricidade: GRU 2 x 40, contexto 24 h (+ defasagem de 168 h), 100 passos de difusão, β até 0,1 linear, L2,
+escala pela média, Adam 1e-3, 20 épocas de 100 lotes de 64, sem parada antecipada; ~40 mil parâmetros (FV das
+casas). Origem móvel, quadro largo com interpolação causal. Ponto = mediana de 100 amostras (grava também a média).
+Script: `scripts/piloto_timegrad.py [teste] [caso ...]`; o modo `teste` (1 época de 5 lotes, 5 dias) rodou de ponta
+a ponta em 9 s.

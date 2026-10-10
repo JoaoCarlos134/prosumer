@@ -70,6 +70,10 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
     ("CycleNet", "Rede treinada", "MLP / linear", "CycleNet", "próprio (PyTorch, redes_proprias.py)", "≈ 4 a 7 mil", "Sim", "Não",
      "Lin et al. (NeurIPS 2024): ciclo aprendível por série + linear no resíduo (24 h na geração, 168 h no consumo). "
      "Entrou em 09/10/2026 depois do piloto (empatou na FV das casas); candidato ao embarcado para geração."),
+    ("Crossformer", "Rede treinada", "Transformer", "Crossformer", "Time-Series-Library (adaptador, redes_proprias.py)",
+     "≈ 8 milhões", "Sim", "Não",
+     "Zhang e Yan (ICLR 2023): atenção em dois estágios, no tempo e entre séries (multivariado). Entrou em 10/10/2026 "
+     "depois do piloto: 1º nas usinas e 2º na FV das casas no regime A, estável em 3 sementes."),
     ("PatchTST", "Rede treinada", "Transformer", "PatchTST", "NeuralForecast", "≈ 467 mil", "Sim", "Não", ""),
     ("iTransformer", "Rede treinada", "Transformer", "iTransformer", "NeuralForecast", "≈ 6,4 milhões", "Sim", "Não",
      "Trata as séries como variáveis de um mesmo sistema."),
@@ -199,21 +203,22 @@ for mod, tipo, *_ in T:
 # Os 24 do levantamento com codigo aberto que ainda faltam (plano do TCC, passo T). Nome = coluna Modelo do levantamento.
 FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
     ("xLSTM", "Rede treinada (NeuralForecast)", *GPU_REDE,
-     "A versão do NeuralForecast TAMBÉM exige os kernels: testada em 07/10, levanta "
-     "'Please install xlstm. You also need mlstm_kernels for backend=mLSTM and ninja for backend=sLSTM'. "
-     "O ninja precisa de compilador C++, que a máquina de casa não tem. Fica para o Linux (WSL)."),
+     "Pilotado em 10/10/2026 (etapa A; NeuralForecast + xlstm com CUDA_HOME apontando para o torch, backbone mLSTM): "
+     "NÃO passou; consumo 26º, usinas -0,55. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("Time-LLM", "Rede treinada (NeuralForecast)", "Sim", "Tem um LLM dentro (GPT-2 ou maior); inviável em CPU.",
      "Já no NeuralForecast instalado."),
     ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.1 pilotado em 09/10/2026 (etapa A): NÃO passou; em B ficou em último "
      "nas usinas (quase não usa o clima). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
-    ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.", "Pacote momentfm; precisa de ambiente próprio."),
-    ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Código no GitHub; dependências antigas (gluonts)."),
+    ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.",
+     "Pilotado em 09/10/2026 (etapa A; 3 tamanhos, 3 casos): NÃO passou, terço de baixo. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
+    ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Pilotado em 10/10/2026 (etapa A; ambiente próprio, gluonts 0.14): "
+     "NÃO passou, 42º-43º de ~50 e subestima ~1/3. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios: só no consumo das casas."),
     ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),
     ("TimeGPT", "Fundacional (serviço)", "Não", "Roda nos servidores da Nixtla (API paga).",
      "Envia os dados para fora: SÓ com as casas (CC0), NUNCA com as usinas."),
-    ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TFB)."),
-    ("Crossformer", "Rede treinada (repositório próprio)", *GPU_REDE, "Precisa de adaptador (código no TSLib)."),
+    ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Pilotado em 10/10/2026 (etapa A; 3 casos, 2 tamanhos): "
+     "NÃO passou; o mais perto foi 16º na FV das casas (p = 0,035). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("S-Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",
      "Precisa de adaptador (TSLib); pode exigir Linux (WSL)."),
     ("Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",

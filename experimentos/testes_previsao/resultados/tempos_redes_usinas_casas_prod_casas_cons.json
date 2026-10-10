@@ -1,0 +1,23 @@
+{
+ "Crossformer|usinas|A": {
+  "segundos": 752.1,
+  "parametros": 7948324,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ },
+ "Crossformer|casas_prod|A": {
+  "segundos": 66.7,
+  "parametros": 7981092,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ },
+ "Crossformer|casas_cons|A": {
+  "segundos": 163.8,
+  "parametros": 8022052,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ }
+}

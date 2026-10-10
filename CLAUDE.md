@@ -207,8 +207,15 @@ empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> **e
 (10/10; contexto 32: FV das casas -0,037, 43o/50; consumo +0,084, 42o/51; subestima ~1/3; contexto 256 rodou
 3 h 09 min sem terminar um caso e foi interrompido; ambiente proprio `~/.venvs/lagllama`, ver o ESTUDO). **DUET nao passa** (10/10; 3 casos: 26o-36o; menor, d_model 64: FV das
 casas 16o/50, p 0,035; consumo 36o). **xLSTM nao passa** (10/10, NeuralForecast + `xlstm` --no-deps, CUDA_HOME = pasta do
-torch; consumo +0,159 26o, FV +0,035, usinas -0,55). Faltam 6: Crossformer, Mamba/S-Mamba,
-TimeGrad, Time-LLM, LLMTime, TimeGPT. Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
+torch; consumo +0,159 26o, FV +0,035, usinas -0,55; o `xlstm` foi DESINSTALADO depois: instalado, quebra o
+`from neuralforecast import models` sem CUDA_HOME). **Crossformer PASSA** (10/10; TSLib em ~/.cache/tslib-repo,
+receita oficial ECL; 1o de 52 nas usinas +0,150 e 2o na FV das casas +0,166, estavel em 3 sementes, deterministico
+na GPU) -> **entrou no benchmark em 10/10** (`04_redes_treinadas.py`, dicionario `MULTIVARIADAS`, laco
+`redes_proprias.treina_multivariado`, so regime A): **56 modelos, 257 linhas**; e o 1o nas usinas em A, a frente
+do TiRex-2. No caminho: o laco multivariado interpolava a serie inteira (buraco no fim da entrada preenchido com o
+dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo refeito. Faltam 5: Mamba/S-Mamba
+(`scripts/piloto_mamba.py` pronto: bloco Mamba em PyTorch puro da TSLib no lugar do `mamba_ssm`), TimeGrad,
+Time-LLM, LLMTime, TimeGPT. Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
 (consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 

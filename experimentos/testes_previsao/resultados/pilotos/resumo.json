@@ -832,14 +832,14 @@
   "modelo": "DUET",
   "caso": "usinas",
   "regime": "A",
-  "skill": 0.0298,
+  "skill": 0.0299,
   "ic95": [
    -0.0001,
    0.0583
   ],
-  "R2": 0.6665,
+  "R2": 0.6666,
   "nRMSE": 0.6382,
-  "MBE": 0.0346,
+  "MBE": 0.0347,
   "posicao": "26o de 52",
   "melhor": "TiRex-2",
   "skill_melhor": 0.1407,
@@ -935,5 +935,131 @@
   "skill_melhor": 0.1407,
   "dm_p_vs_melhor": 0.0,
   "grupo_da_frente": false
+ },
+ "Crossformer|casas_cons|A": {
+  "modelo": "Crossformer",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.186,
+  "ic95": [
+   0.1701,
+   0.2006
+  ],
+  "R2": 0.3412,
+  "nRMSE": 0.9108,
+  "MBE": -0.0314,
+  "posicao": "15o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0304,
+  "grupo_da_frente": false
+ },
+ "Crossformer|casas_prod|A": {
+  "modelo": "Crossformer",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1661,
+  "ic95": [
+   0.1404,
+   0.1913
+  ],
+  "R2": 0.4156,
+  "nRMSE": 1.1743,
+  "MBE": 0.1722,
+  "posicao": "2o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.638,
+  "grupo_da_frente": true
+ },
+ "Crossformer|usinas|A": {
+  "modelo": "Crossformer",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.1497,
+  "ic95": [
+   0.1252,
+   0.1733
+  ],
+  "R2": 0.7438,
+  "nRMSE": 0.5594,
+  "MBE": -0.0242,
+  "posicao": "1o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.4236,
+  "grupo_da_frente": true
+ },
+ "Crossformer-s1|casas_prod|A": {
+  "modelo": "Crossformer-s1",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1583,
+  "ic95": [
+   0.1332,
+   0.184
+  ],
+  "R2": 0.4046,
+  "nRMSE": 1.1853,
+  "MBE": 0.2331,
+  "posicao": "3o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.5502,
+  "grupo_da_frente": true
+ },
+ "Crossformer-s1|usinas|A": {
+  "modelo": "Crossformer-s1",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.1438,
+  "ic95": [
+   0.1152,
+   0.1688
+  ],
+  "R2": 0.7403,
+  "nRMSE": 0.5633,
+  "MBE": 0.0227,
+  "posicao": "1o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.7242,
+  "grupo_da_frente": true
+ },
+ "Crossformer-s2|casas_prod|A": {
+  "modelo": "Crossformer-s2",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1645,
+  "ic95": [
+   0.1381,
+   0.1915
+  ],
+  "R2": 0.4134,
+  "nRMSE": 1.1766,
+  "MBE": 0.1167,
+  "posicao": "2o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.6617,
+  "grupo_da_frente": true
+ },
+ "Crossformer-s2|usinas|A": {
+  "modelo": "Crossformer-s2",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.1516,
+  "ic95": [
+   0.1229,
+   0.1785
+  ],
+  "R2": 0.745,
+  "nRMSE": 0.5581,
+  "MBE": 0.0086,
+  "posicao": "1o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.3759,
+  "grupo_da_frente": true
  }
 }

@@ -14,7 +14,8 @@ logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
 from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO
-from redes_proprias import DEV, CycleNet, ResNet1D, SparseTSF, treina_proprio
+from redes_proprias import (DEV, RECEITA_CROSSFORMER, CycleNet, ResNet1D, SparseTSF, chama_tslib, crossformer,
+                            treina_multivariado, treina_proprio)
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
 ARGS = sys.argv[1:]
@@ -124,6 +125,10 @@ def para_janelas(cv, nome, ini=None, fim=None):
 # testou os dois no consumo e deu empate), backbone Linear, perda L1 como os outros.
 PROPRIAS = {"SparseTSF": lambda n, caso: SparseTSF(), "ResNet-1D": lambda n, caso: ResNet1D(),
             "CycleNet": lambda n, caso: CycleNet(n, 168 if caso == "casas_cons" else 24)}
+# Multivariadas (todas as series do caso numa janela), regime A. Crossformer: etapa A, 10/10/2026 (TSLib, receita
+# do script oficial de eletricidade; laco proprio porque o NeuralForecast nao tem o modelo). Deterministico na GPU
+# (mesma semente, previsoes identicas), entao roda na GPU, diferente do CycleNet.
+MULTIVARIADAS = {"Crossformer": (crossformer, chama_tslib, RECEITA_CROSSFORMER)}
 
 
 def roda_nf(df, fab, caso, regime):
@@ -198,6 +203,22 @@ if __name__ == "__main__":
                 for ini, fim in dobras(caso):
                     j, p, n_par = treina_proprio(d, caso, lambda n: fab(n, caso), ini, fim)
                     jan += j; prev += p
+                grava(nome, caso, "A", jan, prev)
+                anota(chave, t0, n_par, nome, caso, "A", DEV.type)
+            except Exception as e:
+                falhas += 1
+                print("FALHA %-12s %-10s A  %s: %s" % (nome, caso, type(e).__name__, str(e)[:300]), flush=True)
+        for nome, (fab, chama, receita) in MULTIVARIADAS.items():
+            chave = f"{nome}|{caso}|A"
+            if (chave in tempos and (PREV / f"{nome}__{caso}__A.parquet").exists()) or (SO_MODELOS and nome not in SO_MODELOS):
+                continue
+            t0 = time.time()
+            try:
+                jan, prev = [], []
+                for ini, fim in dobras(caso):
+                    j, p, n_par = treina_multivariado(d, caso, fab, chama, ini, fim, **receita)
+                    jan += j; prev += p
+                    torch.cuda.empty_cache()
                 grava(nome, caso, "A", jan, prev)
                 anota(chave, t0, n_par, nome, caso, "A", DEV.type)
             except Exception as e:

@@ -25,7 +25,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | Lag-Llama | **não passa** (contexto 32 em 2 casos; contexto 256 inviável) | FV das casas −0,037 (43º/50), consumo +0,084 (42º/51); subestima ~35% |
 | DUET | **não passa** (2 tamanhos; 3 casos no oficial) | oficial 26º–36º; menor (dm 64) 16º/50 na FV das casas, p = 0,035; consumo 36º |
 | xLSTM | **não passa** (3 casos) | consumo +0,159 (26º/51), FV das casas +0,035 (36º/50), usinas −0,551 (48º/52) |
-| Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| Crossformer | **PASSA** (usinas e FV das casas; 3 sementes) | **1º de 52 nas usinas** (+0,150, à frente do TiRex-2) e 2º de 50 na FV das casas (+0,166); consumo 15º (p = 0,030) |
+| Mamba/S-Mamba, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -276,7 +277,8 @@ paciência 5); protocolo nosso: origem móvel, janelas de treino a cada 6 h, 10%
 | consumo | +0,135 (36º/51), MBE −21% | +0,135 (36º/51), MBE −25% | mediana corrigida +0,208 |
 
 O tamanho menor foi o único ajuste tentado, por um motivo a priori: nas casas cada dobra tem só ~1.000 janelas
-de treino para 5,6 milhões de parâmetros. Não foram tentados mais tamanhos nem sementes para cruzar o 0,05.
+de treino para 5,6 milhões de parâmetros. Não foram tentados mais tamanhos nem sementes para cruzar o 0,05. Depois da correção da interpolação causal no laço
+compartilhado (ver Crossformer, 10/10) as cinco rodadas foram refeitas: números idênticos.
 
 **Decisão. Não passa, descartado com evidência.** Fora do grupo da frente nos três casos; o mais perto é a FV
 das casas com o modelo menor (p = 0,035). Onde a dependência entre casas mais deveria ajudar, o consumo, fica
@@ -318,3 +320,55 @@ Em todos, p < 0,001 contra o melhor.
 grupo da frente; na FV das casas fica entre o LSTM e o GRU; nas usinas é bem pior que os dois (−0,55). Não
 resolve o problema da família recorrente só com histórico, e o CycleNet (4.296 parâmetros) já cobre o lugar de
 rede pequena embarcável com resultado melhor nos três casos.
+
+**Ambiente.** O `xlstm` foi DESINSTALADO do `previsao_gpu` depois do piloto: instalado, o NeuralForecast passa a
+importá-lo em todo `from neuralforecast import models`, e sem `CUDA_HOME` o `04_redes_treinadas.py` quebra. Para
+refazer o piloto: instalar de novo com `--no-deps` só para a rodada (o script já põe o `CUDA_HOME`).
+
+---
+
+## Crossformer (10/10/2026)
+
+**Como funciona.** Zhang e Yan, *Crossformer: Transformer Utilizing Cross-Dimension Dependency for Multivariate
+Time Series Forecasting* (ICLR 2023). Cada série é cortada em segmentos de 12 h (DSW, *dimension-segment-wise
+embedding*), e a entrada vira uma grade séries x segmentos. A atenção em dois estágios (TSA) alterna atenção no
+tempo (entre segmentos da mesma série) e atenção entre séries, por um pequeno conjunto de "roteadores" (custo
+linear no número de séries). Codificador hierárquico (junta segmentos vizinhos a cada camada) e decodificador que
+prevê por segmento em cada escala; a previsão é a soma das escalas.
+
+**O que podia acrescentar.** Dependência entre séries de propósito (como o DUET, com outro mecanismo): as duas
+usinas veem o mesmo tempo regional, as casas a mesma comunidade.
+
+**Como rodar.** Só o modelo da Time-Series-Library (github.com/thuml/Time-Series-Library, commit 4e938a1, MIT),
+em `~/.cache/tslib-repo`; roda no `previsao_gpu` sem instalar nada (o `reformer_pytorch`, usado só pelo Reformer,
+vira um módulo vazio). Hiperparâmetros do script oficial da TSLib para eletricidade (ECL): d_model 256, d_ff 512,
+2 camadas, 8 cabeças, segmento de 12 h, MSE, Adam 1e-4, lote 16, paciência 3. O modelo não normaliza a entrada (a
+TSLib padroniza o conjunto com o treino): cada série é padronizada com média e desvio do treino da dobra.
+Protocolo nosso: entrada de 168 h, origem móvel, janelas de treino a cada 6 h, 10% para parada antecipada, até 30
+épocas. Laço `redes_proprias.treina_multivariado` (o mesmo do DUET; o DUET foi migrado para ele e reproduz as
+previsões bit a bit). ~8 milhões de parâmetros; 110 s (FV das casas), 280 s (consumo), ~1.250 s (usinas) na RTX
+4070. **Determinístico na GPU**: duas rodadas com a mesma semente dão previsões idênticas.
+
+**Defeito achado e corrigido no caminho.** O laço multivariado montava o quadro largo e interpolava a série
+INTEIRA de uma vez: um buraco no fim do histórico de entrada podia ser preenchido com valores do dia previsto. O
+`comum.janelas` faz o certo (corta na véspera, depois interpola). Contagem: nenhum caso nas usinas nem na FV das
+casas (nenhuma entrada termina num buraco); 19 série-dias no consumo. Corrigido (corta, depois interpola, no treino
+e no teste) e TODAS as rodadas multivariadas refeitas. Crossformer: FV das casas idêntica, consumo +0,186 (era
++0,186), usinas +0,150 (era +0,152, pelo treino); DUET: idêntico.
+
+**Piloto (regime A).**
+
+| Caso | semente 42 | semente 1 | semente 2 | Melhor do teste antes |
+|---|---|---|---|---|
+| usinas | **+0,150 (1º/52)**, p 0,42 | +0,144 (1º) | +0,152 (1º) | TiRex-2 +0,141 |
+| FV das casas | **+0,166 (2º/50)**, p 0,64, MBE +17% | +0,158 (3º) | +0,165 (2º) | Toto-2.0-313m +0,178 |
+| consumo | +0,186 (15º/51), p 0,030 | | | mediana corrigida +0,208 |
+
+**Decisão. PASSA** (grupo da frente em dois casos, estável em 3 sementes) e é o primeiro modelo da etapa A a
+liderar um caso: nas usinas fica à frente de todos os fundacionais. É também a primeira evidência a favor da
+dependência entre séries neste benchmark (DUET e iTransformer, que também a usam, não chegam perto): o ganho
+aparece nas usinas, onde são só duas séries, então o que pesa pode ser mais a atenção por segmentos de 12 h do
+que a mistura entre séries; não testado aqui (uma ablação sem o estágio entre séries diria). **Entrou no benchmark
+em 10/10/2026** (`04_redes_treinadas.py`, dicionário `MULTIVARIADAS`, GPU), só no regime A: o modelo não recebe
+clima. Pendências que valem a pena: regime B/C com o clima como séries extras (o Crossformer trata qualquer
+variável como mais uma dimensão), e a ablação acima.

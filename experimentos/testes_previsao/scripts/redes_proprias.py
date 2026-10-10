@@ -142,3 +142,95 @@ def treina_proprio(d, caso, fab, ini, fim, epocas=30, perda="l1", semente=42):
         else:
             p = m(xt).cpu().numpy() * sd + mu
     return jan, list(p), sum(t.numel() for t in m.parameters())
+
+
+# ---------- modelos MULTIVARIADOS (todas as series do caso numa janela): pilotos do DUET e do Crossformer ----------
+def largo(d):
+    """Quadro largo (tempo x series), SEM preencher: o preenchimento e feito depois de cortar no tempo (causal)."""
+    w = d.pivot(index="ds", columns="unique_id", values="y").sort_index()
+    return w.reindex(pd.date_range(w.index.min(), w.index.max(), freq="h"))
+
+
+def _preenche(w):
+    """Interpola por serie e zera as pontas, como comum.janelas; chamar so sobre um trecho ja cortado."""
+    return w.interpolate(limit_direction="both").fillna(0.0)
+
+
+def treina_multivariado(d, caso, fab, chama, ini, fim, L, lr, perda="l1", escala=False, lote=32, epocas=30,
+                        paciencia_max=5, semente=42):
+    """Treina do zero com os dados anteriores a `ini` e preve os dias de [ini, fim], uma janela por dia com
+    TODAS as series. `fab(n_series)` constroi o modelo; `chama(m, x)` devolve (previsao, perda_auxiliar).
+    `escala`: padroniza cada serie com media e desvio do treino da dobra (para modelos sem RevIN).
+    Entradas de teste montadas como em comum.janelas: historico ate a vespera, cortado e so entao interpolado.
+    Devolve (janelas, previsoes, n_parametros) so para os (serie, dia) que o protocolo avalia."""
+    fp = nn.functional.l1_loss if perda == "l1" else nn.functional.mse_loss
+    w = largo(d)
+    cols = list(w.columns)
+    if escala:
+        ant = w[w.index < ini]
+        mu, sd = ant.mean(), ant.std() + 1e-3
+        w = (w - mu) / sd
+    # Interpolacao CAUSAL (corrigido 10/10/2026): antes o quadro inteiro era interpolado de uma vez, e um buraco
+    # no fim do historico podia ser preenchido com valores do dia previsto. Agora: corta, depois preenche.
+    tr = _preenche(w[w.index < ini]).to_numpy(np.float32)
+    X = np.stack([tr[k - L:k] for k in range(L, len(tr) - H + 1, 6)])
+    Y = np.stack([tr[k:k + H] for k in range(L, len(tr) - H + 1, 6)])
+    X, Y = torch.tensor(X), torch.tensor(Y)
+    torch.manual_seed(semente); rng = np.random.default_rng(semente)
+    idx = rng.permutation(len(X)); nval = len(X) // 10
+    va, trn = idx[:nval], idx[nval:]
+    m = fab(len(cols)).to(DEV)
+    opt = torch.optim.Adam(m.parameters(), lr=lr); melhor, estado, paciencia = 1e9, None, 0
+    for _ in range(epocas):
+        m.train()
+        for i in range(0, len(trn), lote):
+            b = trn[i:i + lote]
+            opt.zero_grad()
+            out, aux = chama(m, X[b].to(DEV))
+            loss = fp(out, Y[b].to(DEV)) + aux
+            loss.backward(); opt.step()
+        m.eval()
+        with torch.no_grad():
+            v = np.mean([fp(chama(m, X[va[i:i + 64]].to(DEV))[0], Y[va[i:i + 64]].to(DEV)).item()
+                         for i in range(0, len(va), 64)])
+        if v < melhor - 1e-4:
+            melhor, estado, paciencia = v, {k: t.clone() for k, t in m.state_dict().items()}, 0
+        else:
+            paciencia += 1
+            if paciencia >= paciencia_max:
+                break
+        rng.shuffle(trn)
+    m.load_state_dict(estado); m.eval()
+    jan = [j for j in janelas(d, caso, contexto=L) if ini <= j["dia"] <= fim]
+    prev = {}
+    with torch.no_grad():
+        for dia in sorted({j["dia"] for j in jan}):
+            x = torch.tensor(_preenche(w.loc[:dia - pd.Timedelta(hours=1)].tail(L)).to_numpy(np.float32))[None].to(DEV)
+            p = chama(m, x)[0][0].cpu().numpy()  # (H, n)
+            for c, uid in enumerate(cols):
+                prev[(uid, dia)] = p[:, c] * sd[uid] + mu[uid] if escala else p[:, c]
+    return jan, [prev[(j["unique_id"], j["dia"])] for j in jan], sum(t.numel() for t in m.parameters())
+
+
+def crossformer(n):
+    """Crossformer da Time-Series-Library (commit 4e938a1, MIT, em ~/.cache/tslib-repo), hiperparametros do
+    script oficial de eletricidade (ECL). Etapa A, 10/10/2026: passou no portao (1o nas usinas, 2o na FV das
+    casas, estavel em 3 sementes). O `reformer_pytorch` (so do Reformer) vira um modulo vazio."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path.home() / ".cache" / "tslib-repo"))
+    sys.modules.setdefault("reformer_pytorch", types.SimpleNamespace(LSHSelfAttention=None))
+    from models.Crossformer import Model
+    return Model(types.SimpleNamespace(
+        task_name="long_term_forecast", enc_in=n, seq_len=ENTRADA_NN, pred_len=H, e_layers=2, d_layers=1, factor=3,
+        d_model=256, d_ff=512, n_heads=8, dropout=0.1))
+
+
+# receita de treino do Crossformer (TSLib ECL: MSE, Adam 1e-4, lote 16, paciencia 3; sem RevIN -> escala do treino)
+RECEITA_CROSSFORMER = dict(L=ENTRADA_NN, lr=1e-4, perda="mse", escala=True, lote=16, paciencia_max=3)
+
+
+def chama_tslib(m, x):
+    """Modelos da TSLib recebem (x, marcas, x_dec, marcas_dec); sem perda auxiliar."""
+    return m(x, None, None, None), 0.0

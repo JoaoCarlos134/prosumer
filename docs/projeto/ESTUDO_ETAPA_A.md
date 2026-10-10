@@ -26,7 +26,9 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | DUET | **não passa** (2 tamanhos; 3 casos no oficial) | oficial 26º–36º; menor (dm 64) 16º/50 na FV das casas, p = 0,035; consumo 36º |
 | xLSTM | **não passa** (3 casos) | consumo +0,159 (26º/51), FV das casas +0,035 (36º/50), usinas −0,551 (48º/52) |
 | Crossformer | **PASSA** (usinas e FV das casas; 3 sementes) | **1º de 52 nas usinas** (+0,150, à frente do TiRex-2) e 2º de 50 na FV das casas (+0,166); consumo 15º (p = 0,030) |
-| Mamba/S-Mamba, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| S-Mamba | **não passa** (3 casos) | 19º–27º; FV das casas +0,108, p = 0,043 |
+| Mamba | **PASSA** (FV das casas; sementes e usinas na rodada noturna) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; consumo 25º |
+| TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -372,3 +374,49 @@ que a mistura entre séries; não testado aqui (uma ablação sem o estágio ent
 em 10/10/2026** (`04_redes_treinadas.py`, dicionário `MULTIVARIADAS`, GPU), só no regime A: o modelo não recebe
 clima. Pendências que valem a pena: regime B/C com o clima como séries extras (o Crossformer trata qualquer
 variável como mais uma dimensão), e a ablação acima.
+
+## Mamba e S-Mamba (10/10/2026)
+
+**Como funciona.** Gu e Dao, *Mamba: Linear-Time Sequence Modeling with Selective State Spaces* (2023). Modelo de
+espaço de estados SELETIVO: a cada passo, h_t = Ā_t h_{t-1} + B̄_t x_t e y_t = C_t h_t, com B, C e o passo de
+discretizacao Δ dependentes da entrada (o modelo decide o que guardar e o que esquecer). Custo linear no
+comprimento, como uma RNN, mas treinável em paralelo (varredura). Bloco: projeção de entrada -> convolução causal
+curta -> SiLU -> varredura seletiva -> porta multiplicativa -> projeção de saída. Duas formas de usar em séries:
+
+- **Mamba** (Time-Series-Library, `models/MambaSimple.py`): token = HORA; as séries são misturadas no embedding e
+  o Mamba varre o tempo. Como na TSLib, a previsão são as últimas 24 saídas da varredura causal sobre a entrada.
+  A TSLib usa entrada = horizonte; aqui a entrada é de 168 h, então a 1ª hora prevista só viu a entrada até 23 h
+  antes do corte. Limitação do desenho da TSLib, mantida e declarada (o modelo trabalha com informação mais velha
+  que os outros: o resultado é um piso, não um teto, para a família).
+- **S-Mamba** (Wang et al., *Is Mamba Effective for Time Series Forecasting?*, Neurocomputing 2025; código oficial
+  S-D-Mamba): token = SÉRIE (como o iTransformer): cada série inteira vira um vetor, o Mamba varre as séries nos
+  dois sentidos, depois FFN e projeção para 24 h; normalização por janela.
+
+**O que podia acrescentar.** Mamba é a família de espaço de estados, que nenhum modelo do benchmark representava;
+S-Mamba é mais uma forma de dependência entre séries (como DUET e Crossformer).
+
+**Como rodar.** Os dois oficiais usam o `mamba_ssm`, extensão CUDA sem wheel para Windows (compila com nvcc; o
+caminho seria o WSL2). Aqui o `mamba_ssm.Mamba` é trocado pelo bloco em PyTorch puro da TSLib
+(`MambaSimple.MambaBlock`, do mamba-minimal): mesma arquitetura e mesmo algoritmo, varredura sequencial em vez do
+kernel fundido, então muito mais lento. TSLib commit 4e938a1 (`~/.cache/tslib-repo`), S-D-Mamba commit e7e8bf0
+(`~/.cache/smamba-repo`), ambos MIT; nada instalado no `previsao_gpu`. Hiperparâmetros dos scripts oficiais de
+eletricidade (ECL), MSE, paciência 3: Mamba d_model 128, 2 camadas, expand 2, d_state 16, d_conv 4, Adam 1e-4,
+lote 32 (~0,24 M parâmetros); S-Mamba d_model 512, d_ff 512, 3 camadas, d_state 16, Adam 1e-3, lote 16 (6,8 M).
+Protocolo e laço do Crossformer (`treina_multivariado`). Script: `scripts/piloto_mamba.py <Mamba|S-Mamba> [caso ...]`.
+Tempo na RTX 4070: S-Mamba 57 s / 96 s / 439 s (FV das casas / consumo / usinas); Mamba 1.290 s / 1.805 s nas
+casas, e nas usinas passou de 1 h 50 min sem terminar (interrompido para liberar a máquina; vai para a rodada do
+benchmark, de noite). A lentidão é da varredura sequencial, não do modelo.
+
+**Piloto (regime A).**
+
+| Caso | S-Mamba (6,8 M) | Mamba (0,24 M) | Melhor do teste |
+|---|---|---|---|
+| usinas | +0,032 (27º/53), p < 0,001 | (na rodada do benchmark) | Crossformer +0,150 |
+| FV das casas | +0,108 (19º/51), p 0,043 | **+0,133 (10º/51), p 0,064: empata** | Toto-2.0-313m +0,178 |
+| consumo | +0,177 (22º/52), p < 0,001 | +0,166 (25º/52), p 0,005 | mediana corrigida +0,208 |
+
+**Decisão. S-Mamba não passa** (nunca no grupo da frente; na FV das casas fica perto, p 0,043, mas com uma rodada
+só, sem procurar outra configuração). **Mamba PASSA** na FV das casas (empata com o melhor, p 0,064) e traz a família
+de espaço de estados, com 0,24 M parâmetros. O p está perto do corte: a rodada do benchmark confere a estabilidade
+com as sementes 1 e 2 na FV das casas (relatar como sair, sem trocar configuração) e o determinismo na GPU antes de
+entrar no `04_redes_treinadas.py` (dicionário `MULTIVARIADAS`, regime A).

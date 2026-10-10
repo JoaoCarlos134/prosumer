@@ -227,6 +227,24 @@ def crossformer(n):
         d_model=256, d_ff=512, n_heads=8, dropout=0.1))
 
 
+def mamba(n):
+    """Mamba da Time-Series-Library (models/MambaSimple.py, bloco em PyTorch puro, sem mamba_ssm), hiperparametros
+    do script oficial de eletricidade (ECL). Etapa A, 10/10/2026: passou no portao na FV das casas. Como na TSLib, a
+    previsao sao as ultimas 24 saidas da varredura causal sobre os 168 h de entrada (limitacao declarada no ESTUDO)."""
+    import sys
+    import types
+    from pathlib import Path
+    sys.path.insert(0, str(Path.home() / ".cache" / "tslib-repo"))
+    from models.MambaSimple import Model
+    return Model(types.SimpleNamespace(
+        task_name="long_term_forecast", pred_len=H, enc_in=n, c_out=n, d_model=128, expand=2, d_ff=16, d_conv=4,
+        e_layers=2, embed="timeF", freq="h", dropout=0.1))
+
+
+# receita do Mamba (TSLib ECL: MSE, Adam 1e-4, lote 32, paciencia 3; o modelo normaliza a janela, sem escala)
+RECEITA_MAMBA = dict(L=ENTRADA_NN, lr=1e-4, perda="mse", lote=32, paciencia_max=3)
+
+
 # receita de treino do Crossformer (TSLib ECL: MSE, Adam 1e-4, lote 16, paciencia 3; sem RevIN -> escala do treino)
 RECEITA_CROSSFORMER = dict(L=ENTRADA_NN, lr=1e-4, perda="mse", escala=True, lote=16, paciencia_max=3)
 

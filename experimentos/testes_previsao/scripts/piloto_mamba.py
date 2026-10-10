@@ -30,7 +30,7 @@ Hiperparametros dos scripts oficiais de eletricidade (ECL), MSE, paciencia 3:
 Protocolo nosso: entrada de 168 h, origem movel, janelas de treino a cada 6 h, 10% para parada antecipada, ate
 30 epocas, semente 42; laco redes_proprias.treina_multivariado (o do DUET e do Crossformer).
 
-Uso: DISPOSITIVO=cuda python piloto_mamba.py <Mamba|S-Mamba> [caso ...]   (ambiente previsao_gpu)
+Uso: DISPOSITIVO=cuda python piloto_mamba.py <Mamba|S-Mamba> [semente=42] [caso ...]   (ambiente previsao_gpu)
 Depois: python piloto_comum.py <Mamba|S-Mamba> <caso> A   (ambiente da biblioteca)
 """
 import importlib.util
@@ -44,7 +44,7 @@ import torch
 
 from comum import ENTRADA_NN, H, carrega, dobras
 from piloto_comum import grava_piloto
-from redes_proprias import DEV, treina_multivariado
+from redes_proprias import DEV, mamba, treina_multivariado
 
 TSLIB = Path.home() / ".cache" / "tslib-repo"
 SMAMBA = Path.home() / ".cache" / "smamba-repo"
@@ -75,23 +75,23 @@ def fabrica(n):
             seq_len=ENTRADA_NN, pred_len=H, output_attention=False, use_norm=True, d_model=512, d_ff=512,
             d_state=16, e_layers=3, embed="timeF", freq="h", dropout=0.1, activation="gelu",
             class_strategy="projection"))
-    return MS.Model(types.SimpleNamespace(
-        task_name="long_term_forecast", pred_len=H, enc_in=n, c_out=n, d_model=128, expand=2, d_ff=16, d_conv=4,
-        e_layers=2, embed="timeF", freq="h", dropout=0.1))
+    return mamba(n)   # o mesmo do 04_redes_treinadas.py
 
 
 RECEITA = {"S-Mamba": dict(lr=1e-3, lote=16), "Mamba": dict(lr=1e-4, lote=32)}[VARIANTE]
 
 if __name__ == "__main__":
     casos = [a for a in sys.argv[1:] if a in ("usinas", "casas_prod", "casas_cons")] or ["casas_cons"]
+    semente = int(next((a.split("=")[1] for a in sys.argv[1:] if a.startswith("semente=")), "42"))
+    nome = VARIANTE if semente == 42 else f"{VARIANTE}-s{semente}"
     for caso in casos:
         t0 = time.time()
         d = carrega(caso)
         jan, prev = [], []
         for ini, fim in dobras(caso):
             j, p, n_par = treina_multivariado(d, caso, fabrica, lambda m, x: (m(x, None, None, None), 0.0), ini, fim,
-                                              L=ENTRADA_NN, perda="mse", paciencia_max=3, **RECEITA)
+                                              L=ENTRADA_NN, perda="mse", paciencia_max=3, semente=semente, **RECEITA)
             jan += j; prev += p
             torch.cuda.empty_cache()
-        f = grava_piloto(VARIANTE, caso, "A", jan, prev)
+        f = grava_piloto(nome, caso, "A", jan, prev)
         print(f"OK {f.name} | {len(jan)} janelas | {time.time() - t0:.0f} s em {DEV.type} | {n_par} parametros", flush=True)

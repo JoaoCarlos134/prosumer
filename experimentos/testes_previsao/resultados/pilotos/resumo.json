@@ -1061,5 +1061,95 @@
   "skill_melhor": 0.1407,
   "dm_p_vs_melhor": 0.3759,
   "grupo_da_frente": true
+ },
+ "S-Mamba|casas_prod|A": {
+  "modelo": "S-Mamba",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1076,
+  "ic95": [
+   0.0783,
+   0.1384
+  ],
+  "R2": 0.3306,
+  "nRMSE": 1.2568,
+  "MBE": 0.0635,
+  "posicao": "19o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0433,
+  "grupo_da_frente": false
+ },
+ "S-Mamba|casas_cons|A": {
+  "modelo": "S-Mamba",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1767,
+  "ic95": [
+   0.1603,
+   0.1924
+  ],
+  "R2": 0.3261,
+  "nRMSE": 0.9212,
+  "MBE": -0.0139,
+  "posicao": "22o de 52",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2086,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "S-Mamba|usinas|A": {
+  "modelo": "S-Mamba",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0324,
+  "ic95": [
+   -0.0116,
+   0.074
+  ],
+  "R2": 0.6683,
+  "nRMSE": 0.6366,
+  "MBE": -0.0564,
+  "posicao": "27o de 53",
+  "melhor": "Crossformer",
+  "skill_melhor": 0.1497,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "Mamba|casas_prod|A": {
+  "modelo": "Mamba",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1329,
+  "ic95": [
+   0.104,
+   0.1628
+  ],
+  "R2": 0.3682,
+  "nRMSE": 1.2211,
+  "MBE": -0.0576,
+  "posicao": "10o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0636,
+  "grupo_da_frente": true
+ },
+ "Mamba|casas_cons|A": {
+  "modelo": "Mamba",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1664,
+  "ic95": [
+   0.1503,
+   0.1831
+  ],
+  "R2": 0.3091,
+  "nRMSE": 0.9328,
+  "MBE": -0.0312,
+  "posicao": "25o de 52",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2086,
+  "dm_p_vs_melhor": 0.0045,
+  "grupo_da_frente": false
  }
 }

@@ -213,9 +213,13 @@ receita oficial ECL; 1o de 52 nas usinas +0,150 e 2o na FV das casas +0,166, est
 na GPU) -> **entrou no benchmark em 10/10** (`04_redes_treinadas.py`, dicionario `MULTIVARIADAS`, laco
 `redes_proprias.treina_multivariado`, so regime A): **56 modelos, 257 linhas**; e o 1o nas usinas em A, a frente
 do TiRex-2. No caminho: o laco multivariado interpolava a serie inteira (buraco no fim da entrada preenchido com o
-dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo refeito. Faltam 5: Mamba/S-Mamba
-(`scripts/piloto_mamba.py` pronto: bloco Mamba em PyTorch puro da TSLib no lugar do `mamba_ssm`), TimeGrad,
-Time-LLM, LLMTime, TimeGPT. Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
+dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo refeito. **S-Mamba nao passa** (10/10; 19o-27o).
+**Mamba PASSA** na FV das casas (10/10; TSLib MambaSimple, bloco em PyTorch puro no lugar do `mamba_ssm`; +0,133,
+10o/51, p 0,064; 0,24 M param.; lento: varredura sequencial) -> ja no dicionario `MULTIVARIADAS` do 04; a rodada do
+benchmark, as sementes 1 e 2 e o determinismo estao na `scripts/fila_noite.sh` (conferir o log
+`resultados/log_fila_noite_*.txt` e so entao rodar o atualiza.py e commitar). Faltam 4: TimeGrad,
+Time-LLM, LLMTime, TimeGPT. **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts,
+testes leves); rodadas pesadas de GPU/CPU vao para a fila da noite.** Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
 (consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 

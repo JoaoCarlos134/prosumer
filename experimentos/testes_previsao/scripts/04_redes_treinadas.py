@@ -14,8 +14,8 @@ logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
 from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO
-from redes_proprias import (DEV, RECEITA_CROSSFORMER, CycleNet, ResNet1D, SparseTSF, chama_tslib, crossformer,
-                            treina_multivariado, treina_proprio)
+from redes_proprias import (DEV, RECEITA_CROSSFORMER, RECEITA_MAMBA, CycleNet, ResNet1D, SparseTSF, chama_tslib,
+                            crossformer, mamba, treina_multivariado, treina_proprio)
 
 torch.set_num_threads(5)          # dois processos em paralelo (usinas | casas), ~5 GB livres
 ARGS = sys.argv[1:]
@@ -127,8 +127,10 @@ PROPRIAS = {"SparseTSF": lambda n, caso: SparseTSF(), "ResNet-1D": lambda n, cas
             "CycleNet": lambda n, caso: CycleNet(n, 168 if caso == "casas_cons" else 24)}
 # Multivariadas (todas as series do caso numa janela), regime A. Crossformer: etapa A, 10/10/2026 (TSLib, receita
 # do script oficial de eletricidade; laco proprio porque o NeuralForecast nao tem o modelo). Deterministico na GPU
-# (mesma semente, previsoes identicas), entao roda na GPU, diferente do CycleNet.
-MULTIVARIADAS = {"Crossformer": (crossformer, chama_tslib, RECEITA_CROSSFORMER)}
+# (mesma semente, previsoes identicas), entao roda na GPU, diferente do CycleNet. Mamba: etapa A, 10/10/2026 (TSLib,
+# bloco em PyTorch puro; lento: varredura sequencial).
+MULTIVARIADAS = {"Crossformer": (crossformer, chama_tslib, RECEITA_CROSSFORMER),
+                 "Mamba": (mamba, chama_tslib, RECEITA_MAMBA)}
 
 
 def roda_nf(df, fab, caso, regime):

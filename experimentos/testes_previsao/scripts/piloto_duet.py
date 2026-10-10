@@ -19,7 +19,7 @@ fc_dropout 0, dropout 0,1, MAE, Adam 5e-4, lote 32, paciencia 5. Protocolo nosso
 zero em cada dobra so com o passado), janelas de treino a cada 6 h, 10% para parada antecipada, ate 30 epocas,
 semente 42. A perda de balanceamento dos especialistas e somada a MAE, como no oficial.
 
-Uso: python piloto_duet.py [caso ...]   (ambiente previsao_gpu; padrao casas_cons)
+Uso: python piloto_duet.py [dm=512|64] [caso ...]   (ambiente previsao_gpu; padrao casas_cons)
 Depois: python piloto_comum.py DUET <caso> A   (ambiente da biblioteca)
 """
 import sys
@@ -47,11 +47,11 @@ DEV = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 L = 512
 
 
-def config(n):
+def config(n, dm=512):
     return types.SimpleNamespace(
-        enc_in=n, seq_len=L, pred_len=H, CI=True, d_model=512, d_ff=512, e_layers=2, n_heads=1, factor=3,
+        enc_in=n, seq_len=L, pred_len=H, CI=True, d_model=dm, d_ff=dm, e_layers=2, n_heads=1, factor=3,
         dropout=0.1, fc_dropout=0.0, activation="gelu", output_attention=0, num_experts=4, k=2,
-        noisy_gating=True, hidden_size=256, moving_avg=25)
+        noisy_gating=True, hidden_size=dm // 2, moving_avg=25)
 
 
 def largo(d):
@@ -61,7 +61,7 @@ def largo(d):
     return w.interpolate(limit_direction="both").fillna(0.0)
 
 
-def treina(d, caso, ini, fim, epocas=30):
+def treina(d, caso, ini, fim, dm=512, epocas=30):
     w = largo(d)
     cols = list(w.columns)
     tr = w[w.index < ini].to_numpy(np.float32)
@@ -71,7 +71,7 @@ def treina(d, caso, ini, fim, epocas=30):
     torch.manual_seed(42); rng = np.random.default_rng(42)
     idx = rng.permutation(len(X)); nval = len(X) // 10
     va, trn = idx[:nval], idx[nval:]
-    m = DUETModel(config(len(cols))).to(DEV)
+    m = DUETModel(config(len(cols), dm)).to(DEV)
     opt = torch.optim.Adam(m.parameters(), lr=5e-4); melhor, estado, paciencia = 1e9, None, 0
     for _ in range(epocas):
         m.train()
@@ -108,13 +108,15 @@ def treina(d, caso, ini, fim, epocas=30):
 
 if __name__ == "__main__":
     casos = [a for a in sys.argv[1:] if a in ("usinas", "casas_prod", "casas_cons")] or ["casas_cons"]
+    dm = int(next((a.split("=")[1] for a in sys.argv[1:] if a.startswith("dm=")), "512"))
+    nome = "DUET" if dm == 512 else f"DUET-dm{dm}"
     for caso in casos:
         t0 = time.time()
         d = carrega(caso)
         jan, prev = [], []
         for ini, fim in dobras(caso):
-            j, p, n_par = treina(d, caso, ini, fim)
+            j, p, n_par = treina(d, caso, ini, fim, dm)
             jan += j; prev += p
             torch.cuda.empty_cache()
-        f = grava_piloto("DUET", caso, "A", jan, prev)
+        f = grava_piloto(nome, caso, "A", jan, prev)
         print(f"OK {f.name} | {len(jan)} janelas | {time.time() - t0:.0f} s em {DEV.type} | {n_par} parametros", flush=True)

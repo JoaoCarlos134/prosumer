@@ -791,5 +791,95 @@
   "skill_melhor": 0.2076,
   "dm_p_vs_melhor": 0.0,
   "grupo_da_frente": false
+ },
+ "DUET|casas_cons|A": {
+  "modelo": "DUET",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1353,
+  "ic95": [
+   0.1164,
+   0.1543
+  ],
+  "R2": 0.2567,
+  "nRMSE": 0.9675,
+  "MBE": -0.2133,
+  "posicao": "36o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "DUET|casas_prod|A": {
+  "modelo": "DUET",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.0601,
+  "ic95": [
+   0.0266,
+   0.0929
+  ],
+  "R2": 0.2575,
+  "nRMSE": 1.3237,
+  "MBE": 0.1658,
+  "posicao": "33o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0001,
+  "grupo_da_frente": false
+ },
+ "DUET|usinas|A": {
+  "modelo": "DUET",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": 0.0298,
+  "ic95": [
+   -0.0001,
+   0.0583
+  ],
+  "R2": 0.6665,
+  "nRMSE": 0.6382,
+  "MBE": 0.0346,
+  "posicao": "26o de 52",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.1407,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "DUET-dm64|casas_cons|A": {
+  "modelo": "DUET-dm64",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1346,
+  "ic95": [
+   0.1146,
+   0.1551
+  ],
+  "R2": 0.2555,
+  "nRMSE": 0.9683,
+  "MBE": -0.2534,
+  "posicao": "36o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "DUET-dm64|casas_prod|A": {
+  "modelo": "DUET-dm64",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1175,
+  "ic95": [
+   0.0835,
+   0.1502
+  ],
+  "R2": 0.3455,
+  "nRMSE": 1.2428,
+  "MBE": -0.0197,
+  "posicao": "16o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.035,
+  "grupo_da_frente": false
  }
 }

@@ -23,7 +23,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | CycleNet | **PASSA** (FV das casas) | Linear, ciclo de 24 h: 6º de 49 na FV das casas com **4.296 parâmetros**, empata (p = 0,13; estável em 3 sementes) |
 | MOMENT | **não passa** (3 tamanhos, 3 casos) | cabeça linear sobre o codificador congelado: 26º–38º; na FV superestima 27–30% |
 | Lag-Llama | **não passa** (contexto 32 em 2 casos; contexto 256 inviável) | FV das casas −0,037 (43º/50), consumo +0,084 (42º/51); subestima ~35% |
-| DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| DUET | **não passa** (2 tamanhos; 3 casos no oficial) | oficial 26º–36º; menor (dm 64) 16º/50 na FV das casas, p = 0,035; consumo 36º |
+| Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -242,3 +243,41 @@ e subestima ~1/3 nos dois (a média das amostras não corrige: não é efeito me
 onde as defasagens diária e semanal deveriam ajudar, chega perto do grupo da frente. A faixa sem treino que ele
 traria já vem do FlowState, do VisionTS++ e do Chronos-2, todos muito melhores. Usinas não testadas: os dois
 casos já bastam e o modelo não usa clima.
+
+---
+
+## DUET (10/10/2026)
+
+**Como funciona.** Qiu et al., *DUET: Dual Clustering Enhanced Multivariate Time Series Forecasting* (KDD 2025).
+Dois agrupamentos. (1) Temporal: uma mistura de 4 especialistas lineares (2 ativos por janela, roteador pela
+distribuição da janela) escolhe o extrator conforme o "jeito" da janela; RevIN por janela. (2) De canais: uma
+máscara aprendida (distância de Mahalanobis no domínio da frequência, amostrada com Gumbel) decide quais séries
+olham para quais, e um transformer sobre os canais junta as séries relacionadas. Cada janela entra com todas as
+séries do caso alinhadas no tempo.
+
+**O que podia acrescentar.** Dependência entre séries de propósito: as 20 casas são da mesma comunidade
+(mesmo tempo, mesmas nuvens). Nenhum modelo do benchmark agrupa séries assim (o iTransformer trata séries como
+variáveis, sem agrupamento).
+
+**Como rodar.** Só o modelo do repositório oficial (github.com/decisionintelligence/DUET, commit dcc6e67, MIT),
+em `~/.cache/duet-repo/src`; o arcabouço de benchmark dele não é importado (pacotes vazios no `sys.modules`). Roda
+no `previsao_gpu` sem instalar nada. Script: `scripts/piloto_duet.py [dm=512|64] [caso ...]`. Hiperparâmetros do
+script oficial do conjunto Solar (entrada 512 h, d_model 512, 2 camadas, `CI=1`, MAE, Adam 5e-4, lote 32,
+paciência 5); protocolo nosso: origem móvel, janelas de treino a cada 6 h, 10% para parada antecipada, até 30
+épocas, semente 42, perda de balanceamento somada à MAE. Tempo na RTX 4070: 39–85 s nas casas, 727 s nas usinas.
+
+**Piloto (regime A).**
+
+| Caso | oficial (5,6 M parâmetros) | menor, d_model 64 (414 mil) | Melhor do teste |
+|---|---|---|---|
+| usinas | +0,030 (26º/52), MBE +3% | | TiRex-2 +0,141 |
+| FV das casas | +0,060 (33º/50), MBE +17% | **+0,118 (16º/50), p = 0,035**, MBE −2% | Toto-2.0-313m +0,178 |
+| consumo | +0,135 (36º/51), MBE −21% | +0,135 (36º/51), MBE −25% | mediana corrigida +0,208 |
+
+O tamanho menor foi o único ajuste tentado, por um motivo a priori: nas casas cada dobra tem só ~1.000 janelas
+de treino para 5,6 milhões de parâmetros. Não foram tentados mais tamanhos nem sementes para cruzar o 0,05.
+
+**Decisão. Não passa, descartado com evidência.** Fora do grupo da frente nos três casos; o mais perto é a FV
+das casas com o modelo menor (p = 0,035). Onde a dependência entre casas mais deveria ajudar, o consumo, fica
+no terço de baixo nos dois tamanhos. E a FV das casas já tem o CycleNet (+0,139 com 4.296 parâmetros). Nestes
+dados, agrupar as séries não traz ganho que apareça na previsão de cada uma.

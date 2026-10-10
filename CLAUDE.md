@@ -205,8 +205,8 @@ mudaram (+0,0002 a +0,001); regressao, 05b e as duas planilhas regeradas; **Visi
 empata, p 0,13, estavel em 3 sementes; +0,139 contra +0,033 do SparseTSF) -> **entrou no benchmark em 09/10** (em CPU: na GPU o gather nao e determinístico): **55 modelos, 254 linhas**.
 **MOMENT nao passa** (3 tamanhos x 3 casos: terco de baixo; cabeca linear sobre codificador congelado). **Lag-Llama nao passa**
 (10/10; contexto 32: FV das casas -0,037, 43o/50; consumo +0,084, 42o/51; subestima ~1/3; contexto 256 rodou
-3 h 09 min sem terminar um caso e foi interrompido; ambiente proprio `~/.venvs/lagllama`, ver o ESTUDO). Faltam 8:
-DUET (**EM ANDAMENTO 10/10**, `scripts/piloto_duet.py`, casas_cons primeiro), Crossformer, Mamba/S-Mamba, xLSTM,
+3 h 09 min sem terminar um caso e foi interrompido; ambiente proprio `~/.venvs/lagllama`, ver o ESTUDO). **DUET nao passa** (10/10; 3 casos: 26o-36o; menor, d_model 64: FV das
+casas 16o/50, p 0,035; consumo 36o). Faltam 7: Crossformer, Mamba/S-Mamba, xLSTM,
 TimeGrad, Time-LLM, LLMTime, TimeGPT. Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
 (consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.

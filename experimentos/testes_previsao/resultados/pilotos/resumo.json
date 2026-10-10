@@ -736,5 +736,60 @@
   "dm_p_vs_melhor": 0.0,
   "grupo_da_frente": false,
   "dispositivo": "cuda"
+ },
+ "Lag-Llama-ctx32|casas_prod|A": {
+  "modelo": "Lag-Llama-ctx32",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": -0.0373,
+  "ic95": [
+   -0.0806,
+   0.0063
+  ],
+  "R2": 0.0957,
+  "nRMSE": 1.4608,
+  "MBE": -0.3468,
+  "posicao": "43o de 50",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0018,
+  "grupo_da_frente": false,
+  "dispositivo": "cuda"
+ },
+ "Lag-Llama-ctx32|casas_cons|A": {
+  "modelo": "Lag-Llama-ctx32",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.0837,
+  "ic95": [
+   0.0592,
+   0.109
+  ],
+  "R2": 0.1652,
+  "nRMSE": 1.0253,
+  "MBE": -0.3443,
+  "posicao": "42o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "Lag-Llama-ctx32-media|casas_cons|A": {
+  "modelo": "Lag-Llama-ctx32-media",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.0893,
+  "ic95": [
+   0.0647,
+   0.1145
+  ],
+  "R2": 0.1754,
+  "nRMSE": 1.019,
+  "MBE": -0.3374,
+  "posicao": "42o de 51",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2076,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
  }
 }

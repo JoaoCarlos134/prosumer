@@ -22,7 +22,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | Moirai 1.1 | **não passa** (2 tamanhos, 2 patches válidos, A e B) | usa mal o clima: em B fica em último (24º de 24) |
 | CycleNet | **PASSA** (FV das casas) | Linear, ciclo de 24 h: 6º de 49 na FV das casas com **4.296 parâmetros**, empata (p = 0,13; estável em 3 sementes) |
 | MOMENT | **não passa** (3 tamanhos, 3 casos) | cabeça linear sobre o codificador congelado: 26º–38º; na FV superestima 27–30% |
-|  Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| Lag-Llama | **não passa** (contexto 32 em 2 casos; contexto 256 inviável) | FV das casas −0,037 (43º/50), consumo +0,084 (42º/51); subestima ~35% |
+| DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
 
@@ -203,3 +204,41 @@ codificador não ajuda (o large é igual ao small na FV das casas). Na geração
 resultado bate com o do ajuste fino do TTM (F2e, reprovado): nestes dados, um codificador pré-treinado
 congelado com uma cabeça treinada por cima não chega perto dos fundacionais zero-shot nem das redes pequenas
 treinadas do zero.
+
+---
+
+## Lag-Llama (10/10/2026)
+
+**Como funciona.** Rasul et al., *Lag-Llama: Towards Foundation Models for Probabilistic Time Series
+Forecasting* (2024). Transformer só-decodificador com a arquitetura do LLaMA (RMSNorm, RoPE, SwiGLU). A entrada
+de cada passo não é um patch: é o valor atual mais ~84 defasagens fixas tiradas das frequências comuns (hora
+anterior, mesmo horário ontem, semana passada, mês, trimestre...) e estatísticas de escala. A saída é uma t de
+Student por passo; o futuro é amostrado passo a passo (autorregressivo). Pré-treino em 27 conjuntos (~352
+milhões de pontos). 2,4 milhões de parâmetros.
+
+**O que podia acrescentar.** Faixa (100 amostras) sem treino, para o piloto F2c de quantis; e as defasagens
+diária e semanal, que combinam com o consumo de casa.
+
+**Como rodar.** Só no GitHub (time-series-foundation-models/lag-llama, commit df7531a), clonado em
+`~/.cache/lag-llama-repo/src`; pesos do HuggingFace (Apache-2.0). Ambiente próprio `~/.venvs/lagllama`
+(= previsao_gpu com gluonts 0.14.4, pandas 2.1.4, numpy 1.26.4, scipy 1.13.1: o gluonts 0.16 tirou
+`modules.loss` e o pandas ≥ 2.2 recusa a frequência 'Q' das defasagens). O checkpoint guarda objetos Python:
+`TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1`. Script: `scripts/piloto_lagllama.py [ctx=32|256] [caso ...]`; previsão
+pontual = mediana das 100 amostras (grava também a média, `-media`). Tempo na RTX 4070 com contexto 32: ~680 s
+na FV das casas (920 janelas), 1.011 s no consumo (1.820 janelas), 11,5 GB de VRAM.
+
+**Piloto (regime A, contexto 32, o padrão do modelo).**
+
+| Caso | mediana | média das amostras | Melhor do teste |
+|---|---|---|---|
+| FV das casas | −0,037 (43º/50), MBE −35% | (não gravada nesta rodada) | Toto-2.0-313m +0,178 |
+| consumo | +0,084 (42º/51), MBE −34% | +0,089 (42º/51), MBE −34% | mediana corrigida +0,208 |
+
+Em ambos, p < 0,001 contra o melhor. **Contexto 256** (RoPE escalado, como o artigo sugere): rodou 3 h 09 min
+na FV das casas sem terminar (o de 32 leva ~11 min) e foi interrompido. Inviável no benchmark.
+
+**Decisão. Não passa, descartado com evidência.** Terço de baixo nos dois casos, abaixo da persistência na FV,
+e subestima ~1/3 nos dois (a média das amostras não corrige: não é efeito mediana x média). Nem no consumo,
+onde as defasagens diária e semanal deveriam ajudar, chega perto do grupo da frente. A faixa sem treino que ele
+traria já vem do FlowState, do VisionTS++ e do Chronos-2, todos muito melhores. Usinas não testadas: os dois
+casos já bastam e o modelo não usa clima.

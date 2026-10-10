@@ -6,14 +6,16 @@ passo nao e um patch, e o valor atual mais um conjunto fixo de DEFASAGENS (lags)
 comuns (hora anterior, mesmo horario ontem, semana passada, mes, trimestre...; ~84 lags, a maior de ~1 ano no
 horario) e estatisticas de escala. A saida e uma t de Student por passo; o futuro e amostrado passo a passo
 (autorregressivo). Pre-treino em 27 conjuntos (~352 milhoes de pontos). Previsao pontual aqui: mediana de 100
-amostras. Contexto padrao do modelo: 32 passos (a atencao ve 32; as defasagens vao muito mais longe); o
+amostras (grava tambem a media, `-media`: na FV a mediana subestima ~35%). Contexto padrao do modelo: 32 passos (a atencao ve 32; as defasagens vao muito mais longe); o
 artigo sugere testar contexto maior com RoPE escalado.
 
 Interesse: faixa (amostras) sem treino, para o piloto F2c. Portao: grupo da frente num caso.
 
 Codigo: so no GitHub (time-series-foundation-models/lag-llama, commit df7531a, 06/06/2025), clonado em
 ~/.cache/lag-llama-repo/src e posto no sys.path; pesos do HuggingFace time-series-foundation-models/Lag-Llama
-(Apache-2.0). O repositorio pede gluonts<=0.14.4; roda com o 0.16.2 do previsao_gpu. O checkpoint guarda
+(Apache-2.0). Precisa de ambiente proprio, ~/.venvs/lagllama: o gluonts 0.16 tirou `modules.loss` e o pandas
+>= 2.2 recusa a frequencia 'Q' das defasagens; = previsao_gpu com gluonts 0.14.4, pandas 2.1.4, numpy 1.26.4 e
+scipy 1.13.1. Na RTX 4070: ~680 s para 920 janelas com contexto 32 (11,5 GB de VRAM). O checkpoint guarda
 objetos Python: o torch >= 2.6 so carrega com TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 (posto so neste processo).
 
 Uso: python piloto_lagllama.py [ctx=32|256|1024] [caso ...]   (ambiente previsao_gpu)
@@ -60,8 +62,10 @@ def preve(ctx, jan):
     ds = ListDataset([{"start": pd.Period(w["dia"] - pd.Timedelta(hours=len(w["y"])), freq="h"),
                        "target": w["y"].astype(np.float32)} for w in jan], freq="h")
     torch.manual_seed(42)
-    out = [np.median(f.samples, axis=0)[:H] for f in pred.predict(ds)]
-    return out, n_par
+    med, media = [], []
+    for f in pred.predict(ds):
+        med.append(np.median(f.samples, axis=0)[:H]); media.append(f.samples.mean(axis=0)[:H])
+    return med, media, n_par
 
 
 if __name__ == "__main__":
@@ -71,6 +75,7 @@ if __name__ == "__main__":
     for caso in casos:
         t0 = time.time()
         jan = janelas(carrega(caso), caso, contexto=HIST)
-        prev, n_par = preve(ctx, jan)
+        prev, media, n_par = preve(ctx, jan)
         f = grava_piloto(f"Lag-Llama-ctx{ctx}", caso, "A", jan, prev)
+        grava_piloto(f"Lag-Llama-ctx{ctx}-media", caso, "A", jan, media)  # media das amostras, alem da mediana
         print(f"OK {f.name} | {len(jan)} janelas | {time.time() - t0:.0f} s em {DEV.type} | {n_par} parametros", flush=True)

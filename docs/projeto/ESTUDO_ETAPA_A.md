@@ -29,7 +29,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | S-Mamba | **não passa** (3 casos) | 19º–27º; FV das casas +0,108, p = 0,043 |
 | Mamba | **PASSA** (FV das casas; 3 sementes) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; usinas 4º (+0,121, p < 0,001); consumo 25º |
 | TimeGrad | **não passa** (3 casos; mediana e média das amostras) | 12º–40º; o mais perto, FV das casas pela média, p = 0,028; a mediana subestima 19–28% |
-| Time-LLM, LLMTime, TimeGPT | a fazer | — |
+| Time-LLM, LLMTime | estudados; piloto curto (consumo) na fila da noite de 11/10 | — |
+| TimeGPT | a fazer (espera decisão do usuário: API paga, envia os dados das casas) | — |
 
 ---
 
@@ -463,3 +464,49 @@ a ponta em 9 s.
 subestima muito (a distribuição gerada é assimétrica, com muita massa perto de zero nas horas de geração); a média
 corrige o viés no consumo, mas não muda a posição. A faixa (o que traria de único) só valeria a pena com o ponto
 central perto do grupo da frente; o piloto F2c de faixas segue com os quantis do LightGBM, Chronos-2 e FlowState.
+
+## Time-LLM (estudo 11/10/2026; piloto curto na fila da noite)
+
+**Como funciona.** Jin et al., *Time-LLM: Time Series Forecasting by Reprogramming Large Language Models* (ICLR
+2024). Um LLM congelado é "reprogramado" para séries: a série, normalizada por janela, vira patches de 16 h; uma
+atenção cruzada traduz cada patch para combinações de ~1.000 "protótipos de texto" (combinações lineares
+aprendidas do vocabulário do LLM); antes dos patches vai um prompt em texto (descrição do conjunto + mínimo,
+máximo, mediana, tendência e as 5 maiores defasagens da janela). O LLM processa prompt + patches e uma cabeça
+linear projeta as 24 h. Só reprogramação, mapeamento do vocabulário e cabeça treinam.
+
+**O que podia acrescentar.** Conhecimento do LLM sobre padrões; o prompt é o único modelo do benchmark que recebe
+uma descrição em texto do conjunto. Contra: Tan et al., *Are Language Models Actually Useful for Time Series
+Forecasting?* (NeurIPS 2024), mostram em 13 conjuntos que tirar o LLM (ou trocá-lo por uma atenção simples) não
+piora e treina muito mais rápido. Por isso o piloto é curto (consumo, teto de 2 h) e MEDE a ablação nos nossos dados.
+
+**Como rodar.** NeuralForecast 3.1.9 (`M.TimeLLM`, já no `previsao_gpu`), GPT-2 small (124 M, congelado, padrão
+do NeuralForecast). Configuração comum do 04 (`COMUM_T`) com `windows_batch_size` 32 (era 128: em 08/10 o Time-LLM
+derrubou a máquina quatro vezes por memória); guarda de memória no script (encerra acima de 18 GB privados). Duas
+variantes: `Time-LLM` e `Time-LLM-semLLM` (a ablação "w/o LLM" de Tan et al.: o GPT-2 vira identidade, as
+embeddings do prompt continuam). Modo teste (2 passos): roda de ponta a ponta, 333 s e pico de 11,5 GB com o
+GPT-2, 54 s e 6,6 GB sem. 178 M parâmetros no total com o GPT-2 (~54 M treináveis, a maior parte o mapeamento
+vocabulário -> 1.000 protótipos). Script: `scripts/piloto_timellm.py [semLLM] [teste] [caso ...]`.
+**Portão:** grupo da frente no consumo e, para justificar o custo, ganhar da própria ablação.
+
+## LLMTime (estudo 11/10/2026; piloto curto na fila da noite)
+
+**Como funciona.** Gruver, Finzi, Qiu e Wilson, *Large Language Models Are Zero-Shot Time Series Forecasters*
+(NeurIPS 2023). Nada é treinado: a série é escrita como texto e um LLM pré-treinado continua o texto. Cada valor
+é escalado e escrito com precisão fixa, sem ponto decimal (0,734 -> "734"), separado por vírgula; o LLM gera a
+continuação dígito a dígito (só dígitos e vírgula permitidos) e o texto volta a ser número. Amostrando várias
+continuações sai uma distribuição; ponto = mediana. A tese do artigo: LLMs preferem continuações simples e
+repetitivas (navalha de Occam), um bom viés para séries.
+
+**O que podia acrescentar.** Zero-shot com faixa, sem nenhum treino de série. Contra: o artigo depende de LLMs
+grandes (GPT-3, LLaMA-2 70B) e mostra que o desempenho cai com o tamanho; aqui só cabe um pequeno. Tan et al.
+(2024) também pesam contra.
+
+**Como rodar.** Implementação própria e curta (o código oficial, github.com/ngruver/llm-time-series, chama a API da
+OpenAI ou o LLaMA pelo HuggingFace; a parte que importa é a serialização, reproduzida com a configuração do LLaMA
+no código oficial: alpha 0,99, beta 0,3, 3 dígitos, sem espaço entre dígitos, temperatura 1, top-p 0,9, correção
+de meio-bin). LLM: Qwen2.5-1.5B BASE (Apache-2.0; tokeniza cada dígito separado, como o LLaMA; o artigo mostra que
+modelos ajustados para conversa pioram). Separador "," (o oficial usa ", "). Contexto 336 h, 10 amostras (o
+oficial usa 20), parada quando todas as amostras já escreveram 24 valores. Custo medido: ~6,7 s por janela na RTX
+4070 (a memória cresce muito com o lote: 40 sequências passam dos 12 GB e o Windows despeja na RAM), ~3,5 h no
+consumo. Modo teste: saída válida, nenhuma amostra completada. Script: `scripts/piloto_llmtime.py [teste] [lote=2]
+[caso ...]`. **Portão:** grupo da frente no consumo.

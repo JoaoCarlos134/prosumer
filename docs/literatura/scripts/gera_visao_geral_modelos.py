@@ -210,22 +210,26 @@ FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
      "Pilotado em 10/10/2026 (etapa A; NeuralForecast + xlstm com CUDA_HOME apontando para o torch, backbone mLSTM): "
      "NÃO passou; consumo 26º, usinas -0,55. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("Time-LLM", "Rede treinada (NeuralForecast)", "Sim", "Tem um LLM dentro (GPT-2 ou maior); inviável em CPU.",
-     "Já no NeuralForecast instalado."),
+     "Pilotado em 11/10/2026 (etapa A; GPT-2 e a ablação sem LLM): NÃO passou; consumo 49º com o LLM e 41º sem ele: "
+     "o LLM piora." "Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("Moirai", "Fundacional", *GPU_ZERO_SHOT, "Moirai 1.1 pilotado em 09/10/2026 (etapa A): NÃO passou; em B ficou em último "
      "nas usinas (quase não usa o clima). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("MOMENT", "Fundacional", "Recomendada", "Modelo grande (~385 milhões); lento em CPU.",
      "Pilotado em 09/10/2026 (etapa A; 3 tamanhos, 3 casos): NÃO passou, terço de baixo. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("Lag-Llama", "Fundacional", *GPU_ZERO_SHOT, "Pilotado em 10/10/2026 (etapa A; ambiente próprio, gluonts 0.14): "
      "NÃO passou, 42º-43º de ~50 e subestima ~1/3. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
-    ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios: só no consumo das casas."),
-    ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial: vale para o TCC, não entra na biblioteca."),
+    ("BuildingsBench (Transformer pre-treinado)", "Fundacional", *GPU_ZERO_SHOT, "Treinado em prédios simulados dos EUA: só no consumo. "
+     "Pilotado em 11/10/2026 (F1 f; S, M e L): NÃO passou; L 40º no consumo, faixas descalibradas. Ver docs/projeto/PILOTOS_F1_F2.md."),
+    ("TimesFM-3", "Fundacional", *GPU_ZERO_SHOT, "Pesos só para uso não comercial. Pilotado em 11/10/2026 (F1 f): NÃO "
+     "passou; consumo 16º, quase igual ao TimesFM-2.5 (as faixas são calibradas: piloto F2 c). Ver docs/projeto/PILOTOS_F1_F2.md."),
     ("TimeGPT", "Fundacional (serviço)", "Não", "Roda nos servidores da Nixtla (API paga).",
      "Envia os dados para fora: SÓ com as casas (CC0), NUNCA com as usinas."),
     ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Pilotado em 10/10/2026 (etapa A; 3 casos, 2 tamanhos): "
      "NÃO passou; o mais perto foi 16º na FV das casas (p = 0,035). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("S-Mamba", "Rede treinada (repositório próprio)", *GPU_REDE, "Pilotado em 10/10/2026 (etapa A; bloco Mamba em PyTorch "
      "puro no lugar do mamba_ssm): NÃO passou, 19º-27º. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
-    ("LLMTime", "LLM", "Sim", "Roda um LLM local para gerar a série.", "Lento mesmo em GPU; usar um LLM aberto no lugar do GPT-3."),
+    ("LLMTime", "LLM", "Sim", "Roda um LLM local para gerar a série.", "Pilotado em 11/10/2026 (etapa A; Qwen2.5-1.5B): NÃO "
+     "passou; consumo 52º de 53, abaixo do 'igual a ontem', 3 h de GPU. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("TimeGrad", "Generativo (difusão)", *GPU_REDE, "Pilotado em 11/10/2026 (etapa A; pytorch-ts oficial): NÃO passou; "
      "o mais perto, 12º na FV das casas (média das amostras, p = 0,028). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
 ]

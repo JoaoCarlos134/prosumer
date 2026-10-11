@@ -9,13 +9,27 @@ repository URL redirects here. The code and main docs are now in English; a
 Brazilian layer (ANEEL tariffs, tarifa branca, Lei 14.300) and a Portuguese guide are planned. Most
 project and benchmark documents under `docs/` and `experimentos/` are still in Portuguese.
 
-```python
-from prosumer import DayAhead, EnergySeries, metrics
+The whole analysis is one call (it is what the thesis app will use):
 
-series = EnergySeries.from_dataframe(df, unit="kWh", quantity="consumption", tz="Europe/Dublin", freq="h")
-task = DayAhead(series, test_start="2020-10-01", refit_days=31)
+```python
+from prosumer import EnergySeries, analyze
+from prosumer.io import open_meteo
+
+series = EnergySeries.from_dataframe(df, unit="kWh", quantity="generation", tz="America/Sao_Paulo", freq="h")
+site = (-24.83, -53.65)  # rounded: the coordinates are sent to Open-Meteo
+raw = open_meteo.fetch_previous_runs(*site, start="2024-03-07", end="2026-05-31", tz="America/Sao_Paulo")
+report = analyze(series, site=site, test_days=60, weather=open_meteo.wide(raw))
+print(report.to_markdown())  # quality, forecast check by regime and resolution, weather coverage, what is missing
+```
+
+Or the protocol directly, to test a model of your own:
+
+```python
+from prosumer import DayAhead
+
+task = DayAhead(series, test_start="2020-10-01", refit_days=31)  # issue_hour=12: issued at noon
 for window in task.windows():
-    ...  # forecast window.timestamps from window.history
+    ...  # forecast window.timestamps from window.history (and window.future_covariates)
 ```
 
 **Private repository.** The plant series came from third parties and are not cleared for publication.
@@ -25,7 +39,7 @@ et al. (2024), doi:10.1038/s41597-024-03454-2.
 
 | Folder | What it is |
 |---|---|
-| `src/prosumer/` | the library: `contracts`, `protocol`, `metrics`, `postprocessing`, `data` |
+| `src/prosumer/` | the library: `analysis` (`analyze`), `contracts`, `protocol`, `metrics`, `physics`, `io.open_meteo`, `postprocessing`, `data` |
 | `docs/proposta/` | thesis proposal (PDF and generator), library feasibility study, plan |
 | `docs/projeto/` | state of the analyses, plan for papers A and B, network analysis, summaries |
 | `docs/literatura/` | Edge AI review, references, survey and overview of 127 models |

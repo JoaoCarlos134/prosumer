@@ -32,6 +32,9 @@ lightgbm = ["lightgbm>=4.0"]
 # pvlib (NREL SPA, more models) is optional: `prosumer.physics` is numpy only, and pvlib pulls h5py, which the
 # Smart App Control of the home machine blocks (2026-10-11).
 pvlib = ["pvlib>=0.11"]
+# Downloads (io.open_meteo) use the standard library; truststore makes them work behind proxies that inspect
+# TLS with the system certificates (the Lactec network).
+net = ["truststore>=0.9"]
 # One extra per vendor: when one of their APIs changes, one adapter breaks, not the project.
 chronos = ["chronos-forecasting>=2.0"]
 timesfm = ["timesfm>=3.0"]

@@ -62,7 +62,7 @@ jobs:
         run: pytest --cov --cov-report=term-missing --cov-report=xml
       - name: Guarda a cobertura
         if: matrix.python == '3.12'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cobertura
           path: coverage.xml
@@ -81,7 +81,7 @@ jobs:
         run: uv build
       - name: Confere os metadados do pacote
         run: uvx twine check dist/*
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: dist
           path: dist/

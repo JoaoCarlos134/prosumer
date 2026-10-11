@@ -406,7 +406,17 @@ aplicativo feita (11/10):** `prosumer.analyze(series, site=None, test_days=28, i
 checagem de previsao com as ingenuas e a MEDIANA delas como saida, por resolucao, notas e a lista `pending` do que
 falta; `to_dict`/`to_markdown`). No consumo das casas reproduz as linhas `persist_24h`, `semanal_168h` e `media_7d`
 do `metricas.csv` (teste com dados reais, tolerancia 1e-12). Cada modulo novo (io, forecast, diagnostico, economia)
-entra como secao do `Report`. `DayAhead` aceita datas com fuso. Falta: o `io` da Open-Meteo com varias NWP. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+entra como secao do `Report`. `DayAhead` aceita datas com fuso. **`prosumer.io.open_meteo` feito (11/10):** `fetch_previous_runs` (varias NWP,
+`previous_dayN`, pedido em UTC e convertido, stdlib + `truststore` opcional, extra `net`), `coverage`, `wide` (por modelo
++ media e espalhamento). Reproduz a conversao do `comum.exog_previsao` hora a hora (teste sobre o arquivo salvo); ao
+vivo o GHI bate exato com o download do benchmark e a temperatura difere 0,1-0,2 C (o arquivo da Open-Meteo foi
+revisto: guardar o arquivo baixado de todo resultado publicado). `analyze(weather=...)`: secao de cobertura por modelo e,
+na geracao, `weather_linear` (regime C, y = a + b x GHI medio previsto, horas de sol antes do teste), todas as linhas
+nas mesmas horas; nas usinas (teste do benchmark, 6 NWP) +0,370 Cascavel e +0,247 Curitiba (benchmark, IFS so,
+juntas: linear_fisico +0,312, LightGBM +0,330). **mypy roda aqui:** o `.venv` tem o mypy 2.4.0 puro
+(`uv pip install --reinstall --no-binary mypy mypy==2.4.0`; o compilado e bloqueado); `.venv/Scripts/python.exe -m mypy`.
+CI: `upload-artifact@v6` (Node 24). Proximo: o modulo `forecast` (adaptadores com metadados; o LightGBM e os
+fundacionais de CPU entram como linhas do `Report`). Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

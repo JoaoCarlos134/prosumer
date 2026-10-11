@@ -2,8 +2,8 @@
 
 Status: skeleton of step E1 of the proposal (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
 `contracts`, `protocol`, `metrics` (including metrics at several resolutions), `postprocessing`
-(consumption bias correction), `physics` (sun position, clear sky, plane-of-array) and `data`; the `io`, `quality`, `diagnostics`, `forecast`,
-`embedded` and `economics` modules are not written yet.
+(consumption bias correction), `physics` (sun position, clear sky, plane-of-array) and `data`; the `io`,
+`quality`, `diagnostics`, `forecast`, `embedded` and `economics` modules are not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported

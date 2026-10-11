@@ -166,7 +166,9 @@ def test_evaluated_mask_rules() -> None:
 
     ds = pd.Series(pd.date_range("2024-01-01", periods=48, freq="h"))
     y = ds.dt.hour.map(lambda h: 1.0 if 9 <= h <= 15 else 0.0)
-    f = pd.DataFrame({"ds": ds, "y": y, "poa_ceu_claro": ds.dt.hour.map(lambda h: 100.0 if 7 <= h <= 17 else 0.0)})
+    f = pd.DataFrame(
+        {"ds": ds, "y": y, "poa_ceu_claro": ds.dt.hour.map(lambda h: 100.0 if 7 <= h <= 17 else 0.0)}
+    )
     assert evaluated_mask(f, "all").all()
     assert evaluated_mask(f, "sun").sum() == 2 * 11
     assert evaluated_mask(f, "profile").sum() == 2 * 7
@@ -207,3 +209,29 @@ def test_ranking_refuses_an_empty_comparison() -> None:
 
     with pytest.raises(ValueError):
         ranking({}, {})
+
+
+def test_band_scores_coverage_and_crps() -> None:
+    from prosumer.metrics import band_scores, quantile_loss
+
+    rng = np.random.default_rng(0)
+    y = rng.normal(size=20_000)
+    levels = [0.1, 0.2, 0.5, 0.8, 0.9]
+    z = np.array([-1.2816, -0.8416, 0.0, 0.8416, 1.2816])
+    good = band_scores(y, np.tile(z, (len(y), 1)), levels)
+    assert good["coverage_80"] == pytest.approx(0.8, abs=0.01)
+    assert good["coverage_60"] == pytest.approx(0.6, abs=0.01)
+    assert good["width_80"] == pytest.approx(2.5632)
+    narrow = band_scores(y, np.tile(z / 3, (len(y), 1)), levels)
+    assert narrow["coverage_80"] < 0.5
+    assert good["CRPS"] < narrow["CRPS"]
+    # crossed quantiles are sorted before scoring
+    assert band_scores(y, np.tile(z[::-1], (len(y), 1)), levels) == good
+    assert quantile_loss(np.array([1.0]), np.array([0.0]), 0.9)[0] == pytest.approx(0.9)
+
+
+def test_band_scores_refuses_bad_levels() -> None:
+    from prosumer.metrics import band_scores
+
+    with pytest.raises(ValueError, match="increasing"):
+        band_scores(np.zeros(3), np.zeros((3, 2)), [0.9, 0.1])

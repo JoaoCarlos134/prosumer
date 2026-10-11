@@ -5,7 +5,9 @@ benchmark. The proposal's rule (section 6) is that cut-off dates, seeds and metr
 never in the script, so this is where they live.
 
 Task: 24 hourly values for the next day, issued at 00:00, with history up to 23:00 of the previous day.
-One window per test day; no model sees the day it forecasts.
+One window per test day; no model sees the day it forecasts. `issue_hour` moves the issue time into the day
+itself (pilot F2(d): the evening peak issued at 12:00 with the morning already measured); the target is then
+the hours of the day from `issue_hour` to 23:00 and the history ends one hour before it.
 """
 
 from __future__ import annotations
@@ -51,11 +53,11 @@ class Fold:
 class Window:
     """One day to forecast: the history up to the previous day and the target timestamps.
 
-    `history` is what a model receives: with `fill="causal"` (the default) the gaps are interpolated using only
-    this window's own history, so nothing from the forecast day or later leaks in. `history_valid` keeps which
-    steps were really measured, so a model that handles gaps itself (or a quality report) still sees them.
-    `past_covariates` and `future_covariates` hold the covariates (regimes B and C) over the history and over the
-    24 target hours, by column name; empty without covariates.
+    `history` is what a model receives: with `fill="causal"` (the default) the gaps are interpolated using
+    only this window's own history, so nothing from the forecast day or later leaks in. `history_valid` keeps
+    which steps were really measured, so a model that handles gaps itself (or a quality report) still sees
+    them. `past_covariates` and `future_covariates` hold the covariates (regimes B and C) over the history and
+    over the target hours, by column name; empty without covariates. `timestamps` has `24 - issue_hour` hours.
     """
 
     unique_id: str
@@ -87,12 +89,17 @@ class DayAhead:
         covariates: pd.DataFrame | None = None,
         fill: Literal["causal", "none"] = "causal",
         min_history: int | None = None,
+        issue_hour: int = 0,
     ) -> None:
         """`covariates`: long frame (`unique_id`, `ds` in the series' time zone, one column per covariate).
         `fill`: "causal" interpolates the gaps of each window's history from that history alone (linear, the
-        ends repeat the nearest value, a history with no valid value becomes 0), as the v2 benchmark did; "none"
-        leaves NaN. `min_history`: windows with less history are skipped; default = `context` (the
-        benchmark used 0: a window takes whatever history exists)."""
+        ends repeat the nearest value, a history with no valid value becomes 0), as the v2 benchmark did;
+        "none" leaves NaN. `min_history`: windows with less history are skipped; default = `context` (the
+        benchmark used 0: a window takes whatever history exists). `issue_hour` (0-23): hour of the forecast
+        day at which the forecast is issued; 0 is the benchmark's task. Only the hours from it to 23:00 are
+        forecast, and only they must be valid for the day to count as a test day."""
+        if not 0 <= issue_hour < H:
+            raise ValueError(f"issue_hour must be in 0-{H - 1}, not {issue_hour}")
         if refit_days < 1:
             raise ValueError("refit_days must be >= 1")
         if context < H:
@@ -110,6 +117,7 @@ class DayAhead:
         if fill not in ("causal", "none"):
             raise ValueError(f"fill must be 'causal' or 'none', not {fill!r}")
         self.fill = fill
+        self.issue_hour = issue_hour
         self.min_history = context if min_history is None else min_history
         self.covariates = None
         if covariates is not None:
@@ -136,46 +144,53 @@ class DayAhead:
 
     # ------------------------------------------------------------------ days and windows
     def test_days(self) -> list[tuple[str, pd.Timestamp]]:
-        """(series, day) pairs with all 24 hours present and valid inside the test."""
+        """(series, day) pairs whose target hours (24 when issued at 00:00) are all present and valid."""
         q = self.series.frame
         in_test = q[(q["ds"] >= self.start) & (q["ds"] <= self.end + pd.Timedelta(hours=H - 1))].copy()
+        in_test = in_test[in_test["ds"].dt.hour >= self.issue_hour]
         in_test["day"] = in_test["ds"].dt.normalize()
+        n = H - self.issue_hour
         g = in_test.groupby(["unique_id", "day"])["valid"].agg(["sum", "size"])
-        complete = g[(g["sum"] == H) & (g["size"] == H)]
+        complete = g[(g["sum"] == n) & (g["size"] == n)]
         return [(str(u), pd.Timestamp(d)) for u, d in complete.index]
 
     def windows(self) -> list[Window]:
-        """One window per test day, with up to `context` hours of history before the day."""
+        """One window per test day, with up to `context` hours of history before the issue time."""
         per_series = {u: g.set_index("ds") for u, g in self.series.frame.groupby("unique_id")}
         cov = (
             {}
             if self.covariates is None
-            else {u: g.drop(columns="unique_id").set_index("ds") for u, g in self.covariates.groupby("unique_id")}
+            else {
+                u: g.drop(columns="unique_id").set_index("ds")
+                for u, g in self.covariates.groupby("unique_id")
+            }
         )
         out: list[Window] = []
         for uid, day in self.test_days():
             g = per_series[uid]
-            hist = g.loc[: day - pd.Timedelta(hours=1)].tail(self.context)
+            issue = day + pd.Timedelta(hours=self.issue_hour)
+            hist = g.loc[: issue - pd.Timedelta(hours=1)].tail(self.context)
             if len(hist) < self.min_history:
                 continue  # start of the series: not enough history for this window
             valid = hist["valid"].to_numpy(dtype=bool)
             y = hist["y"].where(hist["valid"])
             if self.fill == "causal":
-                # only this window's history is touched: the day forecast and later never enter the interpolation
+                # only this window's history is touched: the day forecast and later never enter the
+                # interpolation
                 y = y.interpolate(limit_direction="both").fillna(0.0)
             past: dict[str, np.ndarray] = {}
             future: dict[str, np.ndarray] = {}
             if uid in cov:
                 c = cov[uid]
                 past = {k: c[k].reindex(hist.index).to_numpy() for k in c.columns}
-                fut = c.loc[day : day + pd.Timedelta(hours=H - 1)]
+                fut = c.loc[issue : day + pd.Timedelta(hours=H - 1)]
                 future = {k: fut[k].to_numpy() for k in c.columns}
             out.append(
                 Window(
                     unique_id=uid,
                     day=day,
                     history=y.to_numpy(dtype=float),
-                    timestamps=pd.date_range(day, periods=H, freq="h", tz=self.series.tz),
+                    timestamps=pd.date_range(issue, periods=H - self.issue_hour, freq="h", tz=self.series.tz),
                     history_valid=valid,
                     past_covariates=past,
                     future_covariates=future,
@@ -225,10 +240,10 @@ def standardize_by_training(
 ) -> tuple[pd.DataFrame, dict[str, dict[str, tuple[float, float]]]]:
     """Standardize each series with the mean and deviation of its TRAINING rows only (before `cutoff`).
 
-    Port of the benchmark's `normaliza_por_treino` (step v2): the scaler that NeuralForecast offered fitted on the
-    whole frame, test included, so changing a test value changed the scale of everything. Here nothing at or after
-    `cutoff` (validation and test) enters the statistics. Rows where `mask_column` is false or zero (gaps) are
-    left out too; pass `mask_column=None` when there is no mask. A zero deviation becomes 1.
+    Port of the benchmark's `normaliza_por_treino` (step v2): the scaler that NeuralForecast offered fitted on
+    the whole frame, test included, so changing a test value changed the scale of everything. Here nothing at
+    or after `cutoff` (validation and test) enters the statistics. Rows where `mask_column` is false or zero
+    (gaps) are left out too; pass `mask_column=None` when there is no mask. A zero deviation becomes 1.
 
     Returns the standardized frame and, per series, `{column: (mean, std)}` to invert the forecast.
     Raises if a series has no finite training rows.

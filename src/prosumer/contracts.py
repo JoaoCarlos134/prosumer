@@ -22,9 +22,9 @@ import pandas as pd
 if TYPE_CHECKING:
     import pandera.pandas as pa
 
-# pandera is imported only where a series is VALIDATED (`schema`, `EnergySeries.from_dataframe`). The rest of the
-# library (protocol, metrics) needs only pandas and numpy, so the frozen benchmark environments, which do not
-# have pandera, can run the same protocol code.
+# pandera is imported only where a series is VALIDATED (`schema`, `EnergySeries.from_dataframe`). The rest of
+# the library (protocol, metrics) needs only pandas and numpy, so the frozen benchmark environments, which do
+# not have pandera, can run the same protocol code.
 
 Unit = Literal["kWh", "Wh", "kW", "W"]
 Quantity = Literal["generation", "consumption", "irradiance", "temperature"]

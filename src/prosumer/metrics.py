@@ -134,7 +134,8 @@ def diebold_mariano(e1: pd.Series, e2: pd.Series) -> tuple[float, float, float]:
     # Newey-West: long-run variance of the loss difference, with lag floor(T^(1/3)).
     v = float(x @ x / T + 2 * sum((1 - lag / (L + 1)) * (x[lag:] @ x[:-lag]) / T for lag in range(1, L + 1)))
     stat = db / np.sqrt(max(v, 1e-30) / T) * np.sqrt((T - 1) / T)
-    from scipy import stats  # here, not at the top: the benchmark's environments import the protocol without scipy
+    # here, not at the top: the benchmark's environments import the protocol without scipy
+    from scipy import stats
 
     return float(db / j["b"].mean()), float(stat), float(2 * stats.t.sf(abs(stat), T - 1))
 
@@ -155,13 +156,13 @@ def holm(p: list[float] | np.ndarray) -> np.ndarray:
 def ranking(skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: float = 0.05) -> pd.DataFrame:
     """Rank models of ONE comparison (same case, same regime, same hours) and flag who ties with the best.
 
-    `skills`: model -> skill; `errors`: model -> squared errors (`squared_errors`). The best is the highest skill;
-    every other model gets a daily Diebold-Mariano against it, Holm-adjusted over the family, and ties with the best
-    when the adjusted p >= `alpha`. Rows keep the input order; `position` is 1 for the best.
+    `skills`: model -> skill; `errors`: model -> squared errors (`squared_errors`). The best is the highest
+    skill; every other model gets a daily Diebold-Mariano against it, Holm-adjusted over the family, and ties
+    with the best when the adjusted p >= `alpha`. Rows keep the input order; `position` is 1 for the best.
 
-    This is the benchmark's reading rule ("how many tie with the best"): the best is chosen on the same test, so a
-    tie is not a proof of equivalence, and "choosing the best model" is not what the library recommends (the
-    pilot of 2026-10-09 found that picking the previous fold's winner made every case worse).
+    This is the benchmark's reading rule ("how many tie with the best"): the best is chosen on the same test,
+    so a tie is not a proof of equivalence, and "choosing the best model" is not what the library recommends
+    (the pilot of 2026-10-09 found that picking the previous fold's winner made every case worse).
     """
     if not skills:
         raise ValueError("No models to rank")
@@ -182,7 +183,9 @@ def ranking(skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: fl
     return out
 
 
-def ties_with_best(skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: float = 0.05) -> list[str]:
+def ties_with_best(
+    skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: float = 0.05
+) -> list[str]:
     """Models statistically tied with the best (the best included), best first, by skill."""
     r = ranking(skills, errors, alpha=alpha)
     return r[r["ties_with_best"]].sort_values("skill", ascending=False)["model"].tolist()
@@ -194,6 +197,49 @@ def squared_errors(df: pd.DataFrame) -> pd.Series:
         ((df["yhat"] - df["y"]) ** 2).to_numpy(),
         index=pd.MultiIndex.from_arrays([df["unique_id"], df["ds"]], names=KEYS),
     )
+
+
+# ---------------------------------------------------------------------- bands (quantile forecasts)
+# Pilot F2(c): a band such as "tomorrow between 8 and 12 kWh" is only useful if it is calibrated. Two numbers
+# decide: coverage (how often the actual value falls inside the central interval, against its nominal level)
+# and CRPS (sharpness and calibration together, lower is better), against a naive causal band.
+
+
+def quantile_loss(y: np.ndarray, q: np.ndarray, level: float) -> np.ndarray:
+    """Pinball loss of the quantile `q` at `level` (0-1), element by element."""
+    e = np.asarray(y, float) - np.asarray(q, float)
+    return np.maximum(level * e, (level - 1) * e)
+
+
+def band_scores(y: np.ndarray, quantiles: np.ndarray, levels: list[float] | np.ndarray) -> dict[str, float]:
+    """Coverage, width and CRPS of a quantile forecast.
+
+    `quantiles`: shape (n, len(levels)), levels increasing. Crossed quantiles (q20 < q10) are sorted row by
+    row first, as is done in practice. CRPS is approximated by 2 x the mean pinball loss over the levels. For
+    each symmetric pair (level, 1 - level) with level < 0.5 the result has `coverage_<k>` and `width_<k>`,
+    where k is the nominal percentage of the central interval (0.1 and 0.9 -> `coverage_80`).
+    """
+    lv = np.asarray(levels, float)
+    if np.any(np.diff(lv) <= 0) or lv.min() <= 0 or lv.max() >= 1:
+        raise ValueError("levels must be strictly increasing and inside (0, 1)")
+    y = np.asarray(y, float)
+    m = np.sort(np.asarray(quantiles, float), axis=1)
+    if m.shape != (len(y), len(lv)):
+        raise ValueError(f"quantiles must have shape ({len(y)}, {len(lv)}), not {m.shape}")
+    ok = np.isfinite(y) & np.isfinite(m).all(axis=1)
+    if not ok.any():
+        raise ValueError("No finite rows to score")
+    y, m = y[ok], m[ok]
+    out = {"CRPS": float(2 * np.mean([quantile_loss(y, m[:, k], a).mean() for k, a in enumerate(lv)]))}
+    for k, a in enumerate(lv):
+        j = np.flatnonzero(np.isclose(lv, 1 - a))
+        if a < 0.5 and j.size:
+            lo, hi = m[:, k], m[:, j[0]]
+            pct = round((1 - 2 * a) * 100)
+            out[f"coverage_{pct}"] = float(np.mean((y >= lo) & (y <= hi)))
+            out[f"width_{pct}"] = float(np.mean(hi - lo))
+    out["n"] = float(len(y))
+    return out
 
 
 # ---------------------------------------------------------------------- which hours count
@@ -209,12 +255,13 @@ def evaluated_mask(
 
     - "all": every hour (consumption);
     - "sun": hours where the clear-sky irradiance in `sun_column` is positive (generation with a known site);
-    - "profile": hours of the day whose mean of `y` over `profile` exceeds `threshold` x its maximum (generation
-      without geometry, e.g. the houses). Night hours are ~0 for every model and only inflate the skill.
+    - "profile": hours of the day whose mean of `y` over `profile` exceeds `threshold` x its maximum
+      (generation without geometry, e.g. the houses). Night hours are ~0 for every model and only inflate
+      the skill.
 
-    `profile` is the frame the hourly profile comes from; default: `frame` itself. The v2 benchmark used the test
-    period (same mask for every model, never a model input); for new work prefer the training period, so the mask
-    is known before the test.
+    `profile` is the frame the hourly profile comes from; default: `frame` itself. The v2 benchmark used the
+    test period (same mask for every model, never a model input); for new work prefer the training period, so
+    the mask is known before the test.
     """
     if how == "all":
         return pd.Series(True, index=frame.index)
@@ -223,7 +270,9 @@ def evaluated_mask(
     if how == "profile":
         src = frame if profile is None else profile
         mean_by_hour = src.groupby(src["ds"].dt.hour)["y"].mean()
-        return frame["ds"].dt.hour.map(mean_by_hour > threshold * mean_by_hour.max()).fillna(False).astype(bool)
+        return (
+            frame["ds"].dt.hour.map(mean_by_hour > threshold * mean_by_hour.max()).fillna(False).astype(bool)
+        )
     raise ValueError(f"how must be 'all', 'sun' or 'profile', not {how!r}")
 
 

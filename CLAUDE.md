@@ -396,7 +396,13 @@ isotropica e ajuste de orientacao, so numpy (o pvlib virou extra opcional: o h5p
 como o pandas; teste de paridade) e o C refeito pelo piloto multi-NWP bate com 0,0. O piloto da geometria tinha
 um erro (amostras do sol 30 s cedo); refeito, a decisao nao muda. `metrics.ranking` e
 `ties_with_best` feitos (o `05_avalia` usa; `dm_vs_melhor.csv` identico). Proximo passo de codigo: a chamada unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
-`docs/projeto/REVISAO_GERAL_2026-10-11.md`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+`docs/projeto/REVISAO_GERAL_2026-10-11.md`. **Depois (11/10, noite):** `DayAhead(issue_hour=...)` (piloto F2(d):
+emitida dentro do dia, alvo = horas de `issue_hour` a 23 h; 0 = benchmark, v2 congelada continua identica) e
+`metrics.band_scores`/`quantile_loss` (F2(c): CRPS, cobertura e largura por par simetrico); o `piloto_quantis avalia`
+usa a biblioteca e o `resumo.json` sai identico byte a byte nas 14 fontes. A CI (`qualidade`) falhou nos tres pushes de 11/10 (`ce3ac70`, `2937238`, `250c43c`)
+por ruff (linhas > 110 e formato): consertado; rodar `ruff check src tests && ruff format --check src tests` antes de
+cada commit (o mypy so roda na CI). `gh` instalado (winget, `C:\Program Files\GitHub CLI`). Falta: a chamada unica
+do aplicativo e o `io` da Open-Meteo com varias NWP. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

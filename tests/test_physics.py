@@ -29,7 +29,9 @@ def test_the_time_zone_label_does_not_move_the_sun() -> None:
     t = _hours("2025-03-10", 2)
     a = physics.solar_position(t, LAT, LON)["cos_zenith"].to_numpy()
     b = physics.solar_position(t.tz_convert("UTC"), LAT, LON)["cos_zenith"].to_numpy()
-    np.testing.assert_allclose(a, b, atol=1e-3)  # only the date terms differ (wall clock vs UTC, 3 h near equinox)
+    np.testing.assert_allclose(
+        a, b, atol=1e-3
+    )  # only the date terms differ (wall clock vs UTC, 3 h near equinox)
 
 
 def test_clear_sky_is_zero_at_night_and_plausible_at_noon() -> None:
@@ -70,7 +72,9 @@ def test_fit_orientation_recovers_a_known_roof() -> None:
     rng = np.random.default_rng(0)
     ghi = physics.clear_sky_ghi(t, LAT, LON) * rng.uniform(0.3, 1.0, len(t))  # cloudy days: real variety
     y = physics.poa_isotropic(ghi, sun, tilt=20, azimuth=30) * 0.004 + rng.normal(0, 0.02, len(t))
-    r2, tilt, az = physics.fit_orientation(y, ghi, sun, tilts=np.arange(0, 41, 5.0), azimuths=np.arange(0, 360, 10.0))
+    r2, tilt, az = physics.fit_orientation(
+        y, ghi, sun, tilts=np.arange(0, 41, 5.0), azimuths=np.arange(0, 360, 10.0)
+    )
     assert r2 > 0.95
     assert tilt == pytest.approx(20, abs=5)
     assert min(abs(az - 30), 360 - abs(az - 30)) <= 10

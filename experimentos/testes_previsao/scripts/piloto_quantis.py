@@ -31,6 +31,7 @@ import pandas as pd
 
 from comum import CONTEXTO_FM, EXOG, H, carrega, dias_teste, dobras, janelas
 from piloto_comum import PILOTOS
+from prosumer.metrics import band_scores
 
 QS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 TESTE = "teste" in sys.argv[1:]
@@ -118,11 +119,6 @@ def gera_lgbm(caso, regime):
     print(f"OK {f.name} | {len(jan)} janelas | {time.time() - t0:.0f} s", flush=True)
 
 
-def perda_quantilica(y, q, nivel):
-    e = y - q
-    return np.maximum(nivel * e, (nivel - 1) * e)
-
-
 def avalia(fonte, caso, regime):
     av = importlib.import_module("05_avalia")
     base = av.real(caso)
@@ -146,12 +142,9 @@ def avalia(fonte, caso, regime):
     res = {}
     for nome, suf in [(fonte, ""), ("referencia_14_dias", "_ref")]:
         cols = [f"q{n}{suf}" for n in QS]
-        M = j[cols].to_numpy()
-        crps = 2 * np.mean([perda_quantilica(y, M[:, k], n).mean() for k, n in enumerate(QS)])
-        res[nome] = dict(cobertura_80=round(float(np.mean((y >= M[:, 0]) & (y <= M[:, 8]))), 3),
-                         cobertura_60=round(float(np.mean((y >= M[:, 1]) & (y <= M[:, 7]))), 3),
-                         largura_80_media=round(float(np.mean(M[:, 8] - M[:, 0])), 4),
-                         CRPS=round(float(crps), 4))
+        b = band_scores(y, j[cols].to_numpy(), QS)  # ordena os quantis cruzados por linha
+        res[nome] = dict(cobertura_80=round(b["coverage_80"], 3), cobertura_60=round(b["coverage_60"], 3),
+                         largura_80_media=round(b["width_80"], 4), CRPS=round(b["CRPS"], 4))
     fs, rf = res[fonte], res["referencia_14_dias"]
     res["skill_CRPS"] = round(1 - fs["CRPS"] / rf["CRPS"], 4)
     res["portao"] = bool(abs(fs["cobertura_80"] - 0.8) <= 0.05 and abs(fs["cobertura_60"] - 0.6) <= 0.05

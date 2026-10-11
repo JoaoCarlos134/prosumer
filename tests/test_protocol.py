@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from itertools import pairwise
 
 import pandas as pd
@@ -120,7 +121,8 @@ def test_regimes_are_explicit() -> None:
     assert Regime.REAL_FORECAST.value == "C"
 
 
-# ---------------------------------------------------------------- gaps, covariates and standalone folds (2026-10-11)
+# ---------------------------------------------------------------- gaps, covariates and standalone folds
+# (2026-10-11)
 def _holed(seed: int = 3) -> object:
     series = data.example_house(n_series=2, start="2024-01-01", days=60)
     return data.with_gaps(series, fraction=0.02, seed=seed)  # ~60% of the days stay complete
@@ -129,13 +131,17 @@ def _holed(seed: int = 3) -> object:
 def test_causal_fill_uses_only_the_window_history() -> None:
     """Gaps are filled from the window's own history: changing the forecast day (or later) changes nothing."""
     holed = _holed()
-    t = DayAhead(holed, test_start="2024-02-20", test_end="2024-02-25", refit_days=10, context=72, min_history=0)
+    t = DayAhead(
+        holed, test_start="2024-02-20", test_end="2024-02-25", refit_days=10, context=72, min_history=0
+    )
     before = {(w.unique_id, w.day): w.history.copy() for w in t.windows()}
     x = holed.frame.copy()  # type: ignore[attr-defined]
     # data of the LAST test day and after: no window may change (the 25th's history ends on the 24th at 23:00)
     later = x["ds"] >= pd.Timestamp("2024-02-25", tz=holed.tz)  # type: ignore[attr-defined]
     x.loc[later & x["valid"], "y"] = 999.0
-    future_changed = data.EnergySeries.from_dataframe(x, unit="kWh", quantity="consumption", tz=holed.tz, freq="h")  # type: ignore[attr-defined]
+    future_changed = data.EnergySeries.from_dataframe(
+        x, unit="kWh", quantity="consumption", tz=holed.tz, freq="h"
+    )  # type: ignore[attr-defined]
     t2 = DayAhead(future_changed, test_start="2024-02-20", test_end="2024-02-25", refit_days=10, context=72)
     ws = t2.windows()
     assert ws and any(not w.history_valid.all() for w in ws), "needs windows with gaps to mean anything"  # type: ignore[union-attr]
@@ -154,7 +160,9 @@ def test_filled_history_has_no_nan_and_keeps_the_mask() -> None:
 
 
 def test_fill_none_keeps_the_gaps() -> None:
-    t = DayAhead(_holed(), test_start="2024-02-20", test_end="2024-02-29", refit_days=10, context=168, fill="none")
+    t = DayAhead(
+        _holed(), test_start="2024-02-20", test_end="2024-02-29", refit_days=10, context=168, fill="none"
+    )
     for w in t.windows():
         assert (pd.isna(w.history) == ~w.history_valid).all()  # type: ignore[operator]
 
@@ -179,7 +187,9 @@ def test_naive_covariates_are_refused(plant: object) -> None:
 def test_min_history_decides_short_windows(plant: object) -> None:
     short_default = DayAhead(plant, test_start="2024-01-02", test_end="2024-01-03", context=168).windows()
     assert short_default == [], "by default a window needs the whole context"
-    taken = DayAhead(plant, test_start="2024-01-02", test_end="2024-01-03", context=168, min_history=0).windows()
+    taken = DayAhead(
+        plant, test_start="2024-01-02", test_end="2024-01-03", context=168, min_history=0
+    ).windows()
     assert taken and len(taken[0].history) == 24
 
 
@@ -213,10 +223,54 @@ def test_standardization_skips_gaps_and_refuses_empty_training() -> None:
     from prosumer.protocol import standardize_by_training
 
     holed = data.with_gaps(data.example_house(n_series=1, days=20), fraction=0.1, seed=1)
-    x = holed.frame.assign(y=holed.frame["y"].fillna(-1e6))  # a gap with a garbage value: the mask must hide it
+    x = holed.frame.assign(
+        y=holed.frame["y"].fillna(-1e6)
+    )  # a gap with a garbage value: the mask must hide it
     cut = x["ds"].max()
     _, p = standardize_by_training(x, cut, ["y"])
     clean = holed.valid_only()
-    assert p["house_1"]["y"][0] == pytest.approx(clean.loc[clean["ds"] < cut, "y"].mean())  # cutoff is exclusive
+    assert p["house_1"]["y"][0] == pytest.approx(
+        clean.loc[clean["ds"] < cut, "y"].mean()
+    )  # cutoff is exclusive
     with pytest.raises(ValueError, match="Empty"):
         standardize_by_training(x, x["ds"].min(), ["y"])
+
+
+def test_issue_hour_zero_is_the_benchmark_task(plant: object) -> None:
+    a = DayAhead(plant, test_start="2024-03-01", test_end="2024-03-05", context=48).windows()
+    b = DayAhead(plant, test_start="2024-03-01", test_end="2024-03-05", context=48, issue_hour=0).windows()
+    assert [(w.unique_id, w.day, w.history.tolist()) for w in a] == [
+        (w.unique_id, w.day, w.history.tolist()) for w in b
+    ]
+
+
+def test_issue_at_noon_sees_the_morning_and_forecasts_the_rest(plant: object) -> None:
+    """F2(d): issued at 12:00, the history ends at 11:00 of the same day and the target is 12:00-23:00."""
+    t = DayAhead(plant, test_start="2024-03-01", test_end="2024-03-03", context=48, issue_hour=12)
+    q = plant.frame.set_index(["unique_id", "ds"])["y"]  # type: ignore[attr-defined]
+    ws = t.windows()
+    assert ws
+    for w in ws:
+        assert len(w.timestamps) == H - 12
+        assert w.timestamps[0] == w.day + pd.Timedelta(hours=12)
+        assert w.timestamps[-1] == w.day + pd.Timedelta(hours=23)
+        last_seen = w.day + pd.Timedelta(hours=11)
+        assert w.history[-1] == pytest.approx(float(q.loc[(w.unique_id, last_seen)]))
+
+
+def test_issue_hour_only_needs_the_target_hours_valid(plant: object) -> None:
+    """A gap in the morning does not drop the day when the forecast is issued after it."""
+    frame = plant.frame.copy()  # type: ignore[attr-defined]
+    day = pd.Timestamp("2024-03-02", tz=plant.tz)  # type: ignore[attr-defined]
+    frame.loc[frame["ds"] == day + pd.Timedelta(hours=3), "valid"] = False
+    s = dataclasses.replace(plant, frame=frame)  # type: ignore[type-var]
+    uid = frame["unique_id"].iloc[0]
+    at_0 = DayAhead(s, test_start="2024-03-01", test_end="2024-03-03").test_days()
+    at_12 = DayAhead(s, test_start="2024-03-01", test_end="2024-03-03", issue_hour=12).test_days()
+    assert (uid, day) in at_12
+    assert (uid, day) not in at_0
+
+
+def test_issue_hour_out_of_range_is_refused(plant: object) -> None:
+    with pytest.raises(ValueError, match="issue_hour"):
+        DayAhead(plant, test_start="2024-03-01", issue_hour=24)

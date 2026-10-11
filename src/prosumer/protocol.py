@@ -220,5 +220,33 @@ def folds(start: str | pd.Timestamp, end: str | pd.Timestamp, refit_days: int) -
     return out
 
 
+def standardize_by_training(
+    frame: pd.DataFrame, cutoff: pd.Timestamp, columns: list[str], *, mask_column: str | None = "valid"
+) -> tuple[pd.DataFrame, dict[str, dict[str, tuple[float, float]]]]:
+    """Standardize each series with the mean and deviation of its TRAINING rows only (before `cutoff`).
+
+    Port of the benchmark's `normaliza_por_treino` (step v2): the scaler that NeuralForecast offered fitted on the
+    whole frame, test included, so changing a test value changed the scale of everything. Here nothing at or after
+    `cutoff` (validation and test) enters the statistics. Rows where `mask_column` is false or zero (gaps) are
+    left out too; pass `mask_column=None` when there is no mask. A zero deviation becomes 1.
+
+    Returns the standardized frame and, per series, `{column: (mean, std)}` to invert the forecast.
+    Raises if a series has no finite training rows.
+    """
+    out, params = frame.copy(), {}
+    for uid, g in frame.groupby("unique_id", sort=False):
+        keep = g["ds"] < cutoff
+        if mask_column is not None and mask_column in g:
+            keep &= g[mask_column].astype(float) > 0
+        train = g.loc[keep, columns]
+        if train.empty or not np.isfinite(train.to_numpy(float)).all():
+            raise ValueError(f"Empty or non-finite training rows for standardization: {uid}")
+        mean = train.mean()
+        std = train.std(ddof=0).replace(0, 1.0)
+        out.loc[g.index, columns] = (g[columns] - mean) / std
+        params[str(uid)] = {c: (float(mean[c]), float(std[c])) for c in columns}
+    return out, params
+
+
 class SupportError(RuntimeError):
     """The series do not share the same end; the caller must cut by fold."""

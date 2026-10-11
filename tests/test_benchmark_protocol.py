@@ -110,3 +110,52 @@ def test_test_days_and_windows_are_identical(comum, caso, regime, contexto) -> N
                 assert a[parte].keys() == b[parte].keys()
                 for c in EXOG:
                     np.testing.assert_array_equal(a[parte][c], b[parte][c])
+
+
+def _real_v2(comum, caso):  # type: ignore[no-untyped-def]
+    d = comum.carrega(caso)
+    d = d[(d.ds >= CASOS[caso]["ini"])]
+    if caso == "usinas":
+        d["avalia"] = d.poa_ceu_claro > 0
+    elif caso == "casas_prod":
+        perfil = d.groupby(d.ds.dt.hour).y.mean()
+        d["avalia"] = d.ds.dt.hour.map(perfil > 0.01 * perfil.max())
+    else:
+        d["avalia"] = True
+    return d[["unique_id", "ds", "y", "avalia"]]
+
+
+def _normaliza_v2(df, corte, colunas):  # type: ignore[no-untyped-def]
+    out, parametros = df.copy(), {}
+    for uid, g in df.groupby("unique_id", sort=False):
+        valido = g.ds < corte
+        if "available_mask" in g:
+            valido &= g.available_mask > 0
+        treino = g.loc[valido, colunas]
+        if treino.empty or not np.isfinite(treino.to_numpy(float)).all():
+            raise ValueError(f"Treino vazio ou nao finito para normalizacao: {uid}")
+        media = treino.mean()
+        desvio = treino.std(ddof=0).replace(0, 1.0)
+        out.loc[g.index, colunas] = (g[colunas] - media) / desvio
+        parametros[uid] = {c: (float(media[c]), float(desvio[c])) for c in colunas}
+    return out, parametros
+
+
+@pytest.mark.parametrize("caso", ["usinas", "casas_prod", "casas_cons"])
+def test_evaluated_hours_are_identical(comum, caso) -> None:  # type: ignore[no-untyped-def]
+    av = importlib.import_module("05_avalia")
+    novo, velho = av.real(caso), _real_v2(comum, caso)
+    pd.testing.assert_frame_equal(novo.reset_index(drop=True), velho.reset_index(drop=True), check_dtype=False)
+    assert novo.avalia.dtype == bool
+
+
+@pytest.mark.parametrize(("caso", "regime"), [("usinas", "B"), ("casas_cons", "A")])
+def test_standardization_is_identical(comum, caso, regime) -> None:  # type: ignore[no-untyped-def]
+    d = comum.carrega(caso, regime)
+    cols = ["y"] + (EXOG if regime != "A" else [])
+    d = d.assign(available_mask=d.y.notna().astype(float), y=d.y.fillna(0.0))
+    corte = pd.Timestamp(CASOS[caso]["ini"]) - pd.Timedelta(hours=720)
+    a, pa = comum.normaliza_por_treino(d, corte, cols)
+    b, pb = _normaliza_v2(d, corte, cols)
+    pd.testing.assert_frame_equal(a, b)
+    assert pa == pb

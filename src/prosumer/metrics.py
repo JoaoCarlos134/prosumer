@@ -160,6 +160,37 @@ def squared_errors(df: pd.DataFrame) -> pd.Series:
     )
 
 
+# ---------------------------------------------------------------------- which hours count
+def evaluated_mask(
+    frame: pd.DataFrame,
+    how: str = "all",
+    *,
+    sun_column: str = "poa_ceu_claro",
+    profile: pd.DataFrame | None = None,
+    threshold: float = 0.01,
+) -> pd.Series:
+    """Boolean mask of the hours that enter the metrics. Every model of a comparison must use the same mask.
+
+    - "all": every hour (consumption);
+    - "sun": hours where the clear-sky irradiance in `sun_column` is positive (generation with a known site);
+    - "profile": hours of the day whose mean of `y` over `profile` exceeds `threshold` x its maximum (generation
+      without geometry, e.g. the houses). Night hours are ~0 for every model and only inflate the skill.
+
+    `profile` is the frame the hourly profile comes from; default: `frame` itself. The v2 benchmark used the test
+    period (same mask for every model, never a model input); for new work prefer the training period, so the mask
+    is known before the test.
+    """
+    if how == "all":
+        return pd.Series(True, index=frame.index)
+    if how == "sun":
+        return (frame[sun_column] > 0).astype(bool)
+    if how == "profile":
+        src = frame if profile is None else profile
+        mean_by_hour = src.groupby(src["ds"].dt.hour)["y"].mean()
+        return frame["ds"].dt.hour.map(mean_by_hour > threshold * mean_by_hour.max()).fillna(False).astype(bool)
+    raise ValueError(f"how must be 'all', 'sun' or 'profile', not {how!r}")
+
+
 # ---------------------------------------------------------------------- several resolutions
 # Why: a house's hourly consumption is largely unpredictable (R2 0.37 in the benchmark), but the daily
 # total is not (0.58), and the user's decision is rarely hourly: the bill is monthly, the battery looks at

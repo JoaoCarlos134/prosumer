@@ -66,10 +66,10 @@ COMBINATIONS = list(PUBLISHED[["caso", "modelo", "regime"]].itertuples(index=Fal
 
 @cache
 def evaluated_actual(case: str) -> pd.DataFrame:
-    """Target on the evaluated hours. Copy of `05_avalia.real` + `comum.carrega` (regime A).
+    """Target on the evaluated hours: `comum.carrega` (regime A) re-read here + the LIBRARY's `evaluated_mask`.
 
-    TODO(E2): once the evaluated-hours mask is ported to `prosumer.protocol`, replace this copy with the
-    library function; the test then covers the mask too.
+    The mask comes from `prosumer.metrics.evaluated_mask` (ported 2026-10-11), so this test now covers it too;
+    `tests/test_benchmark_protocol.py` checks it against the frozen v2 copy of `05_avalia.real`.
     """
     start, end = CASES[case]
     if case == "usinas":
@@ -83,13 +83,7 @@ def evaluated_actual(case: str) -> pd.DataFrame:
             with_pv = d.groupby("unique_id")["y"].sum()
             d = d[d["unique_id"].isin(with_pv[with_pv > 0].index)]
     d = d[(d["ds"] <= end) & (d["ds"] >= start)].copy()
-    if case == "usinas":
-        d["evaluated"] = d["poa_ceu_claro"] > 0
-    elif case == "casas_prod":
-        profile = d.groupby(d["ds"].dt.hour)["y"].mean()
-        d["evaluated"] = d["ds"].dt.hour.map(profile > 0.01 * profile.max()).astype(bool)
-    else:
-        d["evaluated"] = True
+    d["evaluated"] = pm.evaluated_mask(d, {"usinas": "sun", "casas_prod": "profile", "casas_cons": "all"}[case])
     return d.loc[d["evaluated"], [*KEYS, "y"]].reset_index(drop=True)
 
 

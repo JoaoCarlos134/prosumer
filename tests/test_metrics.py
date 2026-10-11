@@ -156,3 +156,22 @@ def test_daily_r2_defined_with_several_days() -> None:
     y = [1.0] * 24 + [5.0] * 24
     m = metrics.metrics(_frame(y, y))
     assert m["R2_daily"] == pytest.approx(1.0)
+
+
+def test_evaluated_mask_rules() -> None:
+    import pandas as pd
+    import pytest
+
+    from prosumer.metrics import evaluated_mask
+
+    ds = pd.Series(pd.date_range("2024-01-01", periods=48, freq="h"))
+    y = ds.dt.hour.map(lambda h: 1.0 if 9 <= h <= 15 else 0.0)
+    f = pd.DataFrame({"ds": ds, "y": y, "poa_ceu_claro": ds.dt.hour.map(lambda h: 100.0 if 7 <= h <= 17 else 0.0)})
+    assert evaluated_mask(f, "all").all()
+    assert evaluated_mask(f, "sun").sum() == 2 * 11
+    assert evaluated_mask(f, "profile").sum() == 2 * 7
+    # the profile can come from another period (e.g. training): here one where only noon generates
+    other = f.assign(y=(f["ds"].dt.hour == 12).astype(float))
+    assert evaluated_mask(f, "profile", profile=other).sum() == 2
+    with pytest.raises(ValueError):
+        evaluated_mask(f, "night")

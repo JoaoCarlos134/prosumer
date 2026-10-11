@@ -44,7 +44,7 @@ import numpy as np, pandas as pd
 # IDENTICO ao da implementacao v2 que gerou todas as previsoes publicadas (copiada la, congelada).
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 from prosumer.contracts import EnergySeries  # noqa: E402
-from prosumer.protocol import DayAhead, folds  # noqa: E402
+from prosumer.protocol import DayAhead, folds, standardize_by_training  # noqa: E402
 
 # CPU por padrao (como foi rodado no Lactec). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
 # resto do protocolo nao mudam, mas os numeros podem variar um pouco: o dispositivo fica anotado nos tempos.
@@ -191,24 +191,17 @@ def janelas(d, caso, contexto=CONTEXTO_FM, exog=False):
 
 
 def normaliza_por_treino(df, corte, colunas):
-    """Padroniza por serie usando apenas alvos validos anteriores ao corte.
+    """Padroniza por serie usando apenas alvos validos anteriores ao corte (biblioteca:
+    `protocol.standardize_by_training`; o NeuralForecast marca buracos em `available_mask`).
 
     O corte deve excluir validacao e teste. Retorna os parametros para inverter
     a previsao; alterar qualquer valor posterior ao corte nao altera a escala.
     """
-    out, parametros = df.copy(), {}
-    for uid, g in df.groupby("unique_id", sort=False):
-        valido = g.ds < corte
-        if "available_mask" in g:
-            valido &= g.available_mask > 0
-        treino = g.loc[valido, colunas]
-        if treino.empty or not np.isfinite(treino.to_numpy(float)).all():
-            raise ValueError(f"Treino vazio ou nao finito para normalizacao: {uid}")
-        media = treino.mean()
-        desvio = treino.std(ddof=0).replace(0, 1.0)
-        out.loc[g.index, colunas] = (g[colunas] - media) / desvio
-        parametros[uid] = {c: (float(media[c]), float(desvio[c])) for c in colunas}
-    return out, parametros
+    try:
+        return standardize_by_training(df, corte, colunas, mask_column="available_mask")
+    except ValueError as e:
+        raise ValueError(str(e).replace("Empty or non-finite training rows for standardization",
+                                        "Treino vazio ou nao finito para normalizacao")) from e
 
 
 def grava(modelo, caso, regime, janelas_, previsoes, extra=None):

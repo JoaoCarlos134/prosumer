@@ -30,15 +30,12 @@ rng = np.random.default_rng(42)
 
 
 def real(caso):
+    """Alvo do periodo de teste e a mascara de horas avaliadas (biblioteca: `metrics.evaluated_mask`). FV das
+    casas: o perfil sai do proprio periodo de teste, como na v2 (igual para todos; achado 3 da revisao de 11/10)."""
+    from prosumer.metrics import evaluated_mask
     d = carrega(caso)
-    d = d[(d.ds >= CASOS[caso]["ini"])]
-    if caso == "usinas":
-        d["avalia"] = d.poa_ceu_claro > 0
-    elif caso == "casas_prod":
-        perfil = d.groupby(d.ds.dt.hour).y.mean()
-        d["avalia"] = d.ds.dt.hour.map(perfil > 0.01 * perfil.max())
-    else:
-        d["avalia"] = True
+    d = d[(d.ds >= CASOS[caso]["ini"])].copy()
+    d["avalia"] = evaluated_mask(d, {"usinas": "sun", "casas_prod": "profile", "casas_cons": "all"}[caso])
     return d[["unique_id", "ds", "y", "avalia"]]
 
 

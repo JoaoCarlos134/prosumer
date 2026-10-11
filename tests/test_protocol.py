@@ -193,3 +193,30 @@ def test_standalone_folds_match_the_task(plant: object) -> None:
     ]
     with pytest.raises(ValueError):
         folds("2024-03-01", "2024-03-02", 0)
+
+
+def test_standardization_ignores_everything_after_the_cutoff(plant: object) -> None:
+    from prosumer.protocol import standardize_by_training
+
+    f = plant.frame.copy()  # type: ignore[attr-defined]
+    cut = pd.Timestamp("2024-03-01", tz=plant.tz)  # type: ignore[attr-defined]
+    a, pa = standardize_by_training(f, cut, ["y"])
+    g = f.copy()
+    g.loc[g["ds"] >= cut, "y"] = 1e6
+    _, pb = standardize_by_training(g, cut, ["y"])
+    assert pa == pb, "the test period must not move the scale"
+    train = a[a["ds"] < cut]
+    assert train.groupby("unique_id")["y"].mean().abs().max() < 1e-9
+
+
+def test_standardization_skips_gaps_and_refuses_empty_training() -> None:
+    from prosumer.protocol import standardize_by_training
+
+    holed = data.with_gaps(data.example_house(n_series=1, days=20), fraction=0.1, seed=1)
+    x = holed.frame.assign(y=holed.frame["y"].fillna(-1e6))  # a gap with a garbage value: the mask must hide it
+    cut = x["ds"].max()
+    _, p = standardize_by_training(x, cut, ["y"])
+    clean = holed.valid_only()
+    assert p["house_1"]["y"][0] == pytest.approx(clean.loc[clean["ds"] < cut, "y"].mean())  # cutoff is exclusive
+    with pytest.raises(ValueError, match="Empty"):
+        standardize_by_training(x, x["ds"].min(), ["y"])

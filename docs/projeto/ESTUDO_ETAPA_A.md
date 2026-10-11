@@ -29,7 +29,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | S-Mamba | **não passa** (3 casos) | 19º–27º; FV das casas +0,108, p = 0,043 |
 | Mamba | **PASSA** (FV das casas; 3 sementes) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; usinas 4º (+0,121, p < 0,001); consumo 25º |
 | TimeGrad | **não passa** (3 casos; mediana e média das amostras) | 12º–40º; o mais perto, FV das casas pela média, p = 0,028; a mediana subestima 19–28% |
-| Time-LLM, LLMTime | estudados; piloto curto (consumo) na fila da noite de 11/10 | — |
+| Time-LLM | **não passa** (consumo, com e sem o LLM) | GPT-2 +0,043 (49º/53); sem o LLM +0,122 (41º): o LLM PIORA (p < 0,001) |
+| LLMTime | **não passa** (consumo) | Qwen2.5-1.5B −0,056 (52º/53), viés −37%, 3 h 09 min de GPU |
 | TimeGPT | a fazer (espera decisão do usuário: API paga, envia os dados das casas) | — |
 
 ---
@@ -465,7 +466,7 @@ subestima muito (a distribuição gerada é assimétrica, com muita massa perto 
 corrige o viés no consumo, mas não muda a posição. A faixa (o que traria de único) só valeria a pena com o ponto
 central perto do grupo da frente; o piloto F2c de faixas segue com os quantis do LightGBM, Chronos-2 e FlowState.
 
-## Time-LLM (estudo 11/10/2026; piloto curto na fila da noite)
+## Time-LLM (estudo e piloto 11/10/2026)
 
 **Como funciona.** Jin et al., *Time-LLM: Time Series Forecasting by Reprogramming Large Language Models* (ICLR
 2024). Um LLM congelado é "reprogramado" para séries: a série, normalizada por janela, vira patches de 16 h; uma
@@ -488,7 +489,18 @@ GPT-2, 54 s e 6,6 GB sem. 178 M parâmetros no total com o GPT-2 (~54 M treináv
 vocabulário -> 1.000 protótipos). Script: `scripts/piloto_timellm.py [semLLM] [teste] [caso ...]`.
 **Portão:** grupo da frente no consumo e, para justificar o custo, ganhar da própria ablação.
 
-## LLMTime (estudo 11/10/2026; piloto curto na fila da noite)
+**Piloto (fila da noite de 11/10, consumo A, GPU).**
+
+| Variante | Skill | Posição | MBE | Tempo | Pico de memória |
+|---|---|---|---|---|---|
+| Time-LLM (GPT-2) | +0,043 | 49º de 53 | −27% | 1.434 s | 11,6 GB |
+| Time-LLM-semLLM | +0,122 | 41º de 53 | −20% | 221 s | 6,7 GB |
+
+Os dois longe do grupo da frente (DM contra o melhor, p < 0,001). Com o GPT-2 o erro quadrático é 19% MAIOR que sem
+ele (DM, p < 0,001): nos nossos dados o LLM atrapalha, como Tan et al. (2024) acharam em 13 conjuntos, e custa 6,5x
+o tempo. **Decisão: não passa** (nem o portão do grupo da frente, nem o da ablação).
+
+## LLMTime (estudo e piloto 11/10/2026)
 
 **Como funciona.** Gruver, Finzi, Qiu e Wilson, *Large Language Models Are Zero-Shot Time Series Forecasters*
 (NeurIPS 2023). Nada é treinado: a série é escrita como texto e um LLM pré-treinado continua o texto. Cada valor
@@ -510,3 +522,10 @@ oficial usa 20), parada quando todas as amostras já escreveram 24 valores. Cust
 4070 (a memória cresce muito com o lote: 40 sequências passam dos 12 GB e o Windows despeja na RAM), ~3,5 h no
 consumo. Modo teste: saída válida, nenhuma amostra completada. Script: `scripts/piloto_llmtime.py [teste] [lote=2]
 [caso ...]`. **Portão:** grupo da frente no consumo.
+
+**Piloto (fila da noite de 11/10, consumo A, GPU).** −0,056 (52º de 53, abaixo do "igual a ontem"), viés −37%,
+11.341 s (3 h 09 min) na RTX 4070. Todas as 18.200 amostras saíram com 24 valores (nenhuma completada) e nenhuma
+janela ficou sem amostra válida: o resultado é do método, não de falha de geração. Com um LLM de 1,5 B a
+continuação do texto subestima a carga e não reproduz o ciclo diário melhor que repetir o dia anterior; o artigo
+já mostrava a queda com o tamanho do LLM. **Decisão: não passa.** Um LLM maior não cabe nesta GPU nem caberia no
+custo (horas por caso).

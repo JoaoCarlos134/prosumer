@@ -220,9 +220,9 @@ dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo 
 **TimeGrad nao passa** (11/10; pytorch-ts oficial no `~/.venvs/lagllama`; 12o-40o, a mediana subestima 19-28%).
 **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts, testes leves); rodadas pesadas de
 GPU/CPU vao para a fila da noite** (`scripts/fila_noite.sh`, log em `resultados/log_fila_noite_*.txt`).
-Time-LLM (GPT-2 e a ablacao sem LLM) e LLMTime (Qwen2.5-1.5B base): estudados, scripts conferidos no modo
-teste, pilotos curtos no consumo na fila da noite de 11/10. Falta: TimeGPT (espera a decisao do usuario: API paga, envia dados). Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
-(consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
+**Time-LLM nao passa** (11/10, consumo A: GPT-2 +0,043, 49o/53; sem o LLM +0,122, 41o: o LLM PIORA, p < 0,001,
+como Tan et al. 2024). **LLMTime nao passa** (Qwen2.5-1.5B base: -0,056, 52o/53, vies -37%, 3 h 09 min de GPU).
+Etapa A fechada nesta maquina; falta so o TimeGPT (espera a decisao do usuario: API paga, envia dados).
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 
 **Revisao de eficiencia (09/10):** (1) `04_redes_treinadas.py` decidia o que pular olhando so o

@@ -2103,5 +2103,23 @@
   "skill_CRPS": -12.8275,
   "portao": false,
   "horas_avaliadas": 43680
+ },
+ "LLMTime|casas_cons|A": {
+  "modelo": "LLMTime",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": -0.0558,
+  "ic95": [
+   -0.0899,
+   -0.0296
+  ],
+  "R2": -0.1083,
+  "nRMSE": 1.1814,
+  "MBE": -0.367,
+  "posicao": "52o de 53",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2095,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
  }
 }

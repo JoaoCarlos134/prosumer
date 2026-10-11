@@ -2,7 +2,7 @@
 
 Status: skeleton of step E1 of the proposal (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
 `contracts`, `protocol`, `metrics` (including metrics at several resolutions), `postprocessing`
-(consumption bias correction) and `data`; the `io`, `quality`, `physics`, `diagnostics`, `forecast`,
+(consumption bias correction), `physics` (sun position, clear sky, plane-of-array) and `data`; the `io`, `quality`, `diagnostics`, `forecast`,
 `embedded` and `economics` modules are not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
@@ -13,7 +13,7 @@ example data.
 
 from __future__ import annotations
 
-from . import contracts, data, metrics, postprocessing, protocol
+from . import contracts, data, metrics, physics, postprocessing, protocol
 from .contracts import ContractError, EnergySeries
 from .protocol import DayAhead, Fold, Regime, SupportError, Window
 
@@ -36,6 +36,7 @@ __all__ = [
     "contracts",
     "data",
     "metrics",
+    "physics",
     "postprocessing",
     "protocol",
 ]

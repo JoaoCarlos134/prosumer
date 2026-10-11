@@ -31,6 +31,7 @@ import pandas as pd
 
 from comum import DADOS, EXOG, H, PREV, carrega, dias_teste, dobras
 from piloto_comum import PILOTOS, grava_piloto
+from prosumer.physics import fit_orientation, mean_sun, poa_isotropic
 
 R = importlib.import_module("02_referencias")
 AV = importlib.import_module("05_avalia")
@@ -42,50 +43,23 @@ LAGS = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
 
 
 def geometria_solar(ds_local):
-    """Media horaria do vetor do sol (leste, norte, cima, so acima do horizonte) e de cos(z), a partir de 5 min."""
+    """Vetor medio do sol por hora (biblioteca: prosumer.physics.mean_sun), em UTC: as casas estao na hora de Dublin."""
     utc = (pd.DatetimeIndex(ds_local).tz_localize("Europe/Dublin", ambiguous=True, nonexistent="shift_forward")
-           .tz_convert("UTC").tz_localize(None))
-    t = (utc.values[:, None] + (np.arange(12) * 5 + 2.5).astype("timedelta64[m]")[None, :].astype("timedelta64[ns]"))
-    t = pd.DatetimeIndex(t.ravel())
-    n = t.dayofyear.to_numpy(); g = 2 * np.pi / 365 * (n - 1 + (t.hour.to_numpy() - 12) / 24)
-    eot = 229.18 * (0.000075 + 0.001868 * np.cos(g) - 0.032077 * np.sin(g) - 0.014615 * np.cos(2 * g) - 0.040849 * np.sin(2 * g))
-    dec = (0.006918 - 0.399912 * np.cos(g) + 0.070257 * np.sin(g) - 0.006758 * np.cos(2 * g) + 0.000907 * np.sin(2 * g)
-           - 0.002697 * np.cos(3 * g) + 0.00148 * np.sin(3 * g))
-    w = np.radians((t.hour.to_numpy() * 60 + t.minute.to_numpy() + t.second.to_numpy() / 60 + eot + 4 * LON) / 4 - 180)
-    la = np.radians(LAT)
-    cima = np.sin(la) * np.sin(dec) + np.cos(la) * np.cos(dec) * np.cos(w)
-    leste = -np.cos(dec) * np.sin(w)
-    norte = np.cos(la) * np.sin(dec) - np.sin(la) * np.cos(dec) * np.cos(w)
-    acima = cima > 0
-    v = np.stack([leste * acima, norte * acima, cima * acima], -1).reshape(len(ds_local), 12, 3)
-    return v.mean(1), (n.reshape(-1, 12)[:, 0])
+           .tz_convert("UTC"))
+    m = mean_sun(utc, LAT, LON)
+    return m[["east", "north", "up"]].to_numpy(), m["day_of_year"].to_numpy()
 
 
 def poa(ghi, sol, doy, beta, gamma):
-    """POA isotropica (Erbs + Liu-Jordan) para inclinacao beta e azimute gamma (graus, 180 = sul)."""
-    b, gm = np.radians(beta), np.radians(gamma)
-    normal = np.array([np.sin(b) * np.sin(gm), np.sin(b) * np.cos(gm), np.cos(b)])
-    cz = np.clip(sol[:, 2], 0, None)
-    ci = np.clip(sol @ normal, 0, None)          # media horaria de cos(incidencia), ja com o sol acima do horizonte
-    i0 = 1367 * (1 + 0.033 * np.cos(2 * np.pi * doy / 365)) * cz
-    kt = np.where(i0 > 10, np.clip(ghi / np.where(i0 > 10, i0, 1), 0, 1), 0)
-    kd = np.where(kt <= 0.22, 1 - 0.09 * kt, np.where(kt <= 0.8, 0.9511 - 0.1604 * kt + 4.388 * kt**2 - 16.638 * kt**3
-                                                     + 12.336 * kt**4, 0.165))
-    dif = ghi * kd
-    rb = np.where(cz > 0.02, ci / np.where(cz > 0.02, cz, 1), 0)
-    return np.clip(ghi - dif, 0, None) * rb + dif * (1 + np.cos(b)) / 2 + 0.2 * ghi * (1 - np.cos(b)) / 2
+    """POA isotropica (biblioteca: prosumer.physics.poa_isotropic); azimute como bussola (180 = sul)."""
+    s = pd.DataFrame(np.asarray(sol), columns=["east", "north", "up"]).assign(day_of_year=np.asarray(doy))
+    return poa_isotropic(ghi, s, beta, gamma)
 
 
 def melhor_geometria(y, ghi, sol, doy):
-    ok = np.isfinite(y) & (ghi > 50)
-    melhor = (-1.0, 0.0, 180.0)
-    for beta in INCL:
-        for gamma in (AZIM if beta > 0 else [180.0]):
-            p = poa(ghi[ok], sol[ok], doy[ok], beta, gamma)
-            r2 = np.corrcoef(p, y[ok])[0, 1] ** 2
-            if r2 > melhor[0]:
-                melhor = (float(r2), float(beta), float(gamma))
-    return melhor
+    """(R2, inclinacao, azimute) de maior R2 (biblioteca: prosumer.physics.fit_orientation, mesma grade)."""
+    s = pd.DataFrame(np.asarray(sol), columns=["east", "north", "up"]).assign(day_of_year=np.asarray(doy))
+    return fit_orientation(y, ghi, s, tilts=INCL, azimuths=AZIM)
 
 
 if __name__ == "__main__":

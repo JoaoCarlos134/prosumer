@@ -159,3 +159,25 @@ def test_standardization_is_identical(comum, caso, regime) -> None:  # type: ign
     b, pb = _normaliza_v2(d, corte, cols)
     pd.testing.assert_frame_equal(a, b)
     assert pa == pb
+
+
+def _ghi_ceu_claro_v2(serie, idx):  # type: ignore[no-untyped-def]
+    lat, lon = {"Cascavel": (-24.83, -53.65), "Curitiba": (-25.4284, -49.2733)}[serie]
+    t = pd.date_range(idx.min(), idx.max() + pd.Timedelta("55min"), freq="5min") + pd.Timedelta("150s")
+    n = t.dayofyear.to_numpy(); g = 2 * np.pi / 365 * (n - 1 + (t.hour.to_numpy() - 12) / 24)
+    eot = 229.18 * (0.000075 + 0.001868 * np.cos(g) - 0.032077 * np.sin(g) - 0.014615 * np.cos(2 * g) - 0.040849 * np.sin(2 * g))
+    dec = (0.006918 - 0.399912 * np.cos(g) + 0.070257 * np.sin(g) - 0.006758 * np.cos(2 * g) + 0.000907 * np.sin(2 * g)
+           - 0.002697 * np.cos(3 * g) + 0.00148 * np.sin(3 * g))
+    min_solar = (t.hour.to_numpy() + 3) * 60 + t.minute.to_numpy() + t.second.to_numpy() / 60 + eot + 4 * lon
+    w = np.radians(min_solar / 4 - 180)
+    cz = np.sin(np.radians(lat)) * np.sin(dec) + np.cos(np.radians(lat)) * np.cos(dec) * np.cos(w)
+    czp = np.clip(cz, 1e-3, None)
+    cs = np.where(cz > 0, 1098.0 * czp * np.exp(-0.059 / czp), 0.0)
+    return pd.Series(cs, index=t - pd.Timedelta("150s")).resample("h").mean().reindex(idx).fillna(0.0)
+
+
+@pytest.mark.parametrize("serie", ["Cascavel", "Curitiba"])
+def test_clear_sky_is_bit_identical(comum, serie) -> None:  # type: ignore[no-untyped-def]
+    d = comum.carrega("usinas")
+    idx = pd.DatetimeIndex(d[d.unique_id == serie].ds)
+    np.testing.assert_array_equal(comum.ghi_ceu_claro(serie, idx).to_numpy(), _ghi_ceu_claro_v2(serie, idx).to_numpy())

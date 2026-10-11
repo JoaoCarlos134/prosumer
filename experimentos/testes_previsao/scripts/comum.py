@@ -44,6 +44,7 @@ import numpy as np, pandas as pd
 # IDENTICO ao da implementacao v2 que gerou todas as previsoes publicadas (copiada la, congelada).
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 from prosumer.contracts import EnergySeries  # noqa: E402
+from prosumer.physics import clear_sky_ghi  # noqa: E402
 from prosumer.protocol import DayAhead, folds, standardize_by_training  # noqa: E402
 
 # CPU por padrao (como foi rodado no Lactec). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
@@ -100,19 +101,11 @@ def tarefa(d, caso, contexto=CONTEXTO_FM, exog=False):
 
 
 def ghi_ceu_claro(serie, idx):
-    """GHI de ceu claro (Haurwitz, a mesma do projeto), media de cada hora a partir de 5 min, hora local UTC-3."""
+    """GHI de ceu claro (Haurwitz, a mesma do projeto), media de cada hora a partir de 5 min, hora local UTC-3.
+    Biblioteca: `prosumer.physics.clear_sky_ghi` (identica bit a bit; tests/test_benchmark_protocol.py)."""
     lat, lon = SITIOS[serie]
-    t = pd.date_range(idx.min(), idx.max() + pd.Timedelta("55min"), freq="5min") + pd.Timedelta("150s")
-    n = t.dayofyear.to_numpy(); g = 2 * np.pi / 365 * (n - 1 + (t.hour.to_numpy() - 12) / 24)
-    eot = 229.18 * (0.000075 + 0.001868 * np.cos(g) - 0.032077 * np.sin(g) - 0.014615 * np.cos(2 * g) - 0.040849 * np.sin(2 * g))
-    dec = (0.006918 - 0.399912 * np.cos(g) + 0.070257 * np.sin(g) - 0.006758 * np.cos(2 * g) + 0.000907 * np.sin(2 * g)
-           - 0.002697 * np.cos(3 * g) + 0.00148 * np.sin(3 * g))
-    min_solar = (t.hour.to_numpy() + 3) * 60 + t.minute.to_numpy() + t.second.to_numpy() / 60 + eot + 4 * lon
-    w = np.radians(min_solar / 4 - 180)
-    cz = np.sin(np.radians(lat)) * np.sin(dec) + np.cos(np.radians(lat)) * np.cos(dec) * np.cos(w)
-    czp = np.clip(cz, 1e-3, None)
-    cs = np.where(cz > 0, 1098.0 * czp * np.exp(-0.059 / czp), 0.0)
-    return pd.Series(cs, index=t - pd.Timedelta("150s")).resample("h").mean().reindex(idx).fillna(0.0)
+    idx = pd.DatetimeIndex(idx)
+    return pd.Series(clear_sky_ghi(idx.tz_localize(FUSO["usinas"]), lat, lon), index=idx)
 
 
 def exog_previsao(d, regime):

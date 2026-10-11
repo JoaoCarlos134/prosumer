@@ -25,8 +25,8 @@ DEFAULT_TZ = "America/Sao_Paulo"
 def _clear_sky(index: pd.DatetimeIndex, *, peak: float) -> np.ndarray:
     """Simple daytime bell: half-sine between 6 h and 18 h, zero at night.
 
-    Not a real clear-sky model (the real one goes in `physics`, with Haurwitz and solar geometry); a
-    plausible, deterministic daytime shape is enough here.
+    Not a real clear-sky model (that is `physics.clear_sky_ghi`); a plausible, deterministic daytime shape
+    is enough for example data, and changing it would change every test built on it.
     """
     h = index.hour + index.minute / 60.0
     day = np.clip(np.sin(np.pi * (h - 6.0) / 12.0), 0.0, None)

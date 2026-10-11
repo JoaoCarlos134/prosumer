@@ -377,7 +377,7 @@ consumo emitida ao meio-dia (+0,265 x +0,237 do melhor das 00:00, p 0,023); **F2
 em todos os casos (TimesFM-3 nos tres; Chronos-2 e LightGBM quantilico em dois cada); no C erram a calibracao por
 < 1 ponto alem da tolerancia (calibracao conformal a pilotar). NAO PASSAM: F1(e) MLP ajustado (instavel entre
 sementes: -0,22 / +0,13 / -0,07); F1(f) TimesFM-3 (+0,184 no consumo, 16o; ~igual ao 2.5); F2(b) geometria do
-telhado (LightGBM piora -0,031; inclinacao no limite da grade); F2(f) total do dia direto (empata com o melhor
+telhado (LightGBM piora -0,029; inclinacao no limite da grade); F2(f) total do dia direto (empata com o melhor
 somado, +0,147 x +0,146). BuildingsBench (L +0,127 no consumo, 40o; faixas descalibradas; instalado com --no-deps no
 `previsao_gpu`, pesos em `~/.cache/buildingsbench`). PENDENTES: F1(d) AutoARIMA no Lactec (**o ambiente `classicos` foi bloqueado aqui em
 11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); FlowState nas faixas (Lactec).
@@ -390,9 +390,12 @@ nos 3 casos e regimes (15 testes); `atualiza.py` regera tudo identico. Os ambien
 nem o pandera: o `comum.py` poe o `src/` no caminho e monta a serie sem validar (pandera e scipy sao importados so
 onde sao usados). Fuso fixo da grade: usinas `Etc/GMT+3`, casas `Etc/GMT` (ver `comum.FUSO`). Mesmo hash das janelas
 em .venv, previsao, previsao_gpu, lagllama, lote2 e lote2_hf. O ambiente `moirai` deixou de ler parquet
-(Smart App Control no `_parquet` do pyarrow 25.0.1 cp311): **consertado** com pyarrow 24.0.0, `moirai.txt` recongelado. Proximo passo
-de codigo: `prosumer.physics` (juntar as 4 copias da geometria solar), depois `ranking`/`ties_with_best`, a chamada
-unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
+(Smart App Control no `_parquet` do pyarrow 25.0.1 cp311): **consertado** com pyarrow 24.0.0, `moirai.txt` recongelado. **`prosumer.physics` feito (11/10):** posicao do sol, ceu claro de Haurwitz, vetor medio do sol, Erbs, POA
+isotropica e ajuste de orientacao, so numpy (o pvlib virou extra opcional: o h5py dele esta bloqueado aqui). O
+`comum.ghi_ceu_claro` e o `piloto_geometria` usam a biblioteca; o ceu claro sai IDENTICO bit a bit (soma de Kahan
+como o pandas; teste de paridade) e o C refeito pelo piloto multi-NWP bate com 0,0. O piloto da geometria tinha
+um erro (amostras do sol 30 s cedo); refeito, a decisao nao muda. Proximo passo de codigo: `ranking`/
+`ties_with_best`, a chamada unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
 `docs/projeto/REVISAO_GERAL_2026-10-11.md`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao

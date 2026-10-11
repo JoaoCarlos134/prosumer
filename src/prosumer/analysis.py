@@ -18,6 +18,7 @@ leaving it out.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -26,7 +27,8 @@ import pandas as pd
 
 from . import metrics, physics
 from .contracts import EnergySeries
-from .protocol import DayAhead, H, Window
+from .forecast import Forecaster, rolling_forecast
+from .protocol import DayAhead, H, Regime, Window
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
@@ -122,6 +124,7 @@ def analyze(
     issue_hour: int = 0,
     levels: dict[str, metrics.Level] | None = None,
     weather: pd.DataFrame | None = None,
+    models: Sequence[Forecaster] = (),
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -137,6 +140,11 @@ def analyze(
     `weather_linear`: energy = a + b x the mean forecast GHI, per series, fitted on the sun hours before the
     test (the benchmark's "linear physics" on GHI instead of the panel-plane irradiance). Every row of the
     table is then scored on the same hours: those with a weather forecast.
+
+    `models`: forecasters of `prosumer.forecast` to add as rows, run with the rolling origin on the same test
+    days. A model whose card includes regime A (history only) is a regime A row and enters the median; one
+    that takes covariates (e.g. `LightGBM(["ghi_mean"])`, `Chronos2(["ghi_mean"])`) is a regime C row and
+    needs `weather`. Foundation models get 1024 hours of history, as in the benchmark.
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
@@ -181,8 +189,35 @@ def analyze(
     actual = actual.loc[keep]
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
-    if weather is not None:
-        w = _weather_frame(weather, s.series)
+    w = None if weather is None else _weather_frame(weather, s.series)
+    for model in models:
+        name = model.card.name
+        if name in fc.columns:
+            raise ValueError(f"Two forecasts named {name!r}")
+        history_only = Regime.HISTORY in model.card.regimes
+        if not history_only and w is None:
+            notes.append(f"{name} needs a weather forecast (`weather=`): left out.")
+            continue
+        task_m = DayAhead(
+            s,
+            test_start=test_start,
+            test_end=end,
+            refit_days=test_days,
+            context=1024 if model.card.family == "foundation" else CONTEXT,
+            min_history=CONTEXT,  # the same test days as the naive forecasts
+            issue_hour=issue_hour,
+            covariates=None if history_only else w,
+        )
+        out = rolling_forecast(model, task_m).rename(columns={"yhat": name})
+        fc = fc.merge(out, on=["unique_id", "ds"], how="left")
+        regimes[name] = "A" if history_only else "C"
+    # the output: median of every regime A forecast (the naive ones and the A models; not the reference alone)
+    in_median = [
+        *_NAIVE,
+        *[n for n, r in regimes.items() if r == "A" and n not in (OUTPUT, reference, *_NAIVE)],
+    ]
+    fc[OUTPUT] = fc[in_median].median(axis=1)
+    if w is not None:
         weather_table = _weather_coverage(w, frame["ds"].min(), end + pd.Timedelta(hours=H - 1))
         if generation:
             fc, note = _weather_linear(fc, w, s, site, test_start)
@@ -190,14 +225,14 @@ def analyze(
                 notes.append(note)
             else:
                 regimes["weather_linear"] = "C"
-        # common support: every row on the hours where every forecast exists (weather gaps drop hours for all)
-        missing = fc.loc[fc[list(regimes)].isna().any(axis=1), ["unique_id", "ds"]].assign(_drop=True)
-        flagged = (
-            actual.merge(missing, on=["unique_id", "ds"], how="left")["_drop"].fillna(False).to_numpy(bool)
+    # common support: every row on the hours where every forecast exists (a gap in one drops the hour for all)
+    missing = fc.loc[fc[list(regimes)].isna().any(axis=1), ["unique_id", "ds"]].assign(_drop=True)
+    flagged = actual.merge(missing, on=["unique_id", "ds"], how="left")["_drop"].fillna(False).to_numpy(bool)
+    actual = actual.loc[~flagged]
+    if flagged.any():
+        notes.append(
+            f"{int(flagged.sum())} test hours without a forecast from every model left out of every row."
         )
-        actual = actual.loc[~flagged]
-        if flagged.any():
-            notes.append(f"{int(flagged.sum())} test hours without a weather forecast left out of every row.")
     ref = fc[["unique_id", "ds", reference]].rename(columns={reference: "yhat"})
     rows, aligned = [], {}
     for name, regime in regimes.items():
@@ -213,12 +248,23 @@ def analyze(
         aligned[name] = (m, r)
     # the reference last, the regime C forecast after the regime A ones
     table = pd.DataFrame(rows)
-    order = list(dict.fromkeys([OUTPUT, *_NAIVE, "weather_linear", reference]))
+    order = list(
+        dict.fromkeys(
+            [
+                OUTPUT,
+                *_NAIVE,
+                *[n for n, r in regimes.items() if r == "A" and n != reference],
+                "weather_linear",
+            ]
+            + [n for n, r in regimes.items() if r == "C"]
+            + [reference]
+        )
+    )
     table = table.set_index("forecast").loc[[n for n in order if n in set(table["forecast"])]].reset_index()
     resolution = pd.concat(
         [
             metrics.by_resolution(*aligned[n], levels).assign(forecast=n)
-            for n in (OUTPUT, "weather_linear")
+            for n in [OUTPUT, *[n for n, r in regimes.items() if r == "C"]]
             if n in aligned
         ],
         ignore_index=True,
@@ -287,7 +333,6 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
             f["_sun"] = cs_now > 0
         parts.append(pd.DataFrame(f))
     fc = pd.concat(parts, ignore_index=True)
-    fc[OUTPUT] = fc[list(_NAIVE)].median(axis=1)
     return fc
 
 

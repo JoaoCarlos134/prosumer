@@ -415,8 +415,20 @@ na geracao, `weather_linear` (regime C, y = a + b x GHI medio previsto, horas de
 nas mesmas horas; nas usinas (teste do benchmark, 6 NWP) +0,370 Cascavel e +0,247 Curitiba (benchmark, IFS so,
 juntas: linear_fisico +0,312, LightGBM +0,330). **mypy roda aqui:** o `.venv` tem o mypy 2.4.0 puro
 (`uv pip install --reinstall --no-binary mypy mypy==2.4.0`; o compilado e bloqueado); `.venv/Scripts/python.exe -m mypy`.
-CI: `upload-artifact@v6` (Node 24). Proximo: o modulo `forecast` (adaptadores com metadados; o LightGBM e os
-fundacionais de CPU entram como linhas do `Report`). Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+CI: `upload-artifact@v6` (Node 24). **Modulo `prosumer.forecast` feito (11/10, tarde):** `ModelCard` (licenca,
+CPU/GPU, envia dados?, regimes), interface `fit(series, cutoff, covariates)`/`predict(windows)` e `rolling_forecast`
+(origem movel: corta a serie no inicio de cada dobra). `Naive`, `LightGBM` (porte exato do 02_referencias: mesmas
+features, codigos de serie, ordem das linhas e parametros) e adaptadores `Chronos2`, `TiRex2`, `Toto2`
+(`forecast.foundation`, pacotes importados so no uso). **E3 forte:** o LightGBM da biblioteca REFAZ as previsoes
+gravadas nas 9 combinacoes caso/regime com diferenca <= 3,5e-18 (`tests/test_forecast_parity.py`; 2 rapidas por
+padrao, `PROSUMER_FULL=1` para as 9, ~3 min). Fundacionais: 3 janelas conferidas (TiRex-2 A/C, Toto-22m, Chronos-2 A
+~1e-6; Chronos-2 C 1e-3); a conferencia completa (`scripts/confere_biblioteca.py`, saida
+`resultados/conferencia_biblioteca.json`) esta na fila da noite de 11/10, AGENDADA no Agendador de Tarefas do
+Windows (`prosumer_fila_noite`, 22:00, MODO_TESTE=1; apagar a tarefa depois). `analyze(models=[...])`: modelo de
+historico vira linha A e entra na mediana; modelo com covariaveis vira linha C (precisa de `weather`); fundacionais
+com 1024 h. Casas (consumo, 92 dias): LightGBM +0,199, mediana +0,145 -> +0,190. O extra `lightgbm` inclui o
+scikit-learn (o LGBMRegressor exige). Licencas do TiRex-2 e do Toto-2.0 NAO conferidas (o cartao manda ver o model
+card). Proximo: ler a conferencia da noite; faixas (quantis) no `forecast`; o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

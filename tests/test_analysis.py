@@ -166,7 +166,7 @@ def test_weather_without_series_id_is_shared_and_gaps_leave_every_row() -> None:
     assert full.forecast is not None and cut.forecast is not None
     assert "weather_linear" in set(full.forecast["forecast"])
     assert not any("left out" in n for n in full.notes)
-    assert any("without a weather forecast left out of every row" in n for n in cut.notes)
+    assert any("without a forecast from every model left out of every row" in n for n in cut.notes)
     assert cut.forecast.set_index("forecast").loc["median", "skill"] != pytest.approx(
         full.forecast.set_index("forecast").loc["median", "skill"]
     )
@@ -185,3 +185,46 @@ def test_weather_needs_aware_times() -> None:
     series, weather = _plant_and_weather(30)
     with pytest.raises(ValueError, match="time zone"):
         analyze(series, test_days=7, weather=weather.assign(ds=weather["ds"].dt.tz_localize(None)))
+
+
+def test_models_become_rows_and_history_models_enter_the_median() -> None:
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBM, Naive
+
+    s = data.example_house(n_series=2, days=60)
+    base = analyze(s, test_days=14)
+    r = analyze(s, test_days=14, models=[LightGBM(params={"n_estimators": 50})])
+    assert base.forecast is not None and r.forecast is not None
+    f = r.forecast.set_index("forecast")
+    assert f.loc["LightGBM", "regime"] == "A"
+    assert list(r.forecast["forecast"])[:5] == [
+        "median",
+        "persistence_24h",
+        "seasonal_168h",
+        "mean_7d",
+        "LightGBM",
+    ]
+    # the median now has four members: it moves, the naive rows do not
+    b = base.forecast.set_index("forecast")
+    assert f.loc["median", "skill"] != pytest.approx(b.loc["median", "skill"])
+    assert f.loc["mean_7d", "skill"] == pytest.approx(b.loc["mean_7d", "skill"])
+    with pytest.raises(ValueError, match="Two forecasts"):
+        analyze(s, test_days=14, models=[Naive("mean_7d")])
+
+
+def test_weather_models_are_regime_c_and_need_the_weather() -> None:
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBM
+
+    series, weather = _plant_and_weather()
+    model = LightGBM(["ghi_mean"], params={"n_estimators": 50}, name="LightGBM-C")
+    without = analyze(series, site=(-25.43, -49.27), test_days=14, models=[model])
+    assert any("needs a weather forecast" in n for n in without.notes)
+    r = analyze(series, site=(-25.43, -49.27), test_days=14, weather=weather, models=[model])
+    assert r.forecast is not None and r.resolution is not None
+    f = r.forecast.set_index("forecast")
+    assert f.loc["LightGBM-C", "regime"] == "C" and f.loc["LightGBM-C", "skill"] > f.loc["median", "skill"]
+    assert list(r.forecast["forecast"])[-1] == "clear_sky_persistence"
+    assert set(r.resolution["forecast"]) == {"median", "weather_linear", "LightGBM-C"}

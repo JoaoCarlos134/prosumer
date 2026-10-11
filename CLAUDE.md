@@ -371,7 +371,22 @@ Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instave
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).
 Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras (nenhuma origem
 afetada hoje; a biblioteca nao copia isso); LightGBM nao e bit a bit reprodutivel entre maquinas (<= 0,0006);
-redes em duas versoes de torch (2.11 e 2.14.1). Total do plano: ~759 h (~12 meses, ate out/2027), com o
+redes em duas versoes de torch (2.11 e 2.14.1).
+**Revisao dos scripts do benchmark (11/10/2026, so leitura + checagens sobre as previsoes gravadas; nada mudou nos
+numeros).** Conferido e OK: interpolacao causal no `comum.janelas`; exogenas sem NaN em todas as janelas de B/C;
+series sem salto de tempo; `normaliza_por_treino`; correcao de vies causal (07); regra fixa do ensemble; formula do
+DM (HLN, Newey-West) e Holm; todos os modelos avaliados nas MESMAS horas em cada caso/regime (excecao: as 3
+referencias ingenuas das usinas A, 8.800-8.933 de 8.940 horas, por falta de defasagem). Achados a declarar:
+(1) as redes do NeuralForecast (04, `df_nf`) recebem as horas faltantes como 0 (com `available_mask`), enquanto
+todas as outras familias recebem interpolacao causal: 49 de 598 janelas de teste das usinas, 199 horas, todas de sol
+(nas casas nenhuma). Medido sobre as previsoes: sem penalidade sistematica (o skill nesses dias sobe em uns
+modelos e desce em outros); corrigir so se as redes do NF forem refeitas por outro motivo. (2) A parada antecipada
+das redes proprias e multivariadas (`redes_proprias`) valida em 10% de janelas SORTEADAS que se sobrepoem as de
+treino (a cada 6 h, 192 h de comprimento): validacao fraca, sem vazamento do teste; o NF usa os ultimos 30 dias. A
+biblioteca deve usar validacao temporal. (3) A mascara de horas da FV das casas (05) sai do perfil medio do proprio
+periodo de teste: igual para todos, nao e entrada de modelo. (4) O 03 pula modelo so pelo `tempos_fundacionais.json`
+(o 04 confere tambem o parquet). (5) O portao dos pilotos e DM sem Holm (de proposito, mais permissivo); o
+benchmark usa Holm. Testes: auditoria 4/4, biblioteca 313/313 (sem o de propriedade do hypothesis). Total do plano: ~759 h (~12 meses, ate out/2027), com o
 aplicativo (o TCC) no fim.
 
 Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia

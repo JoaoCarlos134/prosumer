@@ -67,6 +67,39 @@ def rolling_forecast(model: Forecaster, task: DayAhead) -> pd.DataFrame:
     return pd.concat(out, ignore_index=True)
 
 
+class Probabilistic(Forecaster, Protocol):
+    """A model that also gives quantiles: `predict_quantiles` -> (windows, levels, target hours), `levels`
+    increasing and including 0.5, whose row is the point forecast."""
+
+    levels: tuple[float, ...]
+
+    def predict_quantiles(self, windows: list[Window]) -> np.ndarray: ...
+
+
+def rolling_quantiles(model: Probabilistic, task: DayAhead) -> pd.DataFrame:
+    """`rolling_forecast` for the quantiles: one column per level (`q0.1`, ..., `q0.9`), plus `yhat` = the 0.5
+    level. One fit per fold serves both the point forecast and the band."""
+    windows = task.windows()
+    levels = tuple(model.levels)
+    out = []
+    for fold in task.folds():
+        inside = [w for w in windows if fold.start <= w.day <= fold.end]
+        if not inside:
+            continue
+        model.fit(_before(task.series, fold.start), fold.start, task.covariates)
+        q = np.asarray(model.predict_quantiles(inside), dtype=float)
+        if q.shape[:2] != (len(inside), len(levels)):
+            raise ValueError(f"{model.card.name}: quantiles of shape {q.shape} for {len(inside)} windows")
+        for w, qq in zip(inside, q, strict=True):
+            n = len(w.timestamps)
+            cols = {f"q{a:g}": qq[k, :n] for k, a in enumerate(levels)}
+            out.append(pd.DataFrame({"unique_id": w.unique_id, "ds": w.timestamps, **cols}))
+    if not out:
+        return pd.DataFrame(columns=["unique_id", "ds", "yhat", *[f"q{a:g}" for a in levels]])
+    f = pd.concat(out, ignore_index=True)
+    return f.assign(yhat=f["q0.5"])
+
+
 def _before(series: EnergySeries, cutoff: pd.Timestamp) -> EnergySeries:
     f = series.frame
     return replace(series, frame=f.loc[f["ds"] < cutoff].reset_index(drop=True))

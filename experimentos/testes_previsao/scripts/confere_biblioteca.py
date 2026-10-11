@@ -10,9 +10,12 @@ Fundacionais nao treinam, mas o torch muda entre versoes e maquinas: espera-se i
 
 Saida: resultados/conferencia_biblioteca.json (uma entrada por modelo|caso|regime). Nao toca no metricas.csv.
 
+`Chronos-2-quantis`: os 9 quantis (0,1-0,9) da biblioteca x os do piloto F2(c) (resultados/pilotos/, gerados
+no ambiente de hoje: espera-se ~1e-6).
+
 Uso (cada modelo no ambiente do pacote dele):
   ~/.venvs/lote2/Scripts/python.exe confere_biblioteca.py TiRex-2 Toto-2.0-313m Toto-2.0-22m [--smoke]
-  ~/.venvs/previsao_gpu/Scripts/python.exe confere_biblioteca.py Chronos-2 [--smoke]
+  ~/.venvs/previsao_gpu/Scripts/python.exe confere_biblioteca.py Chronos-2 Chronos-2-quantis [--smoke]
   --smoke: 3 janelas de um caso, nao grava (confere que o adaptador roda antes da fila da noite)
 """
 import importlib
@@ -36,6 +39,26 @@ MODELOS = {  # nome no benchmark: (fabrica(com_clima), regimes gravados com clim
     "Toto-2.0-22m": (lambda clima: Toto2("22m"), {}),
 }
 SAIDA = RES / "conferencia_biblioteca.json"
+QS = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+QUANTIS = {"Chronos-2-quantis": [("usinas", "A"), ("usinas", "C"), ("casas_prod", "A"), ("casas_cons", "A")]}
+
+
+def confere_quantis(nome, caso, regime, smoke=False):
+    from piloto_comum import PILOTOS
+    clima = regime != "A"
+    task = tarefa(carrega(caso, regime), caso, contexto=CONTEXTO_FM, exog=clima)
+    ws = task.windows()[:3 if smoke else None]
+    t0 = time.time()
+    q = Chronos2(EXOG if clima else None).predict_quantiles(ws)
+    dt = time.time() - t0
+    nossa = pd.concat([pd.DataFrame({"unique_id": w.unique_id, "ds": w.timestamps, "q": a, "valor": q[i, k]})
+                       for i, w in enumerate(ws) for k, a in enumerate(QS)])
+    g = pd.read_parquet(PILOTOS / f"Chronos-2-quantis__{caso}__{regime}.parquet")
+    g["ds"] = g.ds.dt.tz_localize(FUSO[caso])
+    j = nossa.merge(g, on=["unique_id", "ds", "q"], how="left", suffixes=("", "_g"))
+    dif = (j.valor - j.valor_g).abs()
+    return dict(segundos=round(dt, 1), linhas=int(len(j)), sem_par=int(j.valor_g.isna().sum()),
+                max_dif=float(dif.max()), media_dif=float(dif.mean()))
 
 
 def confere(nome, caso, regime, smoke=False):
@@ -74,6 +97,18 @@ def confere(nome, caso, regime, smoke=False):
 if __name__ == "__main__":
     args = sys.argv[1:]
     smoke = "--smoke" in args
+    for nome in [a for a in args if a in QUANTIS]:
+        for caso, regime in QUANTIS[nome][:1 if smoke else None]:
+            chave = f"{nome}|{caso}|{regime}"
+            try:
+                r = confere_quantis(nome, caso, regime, smoke)
+            except Exception as e:
+                r = dict(erro=f"{type(e).__name__}: {str(e)[:300]}")
+            print(("SMOKE " if smoke else "OK    ") + chave, json.dumps(r), flush=True)
+            if not smoke:
+                tudo = json.loads(SAIDA.read_text(encoding="utf-8")) if SAIDA.exists() else {}
+                tudo[chave] = r
+                SAIDA.write_text(json.dumps(tudo, indent=1, ensure_ascii=False), encoding="utf-8")
     for nome in [a for a in args if a in MODELOS]:
         _, com_clima = MODELOS[nome]
         combos = [("usinas", "A")] if smoke else [(c, r) for c in ("usinas", "casas_prod", "casas_cons")

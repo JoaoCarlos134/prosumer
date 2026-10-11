@@ -228,3 +228,22 @@ def test_weather_models_are_regime_c_and_need_the_weather() -> None:
     assert f.loc["LightGBM-C", "regime"] == "C" and f.loc["LightGBM-C", "skill"] > f.loc["median", "skill"]
     assert list(r.forecast["forecast"])[-1] == "clear_sky_persistence"
     assert set(r.resolution["forecast"]) == {"median", "weather_linear", "LightGBM-C"}
+
+
+def test_bands_section_scores_each_band_against_the_14_day_reference() -> None:
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBMQuantile
+
+    s = data.example_house(n_series=2, days=70)
+    r = analyze(s, test_days=14, models=[LightGBMQuantile(params={"n_estimators": 60})])
+    assert r.bands is not None and r.forecast is not None
+    b = r.bands.set_index("source")
+    assert list(b.index) == ["LightGBM-quantile", "empirical_14d"]
+    assert b.loc["empirical_14d", "CRPS_skill"] == 0.0
+    assert (b["hours"] == b["hours"].iloc[0]).all()  # every band on the same hours
+    assert 0 < b.loc["LightGBM-quantile", "coverage_80"] <= 1
+    assert "LightGBM-quantile" in set(r.forecast["forecast"])  # its median is a point row too
+    assert "bands (quantiles)" not in r.pending
+    assert "### Bands" in r.to_markdown()
+    json.dumps(r.to_dict())

@@ -424,11 +424,19 @@ gravadas nas 9 combinacoes caso/regime com diferenca <= 3,5e-18 (`tests/test_for
 padrao, `PROSUMER_FULL=1` para as 9, ~3 min). Fundacionais: 3 janelas conferidas (TiRex-2 A/C, Toto-22m, Chronos-2 A
 ~1e-6; Chronos-2 C 1e-3); a conferencia completa (`scripts/confere_biblioteca.py`, saida
 `resultados/conferencia_biblioteca.json`) esta na fila da noite de 11/10, AGENDADA no Agendador de Tarefas do
-Windows (`prosumer_fila_noite`, 22:00, MODO_TESTE=1; apagar a tarefa depois). `analyze(models=[...])`: modelo de
+Windows (`prosumer_fila_noite`, 23:00, MODO_TESTE=1; apagar a tarefa depois). `analyze(models=[...])`: modelo de
 historico vira linha A e entra na mediana; modelo com covariaveis vira linha C (precisa de `weather`); fundacionais
 com 1024 h. Casas (consumo, 92 dias): LightGBM +0,199, mediana +0,145 -> +0,190. O extra `lightgbm` inclui o
 scikit-learn (o LGBMRegressor exige). Licencas do TiRex-2 e do Toto-2.0 NAO conferidas (o cartao manda ver o model
-card). Proximo: ler a conferencia da noite; faixas (quantis) no `forecast`; o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+card). **Faixas (11/10, tarde):** `LightGBMQuantile` (um LightGBM por nivel; refaz o piloto F2(c) com dif 0,0 em
+casas_prod A e usinas C), `EmpiricalQuantiles` (referencia: quantis do mesmo horario nos 14 dias; = a do piloto ate
+1e-15), quantis no `Chronos2` (= piloto ate 2e-6; o ponto e o nivel 0,5) e no `TiRex2`; `rolling_quantiles` (um ajuste
+serve ponto e faixa); secao `bands` no `analyze` (cobertura 80/60, largura, CRPS e skill contra a empirica nas mesmas
+horas, `calibrated` = +-5 pontos, nota quando nao calibra). Casas, 92 dias: consumo calibrado (0,771/0,573, CRPS
++0,082), FV estreita (0,618/0,423) - como no piloto. A diferenca de 1e-3 do Chronos-2 no C e do ambiente antigo do
+benchmark (o piloto, ambiente de hoje, bate a 2e-6). A fila das 23:00 (tarefa agendada, acorda o PC) confere tambem
+os quantis do Chronos-2 e do LightGBM. Proximo: ler a conferencia; calibracao conformal causal das faixas (C e FV);
+o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

@@ -20,14 +20,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
 from . import metrics, physics
 from .contracts import EnergySeries
-from .forecast import Forecaster, rolling_forecast
+from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
 from .protocol import DayAhead, H, Regime, Window
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
@@ -36,7 +36,7 @@ OUTPUT = "median"
 PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
     "trained and foundation models": "needs the `forecast` module (adapters with metadata): step E2",
-    "bands (quantiles)": "`metrics.band_scores` exists; the quantile sources come with `forecast`: step E2",
+    "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
     "diagnostics": "soiling, string faults, shading: step E4",
     "economics": "time-of-use tariffs and the Brazilian module: step E6",
 }
@@ -52,6 +52,7 @@ class Report:
     forecast: pd.DataFrame | None = None  # one row per forecast: skill, CI, nRMSE, MBE, R2
     resolution: pd.DataFrame | None = None  # the output (median) and the weather forecast, per resolution
     weather: pd.DataFrame | None = None  # coverage of each weather model, when a forecast was given
+    bands: pd.DataFrame | None = None  # calibration and CRPS of each model's quantile band
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
@@ -73,6 +74,7 @@ class Report:
             "forecast": records(self.forecast),
             "resolution": records(self.resolution),
             "weather": records(self.weather),
+            "bands": records(self.bands),
             "pending": dict(self.pending),
         }
 
@@ -103,6 +105,17 @@ class Report:
             ]
         if self.resolution is not None:
             lines += ["", "### At several resolutions", "", _table(self.resolution)]
+        if self.bands is not None:
+            lines += [
+                "",
+                "### Bands",
+                "",
+                "Share of the hours inside the central 80% and 60% intervals (calibrated: within 5 points "
+                "of nominal), mean width of the 80% band and CRPS, against the quantiles of the same hour "
+                "over the last 14 days, all on the same hours.",
+                "",
+                _table(self.bands),
+            ]
         if self.weather is not None:
             lines += [
                 "",
@@ -190,6 +203,7 @@ def analyze(
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
     w = None if weather is None else _weather_frame(weather, s.series)
+    bands_raw: dict[str, pd.DataFrame] = {}
     for model in models:
         name = model.card.name
         if name in fc.columns:
@@ -208,8 +222,13 @@ def analyze(
             issue_hour=issue_hour,
             covariates=None if history_only else w,
         )
-        out = rolling_forecast(model, task_m).rename(columns={"yhat": name})
-        fc = fc.merge(out, on=["unique_id", "ds"], how="left")
+        if hasattr(model, "predict_quantiles") and hasattr(model, "levels"):
+            qf = rolling_quantiles(cast(Probabilistic, model), task_m)  # one fit: point = the 0.5 level
+            bands_raw[name] = qf.drop(columns="yhat")
+            out = qf[["unique_id", "ds", "yhat"]]
+        else:
+            out = rolling_forecast(model, task_m)
+        fc = fc.merge(out.rename(columns={"yhat": name}), on=["unique_id", "ds"], how="left")
         regimes[name] = "A" if history_only else "C"
     # the output: median of every regime A forecast (the naive ones and the A models; not the reference alone)
     in_median = [
@@ -270,6 +289,22 @@ def analyze(
         ignore_index=True,
     )
     resolution = resolution[["forecast", *[c for c in resolution.columns if c != "forecast"]]]
+    bands = None
+    if bands_raw:
+        reference_band = rolling_quantiles(
+            EmpiricalQuantiles(),
+            DayAhead(
+                s,
+                test_start=test_start,
+                test_end=end,
+                refit_days=test_days,
+                context=24 * 14,
+                min_history=CONTEXT,
+                issue_hour=issue_hour,
+            ),
+        ).drop(columns="yhat")
+        bands, band_notes = _bands(bands_raw, reference_band, actual, regimes)
+        notes.extend(band_notes)
 
     summary |= {
         "test_start": test_start.date().isoformat(),
@@ -289,6 +324,8 @@ def analyze(
     pending = dict(PENDING)
     if weather is not None:
         pending.pop("weather (regimes B and C)")
+    if bands is not None:
+        pending.pop("bands (quantiles)")
     return Report(
         summary=summary,
         quality=quality,
@@ -296,6 +333,7 @@ def analyze(
         forecast=table,
         resolution=resolution,
         weather=weather_table,
+        bands=bands,
         pending=pending,
     )
 
@@ -334,6 +372,51 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
         parts.append(pd.DataFrame(f))
     fc = pd.concat(parts, ignore_index=True)
     return fc
+
+
+def _bands(
+    raw: dict[str, pd.DataFrame], reference: pd.DataFrame, actual: pd.DataFrame, regimes: dict[str, str]
+) -> tuple[pd.DataFrame, list[str]]:
+    """Score every band and the 14-day reference on the same evaluated hours (those where all are finite).
+    Negative quantiles are cut at 0, as the point forecasts of the benchmark."""
+    j = actual[["unique_id", "ds", "y"]]
+    for name, q in [("empirical_14d", reference), *raw.items()]:
+        renamed = {c: f"{name}|{c}" for c in q.columns if c.startswith("q")}
+        j = j.merge(q.rename(columns=renamed), on=["unique_id", "ds"])
+    j = j.dropna()
+    if j.empty:
+        return pd.DataFrame(), ["Bands left out: no evaluated hour where every band exists."]
+    y = j["y"].to_numpy()
+    scores = {}
+    for name in ["empirical_14d", *raw]:
+        cols = [c for c in j.columns if c.startswith(f"{name}|q")]
+        levels = [float(c.split("|q")[1]) for c in cols]
+        scores[name] = metrics.band_scores(y, j[cols].clip(lower=0).to_numpy(), levels)
+    base = scores["empirical_14d"]["CRPS"]
+    rows, notes = [], []
+    for name in [*raw, "empirical_14d"]:
+        sc = scores[name]
+        c80, c60 = sc.get("coverage_80", np.nan), sc.get("coverage_60", np.nan)
+        calibrated = bool(abs(c80 - 0.8) <= 0.05 and abs(c60 - 0.6) <= 0.05)
+        rows.append(
+            {
+                "source": name,
+                "regime": regimes.get(name, "A"),
+                "coverage_80": c80,
+                "coverage_60": c60,
+                "width_80": sc.get("width_80", np.nan),
+                "CRPS": sc["CRPS"],
+                "CRPS_skill": 1 - sc["CRPS"] / base if base > 0 else np.nan,
+                "calibrated": calibrated,
+                "hours": int(sc["n"]),
+            }
+        )
+        if name != "empirical_14d" and not calibrated:
+            notes.append(
+                f"The band of {name} is not calibrated (80% band: {c80:.0%} of the hours, 60%: {c60:.0%}): "
+                "do not read it as a probability."
+            )
+    return pd.DataFrame(rows), notes
 
 
 def _weather_frame(weather: pd.DataFrame, series_ids: list[str]) -> pd.DataFrame:

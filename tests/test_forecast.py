@@ -86,3 +86,36 @@ def test_lightgbm_card_and_runs_on_synthetic_data() -> None:
     assert len(fc) == len(task.windows()) * 24 and fc["yhat"].notna().all()
     with pytest.raises(NotImplementedError, match="whole days"):
         rolling_forecast(m, DayAhead(s, test_start="2024-02-20", test_end="2024-02-22", issue_hour=12))
+
+
+def test_empirical_quantiles_are_the_quantiles_of_the_same_hour() -> None:
+    from prosumer.forecast import EmpiricalQuantiles, rolling_quantiles
+
+    s = data.example_house(n_series=1, days=40)
+    task = DayAhead(s, test_start="2024-02-01", test_end="2024-02-03", context=24 * 14)
+    w = task.windows()[0]
+    m = EmpiricalQuantiles()
+    q = m.predict_quantiles([w])[0]
+    same_hour = np.stack([w.history[24 * 14 - 24 * d : 24 * 14 - 24 * d + 24] for d in range(1, 15)])
+    np.testing.assert_allclose(q, np.quantile(same_hour, m.levels, axis=0))
+    np.testing.assert_allclose(m.predict([w])[0], np.median(same_hour, axis=0))
+    out = rolling_quantiles(m, task)
+    assert {"q0.1", "q0.5", "q0.9", "yhat"} <= set(out.columns) and (out["yhat"] == out["q0.5"]).all()
+    # fewer than `min_days` measured days at an hour: no band there
+    holed = Window(w.unique_id, w.day, w.history, w.timestamps, history_valid=np.zeros(len(w.history), bool))
+    assert np.isnan(m.predict_quantiles([holed])).all()
+
+
+def test_lightgbm_quantile_bands_are_ordered_on_average_and_the_point_is_the_median() -> None:
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBMQuantile, rolling_quantiles
+
+    s = data.example_house(n_series=2, days=60)
+    task = DayAhead(s, test_start="2024-02-20", test_end="2024-02-29", refit_days=10, context=168)
+    m = LightGBMQuantile(params={"n_estimators": 60}, levels=(0.1, 0.5, 0.9))
+    out = rolling_quantiles(m, task)
+    assert (out["q0.9"] - out["q0.1"]).mean() > 0
+    assert (out["yhat"] == out["q0.5"]).all()
+    with pytest.raises(ValueError, match=r"include 0.5"):
+        LightGBMQuantile(levels=(0.1, 0.9))

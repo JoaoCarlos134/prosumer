@@ -27,6 +27,7 @@ from ..protocol import H, Regime, Window
 from .base import ModelCard
 
 _ALL = (Regime.HISTORY, Regime.KNOWN_WEATHER, Regime.REAL_FORECAST)
+LEVELS = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 
 
 class _ZeroShot:
@@ -43,6 +44,20 @@ class _ZeroShot:
         """Zero-shot: nothing is fitted. The model is loaded once, on the first `predict`."""
 
     def predict(self, windows: list[Window]) -> np.ndarray:
+        self._ready(windows)
+        out = [p for chunk in _batches(windows, self.batch) for p in self._forecast(chunk)]
+        return np.asarray(out, dtype=float)[:, :H]
+
+    def predict_quantiles(self, windows: list[Window]) -> np.ndarray:
+        """Shape (windows, 9 levels 0.1-0.9, 24); only for the models that give quantiles."""
+        self._ready(windows)
+        out = [q for chunk in _batches(windows, self.batch) for q in self._quantiles(chunk)]
+        return np.asarray(out, dtype=float)[:, :, :H]
+
+    def _quantiles(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        raise NotImplementedError(f"{self.card.name} gives no quantiles here")
+
+    def _ready(self, windows: list[Window]) -> None:
         for w in windows:
             if len(w.timestamps) != H:
                 raise NotImplementedError(f"{self.card.name} forecasts whole days (issue_hour=0)")
@@ -51,8 +66,6 @@ class _ZeroShot:
                     raise ValueError(f"window without covariate {c!r}: pass covariates to DayAhead")
         if self._model is None:
             self._model = self._load()
-        out = [p for chunk in _batches(windows, self.batch) for p in self._forecast(chunk)]
-        return np.asarray(out, dtype=float)[:, :H]
 
     def _past(self, w: Window, c: str) -> np.ndarray:
         return np.asarray(w.past_covariates[c], dtype=np.float32)
@@ -71,6 +84,7 @@ class Chronos2(_ZeroShot):
     """Chronos-2 (Amazon, 2025): past and future covariates, 21 quantiles; the forecast is the median.
     Extra `chronos` (`chronos-forecasting`)."""
 
+    levels = LEVELS
     card = ModelCard(
         name="Chronos-2",
         family="foundation",
@@ -87,9 +101,17 @@ class Chronos2(_ZeroShot):
 
         p = BaseChronosPipeline.from_pretrained("amazon/chronos-2", device_map="cpu")
         self._i50 = int(np.argmin(np.abs(np.asarray(p.quantiles) - 0.5)))
+        qs = [round(float(x), 4) for x in p.quantiles]
+        self._i9 = [qs.index(a) for a in LEVELS]  # fails if one of the 9 levels is not among its 21
         return p
 
     def _forecast(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        return [x[0, self._i50].numpy() for x in self._raw(windows)]
+
+    def _quantiles(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        return [x[0, self._i9].numpy() for x in self._raw(windows)]
+
+    def _raw(self, windows: list[Window]) -> Any:  # pragma: no cover
         inputs = []
         for w in windows:
             e: dict[str, Any] = {"target": w.history.astype(np.float32)}
@@ -97,14 +119,14 @@ class Chronos2(_ZeroShot):
                 e["past_covariates"] = {c: self._past(w, c) for c in self.covariates}
                 e["future_covariates"] = {c: self._future(w, c) for c in self.covariates}
             inputs.append(e)
-        r = self._model.predict(inputs, prediction_length=H)
-        return [x[0, self._i50].numpy() for x in r]
+        return self._model.predict(inputs, prediction_length=H)
 
 
 class TiRex2(_ZeroShot):
     """TiRex-2 (NX-AI): xLSTM, future covariates; the forecast is the median of 9 quantiles. Runs on CPU with
     the GPU hidden from the process (its sLSTM kernel would otherwise need nvcc at import). Extra `tirex2`."""
 
+    levels = LEVELS
     card = ModelCard(
         name="TiRex-2",
         family="foundation",
@@ -127,6 +149,9 @@ class TiRex2(_ZeroShot):
         return load_model("NX-AI/TiRex-2", device="cpu", use_flex_attention=False, compile=False)
 
     def _forecast(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        return [q[4] for q in self._quantiles(windows)]  # level 0.5
+
+    def _quantiles(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
         import torch
         from tirex2 import TimeseriesType
 
@@ -141,7 +166,7 @@ class TiRex2(_ZeroShot):
             target = torch.tensor(w.history.astype(np.float32))[None]
             ts.append(TimeseriesType(target=target, past_covariates=None, future_covariates=fut))
         r = self._model.forecast(ts, prediction_length=H, output_type="numpy", batch_size=self.batch)
-        return [np.asarray(x)[0, 4, :H] for x in r]
+        return [np.asarray(x)[0, :, :H] for x in r]  # (V, 9 quantiles 0.1-0.9, H) -> the target's
 
 
 class Toto2(_ZeroShot):

@@ -19,10 +19,10 @@ MT="powershell -NoProfile -ExecutionPolicy Bypass -File $(cygpath -w "$PWD/modo_
 trap '[ "$MODO_TESTE" = 1 ] && $MT -Restaurar >> "$LOG" 2>&1' EXIT
 {
 date
-# 1. LightGBM da biblioteca x gravado, as 9 combinacoes (~3 min; igualdade ate 1e-12)
+# 1. LightGBM da biblioteca x gravado, as 9 combinacoes + os quantis do piloto (~5 min; igualdade ate 1e-12)
 ( cd ../../.. && PROSUMER_FULL=1 timeout 30m .venv/Scripts/python.exe -m pytest -p no:hypothesispytest     tests/test_forecast_parity.py 2>&1 | tail -3 ); date
 # 2. Fundacionais de CPU pela biblioteca (resultados/conferencia_biblioteca.json; ~25 min medidos no benchmark)
 roda 1h ~/.venvs/lote2/Scripts/python.exe -u confere_biblioteca.py TiRex-2 Toto-2.0-313m Toto-2.0-22m; date
-roda 1h $P -u confere_biblioteca.py Chronos-2; date
+roda 1h $P -u confere_biblioteca.py Chronos-2 Chronos-2-quantis; date
 echo FIM; date
 } >> "$LOG" 2>&1

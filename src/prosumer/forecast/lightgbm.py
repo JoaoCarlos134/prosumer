@@ -78,19 +78,29 @@ class LightGBM:
     def fit(self, series: EnergySeries, cutoff: pd.Timestamp, covariates: pd.DataFrame | None = None) -> None:
         import lightgbm as lgb
 
-        self._codes = {u: k for k, u in enumerate(natural_order(series.series))}
-        self._cov = covariates
-        long = _long(series.frame, covariates, self._needed())
-        table = pd.concat(
-            [self._features(g, uid) for uid, g in _in_order(long, self._codes)], ignore_index=True
-        )
-        train = table[(table["dia"] < cutoff.normalize()) & table["y"].notna()]
+        train = self._training_table(series, cutoff, covariates)
         self._model = lgb.LGBMRegressor(**self.params)
         self._model.fit(train[self.columns], train["y"], categorical_feature=["serie_cod"])
 
     def predict(self, windows: list[Window]) -> np.ndarray:
         if self._model is None:
             raise RuntimeError("fit before predict")
+        x = self._design(windows)
+        return np.asarray(self._model.predict(x[self.columns]), dtype=float).reshape(len(windows), H)
+
+    # ------------------------------------------------------------------ tables
+    def _training_table(
+        self, series: EnergySeries, cutoff: pd.Timestamp, covariates: pd.DataFrame | None
+    ) -> pd.DataFrame:
+        self._codes = {u: k for k, u in enumerate(natural_order(series.series))}
+        long = _long(series.frame, covariates, self._needed())
+        table = pd.concat(
+            [self._features(g, uid) for uid, g in _in_order(long, self._codes)], ignore_index=True
+        )
+        return table[(table["dia"] < cutoff.normalize()) & table["y"].notna()]
+
+    def _design(self, windows: list[Window]) -> pd.DataFrame:
+        """The feature rows of the windows' target hours, window by window, hour by hour."""
         rows = []
         for w in windows:
             if len(w.timestamps) != H:
@@ -106,8 +116,7 @@ class LightGBM:
                 g[c] = np.r_[past, fut]
             t = self._features(g, w.unique_id)
             rows.append(t[t["dia"] == w.day])
-        x = pd.concat(rows, ignore_index=True)
-        return np.asarray(self._model.predict(x[self.columns]), dtype=float).reshape(len(windows), H)
+        return pd.concat(rows, ignore_index=True)
 
     # ------------------------------------------------------------------ features
     def _needed(self) -> list[str]:
@@ -142,6 +151,49 @@ class LightGBM:
         doy = t["dia"].dt.dayofyear
         t["doy_sin"], t["doy_cos"] = np.sin(2 * np.pi * doy / 365.25), np.cos(2 * np.pi * doy / 365.25)
         return t
+
+
+class LightGBMQuantile(LightGBM):
+    """One LightGBM per quantile level (pinball loss), same features and protocol: the band source of pilot
+    F2(c). Calibrated in regime A on the houses' consumption and on the plants (80% band covered 0.77 of the
+    hours); too narrow on the houses' PV (0.65) and in regime C (0.74): read the coverage before trusting it.
+
+    `predict` gives the 0.5 level (the median, a point forecast in its own right, not the mean LightGBM's).
+    """
+
+    def __init__(
+        self,
+        covariates: list[str] | None = None,
+        *,
+        levels: tuple[float, ...] = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+        clear_sky: str | None = None,
+        params: dict[str, Any] | None = None,
+        name: str = "LightGBM-quantile",
+    ) -> None:
+        super().__init__(covariates, clear_sky=clear_sky, params=params, name=name)
+        if 0.5 not in levels or sorted(levels) != list(levels):
+            raise ValueError("levels must be increasing and include 0.5")
+        self.levels = tuple(levels)
+        self._models: list[Any] = []
+
+    def fit(self, series: EnergySeries, cutoff: pd.Timestamp, covariates: pd.DataFrame | None = None) -> None:
+        import lightgbm as lgb
+
+        train = self._training_table(series, cutoff, covariates)
+        self._models = []
+        for a in self.levels:
+            m = lgb.LGBMRegressor(objective="quantile", alpha=a, **self.params)
+            m.fit(train[self.columns], train["y"], categorical_feature=["serie_cod"])
+            self._models.append(m)
+        self._model = self._models[self.levels.index(0.5)]
+
+    def predict_quantiles(self, windows: list[Window]) -> np.ndarray:
+        """Shape (windows, levels, 24), in the order of `levels`; crossed quantiles are left as they come."""
+        if not self._models:
+            raise RuntimeError("fit before predict")
+        x = self._design(windows)[self.columns]
+        q = np.stack([np.asarray(m.predict(x), dtype=float) for m in self._models])  # (levels, rows)
+        return q.reshape(len(self.levels), len(windows), H).transpose(1, 0, 2)
 
 
 # ---------------------------------------------------------------------- helpers

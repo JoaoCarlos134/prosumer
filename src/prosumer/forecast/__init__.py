@@ -12,9 +12,22 @@ the user's data away (TimeGPT). The app shows the card next to each row.
 
 from __future__ import annotations
 
-from .base import Forecaster, ModelCard, rolling_forecast
+from .base import Forecaster, ModelCard, Probabilistic, rolling_forecast, rolling_quantiles
 from .foundation import Chronos2, TiRex2, Toto2
-from .lightgbm import LightGBM
-from .naive import Naive
+from .lightgbm import LightGBM, LightGBMQuantile
+from .naive import EmpiricalQuantiles, Naive
 
-__all__ = ["Chronos2", "Forecaster", "LightGBM", "ModelCard", "Naive", "TiRex2", "Toto2", "rolling_forecast"]
+__all__ = [
+    "Chronos2",
+    "EmpiricalQuantiles",
+    "Forecaster",
+    "LightGBM",
+    "LightGBMQuantile",
+    "ModelCard",
+    "Naive",
+    "Probabilistic",
+    "TiRex2",
+    "Toto2",
+    "rolling_forecast",
+    "rolling_quantiles",
+]

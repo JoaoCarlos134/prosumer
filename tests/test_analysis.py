@@ -127,3 +127,61 @@ def test_analyze_reproduces_the_benchmark_naive_forecasts_on_the_dingle_houses()
     ):
         for col in ("skill", "nRMSE", "MBE", "R2"):
             assert ours.loc[name, col] == pytest.approx(pub.loc[model, col], abs=1e-12), (name, col)
+
+
+def _plant_and_weather(days: int = 60) -> tuple[object, pd.DataFrame]:
+    series, w = data.example_plant(n_series=2, days=days)
+    # a "forecast" equal to the irradiance the generation was built from, as two models that agree
+    weather = w[["unique_id", "ds"]].assign(
+        ghi_a=w["poa_estimated"], ghi_b=w["poa_estimated"], ghi_mean=w["poa_estimated"], ghi_spread=0.0
+    )
+    return series, weather
+
+
+def test_weather_adds_regime_c_and_its_section() -> None:
+    series, weather = _plant_and_weather()
+    r = analyze(series, site=(-25.43, -49.27), test_days=14, weather=weather)
+    assert r.forecast is not None and r.weather is not None and r.resolution is not None
+    f = r.forecast.set_index("forecast")
+    assert (
+        f.loc["weather_linear", "regime"] == "C" and (f.drop(index="weather_linear")["regime"] == "A").all()
+    )
+    assert f.loc["weather_linear", "skill"] > 0.99  # the generation is linear in this irradiance
+    assert f.loc["weather_linear", "skill"] > f.loc["median", "skill"]
+    assert list(r.forecast["forecast"])[-1] == "clear_sky_persistence"  # the reference closes the table
+    assert set(r.resolution["forecast"]) == {"median", "weather_linear"}
+    assert list(r.weather["source"]) == ["a", "b", "mean"] and (r.weather["fraction"] == 1.0).all()
+    assert "weather (regimes B and C)" not in r.pending
+    assert "## Weather forecast" in r.to_markdown()
+
+
+def test_weather_without_series_id_is_shared_and_gaps_leave_every_row() -> None:
+    series, weather = _plant_and_weather()
+    shared = weather[weather["unique_id"] == "plant_1"].drop(columns="unique_id")
+    last_day = shared["ds"].max().normalize()
+    holed = shared.copy()
+    holed.loc[holed["ds"] >= last_day + pd.Timedelta(hours=10), ["ghi_a", "ghi_b", "ghi_mean"]] = np.nan
+    full = analyze(series, test_days=14, weather=shared)
+    cut = analyze(series, test_days=14, weather=holed)
+    assert full.forecast is not None and cut.forecast is not None
+    assert "weather_linear" in set(full.forecast["forecast"])
+    assert not any("left out" in n for n in full.notes)
+    assert any("without a weather forecast left out of every row" in n for n in cut.notes)
+    assert cut.forecast.set_index("forecast").loc["median", "skill"] != pytest.approx(
+        full.forecast.set_index("forecast").loc["median", "skill"]
+    )
+
+
+def test_consumption_with_weather_gets_only_the_coverage() -> None:
+    s = data.example_house(n_series=1, days=40)
+    ds = pd.date_range("2024-01-01", periods=40 * 24, freq="h", tz=s.tz)
+    weather = pd.DataFrame({"ds": ds, "ghi_x": 100.0, "ghi_mean": 100.0})
+    r = analyze(s, test_days=14, weather=weather)
+    assert r.forecast is not None and "weather_linear" not in set(r.forecast["forecast"])
+    assert r.weather is not None and list(r.weather["source"]) == ["x", "mean"]
+
+
+def test_weather_needs_aware_times() -> None:
+    series, weather = _plant_and_weather(30)
+    with pytest.raises(ValueError, match="time zone"):
+        analyze(series, test_days=7, weather=weather.assign(ds=weather["ds"].dt.tz_localize(None)))

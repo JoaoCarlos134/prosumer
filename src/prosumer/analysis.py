@@ -32,7 +32,7 @@ CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days ba
 OUTPUT = "median"
 
 PENDING = {
-    "weather (regimes B and C)": "needs the `io` module (Open-Meteo with several weather models): step E2",
+    "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
     "trained and foundation models": "needs the `forecast` module (adapters with metadata): step E2",
     "bands (quantiles)": "`metrics.band_scores` exists; the quantile sources come with `forecast`: step E2",
     "diagnostics": "soiling, string faults, shading: step E4",
@@ -48,7 +48,8 @@ class Report:
     quality: pd.DataFrame
     notes: list[str] = field(default_factory=list)
     forecast: pd.DataFrame | None = None  # one row per forecast: skill, CI, nRMSE, MBE, R2
-    resolution: pd.DataFrame | None = None  # the output (median) at each resolution
+    resolution: pd.DataFrame | None = None  # the output (median) and the weather forecast, per resolution
+    weather: pd.DataFrame | None = None  # coverage of each weather model, when a forecast was given
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
@@ -61,7 +62,7 @@ class Report:
             for c in out.columns:
                 if pd.api.types.is_datetime64_any_dtype(out[c]):
                     out[c] = out[c].map(lambda t: t.isoformat())
-            return [{k: _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
+            return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
 
         return {
             "summary": {k: _plain(v) for k, v in self.summary.items()},
@@ -69,6 +70,7 @@ class Report:
             "notes": list(self.notes),
             "forecast": records(self.forecast),
             "resolution": records(self.resolution),
+            "weather": records(self.weather),
             "pending": dict(self.pending),
         }
 
@@ -92,12 +94,22 @@ class Report:
                 "",
                 f"Test: {s['test_start']} to {s['test_end']}, issued at {s['issue_hour']:02d}:00, "
                 f"{s['test_windows']} series-days. Skill against `{s['reference']}` (0 = same as it). "
-                f"Output: the {OUTPUT} of the forecasts.",
+                f"Output: the {OUTPUT} of the regime A forecasts (history only); regime C uses the weather "
+                "forecast issued the day before.",
                 "",
                 _table(self.forecast),
             ]
         if self.resolution is not None:
-            lines += ["", f"### The output ({OUTPUT}) at several resolutions", "", _table(self.resolution)]
+            lines += ["", "### At several resolutions", "", _table(self.resolution)]
+        if self.weather is not None:
+            lines += [
+                "",
+                "## Weather forecast",
+                "",
+                "Coverage of each model, from the first day of data to the end of the test.",
+                "",
+                _table(self.weather),
+            ]
         lines += ["", "## Not available yet", "", *[f"- **{k}**: {v}" for k, v in self.pending.items()]]
         return "\n".join(lines) + "\n"
 
@@ -109,6 +121,7 @@ def analyze(
     test_days: int = 28,
     issue_hour: int = 0,
     levels: dict[str, metrics.Level] | None = None,
+    weather: pd.DataFrame | None = None,
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -117,6 +130,13 @@ def analyze(
     yesterday" and the hours count by the training profile. `test_days`: the last days of the data used as the
     test. `issue_hour`: as in `DayAhead` (12 = the evening issued at noon). `levels`: resolutions of
     `metrics.by_resolution` (default: hour, day/night, evening peak, day; `metrics.by_blocks` for a tariff).
+
+    `weather`: the day-ahead weather forecast, as `io.open_meteo.wide` returns it (`ds`, `ghi_<model>`,
+    `ghi_mean`, ...; with `unique_id` for one site per series, without it the same weather for every series).
+    It adds the weather section (coverage of each model) and, for generation, the regime C forecast
+    `weather_linear`: energy = a + b x the mean forecast GHI, per series, fitted on the sun hours before the
+    test (the benchmark's "linear physics" on GHI instead of the panel-plane irradiance). Every row of the
+    table is then scored on the same hours: those with a weather forecast.
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
@@ -159,12 +179,30 @@ def analyze(
     actual = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
     keep = _evaluated(actual, fc, generation, site, test_start)
     actual = actual.loc[keep]
+    regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
+    weather_table = None
+    if weather is not None:
+        w = _weather_frame(weather, s.series)
+        weather_table = _weather_coverage(w, frame["ds"].min(), end + pd.Timedelta(hours=H - 1))
+        if generation:
+            fc, note = _weather_linear(fc, w, s, site, test_start)
+            if note:
+                notes.append(note)
+            else:
+                regimes["weather_linear"] = "C"
+        # common support: every row on the hours where every forecast exists (weather gaps drop hours for all)
+        missing = fc.loc[fc[list(regimes)].isna().any(axis=1), ["unique_id", "ds"]].assign(_drop=True)
+        flagged = (
+            actual.merge(missing, on=["unique_id", "ds"], how="left")["_drop"].fillna(False).to_numpy(bool)
+        )
+        actual = actual.loc[~flagged]
+        if flagged.any():
+            notes.append(f"{int(flagged.sum())} test hours without a weather forecast left out of every row.")
     ref = fc[["unique_id", "ds", reference]].rename(columns={reference: "yhat"})
-    rows = []
-    aligned_output = aligned_ref = None
-    for name in [OUTPUT, *[c for c in _NAIVE if c in fc.columns]]:
+    rows, aligned = [], {}
+    for name, regime in regimes.items():
         m, r = metrics.align(fc[["unique_id", "ds", name]].rename(columns={name: "yhat"}), actual, ref)
-        row = {"forecast": name, "skill": metrics.skill(m, r)}
+        row = {"forecast": name, "regime": regime, "skill": metrics.skill(m, r)}
         try:
             row["skill_ci_low"], row["skill_ci_high"] = metrics.skill_ci95(m, r)
         except ValueError:
@@ -172,18 +210,20 @@ def analyze(
         mm = metrics.metrics(m)
         row.update(nRMSE=mm["nRMSE"], MBE=mm["MBE"], R2=mm["R2"], R2_daily=mm["R2_daily"])
         rows.append(row)
-        if name == OUTPUT:
-            aligned_output, aligned_ref = m, r
-    if reference not in _NAIVE:
-        m, r = metrics.align(ref, actual, ref)
-        mm = metrics.metrics(m)
-        rows.append(
-            {"forecast": reference, "skill": 0.0, "skill_ci_low": 0.0, "skill_ci_high": 0.0}
-            | {k: mm[k] for k in ("nRMSE", "MBE", "R2", "R2_daily")}
-        )
+        aligned[name] = (m, r)
+    # the reference last, the regime C forecast after the regime A ones
     table = pd.DataFrame(rows)
-    assert aligned_output is not None and aligned_ref is not None
-    resolution = metrics.by_resolution(aligned_output, aligned_ref, levels)
+    order = list(dict.fromkeys([OUTPUT, *_NAIVE, "weather_linear", reference]))
+    table = table.set_index("forecast").loc[[n for n in order if n in set(table["forecast"])]].reset_index()
+    resolution = pd.concat(
+        [
+            metrics.by_resolution(*aligned[n], levels).assign(forecast=n)
+            for n in (OUTPUT, "weather_linear")
+            if n in aligned
+        ],
+        ignore_index=True,
+    )
+    resolution = resolution[["forecast", *[c for c in resolution.columns if c != "forecast"]]]
 
     summary |= {
         "test_start": test_start.date().isoformat(),
@@ -197,10 +237,21 @@ def analyze(
             "Generation without a site: the reference is 'same as yesterday', weaker than the clear-sky "
             "persistence of the benchmark. Pass site=(lat, lon) for the benchmark's reference."
         )
-    bias = float(table.set_index("forecast").loc[OUTPUT, "MBE"])
+    bias = float(table.loc[table["forecast"] == OUTPUT, "MBE"].to_numpy(float)[0])
     if abs(bias) > 0.05:
         notes.append(f"The output is biased by {bias:+.0%} of the mean (MBE).")
-    return Report(summary=summary, quality=quality, notes=notes, forecast=table, resolution=resolution)
+    pending = dict(PENDING)
+    if weather is not None:
+        pending.pop("weather (regimes B and C)")
+    return Report(
+        summary=summary,
+        quality=quality,
+        notes=notes,
+        forecast=table,
+        resolution=resolution,
+        weather=weather_table,
+        pending=pending,
+    )
 
 
 # ---------------------------------------------------------------------- pieces
@@ -231,13 +282,88 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
             cs_past = physics.clear_sky_ghi(pd.DatetimeIndex(past), *site)
             cs_now = physics.clear_sky_ghi(w.timestamps, *site)
             total = cs_past.sum()
-            kc = x[-H:].sum() / total if total > 0 else 0.0
+            kc = float(x[-H:].sum()) / float(total) if total > 0 else 0.0
             f["clear_sky_persistence"] = cs_now * kc
             f["_sun"] = cs_now > 0
         parts.append(pd.DataFrame(f))
     fc = pd.concat(parts, ignore_index=True)
     fc[OUTPUT] = fc[list(_NAIVE)].median(axis=1)
     return fc
+
+
+def _weather_frame(weather: pd.DataFrame, series_ids: list[str]) -> pd.DataFrame:
+    """The weather with a `unique_id` per series (repeated when it came without one) and `ds` aware."""
+    if "ds" not in weather.columns:
+        raise ValueError("weather needs a `ds` column (see io.open_meteo.wide)")
+    if getattr(weather["ds"].dt, "tz", None) is None:
+        raise ValueError("weather.ds must carry a time zone")
+    if "unique_id" in weather.columns:
+        return weather.assign(unique_id=weather["unique_id"].astype(str))
+    return pd.concat([weather.assign(unique_id=u) for u in series_ids], ignore_index=True)
+
+
+def _weather_coverage(w: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """Per GHI column (each model, then the mean): first and last hour with a value, fraction in [start,
+    end]."""
+    cols = [c for c in w.columns if c.startswith("ghi_") and c != "ghi_spread"]
+    one = w.drop_duplicates("ds").set_index("ds").sort_index()
+    inside = one.loc[(one.index >= start) & (one.index <= end)]
+    expected = int((end - start) / pd.Timedelta(hours=1)) + 1
+    rows = []
+    for c in cols:
+        ok = inside.index[inside[c].notna()]
+        rows.append(
+            {
+                "source": c.removeprefix("ghi_"),
+                "first": ok.min() if len(ok) else pd.NaT,
+                "last": ok.max() if len(ok) else pd.NaT,
+                "fraction": len(ok) / expected,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _weather_linear(
+    fc: pd.DataFrame,
+    w: pd.DataFrame,
+    s: EnergySeries,
+    site: tuple[float, float] | None,
+    test_start: pd.Timestamp,
+) -> tuple[pd.DataFrame, str | None]:
+    """Regime C for generation: y = a + b x `ghi_mean`, per series, on the sun hours before the test."""
+    x_col = "ghi_mean" if "ghi_mean" in w.columns else "ghi"
+    if x_col not in w.columns:
+        return fc, "Weather forecast without GHI (`ghi_mean` or `ghi`): no regime C forecast."
+    data = s.frame.loc[s.frame["valid"], ["unique_id", "ds", "y"]].merge(
+        w[["unique_id", "ds", x_col]], on=["unique_id", "ds"]
+    )
+    target = fc[["unique_id", "ds"]].merge(w[["unique_id", "ds", x_col]], on=["unique_id", "ds"], how="left")
+    data["_sun"] = _sun(data, site, x_col)
+    target["_sun"] = _sun(target, site, x_col)
+    yhat = np.full(len(target), np.nan)
+    train = data[(data["ds"] < test_start) & data["_sun"] & data[x_col].notna()]
+    for uid, g in train.groupby("unique_id"):
+        if len(g) < 48:
+            continue
+        a, b = np.linalg.lstsq(np.c_[np.ones(len(g)), g[x_col]], g["y"].to_numpy(), rcond=None)[0]
+        m = (target["unique_id"] == uid).to_numpy()
+        x = target.loc[m, x_col].to_numpy(float)
+        # night (no sun) is 0; a sun hour without a forecast stays NaN: a gap is not a zero
+        yhat[m] = np.where(target.loc[m, "_sun"], np.clip(a + b * x, 0.0, None), 0.0)
+    if np.isnan(yhat).all():
+        return fc, "Too few sun hours with a weather forecast before the test (48 per series): no regime C."
+    return fc.assign(weather_linear=yhat), None
+
+
+def _sun(x: pd.DataFrame, site: tuple[float, float] | None, x_col: str) -> np.ndarray:
+    """Sun hours: clear sky > 0 with a site; without one, forecast GHI > 0 or missing (unknown is not
+    night)."""
+    if site is None:
+        return (x[x_col].isna() | (x[x_col] > 0)).to_numpy()
+    ds = pd.DatetimeIndex(x["ds"])
+    uniq = ds.unique()
+    cs = pd.Series(physics.clear_sky_ghi(uniq, *site), index=uniq)
+    return (cs.reindex(ds).to_numpy() > 0).astype(bool)
 
 
 def _evaluated(

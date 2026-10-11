@@ -376,9 +376,9 @@ em todos os casos (TimesFM-3 nos tres; Chronos-2 e LightGBM quantilico em dois c
 < 1 ponto alem da tolerancia (calibracao conformal a pilotar). NAO PASSAM: F1(e) MLP ajustado (instavel entre
 sementes: -0,22 / +0,13 / -0,07); F1(f) TimesFM-3 (+0,184 no consumo, 16o; ~igual ao 2.5); F2(b) geometria do
 telhado (LightGBM piora -0,031; inclinacao no limite da grade); F2(f) total do dia direto (empata com o melhor
-somado, +0,147 x +0,146). PENDENTES: F1(d) AutoARIMA no Lactec (**o ambiente `classicos` foi bloqueado aqui em
-11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); BuildingsBench (estudado, precisa de ambiente
-proprio); FlowState nas faixas (Lactec).
+somado, +0,147 x +0,146). BuildingsBench (L +0,127 no consumo, 40o; faixas descalibradas; instalado com --no-deps no
+`previsao_gpu`, pesos em `~/.cache/buildingsbench`). PENDENTES: F1(d) AutoARIMA no Lactec (**o ambiente `classicos` foi bloqueado aqui em
+11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); FlowState nas faixas (Lactec).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

@@ -15,7 +15,7 @@ venha só do que foi acrescentado.
 | F1(d) AutoARIMA, memória | `piloto_autoarima_memoria.py` | não roda aqui: desde 11/10 o Smart App Control bloqueia o `statsmodels` (`_smoothers_lowess`) do ambiente `classicos`, e o `statsforecast.models` importa ele | **rodar no Lactec** (script pronto: uma série, uma dobra, pico de memória, vigia de 16 GB) |
 | F1(e) MLP ajustado (FV das casas A) | `piloto_mlp.py` | sementes 42/1/2: −0,219 / +0,133 / −0,072 (benchmark −0,271); viés até +51% | **não passa** (instável); o MLP fica "sem ajuste" no texto |
 | F1(f) TimesFM-3 | `piloto_timesfm3.py` | consumo +0,184 (16º/53, p < 0,001); FV casas +0,092 (28º); usinas +0,059 (22º) | **não passa** (+0,000 a +0,013 sobre o TimesFM-2.5 já no benchmark) |
-| F1(f) BuildingsBench | — | estudado (abaixo); precisa de ambiente próprio, pesos do NREL e a transformação de Box-Cox do conjunto deles | **pendente** |
+| F1(f) BuildingsBench (consumo A) | `piloto_buildingsbench.py` | L (161 M, decide): +0,127 (40º/53, p < 0,001), viés −17%; M (16 M) +0,138, S (2,6 M) +0,121, ambos sem viés; faixas: cobertura de 80% entre 0,49 e 0,62, CRPS muito pior que a referência | **não passa** |
 | F2(a) várias previsões do tempo (usinas C) | `08b_previsao_tempo_extra.py`, `piloto_multi_nwp.py` | LightGBM: IFS +0,330 → IFS+GFS+ICON +0,365 → 6 NWP **+0,373** (1º de 24 no C, à frente da mediana +0,367); IFS+AIFS +0,346 contra +0,299 do IFS com o mesmo treino curto. Todos p < 0,001 contra o par | **PASSA** |
 | F2(b) geometria do telhado (FV casas B) | `piloto_geometria.py` | LightGBM com POA −0,031 (p 0,017); linear físico +0,020 (p 0,28); inclinação estimada no limite da grade (60°) em 8 de 10 casas | **não passa** |
 | F2(c) faixas (quantis) | `piloto_quantis.py` | ver a tabela abaixo: há uma fonte calibrada em cada caso do regime A | **PASSA** no regime A; no C falta calibrar |
@@ -57,13 +57,20 @@ TimesFM-3 têm licença própria (anotada no plano como não comercial): a bibli
 tolerância, com CRPS muito melhor que a referência: o passo natural é uma calibração causal (conformal sobre as
 dobras anteriores), a pilotar.
 
-## F1(f) — BuildingsBench (estudo; piloto pendente)
+## F1(f) — BuildingsBench
 
-NREL, BSD-3. Transformers (S/M/L) pré-treinados em 900 mil prédios **simulados** dos EUA (Buildings-900K),
-entrada de 168 h e saída de 24 h, com tipo de prédio (residencial/comercial), latitude/longitude, calendário e
-temperatura opcional; carga transformada por Box-Cox ajustada no conjunto deles. Pesos em
-`oedi-data-lake.s3.amazonaws.com/buildings-bench/v1.1.0/checkpoints/` (ex.: `Transformer_Gaussian_L.pt`). Para
-rodar: ambiente próprio (`pip install buildings_bench`, sem os extras de benchmark), baixar um ponto de controle e
-os arquivos de transformação/metadados do conjunto, e passar as casas como residenciais com as coordenadas de
-Dingle. Ressalva para a leitura: casas irlandesas reais contra prédios simulados dos EUA (fora da distribuição de
-treino).
+NREL, BSD-3. Transformers codificador-decodificador pré-treinados em ~900 mil prédios **simulados** dos EUA
+(Buildings-900K): 168 h de carga + calendário, tipo de prédio e latitude/longitude normalizadas; saída de 24 h
+decodificada hora a hora; carga em Box-Cox ajustada no conjunto deles, cabeça gaussiana nesse espaço.
+
+Instalação (11/10): `buildings_bench==2.0.0` e `tomli` com `--no-deps` no `previsao_gpu`; metadados (normalização
+de lat/lon, `boxcox.pkl`) e pesos v1.1.0 S/M/L em `~/.cache/buildingsbench`, do OEDI. Configuração fixada antes:
+casas residenciais, posição pela regra dos autores para casas fora dos EUA (Londres, Edimburgo e Sceaux vão para
+Mt. Baker, WA), 2020 bissexto; decisão pelo L.
+
+Resultado no consumo A: L +0,127 (40º de 53), viés −17%; M +0,138 (36º), S +0,121 (42º), os dois sem viés (os
+outros fundacionais ficam em ~−20%). Nenhum perto do grupo da frente (+0,210). Faixas: a Box-Cox deles tem
+λ = −0,067 (quase log), e a gaussiana nesse espaço vira uma cauda superior enorme nestas casas (q90 médio de
+dezenas de kWh/h contra carga média de 0,6), com a faixa de 80% cobrindo só 49%–62% das horas: CRPS 2,6 a 14 vezes
+o da referência. Leitura: prédios simulados dos EUA não transferem para casas irlandesas reais melhor que os
+fundacionais gerais; o tamanho não ajuda (L pior que M). **Não passa.**

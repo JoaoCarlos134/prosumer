@@ -12,6 +12,9 @@ Aplicativo bloqueou o 2.11.0; ver CLAUDE.md). As 52 redes originais rodaram em 2
 `whl/cu128`, o `granite-tsfm` com `--no-build-isolation` e incompleto como no item 2 abaixo). Python 3.12.10
 oficial (assinado) como base: o 3.12.13 do uv também passou a ser bloqueado. Terceira versão de torch no
 benchmark (2.11 nas 52 redes originais, 2.14.1 no passo T, 2.9.1 na etapa A): declarar no texto.
+11/10/2026: + `buildings-bench==2.0.0` e `tomli` com `--no-deps` (piloto F1(f); o resolvedor rebaixaria o torch para
+2.4.1 e o transformers para 4.34). Metadados e pesos do BuildingsBench ficam em `~/.cache/buildingsbench` (ver o
+cabecalho de `scripts/piloto_buildingsbench.py`).
 
 | Ambiente | Python | Para quê |
 |---|---|---|

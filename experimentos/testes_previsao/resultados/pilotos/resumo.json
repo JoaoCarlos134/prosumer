@@ -1998,5 +1998,110 @@
   "skill_CRPS": 0.2936,
   "portao": false,
   "horas_avaliadas": 8970
+ },
+ "BuildingsBench-S|casas_cons|A": {
+  "modelo": "BuildingsBench-S",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1213,
+  "ic95": [
+   0.1013,
+   0.1419
+  ],
+  "R2": 0.2323,
+  "nRMSE": 0.9832,
+  "MBE": -0.004,
+  "posicao": "42o de 53",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2095,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "BuildingsBench-M|casas_cons|A": {
+  "modelo": "BuildingsBench-M",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1378,
+  "ic95": [
+   0.1183,
+   0.1576
+  ],
+  "R2": 0.261,
+  "nRMSE": 0.9647,
+  "MBE": 0.0017,
+  "posicao": "36o de 53",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2095,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "BuildingsBench-L|casas_cons|A": {
+  "modelo": "BuildingsBench-L",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.127,
+  "ic95": [
+   0.1062,
+   0.1488
+  ],
+  "R2": 0.2424,
+  "nRMSE": 0.9768,
+  "MBE": -0.1681,
+  "posicao": "40o de 53",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2095,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "BuildingsBench-S-quantis|casas_cons|A": {
+  "BuildingsBench-S": {
+   "cobertura_80": 0.49,
+   "cobertura_60": 0.324,
+   "largura_80_media": 17.8509,
+   "CRPS": 0.6949
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.677,
+   "cobertura_60": 0.507,
+   "largura_80_media": 0.8116,
+   "CRPS": 0.2672
+  },
+  "skill_CRPS": -1.6007,
+  "portao": false,
+  "horas_avaliadas": 43680
+ },
+ "BuildingsBench-M-quantis|casas_cons|A": {
+  "BuildingsBench-M": {
+   "cobertura_80": 0.496,
+   "cobertura_60": 0.33,
+   "largura_80_media": 99.3381,
+   "CRPS": 2.5055
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.677,
+   "cobertura_60": 0.507,
+   "largura_80_media": 0.8116,
+   "CRPS": 0.2672
+  },
+  "skill_CRPS": -8.3769,
+  "portao": false,
+  "horas_avaliadas": 43680
+ },
+ "BuildingsBench-L-quantis|casas_cons|A": {
+  "BuildingsBench-L": {
+   "cobertura_80": 0.615,
+   "cobertura_60": 0.439,
+   "largura_80_media": 154.0695,
+   "CRPS": 3.6947
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.677,
+   "cobertura_60": 0.507,
+   "largura_80_media": 0.8116,
+   "CRPS": 0.2672
+  },
+  "skill_CRPS": -12.8275,
+  "portao": false,
+  "horas_avaliadas": 43680
  }
 }

@@ -367,6 +367,19 @@ biblioteca). Forma da saida ja corrigida: (janelas, 9 quantis, 24 h). Portao: co
 | **App: o TCC (ultimo passo)** | 120 | qualquer | So com a biblioteca pronta. Aplicativo facil de usar que recebe os dados do usuario (inversor, medidor, conta de luz) e faz a analise completa: qualidade (com relogio pelo sol), diagnostico, previsao comparada (mediana, regimes, resolucoes), economia, modelo para aparelho, e um relatorio. Duas formas, ambas ja feitas pelo autor: pagina web local em Streamlit como `1Projects/Keyword_map` (SciKeywordMap) ou programa de computador como `1Projects/Loom` (FastAPI + pywebview, sem servidor nem admin). Usa so a interface publica da biblioteca. PORTAO: um usuario sem programar faz a analise do comeco ao fim. Por isso a E2 ja desenha a API pensando nele: uma chamada que faz a analise completa e devolve um relatorio |
 | E7 Escrita | 80 | — | em paralelo; o TCC descreve o APLICATIVO, a biblioteca por tras dele e as checagens |
 
+**Pilotos F1/F2 feitos em 11/10/2026 (casa, CPU, minutos cada; detalhes em `docs/projeto/PILOTOS_F1_F2.md`):**
+PASSAM: **F2(a)** varias previsoes do tempo no C das usinas (LightGBM com 6 NWP +0,373, 1o de 24, a frente da
+mediana; IFS+GFS+ICON +0,365; AIFS +0,047 sobre o IFS com o mesmo treino curto; arquivo extra em
+`dados/previsao_tempo_extra.parquet` via `08b_previsao_tempo_extra.py`); **F2(d)** previsao do pico 17-20 h do
+consumo emitida ao meio-dia (+0,265 x +0,237 do melhor das 00:00, p 0,023); **F2(c)** faixas calibradas no regime A
+em todos os casos (TimesFM-3 nos tres; Chronos-2 e LightGBM quantilico em dois cada); no C erram a calibracao por
+< 1 ponto alem da tolerancia (calibracao conformal a pilotar). NAO PASSAM: F1(e) MLP ajustado (instavel entre
+sementes: -0,22 / +0,13 / -0,07); F1(f) TimesFM-3 (+0,184 no consumo, 16o; ~igual ao 2.5); F2(b) geometria do
+telhado (LightGBM piora -0,031; inclinacao no limite da grade); F2(f) total do dia direto (empata com o melhor
+somado, +0,147 x +0,146). PENDENTES: F1(d) AutoARIMA no Lactec (**o ambiente `classicos` foi bloqueado aqui em
+11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); BuildingsBench (estudado, precisa de ambiente
+proprio); FlowState nas faixas (Lactec).
+
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).
 Ainda valem da revisao: `02b_classicos.prepara` interpola a serie inteira antes das dobras (nenhuma origem

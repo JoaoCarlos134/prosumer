@@ -37,8 +37,8 @@ o `Plano_TCC_simples.tex`, o `CLAUDE.md`, o `ESTUDO_ETAPA_A.md` e o `PILOTOS_F1_
 | F2 Pilotos | out–nov | passaram (a) várias NWP, (c) faixas no regime A, (d) meio-dia; não passaram (b) geometria, (e) ajuste fino do TTM, (f) total do dia; FlowState nas faixas no Lactec | quase |
 | F2b Levar para a biblioteca | — | não começou | — |
 | E1 Base | feito | pacote, contratos, dados sintéticos, CI, teste de regressão | feito |
-| E2 Versão 0.1 | nov–jan | nomes em inglês, métricas em resoluções, correção de viés, `DayAhead`; cobertura 86% (sem o teste do hypothesis) | ~25% |
-| E3 Checagem 1 | fev | só as métricas passam pela biblioteca | 0% |
+| E2 Versão 0.1 | nov–jan | nomes em inglês, métricas em resoluções, correção de viés, `DayAhead`; **no mesmo dia:** protocolo completo (janelas com preenchimento causal e covariáveis, normalização só com o treino, máscara de horas) | ~35% |
+| E3 Checagem 1 | fev | **no mesmo dia:** o benchmark já usa o protocolo da biblioteca, com igualdade exata contra a v2 congelada | ~30% |
 | E4 Versão 0.2 | fev–abr | TFLite conferidos (legado); candidatos pequenos medidos no benchmark | 0% |
 | E5 Hardware | mai | sem o hardware | 0% |
 | E6 Versão 0.3 | jun–jul | tarifas só no legado; licença não escolhida | 0% |

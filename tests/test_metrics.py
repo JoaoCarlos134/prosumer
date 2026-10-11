@@ -175,3 +175,35 @@ def test_evaluated_mask_rules() -> None:
     assert evaluated_mask(f, "profile", profile=other).sum() == 2
     with pytest.raises(ValueError):
         evaluated_mask(f, "night")
+
+
+def _errors(scale: float, seed: int, days: int = 40):  # type: ignore[no-untyped-def]
+    import numpy as np
+    import pandas as pd
+
+    ds = pd.date_range("2024-01-01", periods=24 * days, freq="h")
+    e = np.random.default_rng(seed).normal(0, scale, len(ds)) ** 2
+    return pd.Series(e, index=pd.MultiIndex.from_arrays([["s"] * len(ds), ds], names=["unique_id", "ds"]))
+
+
+def test_ranking_flags_ties_and_separates_a_clearly_worse_model() -> None:
+    from prosumer.metrics import ranking, ties_with_best
+
+    errors = {"good": _errors(1.0, 0), "twin": _errors(1.0, 1), "bad": _errors(2.0, 2)}
+    skills = {"good": 0.30, "twin": 0.29, "bad": 0.05}
+    r = ranking(skills, errors).set_index("model")
+    assert r.loc["good", "position"] == 1 and r.loc["good", "best"] == "good"
+    assert bool(r.loc["good", "ties_with_best"])
+    assert bool(r.loc["twin", "ties_with_best"]), "same error distribution: must tie"
+    assert not bool(r.loc["bad", "ties_with_best"]), "twice the error: must not tie"
+    assert r.loc["bad", "p_holm"] >= r.loc["bad", "p"]  # Holm never lowers a p-value
+    assert ties_with_best(skills, errors) == ["good", "twin"]
+
+
+def test_ranking_refuses_an_empty_comparison() -> None:
+    import pytest
+
+    from prosumer.metrics import ranking
+
+    with pytest.raises(ValueError):
+        ranking({}, {})

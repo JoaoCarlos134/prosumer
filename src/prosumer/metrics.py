@@ -152,6 +152,42 @@ def holm(p: list[float] | np.ndarray) -> np.ndarray:
     return out
 
 
+def ranking(skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: float = 0.05) -> pd.DataFrame:
+    """Rank models of ONE comparison (same case, same regime, same hours) and flag who ties with the best.
+
+    `skills`: model -> skill; `errors`: model -> squared errors (`squared_errors`). The best is the highest skill;
+    every other model gets a daily Diebold-Mariano against it, Holm-adjusted over the family, and ties with the best
+    when the adjusted p >= `alpha`. Rows keep the input order; `position` is 1 for the best.
+
+    This is the benchmark's reading rule ("how many tie with the best"): the best is chosen on the same test, so a
+    tie is not a proof of equivalence, and "choosing the best model" is not what the library recommends (the
+    pilot of 2026-10-09 found that picking the previous fold's winner made every case worse).
+    """
+    if not skills:
+        raise ValueError("No models to rank")
+    order = pd.Series(skills, dtype=float)
+    best = str(order.sort_values(ascending=False).index[0])
+    rows = []
+    for model, sk in skills.items():
+        row = {"model": model, "skill": float(sk), "position": int((order > sk).sum()) + 1, "best": best}
+        if model != best:
+            row["extra_loss"], row["dm"], row["p"] = diebold_mariano(errors[model], errors[best])
+        rows.append(row)
+    out = pd.DataFrame(rows)
+    others = out["model"] != best
+    out["p_holm"] = np.nan
+    if others.any():
+        out.loc[others, "p_holm"] = holm(out.loc[others, "p"].to_numpy())
+    out["ties_with_best"] = (~others) | (out["p_holm"] >= alpha)
+    return out
+
+
+def ties_with_best(skills: dict[str, float], errors: dict[str, pd.Series], *, alpha: float = 0.05) -> list[str]:
+    """Models statistically tied with the best (the best included), best first, by skill."""
+    r = ranking(skills, errors, alpha=alpha)
+    return r[r["ties_with_best"]].sort_values("skill", ascending=False)["model"].tolist()
+
+
 def squared_errors(df: pd.DataFrame) -> pd.Series:
     """Squared errors indexed by (unique_id, ds), in the shape `diebold_mariano` expects."""
     return pd.Series(

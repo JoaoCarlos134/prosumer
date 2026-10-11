@@ -135,20 +135,14 @@ def avalia():
     D = pd.DataFrame(por_dobra)
 
     # Diebold-Mariano: cada modelo contra o melhor do mesmo caso e regime
+    # (biblioteca: prosumer.metrics.ranking, desde 11/10/2026; mesmo DM, mesmo Holm, mesmo criterio de empate)
+    from prosumer.metrics import ranking
     dm = []
     for (caso, regime), g in M.groupby(["caso", "regime"]):
-        melhor = g.sort_values("skill", ascending=False).iloc[0].modelo
-        bloco = []
-        for modelo in g.modelo:
-            if modelo == melhor:
-                continue
-            dif, est, p = diebold_mariano(erros[(caso, regime, modelo)], erros[(caso, regime, melhor)])
-            bloco.append(dict(caso=caso, regime=regime, modelo=modelo, melhor=melhor, perda_extra=dif, dm=est, p=p))
-        if bloco:
-            ph = holm([b["p"] for b in bloco])
-            for b, x in zip(bloco, ph):
-                b["p_holm"] = x; b["empatado_com_melhor"] = bool(x >= 0.05)
-            dm += bloco
+        R = ranking(dict(zip(g.modelo, g.skill)), {m: erros[(caso, regime, m)] for m in g.modelo})
+        for r in R[R.model != R.best].itertuples():
+            dm.append(dict(caso=caso, regime=regime, modelo=r.model, melhor=r.best, perda_extra=r.extra_loss, dm=r.dm,
+                           p=r.p, p_holm=r.p_holm, empatado_com_melhor=bool(r.ties_with_best)))
     DM = pd.DataFrame(dm)
 
     # Diebold-Mariano entre regimes (usinas): o mesmo modelo, e o melhor de cada regime

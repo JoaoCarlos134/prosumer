@@ -394,8 +394,8 @@ em .venv, previsao, previsao_gpu, lagllama, lote2 e lote2_hf. O ambiente `moirai
 isotropica e ajuste de orientacao, so numpy (o pvlib virou extra opcional: o h5py dele esta bloqueado aqui). O
 `comum.ghi_ceu_claro` e o `piloto_geometria` usam a biblioteca; o ceu claro sai IDENTICO bit a bit (soma de Kahan
 como o pandas; teste de paridade) e o C refeito pelo piloto multi-NWP bate com 0,0. O piloto da geometria tinha
-um erro (amostras do sol 30 s cedo); refeito, a decisao nao muda. Proximo passo de codigo: `ranking`/
-`ties_with_best`, a chamada unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
+um erro (amostras do sol 30 s cedo); refeito, a decisao nao muda. `metrics.ranking` e
+`ties_with_best` feitos (o `05_avalia` usa; `dm_vs_melhor.csv` identico). Proximo passo de codigo: a chamada unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
 `docs/projeto/REVISAO_GERAL_2026-10-11.md`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao

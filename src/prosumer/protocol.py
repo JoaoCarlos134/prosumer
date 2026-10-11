@@ -10,8 +10,9 @@ One window per test day; no model sees the day it forecasts.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -48,12 +49,22 @@ class Fold:
 
 @dataclass(frozen=True, slots=True)
 class Window:
-    """One day to forecast: the history up to the previous day and the target timestamps."""
+    """One day to forecast: the history up to the previous day and the target timestamps.
+
+    `history` is what a model receives: with `fill="causal"` (the default) the gaps are interpolated using only
+    this window's own history, so nothing from the forecast day or later leaks in. `history_valid` keeps which
+    steps were really measured, so a model that handles gaps itself (or a quality report) still sees them.
+    `past_covariates` and `future_covariates` hold the covariates (regimes B and C) over the history and over the
+    24 target hours, by column name; empty without covariates.
+    """
 
     unique_id: str
     day: pd.Timestamp
     history: np.ndarray
     timestamps: pd.DatetimeIndex
+    history_valid: np.ndarray | None = None
+    past_covariates: dict[str, np.ndarray] = field(default_factory=dict)
+    future_covariates: dict[str, np.ndarray] = field(default_factory=dict)
 
 
 class DayAhead:
@@ -73,7 +84,15 @@ class DayAhead:
         refit_days: int = 61,
         context: int = 168,
         seed: int = 42,
+        covariates: pd.DataFrame | None = None,
+        fill: Literal["causal", "none"] = "causal",
+        min_history: int | None = None,
     ) -> None:
+        """`covariates`: long frame (`unique_id`, `ds` in the series' time zone, one column per covariate).
+        `fill`: "causal" interpolates the gaps of each window's history from that history alone (linear, the
+        ends repeat the nearest value, a history with no valid value becomes 0), as the v2 benchmark did; "none"
+        leaves NaN. `min_history`: windows with less history are skipped; default = `context` (the
+        benchmark used 0: a window takes whatever history exists)."""
         if refit_days < 1:
             raise ValueError("refit_days must be >= 1")
         if context < H:
@@ -88,19 +107,25 @@ class DayAhead:
         self.refit_days = refit_days
         self.context = context
         self.seed = seed
+        if fill not in ("causal", "none"):
+            raise ValueError(f"fill must be 'causal' or 'none', not {fill!r}")
+        self.fill = fill
+        self.min_history = context if min_history is None else min_history
+        self.covariates = None
+        if covariates is not None:
+            missing = {"unique_id", "ds"} - set(covariates.columns)
+            if missing:
+                raise ValueError(f"covariates without columns {sorted(missing)}")
+            cov = covariates.copy()
+            cov["unique_id"] = cov["unique_id"].astype(str)
+            if getattr(cov["ds"].dt, "tz", None) is None:
+                raise ValueError("covariates.ds must carry the series' time zone (it is naive)")
+            self.covariates = cov
 
     # ------------------------------------------------------------------ folds
     def folds(self) -> list[Fold]:
         """Consecutive folds of `refit_days`; the last one may be shorter."""
-        out: list[Fold] = []
-        a = self.start
-        i = 1
-        while a <= self.end:
-            b = min(a + pd.Timedelta(days=self.refit_days - 1), self.end)
-            out.append(Fold(index=i, start=a, end=b + pd.Timedelta(hours=H - 1)))
-            a = b + pd.Timedelta(days=1)
-            i += 1
-        return out
+        return folds(self.start, self.end, self.refit_days)
 
     def fold_of(self, day: pd.Timestamp) -> Fold:
         """The fold a day belongs to. A forecast outside its fold is leakage."""
@@ -120,21 +145,40 @@ class DayAhead:
         return [(str(u), pd.Timestamp(d)) for u, d in complete.index]
 
     def windows(self) -> list[Window]:
-        """One window per test day, with `context` hours of history before the day."""
+        """One window per test day, with up to `context` hours of history before the day."""
         per_series = {u: g.set_index("ds") for u, g in self.series.frame.groupby("unique_id")}
+        cov = (
+            {}
+            if self.covariates is None
+            else {u: g.drop(columns="unique_id").set_index("ds") for u, g in self.covariates.groupby("unique_id")}
+        )
         out: list[Window] = []
         for uid, day in self.test_days():
             g = per_series[uid]
             hist = g.loc[: day - pd.Timedelta(hours=1)].tail(self.context)
-            if len(hist) < self.context:
+            if len(hist) < self.min_history:
                 continue  # start of the series: not enough history for this window
-            y = hist["y"].to_numpy(dtype=float)
+            valid = hist["valid"].to_numpy(dtype=bool)
+            y = hist["y"].where(hist["valid"])
+            if self.fill == "causal":
+                # only this window's history is touched: the day forecast and later never enter the interpolation
+                y = y.interpolate(limit_direction="both").fillna(0.0)
+            past: dict[str, np.ndarray] = {}
+            future: dict[str, np.ndarray] = {}
+            if uid in cov:
+                c = cov[uid]
+                past = {k: c[k].reindex(hist.index).to_numpy() for k in c.columns}
+                fut = c.loc[day : day + pd.Timedelta(hours=H - 1)]
+                future = {k: fut[k].to_numpy() for k in c.columns}
             out.append(
                 Window(
                     unique_id=uid,
                     day=day,
-                    history=y,
+                    history=y.to_numpy(dtype=float),
                     timestamps=pd.date_range(day, periods=H, freq="h", tz=self.series.tz),
+                    history_valid=valid,
+                    past_covariates=past,
+                    future_covariates=future,
                 )
             )
         return out
@@ -155,6 +199,25 @@ class DayAhead:
                 f"({ends.min()} to {ends.max()}): cut each fold by [start, end] "
                 "before saving forecasts, or a later fold re-emits days of an earlier one."
             )
+
+
+def folds(start: str | pd.Timestamp, end: str | pd.Timestamp, refit_days: int) -> list[Fold]:
+    """Folds of the rolling origin between two days (inclusive), without needing the series.
+
+    The model is retrained at the start of each fold with data before it; the last fold may be shorter.
+    Time zone: that of `start`/`end` (naive stays naive).
+    """
+    if refit_days < 1:
+        raise ValueError("refit_days must be >= 1")
+    a, last = pd.Timestamp(start).normalize(), pd.Timestamp(end).normalize()
+    out: list[Fold] = []
+    i = 1
+    while a <= last:
+        b = min(a + pd.Timedelta(days=refit_days - 1), last)
+        out.append(Fold(index=i, start=a, end=b + pd.Timedelta(hours=H - 1)))
+        a = b + pd.Timedelta(days=1)
+        i += 1
+    return out
 
 
 class SupportError(RuntimeError):

@@ -15,10 +15,16 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass, replace
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
-import pandera.pandas as pa
+
+if TYPE_CHECKING:
+    import pandera.pandas as pa
+
+# pandera is imported only where a series is VALIDATED (`schema`, `EnergySeries.from_dataframe`). The rest of the
+# library (protocol, metrics) needs only pandas and numpy, so the frozen benchmark environments, which do not
+# have pandera, can run the same protocol code.
 
 Unit = Literal["kWh", "Wh", "kW", "W"]
 Quantity = Literal["generation", "consumption", "irradiance", "temperature"]
@@ -36,6 +42,8 @@ def schema(tz: str) -> pa.DataFrameSchema:
     arrived in another zone (or naive) instead of letting it through and getting the peak hour wrong
     later.
     """
+    import pandera.pandas as pa
+
     return pa.DataFrameSchema(
         {
             "unique_id": pa.Column(str, nullable=False, description="series identifier"),
@@ -117,6 +125,8 @@ class EnergySeries:
                 stacklevel=2,
             )
             x = x.loc[~out]
+        import pandera.pandas as pa
+
         try:
             validated = schema(tz).validate(x, lazy=True)
         except (pa.errors.SchemaError, pa.errors.SchemaErrors) as e:

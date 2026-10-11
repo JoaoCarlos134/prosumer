@@ -118,3 +118,78 @@ def test_regimes_are_explicit() -> None:
     assert Regime.HISTORY.value == "A"
     assert Regime.KNOWN_WEATHER.value == "B"
     assert Regime.REAL_FORECAST.value == "C"
+
+
+# ---------------------------------------------------------------- gaps, covariates and standalone folds (2026-10-11)
+def _holed(seed: int = 3) -> object:
+    series = data.example_house(n_series=2, start="2024-01-01", days=60)
+    return data.with_gaps(series, fraction=0.02, seed=seed)  # ~60% of the days stay complete
+
+
+def test_causal_fill_uses_only_the_window_history() -> None:
+    """Gaps are filled from the window's own history: changing the forecast day (or later) changes nothing."""
+    holed = _holed()
+    t = DayAhead(holed, test_start="2024-02-20", test_end="2024-02-25", refit_days=10, context=72, min_history=0)
+    before = {(w.unique_id, w.day): w.history.copy() for w in t.windows()}
+    x = holed.frame.copy()  # type: ignore[attr-defined]
+    # data of the LAST test day and after: no window may change (the 25th's history ends on the 24th at 23:00)
+    later = x["ds"] >= pd.Timestamp("2024-02-25", tz=holed.tz)  # type: ignore[attr-defined]
+    x.loc[later & x["valid"], "y"] = 999.0
+    future_changed = data.EnergySeries.from_dataframe(x, unit="kWh", quantity="consumption", tz=holed.tz, freq="h")  # type: ignore[attr-defined]
+    t2 = DayAhead(future_changed, test_start="2024-02-20", test_end="2024-02-25", refit_days=10, context=72)
+    ws = t2.windows()
+    assert ws and any(not w.history_valid.all() for w in ws), "needs windows with gaps to mean anything"  # type: ignore[union-attr]
+    for w in ws:
+        assert w.history.tolist() == pytest.approx(before[(w.unique_id, w.day)].tolist())
+
+
+def test_filled_history_has_no_nan_and_keeps_the_mask() -> None:
+    t = DayAhead(_holed(), test_start="2024-02-20", test_end="2024-02-29", refit_days=10, context=168)
+    ws = t.windows()
+    assert ws
+    assert all(not pd.isna(w.history).any() for w in ws)
+    assert any(not w.history_valid.all() for w in ws), "the test data must have gaps inside some window"  # type: ignore[union-attr]
+    for w in ws:
+        assert w.history_valid is not None and len(w.history_valid) == len(w.history)
+
+
+def test_fill_none_keeps_the_gaps() -> None:
+    t = DayAhead(_holed(), test_start="2024-02-20", test_end="2024-02-29", refit_days=10, context=168, fill="none")
+    for w in t.windows():
+        assert (pd.isna(w.history) == ~w.history_valid).all()  # type: ignore[operator]
+
+
+def test_covariates_split_into_past_and_future(plant: object) -> None:
+    f = plant.frame  # type: ignore[attr-defined]
+    cov = f[["unique_id", "ds"]].assign(hour=f["ds"].dt.hour.astype(float))
+    t = DayAhead(plant, test_start="2024-03-01", test_end="2024-03-03", context=48, covariates=cov)
+    for w in t.windows():
+        assert w.future_covariates["hour"].tolist() == list(range(24))
+        assert len(w.past_covariates["hour"]) == 48
+        assert w.past_covariates["hour"][-1] == 23.0
+
+
+def test_naive_covariates_are_refused(plant: object) -> None:
+    f = plant.frame  # type: ignore[attr-defined]
+    cov = f[["unique_id"]].assign(ds=f["ds"].dt.tz_localize(None), hour=1.0)
+    with pytest.raises(ValueError, match="time zone"):
+        DayAhead(plant, test_start="2024-03-01", covariates=cov)
+
+
+def test_min_history_decides_short_windows(plant: object) -> None:
+    short_default = DayAhead(plant, test_start="2024-01-02", test_end="2024-01-03", context=168).windows()
+    assert short_default == [], "by default a window needs the whole context"
+    taken = DayAhead(plant, test_start="2024-01-02", test_end="2024-01-03", context=168, min_history=0).windows()
+    assert taken and len(taken[0].history) == 24
+
+
+def test_standalone_folds_match_the_task(plant: object) -> None:
+    from prosumer.protocol import folds
+
+    t = DayAhead(plant, test_start="2024-03-01", test_end="2024-04-29", refit_days=20)
+    assert [(f.start, f.end) for f in t.folds()] == [
+        (f.start.tz_localize(plant.tz), f.end.tz_localize(plant.tz))  # type: ignore[attr-defined]
+        for f in folds("2024-03-01", "2024-04-29", 20)
+    ]
+    with pytest.raises(ValueError):
+        folds("2024-03-01", "2024-03-02", 0)

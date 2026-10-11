@@ -18,7 +18,6 @@ from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 KEYS = ["unique_id", "ds"]
 
@@ -135,6 +134,8 @@ def diebold_mariano(e1: pd.Series, e2: pd.Series) -> tuple[float, float, float]:
     # Newey-West: long-run variance of the loss difference, with lag floor(T^(1/3)).
     v = float(x @ x / T + 2 * sum((1 - lag / (L + 1)) * (x[lag:] @ x[:-lag]) / T for lag in range(1, L + 1)))
     stat = db / np.sqrt(max(v, 1e-30) / T) * np.sqrt((T - 1) / T)
+    from scipy import stats  # here, not at the top: the benchmark's environments import the protocol without scipy
+
     return float(db / j["b"].mean()), float(stat), float(2 * stats.t.sf(abs(stat), T - 1))
 
 

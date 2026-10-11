@@ -33,8 +33,18 @@ Origem movel (protocolo v2, 05/10/2026)
   usam todo o historico ate a vespera. Mesmos lotes em todas as redes (COMUM em 04_redes_treinadas.py).
 """
 import os
+import sys
 from pathlib import Path
 import numpy as np, pandas as pd
+
+# O protocolo (dobras, dias de teste, janelas) vem da BIBLIOTECA desde 11/10/2026 (etapa E2/E3 do plano): um
+# protocolo so, o mesmo que o usuario da biblioteca recebe. Os ambientes congelados do benchmark nao tem a
+# biblioteca instalada nem o pandera: o src/ entra no caminho e a serie e montada sem validacao (o construtor de
+# EnergySeries nao revalida). tests/test_benchmark_protocol.py confere, no ambiente da biblioteca, que o resultado e
+# IDENTICO ao da implementacao v2 que gerou todas as previsoes publicadas (copiada la, congelada).
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
+from prosumer.contracts import EnergySeries  # noqa: E402
+from prosumer.protocol import DayAhead, folds  # noqa: E402
 
 # CPU por padrao (como foi rodado no Lactec). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
 # resto do protocolo nao mudam, mas os numeros podem variar um pouco: o dispositivo fica anotado nos tempos.
@@ -61,14 +71,32 @@ CASOS = {
 }
 
 
+# Fuso dos dados: os parquets tem relogio local SEM fuso, numa grade sem buraco. A biblioteca exige fuso, entao a
+# grade recebe um fuso FIXO que a preserva hora a hora: usinas UTC-3 (o mesmo que o ghi_ceu_claro assume; o Brasil
+# nao tem horario de verao desde 2019) e casas UTC+0 (a grade das casas ja e a de Dublin com as duas horas de troca
+# de horario preenchidas pelo conjunto, ver 09_clima_casas.py; um fuso com horario de verao a quebraria).
+FUSO = {"usinas": "Etc/GMT+3", "casas_prod": "Etc/GMT", "casas_cons": "Etc/GMT"}
+
+
 def dobras(caso):
     """[(inicio, fim)] das dobras de teste; o modelo treinado e refeito no inicio de cada uma."""
-    ini, fim = pd.Timestamp(CASOS[caso]["ini"]), pd.Timestamp(CASOS[caso]["fim"]).normalize()
-    out, a = [], ini
-    while a <= fim:
-        b = min(a + pd.Timedelta(days=REFIT_DIAS[caso] - 1), fim)
-        out.append((a, b + pd.Timedelta("23h"))); a = b + pd.Timedelta(days=1)
-    return out
+    return [(f.start, f.end) for f in folds(CASOS[caso]["ini"], CASOS[caso]["fim"], REFIT_DIAS[caso])]
+
+
+def tarefa(d, caso, contexto=CONTEXTO_FM, exog=False):
+    """O DayAhead da biblioteca para este caso (serie longa de carrega(); exogenas como covariaveis se exog)."""
+    fuso = FUSO[caso]
+    d = d.reset_index(drop=True)
+    x = pd.DataFrame({"unique_id": d.unique_id.astype(str), "ds": pd.to_datetime(d.ds).dt.tz_localize(fuso),
+                      "y": d.y.astype(float)})
+    x["valid"] = x.y.notna()
+    cov = None
+    if exog:
+        cov = pd.concat([x[["unique_id", "ds"]], d[EXOG]], axis=1)
+    serie = EnergySeries(frame=x.sort_values(["unique_id", "ds"], kind="stable").reset_index(drop=True), unit="kWh",
+                         quantity="consumption" if caso == "casas_cons" else "generation", tz=fuso, freq="h")
+    return DayAhead(serie, test_start=CASOS[caso]["ini"], test_end=CASOS[caso]["fim"], refit_days=REFIT_DIAS[caso],
+                    context=contexto, covariates=cov, min_history=0)
 
 
 def ghi_ceu_claro(serie, idx):
@@ -144,26 +172,21 @@ def clima_casas():
 
 def dias_teste(d, caso):
     """(unique_id, dia) com as 24 horas validas dentro do periodo de teste."""
-    t = d[(d.ds >= CASOS[caso]["ini"]) & (d.ds <= CASOS[caso]["fim"])].copy()
-    t["dia"] = t.ds.dt.normalize()
-    ok = t.groupby(["unique_id", "dia"]).y.agg(lambda s: s.notna().sum() == H and len(s) == H)
-    return [k for k, v in ok.items() if v]
+    return [(u, dia.tz_localize(None)) for u, dia in tarefa(d, caso).test_days()]
 
 
 def janelas(d, caso, contexto=CONTEXTO_FM, exog=False):
-    """Uma janela por dia de teste: historico (interpolado nos buracos) e, se pedido, exogenas passadas e futuras."""
+    """Uma janela por dia de teste: historico (interpolado nos buracos, so com o proprio historico) e, se pedido,
+    exogenas passadas e futuras. Formato de sempre (dicionarios, float32, datas sem fuso)."""
     out = []
-    series = {u: g.set_index("ds") for u, g in d.groupby("unique_id")}
-    for uid, dia in dias_teste(d, caso):
-        g = series[uid]
-        hist = g.loc[:dia - pd.Timedelta("1h")].tail(contexto)
-        w = dict(unique_id=uid, dia=dia, ds_fut=pd.date_range(dia, periods=H, freq="h"),
-                 y=hist.y.interpolate(limit_direction="both").fillna(0.0).to_numpy(np.float32))
+    for w in tarefa(d, caso, contexto, exog).windows():
+        j = dict(unique_id=w.unique_id, dia=w.day.tz_localize(None),
+                 ds_fut=pd.date_range(w.day.tz_localize(None), periods=H, freq="h"),
+                 y=w.history.astype(np.float32))
         if exog:
-            fut = g.loc[dia:dia + pd.Timedelta("23h")]
-            w["x_pass"] = {c: hist[c].to_numpy(np.float32) for c in EXOG}
-            w["x_fut"] = {c: fut[c].to_numpy(np.float32) for c in EXOG}
-        out.append(w)
+            j["x_pass"] = {c: np.asarray(w.past_covariates[c], dtype=np.float32) for c in EXOG}
+            j["x_fut"] = {c: np.asarray(w.future_covariates[c], dtype=np.float32) for c in EXOG}
+        out.append(j)
     return out
 
 

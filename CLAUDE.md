@@ -388,8 +388,8 @@ preenchimento causal, mascara de validade, covariaveis e `min_history`; `standar
 nos 3 casos e regimes (15 testes); `atualiza.py` regera tudo identico. Os ambientes congelados nao tem a biblioteca
 nem o pandera: o `comum.py` poe o `src/` no caminho e monta a serie sem validar (pandera e scipy sao importados so
 onde sao usados). Fuso fixo da grade: usinas `Etc/GMT+3`, casas `Etc/GMT` (ver `comum.FUSO`). Mesmo hash das janelas
-em .venv, previsao, previsao_gpu, lagllama, lote2 e lote2_hf. **O ambiente `moirai` nao le mais parquet** (pandas
-nao acha engine; ja era assim antes da mudanca): refazer antes de rodar o 03b ou o piloto do Moirai. Proximo passo
+em .venv, previsao, previsao_gpu, lagllama, lote2 e lote2_hf. O ambiente `moirai` deixou de ler parquet
+(Smart App Control no `_parquet` do pyarrow 25.0.1 cp311): **consertado** com pyarrow 24.0.0, `moirai.txt` recongelado. Proximo passo
 de codigo: `prosumer.physics` (juntar as 4 copias da geometria solar), depois `ranking`/`ties_with_best`, a chamada
 unica do aplicativo e os 3 pilotos que passaram (varias NWP, `issue_hour`, faixas). Revisao geral do plano:
 `docs/projeto/REVISAO_GERAL_2026-10-11.md`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).

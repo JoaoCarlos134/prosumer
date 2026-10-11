@@ -22,6 +22,9 @@ cabecalho de `scripts/piloto_buildingsbench.py`).
 | `lote2.txt` | 3.12 | Toto 2.0, TiRex-2 (e TabPFN-TS, que ficou de fora em CPU) |
 | `lote2_hf.txt` | 3.12 | Sundial, Timer-XL, Time-MoE (`transformers==4.40.1`, `trust_remote_code`) |
 | `moirai.txt` | 3.11 | Moirai 2.0 e Moirai-MoE (`uni2ts`, torch 2.4) |
+
+`moirai.txt` (11/10/2026): `pyarrow` 25.0.1 -> **24.0.0**. O Smart App Control passou a bloquear o `_parquet` da
+roda cp311 do 25.0.1 (mesmo numa instalacao limpa); 19 a 24 carregam. Sem isso o ambiente nao le os parquets.
 | `classicos.txt` | 3.12 | AutoARIMA, AutoETS, AutoTheta, MSTL (StatsForecast 2.1.1; sem torch) |
 | `previsao_gpu.txt` | 3.12 | igual ao `previsao`, só com `torch==2.9.1+cu128`: o que roda na GPU da máquina de casa desde 09/10/2026 (etapa A) |
 

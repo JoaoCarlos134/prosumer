@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-lightgbm = ["lightgbm>=4.0"]
+lightgbm = ["lightgbm>=4.0", "scikit-learn>=1.3"]  # the LGBMRegressor wrapper needs scikit-learn
 # pvlib (NREL SPA, more models) is optional: `prosumer.physics` is numpy only, and pvlib pulls h5py, which the
 # Smart App Control of the home machine blocks (2026-10-11).
 pvlib = ["pvlib>=0.11"]
@@ -37,6 +37,11 @@ pvlib = ["pvlib>=0.11"]
 net = ["truststore>=0.9"]
 # One extra per vendor: when one of their APIs changes, one adapter breaks, not the project.
 chronos = ["chronos-forecasting>=2.0"]
+# TiRex-2 has no PyPI release: install it from git (a direct reference cannot go in an extra), e.g.
+#   uv pip install "tirex-2 @ git+https://github.com/NX-AI/tirex-2@e68253bd5a99fd2de92c2ebee11d93a16b2a5e68"
+# It and Toto-2.0 need a newer torch than Chronos-2; their environment is frozen in
+# experimentos/testes_previsao/ambientes/lote2.txt.
+toto2 = ["toto-2==2.0.0"]
 timesfm = ["timesfm>=3.0"]
 ttm = ["granite-tsfm"]
 networks = ["neuralforecast>=3.1", "torch>=2.2"]

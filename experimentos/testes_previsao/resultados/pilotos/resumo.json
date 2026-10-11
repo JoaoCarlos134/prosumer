@@ -1151,5 +1151,149 @@
   "skill_melhor": 0.2086,
   "dm_p_vs_melhor": 0.0045,
   "grupo_da_frente": false
+ },
+ "Mamba-s1|casas_prod|A": {
+  "modelo": "Mamba-s1",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1392,
+  "ic95": [
+   0.1098,
+   0.1686
+  ],
+  "R2": 0.3772,
+  "nRMSE": 1.2123,
+  "MBE": -0.0072,
+  "posicao": "7o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.1647,
+  "grupo_da_frente": true
+ },
+ "Mamba-s2|casas_prod|A": {
+  "modelo": "Mamba-s2",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1336,
+  "ic95": [
+   0.1056,
+   0.1636
+  ],
+  "R2": 0.3691,
+  "nRMSE": 1.2202,
+  "MBE": -0.017,
+  "posicao": "10o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.1408,
+  "grupo_da_frente": true
+ },
+ "TimeGrad|casas_prod|A": {
+  "modelo": "TimeGrad",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1142,
+  "ic95": [
+   0.0845,
+   0.1441
+  ],
+  "R2": 0.3405,
+  "nRMSE": 1.2475,
+  "MBE": -0.2803,
+  "posicao": "17o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0125,
+  "grupo_da_frente": false
+ },
+ "TimeGrad-media|casas_prod|A": {
+  "modelo": "TimeGrad-media",
+  "caso": "casas_prod",
+  "regime": "A",
+  "skill": 0.1266,
+  "ic95": [
+   0.1003,
+   0.1535
+  ],
+  "R2": 0.3589,
+  "nRMSE": 1.23,
+  "MBE": -0.195,
+  "posicao": "12o de 51",
+  "melhor": "Toto-2.0-313m",
+  "skill_melhor": 0.1779,
+  "dm_p_vs_melhor": 0.0276,
+  "grupo_da_frente": false
+ },
+ "TimeGrad|casas_cons|A": {
+  "modelo": "TimeGrad",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1456,
+  "ic95": [
+   0.1268,
+   0.1659
+  ],
+  "R2": 0.2743,
+  "nRMSE": 0.956,
+  "MBE": -0.1939,
+  "posicao": "31o de 52",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2086,
+  "dm_p_vs_melhor": 0.0002,
+  "grupo_da_frente": false
+ },
+ "TimeGrad-media|casas_cons|A": {
+  "modelo": "TimeGrad-media",
+  "caso": "casas_cons",
+  "regime": "A",
+  "skill": 0.1557,
+  "ic95": [
+   0.1398,
+   0.1716
+  ],
+  "R2": 0.2913,
+  "nRMSE": 0.9447,
+  "MBE": -0.0111,
+  "posicao": "30o de 52",
+  "melhor": "Ensemble-mediana-corrigida",
+  "skill_melhor": 0.2086,
+  "dm_p_vs_melhor": 0.0001,
+  "grupo_da_frente": false
+ },
+ "TimeGrad|usinas|A": {
+  "modelo": "TimeGrad",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": -0.028,
+  "ic95": [
+   -0.0673,
+   0.0077
+  ],
+  "R2": 0.6256,
+  "nRMSE": 0.6763,
+  "MBE": -0.0496,
+  "posicao": "36o de 53",
+  "melhor": "Crossformer",
+  "skill_melhor": 0.1497,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
+ },
+ "TimeGrad-media|usinas|A": {
+  "modelo": "TimeGrad-media",
+  "caso": "usinas",
+  "regime": "A",
+  "skill": -0.0564,
+  "ic95": [
+   -0.1151,
+   -0.0053
+  ],
+  "R2": 0.6046,
+  "nRMSE": 0.695,
+  "MBE": 0.022,
+  "posicao": "40o de 53",
+  "melhor": "Crossformer",
+  "skill_melhor": 0.1497,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false
  }
 }

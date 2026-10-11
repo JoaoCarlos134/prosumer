@@ -74,6 +74,10 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
      "≈ 8 milhões", "Sim", "Não",
      "Zhang e Yan (ICLR 2023): atenção em dois estágios, no tempo e entre séries (multivariado). Entrou em 10/10/2026 "
      "depois do piloto: 1º nas usinas e 2º na FV das casas no regime A, estável em 3 sementes."),
+    ("Mamba", "Rede treinada", "Espaço de estados", "Mamba", "Time-Series-Library (MambaSimple, PyTorch puro; redes_proprias.py)",
+     "≈ 0,24 milhão", "Sim", "Não",
+     "Gu e Dao (2023): espaço de estados seletivo; bloco em PyTorch puro no lugar do mamba_ssm (só CUDA/Linux). "
+     "Entrou em 11/10/2026 depois do piloto: empata na FV das casas (3 sementes, p 0,06-0,16)."),
     ("PatchTST", "Rede treinada", "Transformer", "PatchTST", "NeuralForecast", "≈ 467 mil", "Sim", "Não", ""),
     ("iTransformer", "Rede treinada", "Transformer", "iTransformer", "NeuralForecast", "≈ 6,4 milhões", "Sim", "Não",
      "Trata as séries como variáveis de um mesmo sistema."),
@@ -219,12 +223,11 @@ FALTA = [  # nome no levantamento, grupo, gpu, por que (gpu), cuidado
      "Envia os dados para fora: SÓ com as casas (CC0), NUNCA com as usinas."),
     ("DUET", "Rede treinada (repositório próprio)", *GPU_REDE, "Pilotado em 10/10/2026 (etapa A; 3 casos, 2 tamanhos): "
      "NÃO passou; o mais perto foi 16º na FV das casas (p = 0,035). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
-    ("S-Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",
-     "Precisa de adaptador (TSLib); pode exigir Linux (WSL)."),
-    ("Mamba", "Rede treinada (repositório próprio)", "Sim", "Usa mamba_ssm, que só tem kernels CUDA.",
-     "Precisa de adaptador; pode exigir Linux (WSL)."),
+    ("S-Mamba", "Rede treinada (repositório próprio)", *GPU_REDE, "Pilotado em 10/10/2026 (etapa A; bloco Mamba em PyTorch "
+     "puro no lugar do mamba_ssm): NÃO passou, 19º-27º. Ver docs/projeto/ESTUDO_ETAPA_A.md."),
     ("LLMTime", "LLM", "Sim", "Roda um LLM local para gerar a série.", "Lento mesmo em GPU; usar um LLM aberto no lugar do GPT-3."),
-    ("TimeGrad", "Generativo (difusão)", *GPU_REDE, "PyTorchTS; prevê uma faixa (avaliar a mediana e, depois, o CRPS)."),
+    ("TimeGrad", "Generativo (difusão)", *GPU_REDE, "Pilotado em 11/10/2026 (etapa A; pytorch-ts oficial): NÃO passou; "
+     "o mais perto, 12º na FV das casas (média das amostras, p = 0,028). Ver docs/projeto/ESTUDO_ETAPA_A.md."),
 ]
 sem_levantamento = {f[0] for f in FALTA} - set(M.Modelo)
 if sem_levantamento:

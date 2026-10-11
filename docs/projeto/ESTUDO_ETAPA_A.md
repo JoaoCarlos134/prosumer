@@ -27,8 +27,8 @@ Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
 | xLSTM | **não passa** (3 casos) | consumo +0,159 (26º/51), FV das casas +0,035 (36º/50), usinas −0,551 (48º/52) |
 | Crossformer | **PASSA** (usinas e FV das casas; 3 sementes) | **1º de 52 nas usinas** (+0,150, à frente do TiRex-2) e 2º de 50 na FV das casas (+0,166); consumo 15º (p = 0,030) |
 | S-Mamba | **não passa** (3 casos) | 19º–27º; FV das casas +0,108, p = 0,043 |
-| Mamba | **PASSA** (FV das casas; sementes e usinas na rodada noturna) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; consumo 25º |
-| TimeGrad | estudado; piloto na fila da noite | — |
+| Mamba | **PASSA** (FV das casas; 3 sementes) | 10º de 51 na FV das casas (+0,133, p = 0,064) com 0,24 M parâmetros; usinas 4º (+0,121, p < 0,001); consumo 25º |
+| TimeGrad | **não passa** (3 casos; mediana e média das amostras) | 12º–40º; o mais perto, FV das casas pela média, p = 0,028; a mediana subestima 19–28% |
 | Time-LLM, LLMTime, TimeGPT | a fazer | — |
 
 ---
@@ -412,17 +412,19 @@ benchmark, de noite). A lentidão é da varredura sequencial, não do modelo.
 
 | Caso | S-Mamba (6,8 M) | Mamba (0,24 M) | Melhor do teste |
 |---|---|---|---|
-| usinas | +0,032 (27º/53), p < 0,001 | (na rodada do benchmark) | Crossformer +0,150 |
-| FV das casas | +0,108 (19º/51), p 0,043 | **+0,133 (10º/51), p 0,064: empata** | Toto-2.0-313m +0,178 |
+| usinas | +0,032 (27º/53), p < 0,001 | +0,121 (4º/53), p < 0,001 | Crossformer +0,150 |
+| FV das casas | +0,108 (19º/51), p 0,043 | **+0,133 (10º/51), p 0,064: empata**; sementes 1 e 2: +0,139 (7º, p 0,165) e +0,134 (10º, p 0,141) | Toto-2.0-313m +0,178 |
 | consumo | +0,177 (22º/52), p < 0,001 | +0,166 (25º/52), p 0,005 | mediana corrigida +0,208 |
 
 **Decisão. S-Mamba não passa** (nunca no grupo da frente; na FV das casas fica perto, p 0,043, mas com uma rodada
 só, sem procurar outra configuração). **Mamba PASSA** na FV das casas (empata com o melhor, p 0,064) e traz a família
-de espaço de estados, com 0,24 M parâmetros. O p está perto do corte: a rodada do benchmark confere a estabilidade
-com as sementes 1 e 2 na FV das casas (relatar como sair, sem trocar configuração) e o determinismo na GPU antes de
-entrar no `04_redes_treinadas.py` (dicionário `MULTIVARIADAS`, regime A).
+de espaço de estados, com 0,24 M parâmetros. O p estava perto do corte, então a fila da noite de 10/10 conferiu:
+as sementes 1 e 2 também empatam (p 0,165 e 0,141), e a rodada do benchmark reproduz o piloto bit a bit nas casas
+(determinístico na GPU). Nas usinas (só na rodada do benchmark, 1 h 56 min) fica em 4º de 53, +0,121, mas separado
+do Crossformer (p < 0,001). **Entrou no benchmark em 11/10/2026** (`04_redes_treinadas.py`, dicionário
+`MULTIVARIADAS`, só regime A): **57 modelos, 260 linhas**.
 
-## TimeGrad (estudo 10/10/2026; piloto na fila da noite)
+## TimeGrad (10/10/2026; piloto na fila da noite, 11/10)
 
 **Como funciona.** Rasul, Seward, Schuster e Vollgraf, *Autoregressive Denoising Diffusion Models for Multivariate
 Probabilistic Time Series Forecasting* (ICML 2021). Uma RNN (GRU) lê o passado de todas as séries juntas (valores
@@ -448,3 +450,16 @@ escala pela média, Adam 1e-3, 20 épocas de 100 lotes de 64, sem parada antecip
 casas). Origem móvel, quadro largo com interpolação causal. Ponto = mediana de 100 amostras (grava também a média).
 Script: `scripts/piloto_timegrad.py [teste] [caso ...]`; o modo `teste` (1 época de 5 lotes, 5 dias) rodou de ponta
 a ponta em 9 s.
+
+**Piloto (regime A; fila da noite, 276 s / 279 s / 706 s na RTX 4070).**
+
+| Caso | mediana de 100 amostras | média das amostras | Melhor do teste |
+|---|---|---|---|
+| usinas | −0,028 (36º/53), MBE −5% | −0,056 (40º/53) | Crossformer +0,150 |
+| FV das casas | +0,114 (17º/51), p 0,013, MBE −28% | +0,127 (12º/51), p 0,028, MBE −20% | Toto-2.0-313m +0,178 |
+| consumo | +0,146 (31º/52), MBE −19% | +0,156 (30º/52), MBE −1% | mediana corrigida +0,208 |
+
+**Decisão. Não passa** (nunca no grupo da frente, uma configuração, a do exemplo oficial). A mediana das amostras
+subestima muito (a distribuição gerada é assimétrica, com muita massa perto de zero nas horas de geração); a média
+corrige o viés no consumo, mas não muda a posição. A faixa (o que traria de único) só valeria a pena com o ponto
+central perto do grupo da frente; o piloto F2c de faixas segue com os quantis do LightGBM, Chronos-2 e FlowState.

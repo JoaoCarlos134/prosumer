@@ -219,8 +219,8 @@ dia previsto; 19 serie-dias no consumo, nenhum nas usinas/FV); corrigido e tudo 
 -> **entrou no benchmark em 11/10** (dicionario `MULTIVARIADAS` do 04, deterministico na GPU): **57 modelos, 260 linhas**.
 **TimeGrad nao passa** (11/10; pytorch-ts oficial no `~/.venvs/lagllama`; 12o-40o, a mediana subestima 19-28%).
 **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts, testes leves); rodadas pesadas de
-GPU/CPU vao para a fila da noite** (`scripts/fila_noite.sh`, log em `resultados/log_fila_noite_*.txt`). Faltam: Time-LLM, LLMTime, TimeGPT. **Regra do usuario (10/10): de dia a maquina fica livre (estudo, revisao, scripts,
-testes leves); rodadas pesadas de GPU/CPU vao para a fila da noite.** Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
+GPU/CPU vao para a fila da noite** (`scripts/fila_noite.sh`, log em `resultados/log_fila_noite_*.txt`).
+Faltam: Time-LLM, LLMTime, TimeGPT (este espera a decisao do usuario: API paga, envia dados). Time-LLM e LLMTime vao para o fim da fila, com UM piloto curto cada
 (consumo A, teto ~2 h): a literatura (Tan et al., NeurIPS 2024) ja indica que o LLM nao ajuda.
 Teste de fumaca da GPU no `previsao_gpu`: NHITS treina e preve em 2,6 s.
 

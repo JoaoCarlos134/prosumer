@@ -55,7 +55,40 @@ Referência: quantis do mesmo horário nos 14 dias anteriores. FlowState (Lactec
 TimesFM-3 têm licença própria (anotada no plano como não comercial): a biblioteca deve preferir Chronos-2
 (Apache-2.0) ou o LightGBM quantílico. No regime C as duas fontes erram a calibração por menos de 1 ponto além da
 tolerância, com CRPS muito melhor que a referência: o passo natural é uma calibração causal (conformal sobre as
-dobras anteriores), a pilotar.
+dobras anteriores): feito, ver F2(c') abaixo.
+
+## F2(c') — calibração conformal causal das faixas (11/10/2026, noite) — PASSA
+
+`scripts/piloto_conformal.py` (ambiente da biblioteca, ~20 s; saída `resultados/pilotos/conformal.json`), sobre os
+quantis gravados de 11 combinações (LightGBM quantílico e Chronos-2 em consumo A, FV das casas A, usinas A e C;
+TimesFM-3 nos três A). Para cada dia D só os erros dos N dias anteriores (todas as séries juntas; o real de D−1 é
+conhecido às 00:00 de D). Calibração só nas **horas de produção**, definidas sem olhar o teste: sol acima do
+horizonte nas usinas, perfil horário de ANTES do teste na FV das casas, todas no consumo. Sem isso as horas de
+noite (faixa ~0, erro ~0) dominam a calibração: na primeira rodada o Chronos-2 no C não se mexeu. Avaliação nas
+horas do benchmark, só nos dias com calibração ativa, as três faixas (bruta, calibrada, referência de 14 dias) nas
+mesmas horas.
+
+Três formas: CQR por par (Romano et al. 2019), aditivo ou normalizado pela largura; e um deslocamento por nível
+(quantil a de (y − q_a)/largura de 80%, mediana inclusive). Passam o portão (±5 pontos nas duas coberturas, CRPS
+melhor que a referência e, se a bruta já passava, CRPS no máximo 1% pior):
+
+| forma | 14 dias | 28 dias |
+|---|---|---|
+| bruta (sem ajuste) | 7 de 11 | |
+| CQR aditivo | 9 | 9 |
+| CQR normalizado | 9 | 9 |
+| **por nível** | 9 | **10** (CRPS +0,0024 em média; pior −0,013) |
+
+Por nível, 28 dias: LightGBM FV das casas 0,651/0,457 → 0,814/0,622 (skill de CRPS +0,096 → +0,114); LightGBM C
+0,741/0,560 → 0,810/0,634 (+0,337 → +0,345); Chronos-2 C, larga demais, 0,837/0,654 → 0,804/0,605 (+0,289 →
++0,296; o CQR não consegue estreitá-la: os erros se amontoam em 0 nas horas de borda do dia); Chronos-2 consumo
+0,748/0,546 → 0,808/0,608. A única falha: TimesFM-3 FV das casas, que já passava e foi 3 pontos além (0,832/0,653).
+
+**Na biblioteca:** `prosumer.postprocessing.conformal_quantiles` (por nível, 28 dias, mínimo 7, `hours=` para as
+horas de produção); dá exatamente o resultado do piloto (diferença 0,0 nas 11). O `analyze` roda cada modelo com
+quantis também nos 28 dias anteriores ao teste (uma dobra a mais, ajustada antes deles) e acrescenta a linha
+`<modelo>+conformal`. Casas, 92 dias, LightGBM quantílico: FV 0,618/0,423 → **0,783/0,593** (calibrada, skill de
+CRPS +0,081 → +0,085); consumo 0,771/0,573 → 0,795/0,594 (CRPS igual).
 
 ## F1(f) — BuildingsBench
 

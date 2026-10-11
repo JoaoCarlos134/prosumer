@@ -239,7 +239,8 @@ def test_bands_section_scores_each_band_against_the_14_day_reference() -> None:
     r = analyze(s, test_days=14, models=[LightGBMQuantile(params={"n_estimators": 60})])
     assert r.bands is not None and r.forecast is not None
     b = r.bands.set_index("source")
-    assert list(b.index) == ["LightGBM-quantile", "empirical_14d"]
+    assert list(b.index) == ["LightGBM-quantile", "LightGBM-quantile+conformal", "empirical_14d"]
+    assert b.loc["LightGBM-quantile+conformal", "regime"] == "A"
     assert b.loc["empirical_14d", "CRPS_skill"] == 0.0
     assert (b["hours"] == b["hours"].iloc[0]).all()  # every band on the same hours
     assert 0 < b.loc["LightGBM-quantile", "coverage_80"] <= 1

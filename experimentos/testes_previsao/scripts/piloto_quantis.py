@@ -126,7 +126,20 @@ def avalia(fonte, caso, regime):
     Q = pd.read_parquet(PILOTOS / f"{fonte}-quantis__{caso}__{regime}.parquet")
     Q = Q.pivot_table(index=["unique_id", "ds"], columns="q", values="valor").clip(lower=0)
     Q = pd.DataFrame(np.sort(Q.to_numpy(), axis=1), index=Q.index, columns=[f"q{n}" for n in QS])
-    # referencia: quantis do mesmo horario nos 14 dias anteriores (so passado)
+    R = referencia(caso)
+    j = base.set_index(["unique_id", "ds"]).join(Q, how="inner").join(R, how="inner").dropna()
+    y = j.y.to_numpy()
+    res = {}
+    for nome, suf in [(fonte, ""), ("referencia_14_dias", "_ref")]:
+        cols = [f"q{n}{suf}" for n in QS]
+        b = band_scores(y, j[cols].to_numpy(), QS)  # ordena os quantis cruzados por linha
+        res[nome] = dict(cobertura_80=round(b["coverage_80"], 3), cobertura_60=round(b["coverage_60"], 3),
+                         largura_80_media=round(b["width_80"], 4), CRPS=round(b["CRPS"], 4))
+    return _fecha(fonte, caso, regime, res, j)
+
+
+def referencia(caso):
+    """Quantis do mesmo horario nos 14 dias anteriores (so passado), colunas q<nivel>_ref."""
     todo = carrega(caso)[["unique_id", "ds", "y"]]
     ref = []
     for uid, g in todo.groupby("unique_id"):
@@ -137,14 +150,10 @@ def avalia(fonte, caso, regime):
             ref.append(pd.DataFrame(dict(unique_id=uid, ds=r.index, q=nivel, valor=r.to_numpy())))
     R = pd.concat(ref).pivot_table(index=["unique_id", "ds"], columns="q", values="valor")
     R.columns = [f"q{n}_ref" for n in QS]
-    j = base.set_index(["unique_id", "ds"]).join(Q, how="inner").join(R, how="inner").dropna()
-    y = j.y.to_numpy()
-    res = {}
-    for nome, suf in [(fonte, ""), ("referencia_14_dias", "_ref")]:
-        cols = [f"q{n}{suf}" for n in QS]
-        b = band_scores(y, j[cols].to_numpy(), QS)  # ordena os quantis cruzados por linha
-        res[nome] = dict(cobertura_80=round(b["coverage_80"], 3), cobertura_60=round(b["coverage_60"], 3),
-                         largura_80_media=round(b["width_80"], 4), CRPS=round(b["CRPS"], 4))
+    return R
+
+
+def _fecha(fonte, caso, regime, res, j):
     fs, rf = res[fonte], res["referencia_14_dias"]
     res["skill_CRPS"] = round(1 - fs["CRPS"] / rf["CRPS"], 4)
     res["portao"] = bool(abs(fs["cobertura_80"] - 0.8) <= 0.05 and abs(fs["cobertura_60"] - 0.6) <= 0.05

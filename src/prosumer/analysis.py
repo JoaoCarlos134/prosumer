@@ -28,10 +28,12 @@ import pandas as pd
 from . import metrics, physics
 from .contracts import EnergySeries
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
+from .postprocessing import conformal_quantiles
 from .protocol import DayAhead, H, Regime, Window
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
+CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (conformal)
 
 PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
@@ -204,6 +206,7 @@ def analyze(
     weather_table = None
     w = None if weather is None else _weather_frame(weather, s.series)
     bands_raw: dict[str, pd.DataFrame] = {}
+    bands_past: dict[str, pd.DataFrame] = {}  # the same model's bands over the calibration days
     for model in models:
         name = model.card.name
         if name in fc.columns:
@@ -225,6 +228,7 @@ def analyze(
         if hasattr(model, "predict_quantiles") and hasattr(model, "levels"):
             qf = rolling_quantiles(cast(Probabilistic, model), task_m)  # one fit: point = the 0.5 level
             bands_raw[name] = qf.drop(columns="yhat")
+            bands_past[name] = _calibration_bands(cast(Probabilistic, model), task_m, test_start)
             out = qf[["unique_id", "ds", "yhat"]]
         else:
             out = rolling_forecast(model, task_m)
@@ -303,7 +307,23 @@ def analyze(
                 issue_hour=issue_hour,
             ),
         ).drop(columns="yhat")
-        bands, band_notes = _bands(bands_raw, reference_band, actual, regimes)
+        hours_of = _production_hours(s, generation, site, test_start - pd.Timedelta(days=CALIBRATION_DAYS))
+        measured = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
+        band_regimes = dict(regimes)
+        for name in list(bands_raw):
+            past = bands_past[name]
+            both = bands_raw[name] if past.empty else pd.concat([past, bands_raw[name]], ignore_index=True)
+            cq = conformal_quantiles(both, measured, days=CALIBRATION_DAYS, hours=hours_of(both))
+            cq = cq[cq["ds"] >= test_start]
+            uncalibrated = cq.loc[~cq["conformal"], "ds"].dt.normalize().nunique()
+            if uncalibrated:
+                notes.append(
+                    f"{name}+conformal: {uncalibrated} test days without 7 days of past errors were left "
+                    "as the model gave them."
+                )
+            bands_raw[f"{name}+conformal"] = cq.drop(columns="conformal")
+            band_regimes[f"{name}+conformal"] = regimes[name]
+        bands, band_notes = _bands(bands_raw, reference_band, actual, band_regimes)
         notes.extend(band_notes)
 
     summary |= {
@@ -374,6 +394,41 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
     return fc
 
 
+def _calibration_bands(model: Probabilistic, task: DayAhead, test_start: pd.Timestamp) -> pd.DataFrame:
+    """The model's bands over the `CALIBRATION_DAYS` days before the test (one fold, fitted before them): the
+    errors the conformal recalibration learns from, as a running system would have them."""
+    start = test_start - pd.Timedelta(days=CALIBRATION_DAYS)
+    past = DayAhead(
+        task.series,
+        test_start=start,
+        test_end=test_start - pd.Timedelta(days=1),
+        refit_days=CALIBRATION_DAYS,
+        context=task.context,
+        min_history=task.min_history,
+        issue_hour=task.issue_hour,
+        covariates=task.covariates,
+    )
+    return rolling_quantiles(model, past).drop(columns="yhat")
+
+
+def _production_hours(
+    s: EnergySeries, generation: bool, site: tuple[float, float] | None, before: pd.Timestamp
+) -> Any:
+    """Hours a band is recalibrated on, known before the test: all for consumption; for generation the sun
+    hours (with a site) or the hours of the profile before `before` (night bands are ~0 and their errors
+    would fill the calibration with zeros)."""
+
+    def hours(keys: pd.DataFrame) -> np.ndarray | None:
+        if not generation:
+            return None
+        if site is not None:
+            return _sun(keys, site, "ds")
+        past = s.frame.loc[s.frame["valid"] & (s.frame["ds"] < before)]
+        return metrics.evaluated_mask(keys.assign(y=0.0), "profile", profile=past).to_numpy(bool)
+
+    return hours
+
+
 def _bands(
     raw: dict[str, pd.DataFrame], reference: pd.DataFrame, actual: pd.DataFrame, regimes: dict[str, str]
 ) -> tuple[pd.DataFrame, list[str]]:
@@ -411,12 +466,19 @@ def _bands(
                 "hours": int(sc["n"]),
             }
         )
-        if name != "empirical_14d" and not calibrated:
-            notes.append(
-                f"The band of {name} is not calibrated (80% band: {c80:.0%} of the hours, 60%: {c60:.0%}): "
-                "do not read it as a probability."
-            )
-    return pd.DataFrame(rows), notes
+    table = pd.DataFrame(rows)
+    ok = dict(zip(table["source"], table["calibrated"], strict=True))
+    for r in rows:
+        name = str(r["source"])
+        if name == "empirical_14d" or r["calibrated"]:
+            continue
+        fixed = ok.get(f"{name}+conformal", False)
+        notes.append(
+            f"The band of {name} is not calibrated (80% band: {r['coverage_80']:.0%} of the hours, 60%: "
+            f"{r['coverage_60']:.0%}): "
+            + (f"use {name}+conformal, which is." if fixed else "do not read it as a probability.")
+        )
+    return table, notes
 
 
 def _weather_frame(weather: pd.DataFrame, series_ids: list[str]) -> pd.DataFrame:

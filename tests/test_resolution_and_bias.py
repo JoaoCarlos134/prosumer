@@ -107,3 +107,62 @@ def test_generation_is_blocked_by_default() -> None:
         postprocessing.correct_bias(fc, actual, quantity="generation")
     allowed = postprocessing.correct_bias(fc, actual, quantity="generation", allow_generation=True)
     assert len(allowed) == len(fc)
+
+
+# ---------------------------------------------------------------------- conformal bands
+LEVELS = (0.1, 0.2, 0.5, 0.8, 0.9)
+
+
+def _band(days: int = 60, half_width: float = 0.3, seed: int = 0) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """y ~ N(5, 1) every hour; a band centred on 5 with the normal's shape but `half_width` x too narrow."""
+    rng = np.random.default_rng(seed)
+    ds = pd.date_range("2024-01-01", periods=24 * days, freq="h", tz="UTC")
+    z = {0.1: -1.2816, 0.2: -0.8416, 0.5: 0.0, 0.8: 0.8416, 0.9: 1.2816}
+    q = pd.DataFrame({"unique_id": "a", "ds": ds, **{f"q{a:g}": 5 + half_width * z[a] for a in LEVELS}})
+    y = pd.DataFrame({"unique_id": "a", "ds": ds, "y": rng.normal(5, 1, len(ds))})
+    return q, y
+
+
+def _coverage(q: pd.DataFrame, y: pd.DataFrame, lo: str, hi: str) -> float:
+    j = q.merge(y, on=["unique_id", "ds"])
+    return float(((j[lo] <= j["y"]) & (j["y"] <= j[hi])).mean())
+
+
+def test_conformal_widens_a_band_that_is_too_narrow() -> None:
+    q, y = _band()
+    assert _coverage(q, y, "q0.1", "q0.9") < 0.4
+    c = postprocessing.conformal_quantiles(q, y, days=28)
+    late = c[c["conformal"]]
+    assert abs(_coverage(late, y, "q0.1", "q0.9") - 0.8) < 0.03
+    assert abs(_coverage(late, y, "q0.2", "q0.8") - 0.6) < 0.03
+    assert not c.loc[c["ds"] < pd.Timestamp("2024-01-08", tz="UTC"), "conformal"].any()  # < 7 days of errors
+    first = c["ds"] < pd.Timestamp("2024-01-08", tz="UTC")
+    pd.testing.assert_frame_equal(c.loc[first, q.columns], q.loc[first])  # left as it came
+
+
+def test_conformal_never_looks_at_the_day_it_adjusts() -> None:
+    q, y = _band(days=30)
+    c1 = postprocessing.conformal_quantiles(q, y)
+    day = pd.Timestamp("2024-01-20", tz="UTC")
+    y2 = y.copy()
+    y2.loc[y2["ds"] >= day, "y"] += 100  # the future changes
+    c2 = postprocessing.conformal_quantiles(q, y2)
+    up_to = c1["ds"] < day + pd.Timedelta(days=1)
+    pd.testing.assert_frame_equal(c1[up_to], c2[up_to])
+
+
+def test_conformal_leaves_zero_width_hours_and_excluded_hours_alone() -> None:
+    q, y = _band(days=20)
+    night = q["ds"].dt.hour < 6
+    q.loc[night, [c for c in q.columns if c.startswith("q")]] = 0.0
+    hours = q["ds"].dt.hour != 12
+    c = postprocessing.conformal_quantiles(q, y, hours=hours)
+    cols = [col for col in q.columns if col.startswith("q")]
+    pd.testing.assert_frame_equal(c.loc[night | ~hours, cols], q.loc[night | ~hours, cols])
+    assert (
+        c.loc[c["conformal"] & ~night & hours, "q0.9"] > q.loc[c["conformal"] & ~night & hours, "q0.9"]
+    ).all()
+    with pytest.raises(ValueError, match="min_days"):
+        postprocessing.conformal_quantiles(q, y, days=5, min_days=7)
+    with pytest.raises(ValueError, match="q<level>"):
+        postprocessing.conformal_quantiles(q[["unique_id", "ds"]], y)

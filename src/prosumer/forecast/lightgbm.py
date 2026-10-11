@@ -156,7 +156,8 @@ class LightGBM:
 class LightGBMQuantile(LightGBM):
     """One LightGBM per quantile level (pinball loss), same features and protocol: the band source of pilot
     F2(c). Calibrated in regime A on the houses' consumption and on the plants (80% band covered 0.77 of the
-    hours); too narrow on the houses' PV (0.65) and in regime C (0.74): read the coverage before trusting it.
+    hours); too narrow on the houses' PV (0.65) and in regime C (0.74): read the coverage before trusting it,
+    or recalibrate with `postprocessing.conformal_quantiles` (calibrated in both, as `analyze` does).
 
     `predict` gives the 0.5 level (the median, a point forecast in its own right, not the mean LightGBM's).
     """

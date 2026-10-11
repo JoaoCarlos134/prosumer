@@ -435,8 +435,15 @@ serve ponto e faixa); secao `bands` no `analyze` (cobertura 80/60, largura, CRPS
 horas, `calibrated` = +-5 pontos, nota quando nao calibra). Casas, 92 dias: consumo calibrado (0,771/0,573, CRPS
 +0,082), FV estreita (0,618/0,423) - como no piloto. A diferenca de 1e-3 do Chronos-2 no C e do ambiente antigo do
 benchmark (o piloto, ambiente de hoje, bate a 2e-6). A fila das 23:00 (tarefa agendada, acorda o PC) confere tambem
-os quantis do Chronos-2 e do LightGBM. Proximo: ler a conferencia; calibracao conformal causal das faixas (C e FV);
-o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+os quantis do Chronos-2 e do LightGBM. **Calibracao conformal causal das faixas (11/10, noite): PASSA** (piloto
+`piloto_conformal.py` sobre os quantis gravados, ~20 s; detalhes em `docs/projeto/PILOTOS_F1_F2.md`, F2(c')): um
+deslocamento por nivel, quantil a de (y - q_a)/largura de 80% nos 28 dias anteriores, so nas horas de producao (sol nas
+usinas, perfil de ANTES do teste na FV das casas; sem isso a noite enche a calibracao de zeros); 10 de 11 fontes
+calibradas contra 7 de 11 brutas, inclusive as 4 que falhavam (LightGBM FV 0,651 -> 0,814; C 0,741 -> 0,810;
+Chronos-2 C largo demais 0,837/0,654 -> 0,804/0,605); CQR por par fica em 9. Na biblioteca:
+`postprocessing.conformal_quantiles` (= piloto, dif 0,0) e linha `<modelo>+conformal` na secao `bands` do `analyze`
+(28 dias de previsoes antes do teste). Casas 92 dias: FV 0,618/0,423 -> 0,783/0,593, calibrada. Proximo: ler a
+conferencia; o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

@@ -4,7 +4,8 @@ Day-ahead forecasting of energy prosumers' generation and consumption (PV plants
 batteries), from meter data to embedded models. It is the basis of João Carlos Jachenski Junior's
 undergraduate thesis (TCC) and later master's work, and grew out of the Edge AI R&D project at Lactec.
 
-The package was called `prossumidor` until 2026-10-09. The code and main docs are now in English; a
+The package (and, since 2026-10-11, the GitHub repository) was called `prossumidor` until 2026-10-09; the old
+repository URL redirects here. The code and main docs are now in English; a
 Brazilian layer (ANEEL tariffs, tarifa branca, Lei 14.300) and a Portuguese guide are planned. Most
 project and benchmark documents under `docs/` and `experimentos/` are still in Portuguese.
 

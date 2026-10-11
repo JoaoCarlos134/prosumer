@@ -1,4 +1,4 @@
-# Biblioteca `prossumidor` e TCC
+# Biblioteca `prosumer` (antes `prossumidor`) e TCC
 
 A proposta de transformar o código do projeto numa biblioteca Python e de usar esse trabalho como
 TCC (e, depois, mestrado). **Estado em 06/10/2026:** o uso acadêmico para o TCC foi autorizado pela

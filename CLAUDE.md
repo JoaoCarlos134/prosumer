@@ -3,8 +3,9 @@
 Snapshot written on 2026-10-05 from the work machine (Lactec), where the project lives in OneDrive
 (`Documentos/2026/Projeto_IA`); state, findings and next steps updated on 2026-10-06 after the v2 +
 batch 2 run finished on the home GPU. This repo is the exported, anonymized subset needed for the TCC, the
-future master's and the `prosumer` library (called `prossumidor` until 2026-10-09; the GitHub repo and
-the folder keep the old name). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
+future master's and the `prosumer` library (called `prossumidor` until 2026-10-09; GitHub repo renamed to
+`JoaoCarlos134/prosumer` on 2026-10-11, the old URL redirects; the local folders on both machines keep the old
+name `prossumidor` on purpose: venvs, VS Code and Claude Code memory are tied to the path). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
 `tests/`, README, pyproject) is in English since 2026-10-09; project docs, benchmark scripts and their
 comments stay in Portuguese (code comments without accents) — keep that convention there.
 

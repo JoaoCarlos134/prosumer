@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Fila da noite (maquina de casa, RTX 4070): so o que pesa (GPU/CPU por horas). De dia a maquina fica livre.
 # Uso (de scripts/):  bash fila_noite.sh        log em ../resultados/log_fila_noite_<data>.txt (fora do git)
+# MODO_TESTE=1 bash fila_noite.sh: liga o modo_teste.ps1 antes (fecha a lista de programas, plano Alto desempenho) e
+# restaura no fim. Sem a variavel, nada e fechado.
 # Cada etapa e independente e tem teto de tempo: uma falha nao para as seguintes. Nao roda o atualiza.py: a decisao
 # de entrar no benchmark e conferida de dia, depois. Filas anteriores: no historico do git (10/10: Mamba, TimeGrad).
 #
@@ -11,6 +13,9 @@ LOG=../resultados/log_fila_noite_$(date +%Y-%m-%d).txt
 export DISPOSITIVO=cuda
 nota() { echo "== $1 $2"; $B piloto_comum.py $1 $2 A 2>&1 | grep -E '"(skill|MBE|posicao|dm_p_vs_melhor|grupo_da_frente)"' | tr -d '\n'; echo; }
 roda() { timeout "$1" "${@:2}" 2>&1 | grep -E "^OK|ABORTADO|Error|Traceback"; echo "  (saida ${PIPESTATUS[0]}; 124 = teto de tempo)"; }
+MT="powershell -NoProfile -ExecutionPolicy Bypass -File $(cygpath -w "$PWD/modo_teste.ps1")"
+[ "$MODO_TESTE" = 1 ] && $MT -Aplicar >> "$LOG" 2>&1
+trap '[ "$MODO_TESTE" = 1 ] && $MT -Restaurar >> "$LOG" 2>&1' EXIT
 {
 date
 # 1. Time-LLM com GPT-2 e a ablacao sem LLM (teto 2 h cada; guarda de memoria de 18 GB no proprio script)

@@ -1,0 +1,129 @@
+"""The app's single call: the report has every section and its numbers line up with the library."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from prosumer import EnergySeries, analysis, data
+from prosumer.analysis import analyze
+
+
+def test_house_report_has_every_section() -> None:
+    r = analyze(data.example_house(n_series=2, days=60), test_days=21)
+    assert list(r.quality["series"]) == ["house_1", "house_2"]
+    assert (r.quality["coverage"] == 1.0).all()
+    assert r.summary["reference"] == "persistence_24h"
+    assert r.forecast is not None and r.resolution is not None
+    f = r.forecast.set_index("forecast")
+    assert list(f.index) == ["median", "persistence_24h", "seasonal_168h", "mean_7d"]
+    assert f.loc["persistence_24h", "skill"] == pytest.approx(0.0)
+    assert f.loc["median", "skill_ci_low"] <= f.loc["median", "skill"] <= f.loc["median", "skill_ci_high"]
+    # synthetic houses: lognormal noise around a fixed weekly shape, so averaging days beats yesterday
+    assert f.loc["mean_7d", "skill"] > 0
+    assert list(r.resolution["level"]) == ["hour", "day_night", "peak_17_21", "day"]
+    assert r.summary["test_windows"] == 2 * 21
+    assert set(r.pending) == set(analysis.PENDING)
+
+
+def test_report_serializes_and_renders() -> None:
+    r = analyze(data.example_house(n_series=1, days=40), test_days=14)
+    json.dumps(r.to_dict())  # the app sends it as JSON
+    md = r.to_markdown()
+    for title in ("# Analysis", "## Data quality", "## Day-ahead forecast check", "## Not available yet"):
+        assert title in md
+
+
+def test_naive_forecasts_are_the_lagged_values() -> None:
+    """Window position arithmetic checked against `data.persistence_forecast`, also when issued at noon."""
+    s = data.example_house(n_series=1, days=30)
+    for hour in (0, 12):
+        task = analysis.DayAhead(
+            s, test_start="2024-01-20", test_end="2024-01-25", context=168, issue_hour=hour
+        )
+        fc = analysis._naive_forecasts(task.windows(), None, "persistence_24h")
+        assert (fc["ds"].dt.hour >= hour).all()
+        keys = ["unique_id", "ds"]
+        for name, lag in (("persistence_24h", 24), ("seasonal_168h", 168)):
+            ref = data.persistence_forecast(s, lag_h=lag).rename(columns={"yhat": "expected"})
+            m = fc.merge(ref, on=keys)
+            assert len(m) == len(fc)
+            np.testing.assert_allclose(m[name], m["expected"])
+
+
+def test_plant_with_site_uses_clear_sky_persistence_and_sun_hours() -> None:
+    series, _ = data.example_plant(n_series=1, days=50)
+    r = analyze(series, site=(-25.43, -49.27), test_days=14)
+    assert r.summary["reference"] == "clear_sky_persistence"
+    assert r.forecast is not None
+    f = r.forecast.set_index("forecast")
+    assert "clear_sky_persistence" in f.index and f.loc["clear_sky_persistence", "skill"] == 0.0
+    assert not any("without a site" in n for n in r.notes)
+
+
+def test_plant_without_site_says_so() -> None:
+    series, _ = data.example_plant(n_series=1, days=50)
+    r = analyze(series, test_days=14)
+    assert r.summary["reference"] == "persistence_24h"
+    assert any("without a site" in n for n in r.notes)
+
+
+def test_quality_notes_gaps_and_series_ending_apart() -> None:
+    s = data.with_gaps(data.example_house(n_series=2, days=60), fraction=0.1, seed=2, short_series="house_2")
+    r = analyze(s, test_days=14)
+    q = r.quality.set_index("series")
+    assert (q["coverage"] < 0.95).all() and (q["gaps"] > 0).all()
+    assert q.loc["house_2", "last_valid"] < q.loc["house_1", "last_valid"]
+    assert any("Coverage below 95%" in n for n in r.notes)
+    assert any("do not end together" in n for n in r.notes)
+
+
+def test_too_short_skips_the_forecast_check_but_keeps_quality() -> None:
+    r = analyze(data.example_house(n_series=1, days=10), test_days=7)
+    assert r.forecast is None and not r.quality.empty
+    assert any("skipped" in n for n in r.notes)
+
+
+def test_hourly_only() -> None:
+    s = data.example_house(n_series=1, days=20, freq="30min")
+    with pytest.raises(ValueError, match="hourly"):
+        analyze(s)
+
+
+def test_runs() -> None:
+    assert analysis._runs(np.array([False, True, True, False, True])) == [2, 1]
+    assert analysis._runs(np.zeros(3, bool)) == []
+
+
+BENCH = Path(__file__).resolve().parents[1] / "experimentos" / "testes_previsao"
+
+
+@pytest.mark.skipif(
+    not (BENCH / "dados" / "casas_horario.parquet").exists()
+    or not (BENCH / "resultados" / "metricas.csv").exists(),
+    reason="benchmark data missing",
+)
+def test_analyze_reproduces_the_benchmark_naive_forecasts_on_the_dingle_houses() -> None:
+    """End to end on real data: `analyze` over the last 92 days of the houses' consumption is the benchmark's
+    `casas_cons|A` test, and its naive forecasts must give the published rows of `metricas.csv`."""
+    c = pd.read_parquet(BENCH / "dados" / "casas_horario.parquet")
+    d = c.rename(columns={"casa": "unique_id", "cons_kWh": "y"})[["unique_id", "ds", "y"]]
+    d = d[d["ds"] <= "2020-12-31 23:00"]
+    s = EnergySeries.from_dataframe(d, unit="kWh", quantity="consumption", tz="Etc/GMT", freq="h")
+    r = analyze(s, test_days=92)
+    assert (r.summary["test_start"], r.summary["test_end"]) == ("2020-10-01", "2020-12-31")
+    assert r.forecast is not None
+    ours = r.forecast.set_index("forecast")
+    pub = pd.read_csv(BENCH / "resultados" / "metricas.csv", sep=";", decimal=",", encoding="utf-8-sig")
+    pub = pub[(pub["caso"] == "casas_cons") & (pub["regime"] == "A")].set_index("modelo")
+    for name, model in (
+        ("persistence_24h", "persist_24h"),
+        ("seasonal_168h", "semanal_168h"),
+        ("mean_7d", "media_7d"),
+    ):
+        for col in ("skill", "nRMSE", "MBE", "R2"):
+            assert ours.loc[name, col] == pytest.approx(pub.loc[model, col], abs=1e-12), (name, col)

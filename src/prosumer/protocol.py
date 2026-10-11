@@ -106,9 +106,9 @@ class DayAhead:
             raise ValueError(f"context ({context} h) must cover at least the horizon ({H} h)")
         self.series = series.to_kwh()
         tz = self.series.tz
-        self.start = pd.Timestamp(test_start, tz=tz).normalize()
+        self.start = _in_tz(test_start, tz).normalize()
         last = self.series.frame["ds"].max()
-        self.end = pd.Timestamp(test_end, tz=tz).normalize() if test_end is not None else last.normalize()
+        self.end = _in_tz(test_end, tz).normalize() if test_end is not None else last.normalize()
         if self.end < self.start:
             raise ValueError(f"Test end ({self.end.date()}) is before its start ({self.start.date()})")
         self.refit_days = refit_days
@@ -214,6 +214,12 @@ class DayAhead:
                 f"({ends.min()} to {ends.max()}): cut each fold by [start, end] "
                 "before saving forecasts, or a later fold re-emits days of an earlier one."
             )
+
+
+def _in_tz(value: str | pd.Timestamp, tz: str) -> pd.Timestamp:
+    """A naive value is read in `tz`; an aware one is converted to it."""
+    t = pd.Timestamp(value)
+    return t.tz_localize(tz) if t.tzinfo is None else t.tz_convert(tz)
 
 
 def folds(start: str | pd.Timestamp, end: str | pd.Timestamp, refit_days: int) -> list[Fold]:

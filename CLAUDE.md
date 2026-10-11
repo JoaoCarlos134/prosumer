@@ -401,8 +401,12 @@ emitida dentro do dia, alvo = horas de `issue_hour` a 23 h; 0 = benchmark, v2 co
 `metrics.band_scores`/`quantile_loss` (F2(c): CRPS, cobertura e largura por par simetrico); o `piloto_quantis avalia`
 usa a biblioteca e o `resumo.json` sai identico byte a byte nas 14 fontes. A CI (`qualidade`) falhou nos tres pushes de 11/10 (`ce3ac70`, `2937238`, `250c43c`)
 por ruff (linhas > 110 e formato): consertado; rodar `ruff check src tests && ruff format --check src tests` antes de
-cada commit (o mypy so roda na CI). `gh` instalado (winget, `C:\Program Files\GitHub CLI`). Falta: a chamada unica
-do aplicativo e o `io` da Open-Meteo com varias NWP. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+cada commit (o mypy so roda na CI). `gh` instalado (winget, `C:\Program Files\GitHub CLI`, logado como JoaoCarlos134). **Chamada unica do
+aplicativo feita (11/10):** `prosumer.analyze(series, site=None, test_days=28, issue_hour=0) -> Report` (qualidade,
+checagem de previsao com as ingenuas e a MEDIANA delas como saida, por resolucao, notas e a lista `pending` do que
+falta; `to_dict`/`to_markdown`). No consumo das casas reproduz as linhas `persist_24h`, `semanal_168h` e `media_7d`
+do `metricas.csv` (teste com dados reais, tolerancia 1e-12). Cada modulo novo (io, forecast, diagnostico, economia)
+entra como secao do `Report`. `DayAhead` aceita datas com fuso. Falta: o `io` da Open-Meteo com varias NWP. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

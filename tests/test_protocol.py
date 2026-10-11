@@ -274,3 +274,12 @@ def test_issue_hour_only_needs_the_target_hours_valid(plant: object) -> None:
 def test_issue_hour_out_of_range_is_refused(plant: object) -> None:
     with pytest.raises(ValueError, match="issue_hour"):
         DayAhead(plant, test_start="2024-03-01", issue_hour=24)
+
+
+def test_test_dates_may_carry_a_time_zone(plant: object) -> None:
+    tz = plant.tz  # type: ignore[attr-defined]
+    naive = DayAhead(plant, test_start="2024-03-01", test_end="2024-03-05")
+    aware = DayAhead(
+        plant, test_start=pd.Timestamp("2024-03-01", tz=tz), test_end=pd.Timestamp("2024-03-05", tz=tz)
+    )
+    assert (naive.start, naive.end) == (aware.start, aware.end)

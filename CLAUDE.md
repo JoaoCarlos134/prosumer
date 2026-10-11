@@ -4,8 +4,9 @@ Snapshot written on 2026-10-05 from the work machine (Lactec), where the project
 (`Documentos/2026/Projeto_IA`); state, findings and next steps updated on 2026-10-06 after the v2 +
 batch 2 run finished on the home GPU. This repo is the exported, anonymized subset needed for the TCC, the
 future master's and the `prosumer` library (called `prossumidor` until 2026-10-09; GitHub repo renamed to
-`JoaoCarlos134/prosumer` on 2026-10-11, the old URL redirects; the local folders on both machines keep the old
-name `prossumidor` on purpose: venvs, VS Code and Claude Code memory are tied to the path). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
+`JoaoCarlos134/prosumer` on 2026-10-11, the old URL redirects; the home folder became `Downloads/projects/prosumer` the same day,
+via `~/renomeia_prosumer.ps1`, which also fixes the editable install, graphify's root and copies the Claude Code memory;
+at Lactec rename the clone to `1Projects/prosumer`, run `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git` and change the exporter's default destination). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
 `tests/`, README, pyproject) is in English since 2026-10-09; project docs, benchmark scripts and their
 comments stay in Portuguese (code comments without accents) — keep that convention there.
 
@@ -33,7 +34,7 @@ comments stay in Portuguese (code comments without accents) — keep that conven
   (Identified 2026-10-07; before that they were treated as unknown origin and kept private.)
 - Re-syncing from Lactec is done there by rerunning the export script; files here may be overwritten by it.
   Commit work done here before a re-sync. Its default destination is the Lactec clone in
-  `OneDrive - Lactec/Documentos/1Projects/prossumidor` (was `~/repos/prossumidor` until 07/10/2026).
+  `OneDrive - Lactec/Documentos/1Projects/prossumidor` (to be renamed `prosumer`: update the exporter) (was `~/repos/prossumidor` until 07/10/2026).
 
 ## Layout
 

@@ -82,6 +82,8 @@ def gera(caso):
     import torch
     from redes_proprias import DEV, CycleNet, SparseTSF, treina_proprio
     assert DEV.type == "cpu", "rodar com DISPOSITIVO=cpu"
+    # o 04_redes_treinadas fixa 5 threads; em CPU o numero de threads muda a ordem das somas e, com ela, o treino
+    torch.set_num_threads(int(os.environ.get("THREADS_TORCH", "5")))
     t0 = time.time()
     d = carrega(caso)
     ids = {u: i for i, u in enumerate(sorted(d.unique_id.unique()))}     # a ordem do treina_proprio

@@ -35,6 +35,8 @@ pvlib = ["pvlib>=0.11"]
 # Downloads (io.open_meteo) use the standard library; truststore makes them work behind proxies that inspect
 # TLS with the system certificates (the Lactec network).
 net = ["truststore>=0.9"]
+# Reading Excel files (io.fronius Solar.web exports, io.meter tables); CSV needs nothing extra.
+fronius = ["openpyxl>=3.1"]
 # One extra per vendor: when one of their APIs changes, one adapter breaks, not the project.
 chronos = ["chronos-forecasting>=2.0"]
 # TiRex-2 has no PyPI release: install it from git (a direct reference cannot go in an extra), e.g.

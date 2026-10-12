@@ -5,8 +5,8 @@ Status: step E2 of the proposal (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far
 (including metrics at several resolutions and bands), `postprocessing` (consumption bias correction),
 `physics` (sun position, clear sky, plane-of-array), `provenance` (source and licence of every input),
 `quality` (the clock of a generation series checked against the sun), `forecast`, `io` (Open-Meteo
-forecasts, NASA POWER weather) and `data` (synthetic series and the real Dingle houses); the
-`diagnostics`, `embedded` and `economics` modules are not written yet.
+forecasts, NASA POWER weather, Fronius Solar.web exports, generic meter tables) and `data` (synthetic
+series and the real Dingle houses); the `diagnostics`, `embedded` and `economics` modules are not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported

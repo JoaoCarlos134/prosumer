@@ -466,7 +466,14 @@ iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C:
 quantis do Chronos-2 = piloto com dif 0,0 nos 4. `resultados/conferencia_biblioteca.json`, 24 entradas, nenhum erro.
 As rodadas v1 dos fundacionais em casas_prod A (Chronos-2, Chronos-Bolt-small, Moirai-2.0-small, TTM-r2, TiRex,
 TimesFM-2.5 e o Ensemble) gravaram as 20 casas, inclusive as 10 sem FV: o 05_avalia so avalia as 10, nenhum numero
-muda; a conferencia compara nas comuns e anota `series_extra_gravada`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+muda; a conferencia compara nas comuns e anota `series_extra_gravada`.
+**Proveniencia (12/10, madrugada; agente em worktree, juntado):** `prosumer.provenance` (`Provenance`, `attach`, `of`),
+campo opcional `EnergySeries.provenance`, preenchido por `data.dingle_houses` (CC0 + citacao), pelos sinteticos e pelos
+leitores (`attrs["provenance"]` em `open_meteo`/`nasa_power`); secao "Data sources and licences" no `Report`, com notas
+para licenca desconhecida, uso nao comercial e modelo que envia dados. Conferido: dados da Open-Meteo CC BY 4.0, mas a
+**API gratuita e so para uso nao comercial** (< 10 mil chamadas/dia; https://open-meteo.com/en/terms) - pesa no
+aplicativo se ele for comercial; NASA POWER sem licenca propria, CC0 pela regra geral da NASA, pede citacao e aviso de
+publicacao. Testes: 355 passam, 10 pulados. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

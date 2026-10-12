@@ -1,4 +1,4 @@
-"""Embedded models: export a fitted linear or tree model, WITH its preprocessing, to one C header.
+"""Embedded models: export a fitted linear, tree or small network, WITH its preprocessing, to one C header.
 
 Why a module of its own (step E4, pilot `piloto_embarcado.py`, study `docs/projeto/ESTUDO_EMBARCADO.md`):
 
@@ -9,6 +9,10 @@ Why a module of its own (step E4, pilot `piloto_embarcado.py`, study `docs/proje
 - An ESP32 (520 KB SRAM, 4 MB flash) cannot run the benchmark's full-size trees, but it runs a Ridge
   (23 floats: fill values, weights, intercept) or a small forest (tens of KB). The pilot measured what that
   costs in skill: on house consumption the small models tie with the full-size ones.
+- The benchmark's two small networks, SparseTSF (32 parameters) and CycleNet with the linear backbone
+  (~4-7 thousand), are plain arrays too: `SparseTSF` and `CycleNet` hold them as numpy (`from_torch` reads a
+  trained module's state dict without importing torch) and the header runs them on the raw 168 h with the
+  benchmark's causal gap fill and per-window normalization (pilot `piloto_embarcado_redes.py`).
 - No dependency besides numpy: the model is read from the fitted object (scikit-learn `coef_`/`tree_`,
   LightGBM `dump_model`), and the C is plain C99 (`math.h`, `stdint.h`), single-precision float, as the ESP32
   FPU.
@@ -316,7 +320,227 @@ def _lgb_left(node: dict[str, Any], v: float) -> bool:
     return v <= float(node["threshold"])
 
 
-Model = Linear | Trees
+# ---------------------------------------------------------------------- neural linear models
+# The benchmark's two small networks (`experimentos/testes_previsao/scripts/redes_proprias.py`), regime A:
+# both read the 168 hours before the day, causally filled, and normalize the window by its own mean and
+# population standard deviation plus 1e-3 (`treina_proprio`). Their weights are a few plain arrays, so the
+# library holds them as numpy and never imports torch; `from_torch` only reads a module's state dict.
+
+EPS = 1e-3  # added to the window's standard deviation, as `treina_proprio`
+
+
+def causal_fill(history: np.ndarray) -> np.ndarray:
+    """The gaps (NaN) of each history row filled as the benchmark windows are (`protocol.DayAhead`, pandas
+    `interpolate(limit_direction="both")`): linear between the valid neighbours, the ends repeat the nearest
+    valid value, a row with no valid value becomes 0. Float64; `history` is (168,) or (n, 168)."""
+    y = np.array(history, dtype=float)
+    rows = y.reshape(-1, y.shape[-1])
+    i = np.arange(rows.shape[1])
+    for r in rows:
+        ok = ~np.isnan(r)
+        if ok.all():
+            continue
+        r[~ok] = np.interp(i[~ok], i[ok], r[ok]) if ok.any() else 0.0
+    return y
+
+
+def _fill32(history: np.ndarray) -> np.ndarray:
+    """`causal_fill` in the C's float32 arithmetic: slope = (y_q - y_p) / (q - p); slope * (t - p) + y_p."""
+    h = np.asarray(history, dtype=np.float32)
+    out = h.copy()
+    for r, x in zip(h, out, strict=True):
+        ok = np.flatnonzero(~np.isnan(r))
+        if len(ok) == len(r):
+            continue
+        if len(ok) == 0:
+            x[:] = 0.0
+            continue
+        x[: ok[0]] = r[ok[0]]
+        x[ok[-1] + 1 :] = r[ok[-1]]
+        for t in np.flatnonzero(np.isnan(r[ok[0] : ok[-1]])) + ok[0]:
+            p = ok[ok < t][-1]
+            q = ok[ok > t][0]
+            slope = (r[q] - r[p]) / np.float32(q - p)
+            x[t] = slope * np.float32(t - p) + r[p]
+    return out
+
+
+def _window(history: np.ndarray, dtype: Any) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Filled, normalized windows (n, 168), their mean and deviation (n, 1); in `dtype` (float32: C order)."""
+    h = np.asarray(history, dtype=float)
+    if h.shape[-1] != HISTORY or h.ndim > 2:
+        raise ValueError(f"history must be (168,) or (n, 168) hourly values, not {h.shape}")
+    h = h.reshape(-1, HISTORY)
+    if np.dtype(dtype) == np.float64:
+        x = causal_fill(h)
+        mu = x.mean(axis=1, keepdims=True)
+        sd = x.std(axis=1, keepdims=True) + EPS
+        return (x - mu) / sd, mu, sd
+    x = _fill32(h)
+    s = np.zeros(len(x), dtype=np.float32)
+    for t in range(HISTORY):  # sequential sums, as the C loop
+        s = s + x[:, t]
+    m = s / np.float32(HISTORY)
+    v = np.zeros(len(x), dtype=np.float32)
+    for t in range(HISTORY):
+        d = x[:, t] - m
+        v = v + d * d
+    sd = np.sqrt(v / np.float32(HISTORY)) + np.float32(EPS)
+    return (x - m[:, None]) / sd[:, None], m[:, None], sd[:, None]
+
+
+def _state(module: Any) -> dict[str, np.ndarray]:
+    """A torch module's parameters as float64 numpy arrays (duck-typed: no torch import here)."""
+    return {k: np.asarray(v.detach().cpu().numpy(), dtype=float) for k, v in module.state_dict().items()}
+
+
+def _out(y: np.ndarray, single: bool) -> np.ndarray:
+    y = np.asarray(y, dtype=float)
+    return y[0] if single else y
+
+
+@dataclass(frozen=True)
+class SparseTSF:
+    """SparseTSF (Lin et al., 2024) as in the benchmark: on the normalized window x, z = conv(x) + x (kernel
+    `2 * (period // 2) + 1`, zero padding, no bias), then each of the `period` phases is forecast by a linear
+    map shared by all phases from the window's values at that phase: out[o * period + ph] =
+    sum_j linear[o, j] * z[j * period + ph]. 32 parameters for period 24. Series-independent."""
+
+    conv: np.ndarray  # (kernel,)
+    linear: np.ndarray  # (24 // period, 168 // period)
+    period: int = 24
+
+    def __post_init__(self) -> None:
+        p = self.period
+        if p < 1 or HISTORY % p or H % p:
+            raise ValueError(f"period {p} must divide {HISTORY} and {H}")
+        if np.shape(self.conv) != (1 + 2 * (p // 2),):
+            raise ValueError(f"conv must have {1 + 2 * (p // 2)} weights, not {np.shape(self.conv)}")
+        if np.shape(self.linear) != (H // p, HISTORY // p):
+            raise ValueError(f"linear must be {(H // p, HISTORY // p)}, not {np.shape(self.linear)}")
+
+    @classmethod
+    def from_torch(cls, module: Any) -> SparseTSF:
+        """From the benchmark's `SparseTSF` module (`conv.weight`, `lin.weight`, attribute `p`)."""
+        s = _state(module)
+        if set(s) != {"conv.weight", "lin.weight"}:
+            raise NotImplementedError(f"expected conv.weight and lin.weight without bias, got {sorted(s)}")
+        return cls(s["conv.weight"].reshape(-1), s["lin.weight"], int(getattr(module, "p", 24)))
+
+    @property
+    def n_parameters(self) -> int:
+        return int(self.conv.size + self.linear.size)
+
+    def predict(self, history: np.ndarray, dtype: Any = np.float64) -> np.ndarray:
+        """The 24 values after each 168 h history (NaN = gap, filled causally). `dtype=np.float32` reproduces
+        the C arithmetic. Not clipped (see `forecast_day`)."""
+        single = np.ndim(history) == 1
+        x, mu, sd = _window(history, dtype)
+        w = np.asarray(self.conv, dtype=dtype)
+        lin = np.asarray(self.linear, dtype=dtype)
+        pad = len(w) // 2
+        xp = np.pad(x, ((0, 0), (pad, pad)))
+        c = np.zeros_like(x)
+        for k in range(len(w)):  # c[t] = sum_k w[k] x[t + k - pad], in the C order
+            c = c + w[k] * xp[:, k : k + HISTORY]
+        z = c + x
+        p = self.period
+        out = np.zeros((len(x), H), dtype=dtype)
+        for o in range(H // p):
+            acc = np.zeros((len(x), p), dtype=dtype)
+            for j in range(HISTORY // p):
+                acc = acc + lin[o, j] * z[:, j * p : (j + 1) * p]
+            out[:, o * p : (o + 1) * p] = acc
+        return _out(out * sd + mu, single)
+
+    def forecast_day(self, history: np.ndarray, day: Any = None, dtype: Any = np.float64) -> np.ndarray:
+        """What the header's `<name>_forecast_day` returns: `predict`, negatives cut. `day` is not used."""
+        return np.clip(self.predict(history, dtype), 0.0, None)
+
+
+@dataclass(frozen=True)
+class CycleNet:
+    """CycleNet (Lin et al., NeurIPS 2024) with the linear backbone, as in the benchmark: a learned cycle Q of
+    W points per series (24 or 168) is removed from the normalized window and its continuation added back to
+    a linear map 168 -> 24 of the residual. The phase is the position in the cycle of the window's first hour:
+    hour of day (W = 24) or weekday * 24 + hour (W = 168, Monday = 0). For a day-ahead window issued at
+    midnight the first hour is 00:00 of the same weekday a week before, so the phase is 0 (W = 24) or
+    weekday(day) * 24 (`day_phase`)."""
+
+    cycle: np.ndarray  # (n_series, W)
+    weight: np.ndarray  # (24, 168)
+    bias: np.ndarray  # (24,)
+
+    def __post_init__(self) -> None:
+        if np.ndim(self.cycle) != 2 or np.shape(self.cycle)[1] not in (H, HISTORY):
+            raise ValueError(f"cycle must be (n_series, 24 or 168), not {np.shape(self.cycle)}")
+        if np.shape(self.weight) != (H, HISTORY) or np.shape(self.bias) != (H,):
+            raise ValueError("weight must be (24, 168) and bias (24,): only the linear backbone is exported")
+
+    @classmethod
+    def from_torch(cls, module: Any) -> CycleNet:
+        """From the benchmark's `CycleNet` module with the linear backbone (`Q`, `f.weight`, `f.bias`)."""
+        s = _state(module)
+        if set(s) != {"Q", "f.weight", "f.bias"}:
+            raise NotImplementedError(f"only the linear backbone (Q, f.weight, f.bias), got {sorted(s)}")
+        return cls(s["Q"], s["f.weight"], s["f.bias"])
+
+    @property
+    def period(self) -> int:
+        return int(self.cycle.shape[1])
+
+    @property
+    def n_series(self) -> int:
+        return int(self.cycle.shape[0])
+
+    @property
+    def n_parameters(self) -> int:
+        return int(self.cycle.size + self.weight.size + self.bias.size)
+
+    def fix(self, series: int) -> CycleNet:
+        """Keep the cycle of one series (index in the training order: sorted series ids), as a device that
+        serves one house needs. Required before `to_c`."""
+        if not 0 <= series < self.n_series:
+            raise ValueError(f"series {series} outside 0-{self.n_series - 1}")
+        return CycleNet(self.cycle[series : series + 1], self.weight, self.bias)
+
+    def day_phase(self, day: Any) -> int:
+        """Phase of the window of the day `day` (issued at its midnight)."""
+        return 0 if self.period == H else int(pd.Timestamp(day).dayofweek) * H
+
+    def predict(
+        self, history: np.ndarray, phase: Any = 0, series: Any = 0, dtype: Any = np.float64
+    ) -> np.ndarray:
+        """The 24 values after each 168 h history (NaN = gap, filled causally); `phase` and `series` are
+        scalars or one per row. `dtype=np.float32` reproduces the C arithmetic. Not clipped."""
+        single = np.ndim(history) == 1
+        x, mu, sd = _window(history, dtype)
+        n = len(x)
+        ph = np.broadcast_to(np.asarray(phase, dtype=int), (n,))
+        se = np.broadcast_to(np.asarray(series, dtype=int), (n,))
+        if (se < 0).any() or (se >= self.n_series).any():
+            raise ValueError(f"series outside 0-{self.n_series - 1}")
+        q = np.asarray(self.cycle, dtype=dtype)
+        w = np.asarray(self.weight, dtype=dtype)
+        W = self.period
+        r = x - q[se[:, None], (ph[:, None] + np.arange(HISTORY)[None, :]) % W]
+        acc = np.broadcast_to(np.asarray(self.bias, dtype=dtype), (n, H)).copy()
+        for t in range(HISTORY):  # in the C order
+            acc = acc + w[:, t][None, :] * r[:, t][:, None]
+        acc = acc + q[se[:, None], (ph[:, None] + HISTORY + np.arange(H)[None, :]) % W]
+        return _out(acc * sd + mu, single)
+
+    def forecast_day(
+        self, history: np.ndarray, day: Any, series: int = 0, dtype: Any = np.float64
+    ) -> np.ndarray:
+        """What the header's `<name>_forecast_day` returns for `day`: `predict` at the day's phase, negatives
+        cut."""
+        return np.clip(self.predict(history, self.day_phase(day), series, dtype), 0.0, None)
+
+
+Network = SparseTSF | CycleNet
+
+Model = Linear | Trees | SparseTSF | CycleNet
 
 
 # ---------------------------------------------------------------------- sizes
@@ -333,6 +557,12 @@ class Footprint:
 
 
 def footprint(model: Model, *, day_ahead: bool = True) -> Footprint:
+    """Flash and RAM of the exported header. For the networks the RAM is always that of `forecast_day`
+    (history, filled/normalized window, SparseTSF's conv output, 24 outputs); `day_ahead` is ignored."""
+    if isinstance(model, SparseTSF):
+        return Footprint(4 * model.n_parameters, 4 * (3 * HISTORY + H))
+    if isinstance(model, CycleNet):
+        return Footprint(4 * model.n_parameters, 4 * (2 * HISTORY + H))
     n = len(model.features)
     flash = 4 * n  # fill values
     if isinstance(model, Linear):
@@ -352,9 +582,15 @@ def to_c(model: Model, name: str, *, day_ahead: bool = True, clip_negative: bool
     `day_ahead`, `<name>_features(hist, dow, doy, series_code, out)` and
     `<name>_forecast_day(hist, dow, doy, series_code, out24)` (dow: Monday = 0; doy: 1-366; hist: the 168
     hourly values before the day, oldest first, NAN for a gap), plus `prosumer_block_totals`.
+
+    A `SparseTSF` or a one-series `CycleNet` (see `CycleNet.fix`) gives only `<name>_forecast_day` with the
+    same arguments (the networks do not use `doy` and `series_code`; SparseTSF not `dow` either): the gaps
+    are filled as the benchmark windows (`causal_fill`), not imputed per feature as the other models do.
     """
     if not name.isidentifier():
         raise ValueError(f"{name!r} is not a C identifier")
+    if isinstance(model, SparseTSF | CycleNet):
+        return _c_network(model, name, clip_negative)
     if day_ahead and model.features != FEATURES:
         raise ValueError(f"day_ahead needs the features {FEATURES}; fix() drops nothing for trees")
     n = len(model.features)
@@ -468,17 +704,148 @@ def _c_day_ahead(name: str, n: int, clip: bool) -> list[str]:
         f"        {out}",
         "    }",
         "}",
-        "",
-        "#ifndef PROSUMER_BLOCK_TOTALS",
-        "#define PROSUMER_BLOCK_TOTALS",
-        "/* Day total and tariff blocks: block[h] is the block of hour h (0..n_blocks-1). */",
-        "static inline void prosumer_block_totals(const float y[24], const uint8_t block[24], int n_blocks,",
-        "                                         float *totals) {",
-        "    for (int b = 0; b < n_blocks; b++) totals[b] = 0.0f;",
-        "    for (int h = 0; h < 24; h++) totals[block[h]] += y[h];",
-        "}",
-        "#endif",
+        *_C_BLOCK_TOTALS,
     ]
+
+
+_C_BLOCK_TOTALS = [
+    "",
+    "#ifndef PROSUMER_BLOCK_TOTALS",
+    "#define PROSUMER_BLOCK_TOTALS",
+    "/* Day total and tariff blocks: block[h] is the block of hour h (0..n_blocks-1). */",
+    "static inline void prosumer_block_totals(const float y[24], const uint8_t block[24], int n_blocks,",
+    "                                         float *totals) {",
+    "    for (int b = 0; b < n_blocks; b++) totals[b] = 0.0f;",
+    "    for (int h = 0; h < 24; h++) totals[block[h]] += y[h];",
+    "}",
+    "#endif",
+]
+
+# Shared by every network header: the benchmark's causal fill of the window and its mean and population
+# deviation (+1e-3), single precision, sums in index order (`_fill32` and `_window` mirror them in numpy).
+_C_WINDOW = [
+    "",
+    "#ifndef PROSUMER_WINDOW",
+    "#define PROSUMER_WINDOW",
+    "/* Gaps (NAN) filled as the benchmark windows: linear between the valid neighbours, the ends repeat the",
+    "   nearest valid value, no valid value gives 0. */",
+    "static inline void prosumer_causal_fill(const float *h, int n, float *x) {",
+    "    int first = -1, last = -1;",
+    "    for (int t = 0; t < n; t++) if (!isnan(h[t])) { if (first < 0) first = t; last = t; }",
+    "    if (first < 0) { for (int t = 0; t < n; t++) x[t] = 0.0f; return; }",
+    "    int p = first;",
+    "    for (int t = 0; t < n; t++) {",
+    "        if (t < first) x[t] = h[first];",
+    "        else if (t > last) x[t] = h[last];",
+    "        else if (!isnan(h[t])) { x[t] = h[t]; p = t; }",
+    "        else {",
+    "            int q = t + 1;",
+    "            while (isnan(h[q])) q++;",
+    "            const float slope = (h[q] - h[p]) / (float)(q - p);",
+    "            x[t] = slope * (float)(t - p) + h[p];",
+    "        }",
+    "    }",
+    "}",
+    "",
+    "/* Normalizes x in place by its mean and population standard deviation + 1e-3. */",
+    "static inline void prosumer_normalize(float *x, int n, float *mu, float *sd) {",
+    "    float s = 0.0f;",
+    "    for (int t = 0; t < n; t++) s = s + x[t];",
+    "    const float m = s / (float)n;",
+    "    float v = 0.0f;",
+    "    for (int t = 0; t < n; t++) { const float d = x[t] - m; v = v + d * d; }",
+    "    const float sdev = sqrtf(v / (float)n) + 1e-3f;",
+    "    for (int t = 0; t < n; t++) x[t] = (x[t] - m) / sdev;",
+    "    *mu = m;",
+    "    *sd = sdev;",
+    "}",
+    "#endif",
+]
+
+
+def _c_network(model: SparseTSF | CycleNet, name: str, clip: bool) -> str:
+    up = name.upper()
+    out = "out[h] = y < 0.0f ? 0.0f : y;" if clip else "out[h] = y;"
+    kind = "SparseTSF" if isinstance(model, SparseTSF) else f"CycleNet (linear, cycle of {model.period} h)"
+    lines = [
+        f"/* {name}: {kind}, generated by prosumer.embedded. {model.n_parameters} parameters. */",
+        "/* Gaps are NaN and are tested with isnan(): do not compile with -ffast-math (it removes them). */",
+        f"#ifndef {up}_H",
+        f"#define {up}_H",
+        "#include <math.h>",
+        "#include <stdint.h>",
+        *_C_WINDOW,
+        "",
+    ]
+    sig = [
+        f"/* The 24 hours of a day from the {HISTORY} hours before it (oldest first, NAN for a gap);",
+        "   dow: weekday of the day, Monday = 0. */",
+        f"static inline void {name}_forecast_day(const float hist[{HISTORY}], int dow, int doy,",
+        f"                                         float series_code, float out[{H}]) {{",
+    ]
+    if isinstance(model, SparseTSF):
+        if model.conv.size > HISTORY:
+            raise ValueError("kernel longer than the window")
+        p, k = model.period, model.conv.size
+        lines += [
+            f"static const float {name}_conv[{k}] = {{{_floats(model.conv)}}};",
+            f"static const float {name}_linear[{model.linear.size}] = {{{_floats(model.linear.ravel())}}};",
+            "",
+            *sig,
+            "    (void)dow; (void)doy; (void)series_code;",
+            f"    float x[{HISTORY}], z[{HISTORY}], mu, sd;",
+            f"    prosumer_causal_fill(hist, {HISTORY}, x);",
+            f"    prosumer_normalize(x, {HISTORY}, &mu, &sd);",
+            f"    for (int t = 0; t < {HISTORY}; t++) {{",
+            "        float c = 0.0f;",
+            f"        for (int k = 0; k < {k}; k++) {{",
+            f"            const int i = t + k - {k // 2};",
+            f"            if (i >= 0 && i < {HISTORY}) c = c + {name}_conv[k] * x[i];",
+            "        }",
+            "        z[t] = c + x[t];",
+            "    }",
+            f"    for (int o = 0; o < {H // p}; o++) {{",
+            f"        for (int ph = 0; ph < {p}; ph++) {{",
+            "            float acc = 0.0f;",
+            f"            for (int j = 0; j < {HISTORY // p}; j++)",
+            f"                acc = acc + {name}_linear[o * {HISTORY // p} + j] * z[j * {p} + ph];",
+            f"            const int h = o * {p} + ph;",
+            "            const float y = acc * sd + mu;",
+            f"            {out}",
+            "        }",
+            "    }",
+            "}",
+        ]
+    else:
+        if model.n_series != 1:
+            raise ValueError(f"CycleNet has {model.n_series} series: fix(series) one per header")
+        w = model.period
+        phase = "0" if w == H else "(((dow % 7) + 7) % 7) * 24"
+        lines += [
+            f"#define {up}_PERIOD {w}",
+            f"static const float {name}_cycle[{w}] = {{{_floats(model.cycle[0])}}};",
+            f"static const float {name}_weight[{H * HISTORY}] = {{{_floats(model.weight.ravel())}}};",
+            f"static const float {name}_bias[{H}] = {{{_floats(model.bias)}}};",
+            "",
+            *sig,
+            "    (void)dow; (void)doy; (void)series_code;" if w == H else "    (void)doy; (void)series_code;",
+            f"    const int phase = {phase};",
+            f"    float x[{HISTORY}], mu, sd;",
+            f"    prosumer_causal_fill(hist, {HISTORY}, x);",
+            f"    prosumer_normalize(x, {HISTORY}, &mu, &sd);",
+            f"    for (int t = 0; t < {HISTORY}; t++) x[t] = x[t] - {name}_cycle[(phase + t) % {w}];",
+            f"    for (int h = 0; h < {H}; h++) {{",
+            f"        float acc = {name}_bias[h];",
+            f"        for (int t = 0; t < {HISTORY}; t++)",
+            f"            acc = acc + {name}_weight[h * {HISTORY} + t] * x[t];",
+            f"        acc = acc + {name}_cycle[(phase + {HISTORY} + h) % {w}];",
+            "        const float y = acc * sd + mu;",
+            f"        {out}",
+            "    }",
+            "}",
+        ]
+    lines += [*_C_BLOCK_TOTALS, "", f"#endif /* {up}_H */", ""]
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------- helpers
@@ -611,11 +978,14 @@ def _ints(a: np.ndarray) -> str:
 __all__ = [
     "FEATURES",
     "HISTORY",
+    "CycleNet",
     "Footprint",
     "Linear",
     "Model",
+    "SparseTSF",
     "Trees",
     "block_totals",
+    "causal_fill",
     "day_ahead_features",
     "footprint",
     "to_c",

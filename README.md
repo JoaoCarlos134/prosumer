@@ -100,10 +100,11 @@ for window in task.windows():
 | `quality` | the clock of a PV series checked against the sun (`clock_offset`) and the clouds (`clock_offset_weather`) |
 | `diagnostics` | from the energy alone: clear days, roof orientation, clear-day performance index and its steps (cleanings, faults) over time; `analyze(site=..., kwp=...)` |
 | `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo day-ahead forecasts (several models), NASA POWER hourly weather |
+| `embedded` | a fitted Ridge, forest or LightGBM with its preprocessing and the day-ahead features, as one C header for an ESP32 (`to_c`, `footprint`, `block_totals`) |
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |
 
-Not written yet: embedded models (E4), soiling vs shading and string faults (they need 5-minute or DC data),
+Not written yet: SparseTSF/TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data),
 economics with time-of-use tariffs and the Brazilian module (E6).
 
 ## What the benchmark found (the defaults come from here)

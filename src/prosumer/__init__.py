@@ -8,7 +8,8 @@ Status: version 0.1 done (step E2) and step E4 started, of the proposal
 `quality` (the clock of a generation series checked against the sun), `diagnostics` (clear-day
 performance of a PV series from its energy alone, and its change points), `forecast`, `io` (Open-Meteo
 forecasts, NASA POWER weather, Fronius Solar.web exports, generic meter tables) and `data` (synthetic
-series and the real Dingle houses); the `embedded` and `economics` modules are not written yet.
+series and the real Dingle houses); `embedded` (a fitted linear or tree model with its preprocessing as one C
+header, for an ESP32); the `economics` module is not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported
@@ -23,6 +24,7 @@ from . import (
     contracts,
     data,
     diagnostics,
+    embedded,
     metrics,
     physics,
     postprocessing,
@@ -58,6 +60,7 @@ __all__ = [
     "contracts",
     "data",
     "diagnostics",
+    "embedded",
     "metrics",
     "physics",
     "postprocessing",

@@ -185,3 +185,23 @@ def test_c_header_reproduces_python() -> None:
         np.testing.assert_allclose(got[:500], m.predict(rows, np.float32), rtol=2e-6, atol=2e-6)
         day_py = np.clip(m.predict(E.day_ahead_features(hist, day, 3.0), np.float32), 0, None)
         np.testing.assert_allclose(got[500:], day_py, rtol=1e-5, atol=1e-5)
+
+
+def test_forest_without_imputer_routes_gaps_as_sklearn() -> None:
+    """Review finding (2026-10-12): without an imputer the export sent every NaN left (up to 0.45 kWh off)."""
+    _sklearn()
+    from sklearn.ensemble import RandomForestRegressor
+
+    x, y = _xy()
+    gaps = np.random.default_rng(5).random(x.shape) < 0.05
+    gaps[:, 4] = False  # keep the series code
+    xn = np.where(gaps, np.nan, x)
+    for train in (xn, x):  # NaN seen in training, and NaN only at prediction time
+        rf = RandomForestRegressor(n_estimators=8, max_depth=7, random_state=0).fit(train, y)
+        m = E.Trees.from_sklearn(rf, E.FEATURES)
+        assert m.missing is not None
+        rows = np.isnan(xn).any(axis=1)
+        np.testing.assert_allclose(m.predict(xn[rows]), rf.predict(xn[rows]), rtol=1e-6, atol=1e-6)
+        p = m.fix({"serie_cod": 2.0})
+        sel = rows & (xn[:, 4] == 2.0)
+        np.testing.assert_allclose(p.predict(xn[sel]), rf.predict(xn[sel]), rtol=1e-6, atol=1e-6)

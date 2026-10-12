@@ -487,8 +487,15 @@ tendencia/perda); secao `diagnostics` do `analyze(site=, kwp=)`. Piloto `piloto_
 acha a custo de 8 alarmes falsos nas casas); fator escolhido NESTAS usinas, declarado. Conserto:
 `physics.fit_orientation` buscava so azimutes 90-270 (perdia telhado virado ao norte). **Revisor pos-trabalho**
 (`.claude/agents/work-reviewer.md`, pedido do usuario): rodar apos cada etapa; a 1a revisao achou 2 quebras (serie toda
-zero, inversor que morre) e um portao reduzido depois da rodada - consertados e declarados. Embarcado: agente em
-worktree (estudo + piloto emlearn), ainda nao juntado. Falta no diagnostico: sujeira x sombra x string (5 min/CC).
+zero, inversor que morre) e um portao reduzido depois da rodada - consertados e declarados. **Embarcado juntado (12/10):** `prosumer.embedded`
+(`day_ahead_features` = tabela do benchmark, `Linear`/`Trees` de sklearn e LightGBM, `to_c` = cabecalho C com
+atributos, buracos, `forecast_day` e blocos de tarifa; so numpy); estudo `docs/projeto/ESTUDO_EMBARCADO.md`, piloto
+`piloto_embarcado.py` (consumo das casas, A): Ridge 92 B, floresta 10x8 ~30 KB, LightGBM 100x15 ~17 KB por casa,
+todos EMPATAM com o melhor e com os cheios (o LightGBM pequeno e 1o pontual, p 0,72); C == Python (LightGBM: 1 h
+de 13.920 com 0,026 kWh, float32 x float64, criterio relaxado depois e declarado). Sem compilador e .exe local
+bloqueado: o C e conferido via `zig cc` -> WebAssembly -> Node. emlearn diverge do sklearn (4-42 h): rota propria.
+No `.venv`: importar `lightgbm` ANTES de `sklearn.ensemble` (senao o ajuste do LightGBM quebra o processo). A
+revisao achou e foi consertado: floresta sem imputador mandava todo NaN para a esquerda (ate 0,45 kWh). Falta no diagnostico: sujeira x sombra x string (5 min/CC).
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

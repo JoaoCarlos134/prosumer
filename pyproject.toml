@@ -51,7 +51,8 @@ networks = ["neuralforecast>=3.1", "torch>=2.2"]
 # (scikit-learn or LightGBM). This extra is for the other routes of the study (docs/projeto/ESTUDO_EMBARCADO.md):
 # ONNX on the Raspberry Pi, emlearn for comparison, and ziglang to compile the C in the tests (C -> WebAssembly,
 # run with Node: the Smart App Control of the home machine blocks locally built .exe files).
-embedded = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21", "ziglang>=0.13"]
+# setuptools: emlearn imports distutils, gone from the standard library in Python 3.12.
+embedded = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21", "setuptools", "ziglang>=0.13"]
 plots = ["matplotlib>=3.8"]
 dev = [
   "pytest>=8",

@@ -14,9 +14,12 @@ também em `resumo.json`); módulo `src/prosumer/embedded.py`; testes `tests/tes
 
 **PASSA.** Ridge, florestas pequenas e um LightGBM pequeno com os atributos do benchmark cabem com folga no
 ESP32 (de 92 B a 30 KB de flash por casa; 1,9 KB de RAM de trabalho), o C exportado reproduz o Python, e o skill
-fica igual ou **acima** dos modelos de tamanho cheio no consumo das casas (regime A): o LightGBM de 100 árvores
-de 15 folhas (17 KB por casa) dá **+0,212**, 1º de 53 no teste (o LightGBM cheio do benchmark dá +0,206 e
-ocuparia ~0,4 MB por casa).
+**empata** com os modelos de tamanho cheio no consumo das casas (regime A): o LightGBM de 100 árvores de 15
+folhas (17 KB por casa) dá +0,212, primeiro na estimativa pontual mas **empatado** com o melhor publicado (mediana
+corrigida +0,2095, DM p 0,72) e com o LightGBM cheio (+0,206, p 0,15; o cheio ocuparia ~0,4 MB por casa). As
+florestas 20×10 (+0,1929) e 50×10 (+0,1941) ficam um pouco abaixo da floresta cheia (+0,1942), também empatadas.
+(Correção da revisão independente de 12/10: a 1ª versão dizia "igual ou acima" e "1º de 53" sem dizer que é
+empate estatístico.)
 
 ## 2. Candidatos por dispositivo
 
@@ -88,8 +91,8 @@ nível). No piloto (consumo das casas, regime A):
 \* Ilustrativa (as casas são irlandesas): ponta 18–21 h, intermediário 17 h e 21 h, fora de ponta o resto; a
 grade real depende da distribuidora (`metrics.by_blocks`).
 
-Leitura: nos blocos e no dia, os modelos pequenos **ganham da mediana com folga** (dia +0,128/+0,136 contra
-+0,016): a mediana subestima o consumo (viés dos fundacionais) e o erro se acumula na soma. Para uma decisão de
+Leitura: nos blocos e no dia, os modelos pequenos ficam bem acima da mediana na estimativa pontual (dia
++0,128/+0,136 contra +0,016; sem teste DM nem IC nessa resolução): a mediana subestima o consumo (viés dos fundacionais) e o erro se acumula na soma. Para uma decisão de
 tarifa, o Ridge de 92 bytes ou o LightGBM pequeno são melhores que a saída padrão da biblioteca (a mediana
 corrigida no consumo resolve parte disso, mas não roda num ESP32).
 
@@ -106,11 +109,16 @@ mediana; LightGBM 100 árvores × 15 folhas, taxa 0,1 (o resto como o benchmark)
 o tamanho.
 
 **Portão** (fixado antes): (a) C exportado = Python (dif. máx. pequena), (b) cabe no ESP32 (4 MB de flash,
-~320 KB de RAM), (c) skill até 0,02 abaixo do modelo cheio **ou** empata com a mediana.
+~320 KB de RAM), (c) skill até 0,02 abaixo do modelo cheio **ou** empata com a mediana. Leitura honesta de (c), da revisão: para
+o Ridge ela é automática (o Ridge do piloto É o do benchmark, dif. 1,5e-14), e a marca `empata_com_mediana` do
+script quer dizer "skill pontual >= mediana OU empata com o melhor" - o Ridge passa só pela estimativa pontual
+(+0,1945 x +0,1938, sem teste; DM p 0,004 contra o melhor). O portão está no docstring do script, mas o
+histórico do git (um commit só) não mostra que ele e a lista de modelos vieram antes dos resultados; o LightGBM
+pequeno tem uma configuração só gravada (nenhuma busca no teste), a grade de 5 florestas foi avaliada no teste.
 
 | Modelo | Skill | Posição (DM p vs melhor) | Float16 | Flash por casa | C − Python (linhas / ponta a ponta) | Cortex-M4F `.text` + `.rodata` | Portão |
 |---|---|---|---|---|---|---|---|
-| Ridge | +0,1945 (cheio +0,1945) | 7º/53 (p 0,004) | +0,1945 | 92 B | 4,0e-7 / 4,3e-7 | 488 + 88 B | **passa** (empata com a mediana +0,194) |
+| Ridge | +0,1945 (cheio +0,1945) | 7º/53 (p 0,004) | +0,1945 | 92 B | 4,0e-7 / 4,3e-7 | 488 + 88 B | **passa** (pontual >= mediana +0,194; não empata com o melhor) |
 | RF 10×6 | +0,1975 | 6º (p 0,055) | +0,1976 | 7,7 KB (8,8 global) | 4,3e-7 / 4,3e-7 | 586 B + 8,8 KB | passa |
 | **RF 10×8** | **+0,2000** | 6º (p 0,17) | +0,2001 | 24 KB (30 global) | 3,7e-7 / 3,7e-7 | 586 B + 30 KB | **passa** |
 | RF 20×8 | +0,1985 | 6º (p 0,14) | +0,1985 | 49 KB (60 global) | 7,3e-7 / 7,3e-7 | 586 B + 60 KB | passa |

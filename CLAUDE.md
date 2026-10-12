@@ -496,6 +496,14 @@ de 13.920 com 0,026 kWh, float32 x float64, criterio relaxado depois e declarado
 bloqueado: o C e conferido via `zig cc` -> WebAssembly -> Node. emlearn diverge do sklearn (4-42 h): rota propria.
 No `.venv`: importar `lightgbm` ANTES de `sklearn.ensemble` (senao o ajuste do LightGBM quebra o processo). A
 revisao achou e foi consertado: floresta sem imputador mandava todo NaN para a esquerda (ate 0,45 kWh). Falta no diagnostico: sujeira x sombra x string (5 min/CC).
+**Embarcado, redes e geracao (12/10, tarde; ESTUDO_EMBARCADO secao 8):** `embedded.SparseTSF` e `embedded.CycleNet`
+(arrays numpy, `from_torch` sem importar torch, cabecalho C com o preenchimento causal e a normalizacao por janela do
+benchmark). Piloto `piloto_embarcado_redes.py` (gera no `previsao_gpu`, avalia no `.venv`), portao commitado antes:
+as 6 combinacoes (2 redes x 3 casos) PASSAM; C = torch ate 2,5e-6 kWh; SparseTSF 128 B, CycleNet ~16-17 KB por serie;
+empatam com o melhor so o CycleNet na FV das casas (p 0,12). Retreino em CPU (5 threads, como o 04) = gravado em
+CycleNet casas_prod/usinas (0,0); CycleNet casas_cons NAO e deterministico em CPU entre rodadas (ate 0,035 kWh, skill
+igual a 4 casas); SparseTSF (gravado em GPU) ate 4e-4. Arvores na geracao (`piloto_embarcado.py casas_prod|usinas`):
+passam todas menos a RF 50x10 na FV das casas (C ponta a ponta fora da tolerancia em 1 hora, 6,6e-4 kWh).
 **Previsao dos proximos dias e site de exemplo (12/10, noite):** `prosumer.outlook` (`forecast_ahead`, 1-35 dias,
 hora e dia; geracao = potencia efetiva e telhado aprendidos nos dias claros x POA da previsao do tempo, puxada para o
 esperado da estacao conforme a antecedencia cresce (`TRUST`, PROVISORIO ate o piloto `piloto_horizonte.py`); consumo

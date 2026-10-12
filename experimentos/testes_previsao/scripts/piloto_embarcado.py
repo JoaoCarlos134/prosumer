@@ -19,9 +19,24 @@ O que faz:
   5. Opcoes baratas de quantizacao: pesos do Ridge e limiares/folhas da floresta em float16.
 
 Uso (ambiente da biblioteca, o .venv do repositorio, com scikit-learn, lightgbm, emlearn, setuptools e ziglang):
-    .venv/Scripts/python.exe experimentos/testes_previsao/scripts/piloto_embarcado.py
-Saidas: resultados/pilotos/Emb-*__casas_cons__A.parquet, resultados/pilotos/embarcado.json e entradas no
-resultados/pilotos/resumo.json. CPU, poucos minutos.
+    .venv/Scripts/python.exe experimentos/testes_previsao/scripts/piloto_embarcado.py [caso]
+caso = casas_cons (padrao, a 1a rodada), casas_prod ou usinas (extensao de 12/10/2026, geracao).
+Saidas: resultados/pilotos/Emb-*__<caso>__A.parquet, resultados/pilotos/embarcado.json (casas_cons) ou
+embarcado_<caso>.json e entradas no resultados/pilotos/resumo.json. CPU, poucos minutos.
+
+EXTENSAO PARA A GERACAO (casas_prod A e usinas A; 12/10/2026). Mesmos modelos e configuracoes da 1a rodada
+(Ridge, as 5 florestas, LightGBM 100 x 15), nada ajustado no teste destes casos. O skill vem de
+`piloto_comum.avalia_piloto`, que aplica a mascara de horas avaliadas do benchmark (na geracao, so as horas de
+producao). PORTAO destes casos, fixado ANTES de rodar (neste commit) e mais estrito que o da 1a rodada (sem o
+criterio refinado do LightGBM e sem "empata com a mediana"); nao afrouxar depois de ver o resultado:
+  (a) C == Python: |C - Py| <= 1e-5 * max(|Py|, max|historico valido da janela|) + 1e-7 kWh em TODAS as linhas de
+      atributos e em TODAS as horas de ponta a ponta (C calcula os atributos das 168 h brutas) das janelas da
+      ultima dobra; Py = a previsao do modelo em Python (scikit-learn / LightGBM em float64; cortada em zero na
+      ponta a ponta, como o C).
+  (b) cabe no ESP32: flash <= 4 MB e RAM <= 320 KB (por casa no Ridge e no LightGBM, a floresta inteira).
+  (c) skill >= skill do modelo cheio correspondente no metricas.csv - 0,02 (Ridge -> Ridge, RF -> RandomForest,
+      LGB -> LightGBM), OU empata com o melhor do teste (DM p >= 0,05 sem Holm, grupo_da_frente).
+  Passa = (a) e (b) e (c).
 """
 import importlib
 import json
@@ -54,7 +69,8 @@ from prosumer import metrics as pm  # noqa: E402
 
 ref02 = importlib.import_module("02_referencias")
 
-CASO, REGIME = "casas_cons", "A"
+CASO, REGIME = "casas_cons", "A"     # CASO muda pela linha de comando (ver __main__)
+TOL_REL, TOL_ABS = 1e-5, 1e-7          # portao (a) da extensao para a geracao
 CAL = ["h", "dow", "doy_sin", "doy_cos", "serie_cod"]
 LAGS = ["y_d1", "y_d2", "y_d7", "y_media7", "tot_d1", "tot_media7"]
 COLS = CAL + LAGS
@@ -149,6 +165,12 @@ def secoes_elf32(f):
     return out
 
 
+def razao(c, py, esc):
+    """Maior |C - Py| / tolerancia do portao (a) da extensao; <= 1 passa."""
+    esc = np.broadcast_to(np.asarray(esc, float), np.shape(py))
+    return float(np.max(np.abs(c - py) / (TOL_REL * np.maximum(np.abs(py), esc) + TOL_ABS)))
+
+
 # ------------------------------------------------------------------ quantizacao barata (simulada em numpy)
 def ridge_f16(lin):
     return E.Linear(lin.features, lin.weights.astype(np.float16).astype(float),
@@ -182,6 +204,10 @@ def main():
     hist = np.stack([Y[u].reindex(pd.date_range(dia - pd.Timedelta(hours=168), periods=168, freq="h")).to_numpy()
                      for u, dia in teste.itertuples(index=False)])
     cods = tt.groupby(["unique_id", "dia"], sort=False).serie_cod.first().to_numpy()
+    # escala de cada janela (maior valor valido das 168 h) e de cada linha de atributos: tolerancia do portao (a)
+    esc_jan = np.max(np.abs(np.where(np.isnan(hist), 0.0, hist)), axis=1)
+    esc_lin = np.repeat(esc_jan, H)
+    assert len(esc_lin) == len(tt)
     dows = teste.dia.dt.dayofweek.to_numpy()
     doys = teste.dia.dt.dayofyear.to_numpy()
 
@@ -222,8 +248,11 @@ def main():
             ultimos[nome] = (mod, m)
     print("treino e previsao: %.0f s" % (time.time() - t0), flush=True)
     import test_benchmark_regression as T
-    gravado = pd.read_parquet(T.FORECASTS / f"Ridge__{CASO}__{REGIME}.parquet").yhat.to_numpy()
-    relatorio["ridge_refeito_vs_gravado_max_dif"] = float(np.max(np.abs(gravado - prev["Emb-Ridge"])))
+    gravado = pd.read_parquet(T.FORECASTS / f"Ridge__{CASO}__{REGIME}.parquet")[["unique_id", "ds", "yhat"]]
+    refeito = pd.DataFrame({"unique_id": np.repeat(teste.unique_id.to_numpy(), H),
+                            "ds": np.concatenate([w["ds_fut"] for w in jan]), "yhat_ref": prev["Emb-Ridge"]})
+    gr = refeito.merge(gravado, on=["unique_id", "ds"], how="left")
+    relatorio["ridge_refeito_vs_gravado_max_dif"] = float(np.max(np.abs(gr.yhat - gr.yhat_ref)))
     print("Ridge refeito x gravado:", relatorio["ridge_refeito_vs_gravado_max_dif"], flush=True)
 
     # ---------------- skill (metricas da biblioteca, mesmo criterio do benchmark)
@@ -251,6 +280,7 @@ def main():
         info = {}
         if nome == "Emb-LGB-100x15":
             difs, difs_exp, difs_dia, n_dif, fps, cab0 = [], [], [], 0, [], None
+            raz_l, raz_d = [], []
             for cod in np.unique(tt.loc[m, "serie_cod"]):
                 arv = E.Trees.from_lightgbm(mod, COLS, fixed={"serie_cod": float(cod)})
                 cab = E.to_c(arv, "gb")
@@ -258,18 +288,21 @@ def main():
                 mm = (tt.loc[m, "serie_cod"] == cod).to_numpy()
                 c = confere_linhas("gb", cab, X[mm].astype(np.float32))
                 difs.append(float(np.max(np.abs(c - py[mm]))))
+                raz_l.append(razao(c, py[mm], esc_lin[m][mm]))
                 n_dif += int((np.abs(c - py[mm]) > 1e-4).sum())
                 difs_exp.append(float(np.max(np.abs(c - arv.predict(X[mm], np.float32)))))
                 js = [j for j in sel if cods[j] == cod]
                 cd = confere_dia("gb", cab, hist[js], dows[js], doys[js], cods[js])
                 pyd = np.clip(prev[nome].reshape(-1, H)[js], 0, None)
                 difs_dia.append(float(np.max(np.abs(cd - pyd))))
+                raz_d.append(razao(cd, pyd, esc_jan[js][:, None]))
                 fps.append(E.footprint(arv))
             info = dict(max_dif_linhas=max(difs), horas_dif_maior_1e4=n_dif, horas=int(m.sum()),
                         max_dif_vs_modelo_exportado=max(difs_exp),
                         max_dif_dia_ponta_a_ponta=max(difs_dia), flash_bytes=max(f.flash for f in fps),
                         ram_bytes=fps[0].ram, flash_bytes_min=min(f.flash for f in fps),
-                        cortex_m4=bytes_cortex_m4(cab0, "gb"), por="casa (codigo da serie fixo; categorico resolvido)")
+                        cortex_m4=bytes_cortex_m4(cab0, "gb"), por="casa (codigo da serie fixo; categorico resolvido)",
+                        razao_tol_linhas=max(raz_l), razao_tol_dia=max(raz_d))
             # o LightGBM CHEIO do benchmark (600 arvores de 63 folhas), mesma dobra: so o tamanho exportado
             treino = t[(t.dia < dobras(CASO)[-1][0]) & t.y.notna()]
             cheio = lgb.LGBMRegressor(**ref02_lgb_params()).fit(treino[COLS], treino.y, categorical_feature=["serie_cod"])
@@ -278,22 +311,25 @@ def main():
             info["lightgbm_cheio_flash_bytes"] = [min(f.flash for f in fc), max(f.flash for f in fc)]
         elif nome == "Emb-Ridge":
             casas = {}
-            difs, difs_dia, fps = [], [], []
+            difs, difs_dia, fps, raz_l, raz_d = [], [], [], [], []
             for cod in np.unique(tt.loc[m, "serie_cod"]):
                 lin = ridge_por_casa(mod, cod)
                 cab = E.to_c(lin, "ridge")
                 mm = (tt.loc[m, "serie_cod"] == cod).to_numpy()
                 c = confere_linhas("ridge", cab, X[mm].astype(np.float32))
                 difs.append(float(np.max(np.abs(c - py[mm]))))
+                raz_l.append(razao(c, py[mm], esc_lin[m][mm]))
                 js = [j for j in sel if cods[j] == cod]
                 cd = confere_dia("ridge", cab, hist[js], dows[js], doys[js], cods[js])
                 pyd = np.clip(prev["Emb-Ridge"].reshape(-1, H)[js], 0, None)
                 difs_dia.append(float(np.max(np.abs(cd - pyd))))
+                raz_d.append(razao(cd, pyd, esc_jan[js][:, None]))
                 fps.append(E.footprint(lin))
                 casas[int(cod)] = cab
             info = dict(max_dif_linhas=max(difs), max_dif_dia_ponta_a_ponta=max(difs_dia),
-                        flash_bytes=fps[0].flash, ram_bytes=fps[0].ram, cabecalho_bytes=len(casas[0]),
-                        cortex_m4=bytes_cortex_m4(casas[0], "ridge"), por="casa (one-hot dobrado no vies)")
+                        flash_bytes=fps[0].flash, ram_bytes=fps[0].ram, cabecalho_bytes=len(next(iter(casas.values()))),
+                        cortex_m4=bytes_cortex_m4(next(iter(casas.values())), "ridge"), por="casa (one-hot dobrado no vies)",
+                        razao_tol_linhas=max(raz_l), razao_tol_dia=max(raz_d))
         else:
             arv = E.Trees.from_sklearn(mod.steps[1][1], COLS, imputer=mod.steps[0][1])
             cab = E.to_c(arv, "rf")
@@ -308,7 +344,8 @@ def main():
                         horas_dif_maior_1e4=int((dd > 1e-4).sum()), horas=int(dd.size),
                         nos=arv.n_nodes, flash_bytes=fp.flash, ram_bytes=fp.ram, cabecalho_bytes=len(cab),
                         cortex_m4=bytes_cortex_m4(cab, "rf"),
-                        por_casa_podada_flash_bytes=[min(f.flash for f in fps), max(f.flash for f in fps)])
+                        por_casa_podada_flash_bytes=[min(f.flash for f in fps), max(f.flash for f in fps)],
+                        razao_tol_linhas=razao(c, py, esc_lin[m]), razao_tol_dia=razao(cd, pyd, esc_jan[sel][:, None]))
             # rota do plano: emlearn (so o modelo; imputacao fora). Compila igual e compara. Acima de ~25 mil nos
             # o cabecalho do emlearn (codigo em linha) passa de 3 MB e a compilacao fica lenta: pula.
             try:
@@ -336,8 +373,9 @@ def main():
     # ---------------- por resolucao (hora, dia/noite, pico, dia) contra os cheios gravados
     niveis = dict(pm.DEFAULT_LEVELS)
     # tarifa branca (ilustrativa; as casas sao irlandesas): ponta 18-21 h, intermediario 17 h e 21 h, fora ponta
-    niveis["tarifa_branca"] = pm.by_blocks({h: ("ponta" if 18 <= h < 21 else "inter" if h in (17, 21) else "fora")
-                                            for h in range(24)})
+    if CASO == "casas_cons":
+        niveis["tarifa_branca"] = pm.by_blocks({h: ("ponta" if 18 <= h < 21 else "inter" if h in (17, 21) else "fora")
+                                                for h in range(24)})
     res = {}
     fontes = {n: pd.read_parquet(PILOTOS / f"{n}__{CASO}__{REGIME}.parquet") for n in modelos}
     for n in ("Ridge", "RandomForest", "LightGBM", "Ensemble-mediana"):
@@ -359,6 +397,18 @@ def main():
             continue
         cheio = {"Emb-Ridge": pub["Ridge"], "Emb-LGB-100x15": pub["LightGBM"]}.get(nome, pub["RandomForest"])
         c = relatorio["c"][nome]
+        if CASO != "casas_cons":
+            # portao da extensao para a geracao (docstring), fixado antes de rodar: sem criterio refinado
+            portao[nome] = dict(
+                c_igual_python=bool(c["razao_tol_linhas"] <= 1 and c["razao_tol_dia"] <= 1),
+                cabe_no_esp32=c["cabe_no_esp32"],
+                skill_ate_0_02_do_cheio=bool(r["skill"] >= cheio - 0.02),
+                empata_com_o_melhor=bool(r["grupo_da_frente"]),
+            )
+            portao[nome]["passa"] = bool(portao[nome]["c_igual_python"] and portao[nome]["cabe_no_esp32"]
+                                         and (portao[nome]["skill_ate_0_02_do_cheio"]
+                                              or portao[nome]["empata_com_o_melhor"]))
+            continue
         igual = c["max_dif_linhas"] < 1e-4
         if not igual and "max_dif_vs_modelo_exportado" in c:
             # Criterio refinado DEPOIS de ver o resultado (declarado no ESTUDO): o C reproduz o modelo exportado
@@ -378,9 +428,13 @@ def main():
                                           or portao[nome]["empata_com_mediana"]))
     relatorio["portao"] = portao
     relatorio["segundos"] = round(time.time() - t0, 1)
-    (PILOTOS / "embarcado.json").write_text(json.dumps(relatorio, indent=1, ensure_ascii=False), encoding="utf-8")
+    saida = "embarcado.json" if CASO == "casas_cons" else f"embarcado_{CASO}.json"
+    (PILOTOS / saida).write_text(json.dumps(relatorio, indent=1, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(portao, indent=1), "\n%.0f s" % (time.time() - t0))
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        CASO = sys.argv[1]
+        assert CASO in ("casas_cons", "casas_prod", "usinas")
     main()

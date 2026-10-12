@@ -1,0 +1,335 @@
+{
+ "casas_prod": {
+  "gera": {
+   "torch": "2.9.1+cu128",
+   "dispositivo": "cpu",
+   "periodo_cyclenet": 24,
+   "SparseTSF": {
+    "parametros": 32,
+    "segundos": 7.7,
+    "janelas": 920,
+    "max_dif_numpy_vs_torch": 2.3594460429876563e-07,
+    "retreinada_vs_gravada": {
+     "max_dif": 6.175041198730469e-05,
+     "media_dif": 8.694377290827317e-06,
+     "horas_dif_maior_1e6": 19208,
+     "horas": 22080,
+     "so_num_lado": 0
+    }
+   },
+   "CycleNet": {
+    "parametros": 4296,
+    "segundos": 6.3,
+    "janelas": 920,
+    "max_dif_numpy_vs_torch": 4.6750354165681074e-07,
+    "retreinada_vs_gravada": {
+     "max_dif": 0.0,
+     "media_dif": 0.0,
+     "horas_dif_maior_1e6": 0,
+     "horas": 22080,
+     "so_num_lado": 0
+    }
+   },
+   "segundos": 14.5
+  },
+  "avalia": {
+   "SparseTSF": {
+    "skill_c": 0.0325,
+    "ic95": [
+     -0.0069,
+     0.069
+    ],
+    "R2": 0.2134,
+    "MBE": 0.0551,
+    "posicao": "39o de 52",
+    "dm_p_vs_melhor": 0.002,
+    "melhor": "Toto-2.0-313m",
+    "skill_melhor": 0.1779,
+    "skill_torch_retreinado": 0.0325,
+    "skill_benchmark": 0.0325,
+    "max_dif_c_vs_torch": 2.980232238769531e-07,
+    "max_razao_dif_tolerancia": 0.019436212704093882,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 22080,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 0,
+    "janelas": 920,
+    "cabecalhos": 3,
+    "flash_bytes": 128,
+    "ram_bytes": 2112,
+    "cabecalho_bytes": 3655,
+    "cortex_m4": {
+     ".text": 562,
+     ".rodata": 128
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": false,
+     "passa": true
+    }
+   },
+   "CycleNet": {
+    "skill_c": 0.1376,
+    "ic95": [
+     0.1105,
+     0.1649
+    ],
+    "R2": 0.3749,
+    "MBE": -0.0637,
+    "posicao": "8o de 52",
+    "dm_p_vs_melhor": 0.1236,
+    "melhor": "Toto-2.0-313m",
+    "skill_melhor": 0.1779,
+    "skill_torch_retreinado": 0.1376,
+    "skill_benchmark": 0.1376,
+    "max_dif_c_vs_torch": 4.76837158203125e-07,
+    "max_razao_dif_tolerancia": 0.027727443156956327,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 22080,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 0,
+    "janelas": 920,
+    "cabecalhos": 30,
+    "flash_bytes": 16320,
+    "ram_bytes": 1440,
+    "cabecalho_bytes": 69178,
+    "cortex_m4": {
+     ".text": 560,
+     ".rodata": 16320
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": true,
+     "passa": true
+    }
+   },
+   "segundos": 9.0
+  }
+ },
+ "casas_cons": {
+  "gera": {
+   "torch": "2.9.1+cu128",
+   "dispositivo": "cpu",
+   "periodo_cyclenet": 168,
+   "SparseTSF": {
+    "parametros": 32,
+    "segundos": 12.8,
+    "janelas": 1820,
+    "max_dif_numpy_vs_torch": 4.029847495701233e-07,
+    "retreinada_vs_gravada": {
+     "max_dif": 0.0003895759582519531,
+     "media_dif": 3.640773086109277e-05,
+     "horas_dif_maior_1e6": 42112,
+     "horas": 43680,
+     "so_num_lado": 0
+    }
+   },
+   "CycleNet": {
+    "parametros": 7416,
+    "segundos": 13.7,
+    "janelas": 1820,
+    "max_dif_numpy_vs_torch": 6.742898350786675e-07,
+    "retreinada_vs_gravada": {
+     "max_dif": 0.0346599817276001,
+     "media_dif": 0.003581633581865183,
+     "horas_dif_maior_1e6": 43661,
+     "horas": 43680,
+     "so_num_lado": 0
+    }
+   },
+   "segundos": 27.6
+  },
+  "avalia": {
+   "SparseTSF": {
+    "skill_c": 0.1907,
+    "ic95": [
+     0.1772,
+     0.2048
+    ],
+    "R2": 0.3489,
+    "MBE": -0.0078,
+    "posicao": "14o de 53",
+    "dm_p_vs_melhor": 0.0001,
+    "melhor": "Ensemble-mediana-corrigida",
+    "skill_melhor": 0.2095,
+    "skill_torch_retreinado": 0.1907,
+    "skill_benchmark": 0.1907,
+    "max_dif_c_vs_torch": 4.76837158203125e-07,
+    "max_razao_dif_tolerancia": 0.015514972284867732,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 43680,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 0,
+    "janelas": 1820,
+    "cabecalhos": 3,
+    "flash_bytes": 128,
+    "ram_bytes": 2112,
+    "cabecalho_bytes": 3655,
+    "cortex_m4": {
+     ".text": 562,
+     ".rodata": 128
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": false,
+     "passa": true
+    }
+   },
+   "CycleNet": {
+    "skill_c": 0.1659,
+    "ic95": [
+     0.148,
+     0.184
+    ],
+    "R2": 0.3082,
+    "MBE": -0.1958,
+    "posicao": "26o de 53",
+    "dm_p_vs_melhor": 0.0,
+    "melhor": "Ensemble-mediana-corrigida",
+    "skill_melhor": 0.2095,
+    "skill_torch_retreinado": 0.1659,
+    "skill_benchmark": 0.1659,
+    "max_dif_c_vs_torch": 2.5033950805664062e-06,
+    "max_razao_dif_tolerancia": 0.07012311150045956,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 43680,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 0,
+    "janelas": 1820,
+    "cabecalhos": 60,
+    "flash_bytes": 16896,
+    "ram_bytes": 1440,
+    "cabecalho_bytes": 71482,
+    "cortex_m4": {
+     ".text": 626,
+     ".rodata": 16896
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": false,
+     "passa": true
+    }
+   },
+   "segundos": 17.7
+  }
+ },
+ "usinas": {
+  "gera": {
+   "torch": "2.9.1+cu128",
+   "dispositivo": "cpu",
+   "periodo_cyclenet": 24,
+   "SparseTSF": {
+    "parametros": 32,
+    "segundos": 15.1,
+    "janelas": 598,
+    "max_dif_numpy_vs_torch": 1.6762673062942213e-06,
+    "retreinada_vs_gravada": {
+     "max_dif": 0.0004096031188964844,
+     "media_dif": 8.254410302393147e-05,
+     "horas_dif_maior_1e6": 14240,
+     "horas": 14352,
+     "so_num_lado": 0
+    }
+   },
+   "CycleNet": {
+    "parametros": 4104,
+    "segundos": 13.6,
+    "janelas": 598,
+    "max_dif_numpy_vs_torch": 1.7976753641235632e-06,
+    "retreinada_vs_gravada": {
+     "max_dif": 0.0,
+     "media_dif": 0.0,
+     "horas_dif_maior_1e6": 0,
+     "horas": 14352,
+     "so_num_lado": 0
+    }
+   },
+   "segundos": 29.1
+  },
+  "avalia": {
+   "SparseTSF": {
+    "skill_c": 0.0547,
+    "ic95": [
+     0.0099,
+     0.0979
+    ],
+    "R2": 0.6834,
+    "MBE": 0.0172,
+    "posicao": "24o de 54",
+    "dm_p_vs_melhor": 0.0,
+    "melhor": "Crossformer",
+    "skill_melhor": 0.1497,
+    "skill_torch_retreinado": 0.0547,
+    "skill_benchmark": 0.0547,
+    "max_dif_c_vs_torch": 1.430511474609375e-06,
+    "max_razao_dif_tolerancia": 0.024730990777286313,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 14352,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 49,
+    "janelas": 598,
+    "cabecalhos": 5,
+    "flash_bytes": 128,
+    "ram_bytes": 2112,
+    "cabecalho_bytes": 3660,
+    "cortex_m4": {
+     ".text": 562,
+     ".rodata": 128
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": false,
+     "passa": true
+    }
+   },
+   "CycleNet": {
+    "skill_c": 0.0623,
+    "ic95": [
+     0.0356,
+     0.0878
+    ],
+    "R2": 0.6885,
+    "MBE": 0.0269,
+    "posicao": "19o de 54",
+    "dm_p_vs_melhor": 0.0,
+    "melhor": "Crossformer",
+    "skill_melhor": 0.1497,
+    "skill_torch_retreinado": 0.0623,
+    "skill_benchmark": 0.0623,
+    "max_dif_c_vs_torch": 2.384185791015625e-06,
+    "max_razao_dif_tolerancia": 0.03741299940560374,
+    "horas_fora_da_tolerancia": 0,
+    "horas": 14352,
+    "max_dif_c_vs_numpy_float32": 0.0,
+    "janelas_com_buraco": 49,
+    "janelas": 598,
+    "cabecalhos": 10,
+    "flash_bytes": 16320,
+    "ram_bytes": 1440,
+    "cabecalho_bytes": 69286,
+    "cortex_m4": {
+     ".text": 560,
+     ".rodata": 16320
+    },
+    "portao": {
+     "c_igual_python": true,
+     "cabe_no_esp32": true,
+     "skill_ate_0_02_da_rede_do_benchmark": true,
+     "empata_com_o_melhor": false,
+     "passa": true
+    }
+   },
+   "segundos": 5.1
+  }
+ }
+}

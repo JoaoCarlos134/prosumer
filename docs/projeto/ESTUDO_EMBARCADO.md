@@ -177,4 +177,131 @@ carregado) derruba o processo com *access violation* em `set_field`; importar o 
 
 Próximos passos sugeridos: exportar SparseTSF e CycleNet (lineares, cabem em arrays); um exemplo ESP-IDF/Arduino
 que lê o medidor, guarda 168 h e chama `forecast_day` (E5, com latência e energia medidas); repetir o piloto na
-geração FV das casas (regime A) antes de recomendar o ESP32 para geração.
+geração FV das casas (regime A) antes de recomendar o ESP32 para geração. (O 1º e o 3º foram feitos: seção 8.)
+
+## 8. SparseTSF, CycleNet e a geração FV (12/10/2026, tarde)
+
+Os dois passos sugeridos na seção 7: exportar as redes lineares do benchmark e repetir o piloto na geração.
+Arquivos: `piloto_embarcado_redes.py` (redes; etapa `gera` no `~/.venvs/previsao_gpu` com torch, etapa `avalia`
+no `.venv` com zig e node) e `piloto_embarcado.py casas_prod|usinas` (árvores e Ridge). Saídas em
+`resultados/pilotos/`: `Emb-redes__<caso>.npz` (pesos de todas as dobras, históricos brutos, previsões do torch),
+`Emb-{SparseTSF,CycleNet}[-torch]__<caso>__A.parquet`, `embarcado_redes.json`, `embarcado_casas_prod.json`,
+`embarcado_usinas.json` e entradas no `resumo.json`. Nada em `previsoes/` nem no `metricas.csv`. CPU: ~2 min para
+as redes nos três casos e ~2,5 min por caso para as árvores.
+
+**Portão** (no docstring dos dois scripts, commit `7f2cc63`, ANTES de qualquer rodada destes casos; mais estrito
+que o da seção 5): (a) C = Python em todas as horas, |C − Py| ≤ 1e-5 · max(|Py|, maior valor válido das 168 h da
+janela) + 1e-7 kWh, com o C partindo das 168 h brutas (buracos como NAN); redes: todas as janelas de todas as
+dobras, Py = torch retreinado; árvores: linhas de atributos e ponta a ponta da última dobra, Py = scikit-learn /
+LightGBM em float64; (b) cabe no ESP32 (flash ≤ 4 MB, RAM ≤ 320 KB); (c) skill ≥ o do modelo cheio
+correspondente no `metricas.csv` − 0,02 (c1), **ou** empata com o melhor do teste (DM p ≥ 0,05, sem Holm) (c2).
+Sem critério refinado depois. Depois do commit do portão mudou uma coisa no script das redes, fora do portão:
+`torch.set_num_threads(5)`, como o `04_redes_treinadas.py` (ver "Retreino").
+
+### O que entrou na biblioteca
+
+- `embedded.SparseTSF(conv, linear)`: na janela normalizada x, z = conv(x) + x (núcleo 25, preenchimento com
+  zeros, sem viés), e cada uma das 24 fases é prevista pela mesma linear 7 → 1 dos valores daquela fase. 32
+  parâmetros. `embedded.CycleNet(cycle, weight, bias)`: ciclo Q por série (24 h na geração, 168 h no consumo,
+  como no benchmark) tirado da janela normalizada e somado de volta à saída da linear 168 → 24; fase = hora (W =
+  24) ou dia da semana × 24 + hora (W = 168) do primeiro ponto, que numa previsão emitida à meia-noite é 0 ou
+  dia_da_semana(dia) × 24 (`day_phase`). `CycleNet.fix(serie)` guarda o ciclo de uma série (índice na ordem do
+  treino: ids ordenados), como `Trees.fix`; o `to_c` exige uma série por cabeçalho.
+- Normalização exatamente a do `treina_proprio`: média e desvio **populacional** (numpy, ddof 0) das 168 h,
+  desvio + 1e-3. `from_torch(modulo)` só lê o `state_dict()` (`.detach().cpu().numpy()`), sem importar torch;
+  rejeita o backbone MLP do CycleNet e viés no SparseTSF.
+- `causal_fill`: o preenchimento das janelas do benchmark (`DayAhead`: pandas `interpolate(limit_direction="both")`,
+  0 sem nenhum valor válido), igual ao pandas bit a bit (teste). O cabeçalho faz o mesmo em float32
+  (`prosumer_causal_fill`, `prosumer_normalize`), então o dispositivo recebe as 168 h brutas com NAN, como nos
+  outros cabeçalhos. **Contrato diferente das árvores, declarado**: lá cada atributo com buraco recebe o valor de
+  imputação; aqui o histórico é interpolado antes, como nas janelas das redes do benchmark.
+- `predict(..., dtype=np.float32)` reproduz a ordem das contas do C (somas sequenciais); `forecast_day` corta
+  negativos como o C; `<nome>_forecast_day(hist, dow, doy, series_code, out)` tem a mesma assinatura dos outros
+  cabeçalhos (as redes ignoram `doy` e `series_code`; o SparseTSF também `dow`). `footprint`: flash = 4 bytes por
+  parâmetro; RAM = histórico + janela (+ saída da convolução no SparseTSF) + 24 saídas.
+- Testes (`tests/test_embedded.py`): referência numpy escrita direto do `forward` do torch (correlação, reshape,
+  gather) com pesos montados à mão (roda na CI, sem torch); igualdade com módulos torch copiados do
+  `redes_proprias` (pula sem torch; passa no `previsao_gpu`); C = Python via WebAssembly nos dois períodos e em
+  todos os dias da semana; histórico constante (desvio 0, sobra o 1e-3) e sem nenhum valor válido.
+
+### Retreino x previsões gravadas
+
+| Rede | Caso | Retreinada × gravada (máx. / média, kWh) | numpy × torch (máx.) | Leitura |
+|---|---|---|---|---|
+| SparseTSF | consumo | 3,9e-4 / 3,6e-5 | 4,0e-7 | gravada em GPU, refeita em CPU |
+| SparseTSF | FV casas | 6,2e-5 / 8,7e-6 | 2,4e-7 | idem |
+| SparseTSF | usinas | 4,1e-4 / 8,3e-5 | 1,7e-6 | idem |
+| CycleNet | consumo | **0,035 / 0,0036** | 6,7e-7 | CPU não determinístico (abaixo) |
+| CycleNet | FV casas | **0,0** | 4,7e-7 | idêntica (com 5 threads) |
+| CycleNet | usinas | **0,0** | 1,8e-6 | idêntica (com 5 threads) |
+
+Achado: o treino do CycleNet em CPU depende do número de threads. A 1ª rodada (número de threads padrão do torch) deu até 0,038
+kWh de diferença na FV das casas; com 5, como o `04`, deu 0,0 na FV das casas e nas usinas. No consumo (ciclo de
+168 h, 20 séries), a dobra 1 com 1, 4, 8 e 20 threads diferiu até 0,024–0,037 kWh da gravada, com 2 e 5 bateu
+(≤ 1,4e-6), e **com 5 threads também não é determinístico entre rodadas**: três rodadas no mesmo processo deram
+0,024, 0,024 e 1,2e-6 kWh; na FV das casas, 0,0 nas três (medição avulsa, script fora do repositório). O skill do
+CycleNet refeito no consumo é o do benchmark até a 4ª casa (+0,1659). O "determinístico em CPU" do `04` vale para a
+FV das casas e as usinas, não para o consumo.
+
+### Redes: resultado do portão
+
+O skill é o das previsões **do C** (o que o dispositivo calcula), com a máscara de horas avaliadas do benchmark.
+
+| Rede | Caso | Skill do C (benchmark) | Posição (DM p vs melhor) | Flash / RAM | C − torch máx. (razão à tolerância) | Portão |
+|---|---|---|---|---|---|---|
+| SparseTSF | consumo | +0,1907 (+0,1907) | 14º/53 (p 0,0001) | 128 B / 2,1 KB | 4,8e-7 (0,016) | **passa** por (c1); não empata |
+| CycleNet W=168 | consumo | +0,1659 (+0,1659) | 26º/53 (p < 0,0001) | 16,9 KB / 1,4 KB por casa | 2,5e-6 (0,070) | **passa** por (c1); não empata |
+| SparseTSF | FV casas | +0,0325 (+0,0325) | 39º/52 (p 0,002) | 128 B / 2,1 KB | 3,0e-7 (0,019) | **passa** por (c1); não empata |
+| CycleNet W=24 | FV casas | +0,1376 (+0,1376) | 8º/52 (**p 0,124, empata**) | 16,3 KB / 1,4 KB por casa | 4,8e-7 (0,028) | **passa** |
+| SparseTSF | usinas | +0,0547 (+0,0547) | 24º/54 (p < 0,0001) | 128 B / 2,1 KB | 1,4e-6 (0,025) | **passa** por (c1); não empata |
+| CycleNet W=24 | usinas | +0,0623 (+0,0623) | 19º/54 (p < 0,0001) | 16,3 KB / 1,4 KB por usina | 2,4e-6 (0,037) | **passa** por (c1); não empata |
+
+Melhor de cada teste: consumo `Ensemble-mediana-corrigida` +0,2095; FV casas `Toto-2.0-313m` +0,1779; usinas
+`Crossformer` +0,1497. C − numpy em float32: **0,0** nas 6 (mesma aritmética). As 49 janelas das usinas com buraco
+no histórico passaram pelo preenchimento do C (as casas não têm janela de teste com buraco). Objeto Cortex-M4F
+(`-Os`): 562 B de código + 128 B de dados (SparseTSF); 560–626 B + 16,3–16,9 KB (CycleNet).
+
+**Leitura honesta.** (c) é quase automático: a rede exportada é a do benchmark, então (c1) só falharia se o C ou o
+retreino mudassem a previsão; o piloto testou de fato (a) e (b), e ambos passam com folga (o pior caso usa 7% da
+tolerância). Caber e reproduzir não quer dizer ser boa escolha: só o CycleNet na FV das casas empata com o melhor
+(e com o Ridge, +0,1376 × +0,1378); nos outros cinco casos a rede fica abaixo do Ridge de 92 B (seção 5 e abaixo).
+
+### Árvores e Ridge na geração: resultado do portão
+
+Mesmos modelos e configurações da seção 5, nada ajustado nestes casos. Ridge refeito × gravado: 1,8e-14
+(FV casas) e 4,8e-13 (usinas).
+
+| Modelo | FV casas: skill (cheio) | Posição (p) | Flash | Usinas: skill (cheio) | Posição (p) | Flash | Portão FV / usinas |
+|---|---|---|---|---|---|---|---|
+| Ridge | +0,1378 (+0,1378) | 7º/52 (**p 0,078, empata**) | 92 B | +0,0758 (+0,0758) | 16º/54 (p < 0,0001) | 92 B | passa / passa |
+| RF 10×6 | +0,1148 (RF cheia +0,1076) | 18º (p 0,030) | 8,6 KB | +0,0955 (RF cheia +0,1012) | 10º (p < 0,0001) | 8,9 KB | passa / passa |
+| RF 10×8 | +0,1005 | 23º (p 0,015) | 28,6 KB | +0,1012 | 8º (p < 0,0001) | 29,9 KB | passa / passa |
+| RF 20×8 | +0,1119 | 19º (p 0,036) | 57 KB | +0,1012 | 8º (p < 0,0001) | 60 KB | passa / passa |
+| RF 20×10 | +0,1121 | 19º (p 0,032) | 152 KB | +0,0957 | 10º (p < 0,0001) | 153 KB | passa / passa |
+| RF 50×10 | +0,1149 | 18º (p 0,032) | 488 KB | +0,0997 | 10º (p < 0,0001) | 491 KB | **falha (a)** / passa |
+| LightGBM 100×15 | +0,1161 (+0,0744) | 18º (p 0,046) | 21–22 KB por casa | +0,1135 (+0,0838) | 8º (p 0,0015) | 21–23 KB por usina | passa / passa |
+
+Posições entre 52 (FV casas) e 54 (usinas) modelos. Mediana de todos: +0,1641 (FV casas), +0,1279 (usinas). Flash
+das florestas = a floresta inteira (podada por série: −1 a −6%). RAM de trabalho 1.868 B em todos. Float16: skill
+muda ≤ 0,0002.
+
+- **RF 50×10 na FV das casas falha (a)**: as linhas de atributos batem (razão 0,019), mas na ponta a ponta uma hora
+  difere 6,6e-4 kWh (40× a tolerância). Hipótese, **não conferida**: o C calcula um atributo (média de 7 dias ou
+  total de ontem) em float32 a partir das 168 h, ele cai do outro lado de um limiar e a folha muda; é o mecanismo
+  da 1 hora do LightGBM na seção 5. Fica registrado como falha, sem critério refinado.
+- O LightGBM pequeno fica acima do cheio nos dois casos na estimativa pontual (+0,1161 × +0,0744; +0,1135 ×
+  +0,0838), mas não empata com o melhor (p 0,046 e 0,0015). Só o Ridge empata, e só na FV das casas.
+- (c) passa por (c1) em todos: os modelos pequenos ficam no nível dos cheios, mas a distância para o melhor
+  (fundacionais, Crossformer) é real nestes casos.
+- emlearn (só informação): diverge do scikit-learn em 2–45 horas na FV das casas e 0–2 nas usinas (até 0,07 kWh),
+  como na seção 5.
+
+### Veredito
+
+Todos os modelos exportados **cabem** no ESP32 (o maior, a RF 50×10, usa 0,5 MB de 4 MB) e o C **reproduz** o
+Python dentro do portão em 19 de 20 combinações modelo × caso desta seção (a exceção é a RF 50×10 na FV das
+casas). Para escolher **o que** pôr no dispositivo decide o skill: no consumo, o LightGBM pequeno ou o Ridge (seção
+5); na FV das casas, o Ridge (92 B) ou o CycleNet (16 KB), os dois empatados com o melhor; nas usinas nenhum
+modelo de ESP32 empata com o melhor (o LightGBM pequeno, +0,1135, é o mais perto). O SparseTSF cabe em 128 B, mas
+não empata em nenhum caso. Ressalvas: um regime só (A); nenhuma medida em hardware real (E5); o portão (c) é
+fraco para as redes, como dito acima.

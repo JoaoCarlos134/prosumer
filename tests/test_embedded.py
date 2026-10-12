@@ -205,3 +205,212 @@ def test_forest_without_imputer_routes_gaps_as_sklearn() -> None:
         p = m.fix({"serie_cod": 2.0})
         sel = rows & (xn[:, 4] == 2.0)
         np.testing.assert_allclose(p.predict(xn[sel]), rf.predict(xn[sel]), rtol=1e-6, atol=1e-6)
+
+
+# ---------------------------------------------------------------------- SparseTSF and CycleNet
+class _Tensor:
+    """Stands for a torch tensor in `from_torch` (duck-typed): CI has no torch."""
+
+    def __init__(self, a: np.ndarray) -> None:
+        self.a = np.asarray(a, dtype=np.float32)
+
+    def detach(self) -> _Tensor:
+        return self
+
+    def cpu(self) -> _Tensor:
+        return self
+
+    def numpy(self) -> np.ndarray:
+        return self.a
+
+
+class _Module:
+    def __init__(self, state: dict[str, np.ndarray]) -> None:
+        self.state = {k: _Tensor(v) for k, v in state.items()}
+        self.p = 24
+
+    def state_dict(self) -> dict[str, _Tensor]:
+        return self.state
+
+
+def _nets(seed: int = 0, n_series: int = 3, period: int = 168) -> tuple[E.SparseTSF, E.CycleNet]:
+    rng = np.random.default_rng(seed)
+
+    def f32(*shape: int) -> np.ndarray:  # weights exact in float32, as a trained module's
+        return rng.normal(0, 0.3, shape).astype(np.float32).astype(float)
+
+    sp = E.SparseTSF(f32(25), f32(1, 7))
+    cy = E.CycleNet(f32(n_series, period), f32(24, 168) / 8, f32(24))
+    return sp, cy
+
+
+def _histories(n: int = 12, seed: int = 2) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    t = np.arange(168)
+    h = 0.5 + 0.4 * np.sin(2 * np.pi * t / 24)[None, :] + rng.gamma(2.0, 0.1, (n, 168))
+    h[rng.random(h.shape) < 0.05] = np.nan
+    h[0, :5] = np.nan  # leading gap: repeats the first valid value
+    h[1, -7:] = np.nan  # trailing gap
+    h[2, 40:60] = np.nan  # a long interior gap
+    h[3] = 0.8  # constant: standard deviation 0, only the 1e-3 remains
+    h[4] = np.nan  # no valid value: 0
+    return h
+
+
+def _ref_window(h: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """`treina_proprio`'s windows: pandas interpolation, then mean and population deviation + 1e-3."""
+    x = np.stack([pd.Series(r).interpolate(limit_direction="both").fillna(0.0).to_numpy() for r in h])
+    mu, sd = x.mean(1, keepdims=True), x.std(1, keepdims=True) + 1e-3
+    return (x - mu) / sd, mu, sd
+
+
+def _ref_sparsetsf(m: E.SparseTSF, h: np.ndarray) -> np.ndarray:
+    """The torch forward written directly: conv1d (cross-correlation, zero padding) + x, reshape by period."""
+    x, mu, sd = _ref_window(h)
+    z = np.stack([np.correlate(np.pad(r, 12), m.conv, mode="valid") for r in x]) + x
+    seg = z.reshape(len(z), 7, 24).transpose(0, 2, 1)  # (B, phase, segment)
+    out = (seg @ m.linear.T).transpose(0, 2, 1).reshape(len(z), -1)
+    return out * sd + mu
+
+
+def _ref_cyclenet(m: E.CycleNet, h: np.ndarray, phase: np.ndarray, series: np.ndarray) -> np.ndarray:
+    x, mu, sd = _ref_window(h)
+    w = m.period
+    q_in = np.stack([m.cycle[s, (f + np.arange(168)) % w] for s, f in zip(series, phase, strict=True)])
+    q_out = np.stack([m.cycle[s, (f + 168 + np.arange(24)) % w] for s, f in zip(series, phase, strict=True)])
+    return ((x - q_in) @ m.weight.T + m.bias + q_out) * sd + mu
+
+
+def test_causal_fill_is_the_benchmark_interpolation() -> None:
+    h = _histories()
+    before = h.copy()
+    want = np.stack([pd.Series(r).interpolate(limit_direction="both").fillna(0.0).to_numpy() for r in h])
+    np.testing.assert_array_equal(E.causal_fill(h), want)
+    np.testing.assert_array_equal(E.causal_fill(h[2]), want[2])
+    np.testing.assert_allclose(E._fill32(h), want, rtol=1e-6, atol=1e-7)
+    np.testing.assert_array_equal(h, before)  # the input is not touched
+
+
+def test_networks_equal_a_direct_reference() -> None:
+    sp, cy = _nets()
+    h = _histories()
+    np.testing.assert_allclose(sp.predict(h), _ref_sparsetsf(sp, h), rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(sp.predict(h, np.float32), _ref_sparsetsf(sp, h), rtol=1e-5, atol=1e-5)
+    phase = np.arange(len(h)) * 24 % 168
+    series = np.arange(len(h)) % 3
+    want = _ref_cyclenet(cy, h, phase, series)
+    np.testing.assert_allclose(cy.predict(h, phase, series), want, rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(cy.predict(h, phase, series, np.float32), want, rtol=1e-5, atol=1e-5)
+    one = cy.fix(2)
+    np.testing.assert_allclose(one.predict(h[2], phase[2]), want[2], rtol=1e-12, atol=1e-12)
+    assert np.isfinite(sp.predict(h)).all() and np.isfinite(cy.predict(h)).all()  # constant and empty rows
+    # constant history: the window normalizes to 0, so SparseTSF gives back the level
+    np.testing.assert_allclose(sp.predict(h[3]), 0.8, rtol=0, atol=1e-12)
+    day = pd.Timestamp("2020-03-19")  # a Thursday: phase 3 * 24 in a weekly cycle
+    assert cy.day_phase(day) == 72 and _nets(period=24)[1].day_phase(day) == 0
+    np.testing.assert_array_equal(cy.forecast_day(h[5], day, 1), np.clip(cy.predict(h[5], 72, 1), 0, None))
+
+
+def test_networks_from_state_dict_and_errors() -> None:
+    sp, cy = _nets()
+    h = _histories()
+    m = E.SparseTSF.from_torch(_Module({"conv.weight": sp.conv.reshape(1, 1, 25), "lin.weight": sp.linear}))
+    np.testing.assert_array_equal(m.predict(h), sp.predict(h))
+    c = E.CycleNet.from_torch(_Module({"Q": cy.cycle, "f.weight": cy.weight, "f.bias": cy.bias}))
+    np.testing.assert_array_equal(c.predict(h, 24, 1), cy.predict(h, 24, 1))
+    assert c.n_series == 3 and c.period == 168 and c.n_parameters == 3 * 168 + 24 * 168 + 24
+    mlp = {"Q": cy.cycle, "f.0.weight": np.zeros((512, 168)), "f.0.bias": np.zeros(512)}
+    with pytest.raises(NotImplementedError):
+        E.CycleNet.from_torch(_Module(mlp))
+    with pytest.raises(NotImplementedError):
+        E.SparseTSF.from_torch(
+            _Module(
+                {"conv.weight": np.zeros((1, 1, 25)), "lin.weight": np.zeros((1, 7)), "lin.bias": np.zeros(1)}
+            )
+        )
+    with pytest.raises(ValueError):
+        E.SparseTSF(np.zeros(5), np.zeros((1, 7)))
+    with pytest.raises(ValueError):
+        E.CycleNet(np.zeros((1, 48)), cy.weight, cy.bias)
+    with pytest.raises(ValueError):
+        E.to_c(cy, "cy")  # three series: one header per series
+    with pytest.raises(ValueError):
+        cy.fix(3)
+    with pytest.raises(ValueError):
+        cy.predict(h, 0, 3)
+    with pytest.raises(ValueError):
+        sp.predict(np.zeros(100))
+    assert E.footprint(sp) == E.Footprint(4 * 32, 4 * (3 * 168 + 24))
+    fp = E.footprint(cy.fix(0))
+    assert fp.flash == 4 * (168 + 24 * 168 + 24) and fp.fits()
+
+
+def test_networks_equal_torch() -> None:
+    torch = pytest.importorskip("torch")
+    nn = torch.nn
+
+    class SparseTSF(nn.Module):  # copy of experimentos/testes_previsao/scripts/redes_proprias.py
+        def __init__(self, L: int = 168, Hh: int = 24, p: int = 24) -> None:
+            super().__init__()
+            self.p = p
+            self.conv = nn.Conv1d(1, 1, kernel_size=1 + 2 * (p // 2), padding=p // 2, bias=False)
+            self.lin = nn.Linear(L // p, Hh // p, bias=False)
+
+        def forward(self, x):  # type: ignore[no-untyped-def]
+            B, L = x.shape
+            x = self.conv(x[:, None, :])[:, 0, :] + x
+            x = x.reshape(B, L // self.p, self.p).permute(0, 2, 1)
+            return self.lin(x).permute(0, 2, 1).reshape(B, -1)
+
+    class CycleNet(nn.Module):
+        def __init__(self, n_series: int, W: int) -> None:
+            super().__init__()
+            self.W = W
+            self.Q = nn.Parameter(torch.randn(n_series, W) * 0.3)
+            self.f = nn.Linear(168, 24)
+
+        def ciclo(self, serie, fase, n, desloc=0):  # type: ignore[no-untyped-def]
+            idx = (fase[:, None] + desloc + torch.arange(n)[None, :]) % self.W
+            return torch.gather(self.Q[serie], 1, idx)
+
+        def forward(self, x, serie, fase):  # type: ignore[no-untyped-def]
+            return self.f(x - self.ciclo(serie, fase, 168)) + self.ciclo(serie, fase, 24, desloc=168)
+
+    torch.manual_seed(0)
+    h = _histories()
+    x, mu, sd = _ref_window(h)
+    xt = torch.tensor(x, dtype=torch.float32)
+    sp_t = SparseTSF().eval()
+    cy_t = CycleNet(3, 168).eval()
+    phase = np.arange(len(h)) * 24 % 168
+    series = np.arange(len(h)) % 3
+    with torch.no_grad():
+        want_sp = sp_t(xt).numpy() * sd + mu
+        want_cy = cy_t(xt, torch.tensor(series), torch.tensor(phase)).numpy() * sd + mu
+    np.testing.assert_allclose(E.SparseTSF.from_torch(sp_t).predict(h), want_sp, rtol=1e-5, atol=1e-5)
+    got = E.CycleNet.from_torch(cy_t).predict(h, phase, series)
+    np.testing.assert_allclose(got, want_cy, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.skipif(not wasm_c.available(), reason="needs zig (pip install ziglang) and node")
+def test_network_headers_reproduce_python() -> None:
+    h = _histories()
+    days = pd.date_range("2020-03-16", periods=len(h), freq="D")  # from a Monday: every weekday
+    src = (
+        '#include "{0}.h"\n'
+        "void run(const float *in, long n, float *out) {{\n"
+        "    for (long i = 0; i < n / 169; i++)\n"
+        "        {0}_forecast_day(in + 169 * i, (int)in[169 * i + 168], 0, 0.0f, out + 24 * i);\n"
+        "}}\n"
+    )
+    inputs = np.c_[h, days.dayofweek.to_numpy()].ravel()
+    for period in (24, 168):
+        sp, cy = _nets(seed=period, period=period)
+        for name, m in (("sp", sp), ("cy", cy.fix(1))):
+            got = wasm_c.run(src.format(name), inputs, 24 * len(h), headers={f"{name}.h": E.to_c(m, name)})
+            got = got.reshape(len(h), 24)
+            py32 = np.stack([m.forecast_day(r, d, dtype=np.float32) for r, d in zip(h, days, strict=True)])
+            py64 = np.stack([m.forecast_day(r, d) for r, d in zip(h, days, strict=True)])
+            np.testing.assert_allclose(got, py32, rtol=1e-6, atol=1e-6)
+            np.testing.assert_allclose(got, py64, rtol=1e-5, atol=1e-5)
+            assert (got >= 0).all() and (got > 0).any()

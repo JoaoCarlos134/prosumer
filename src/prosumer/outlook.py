@@ -43,6 +43,12 @@ there): the average day of that month, not a forecast of that day's weather. It 
   not the best available.
 - Consumption, 20 Dingle houses, leads 1-14: the weekday/weekend profile of the last 4 weeks beat "same as the
   last day" at every lead (mean hourly skill +0.234) and the same-weekday mean of 4 weeks (+0.187).
+- Still different from the pilot, on purpose: the roof is fitted on all the data at forecast time (the pilot
+  fitted it once before its test); a model with impossible GHI is dropped from that day to the end of the
+  forecast (the pilot dropped it for the day only); the live API's mix of models by lead is not the archive's
+  the factors were fitted on (Meteo-France only to lead 3 there, no ICON at lead 7); one set of factors for
+  every site, pooled over the two plants (per plant they differ by up to 0.1 at lead 1); the rest of the issue
+  day (lead 0) uses lead 1's factor.
 - Not measured: the thresholds of the confidence labels (they follow the measured skill, `SKILL`), a roof the
   person types in, other climates than Parana's.
 """

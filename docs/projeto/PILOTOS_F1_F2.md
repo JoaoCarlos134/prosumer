@@ -21,7 +21,7 @@ venha só do que foi acrescentado.
 | F2(c) faixas (quantis) | `piloto_quantis.py` | ver a tabela abaixo: há uma fonte calibrada em cada caso do regime A | **PASSA** no regime A; no C falta calibrar |
 | F2(d) atualização ao meio-dia (pico 17–20 h, consumo) | `piloto_meio_dia.py` | emitida às 12:00 **+0,265** contra +0,237 do melhor das 00:00 (Timer-XL-84m), p 0,023; +0,07 sobre o mesmo LightGBM das 00:00 | **PASSA** |
 | F2(f) modelo direto do total do dia (consumo) | `piloto_total_dia.py` | direto +0,147 contra +0,146 da soma do Timer-XL-84m (p 0,98) e +0,095 da soma do LightGBM | **não passa** (empata com o melhor; registro: um LightGBM de 300 árvores empata com um fundacional de 84 M no total do dia) |
-| Horizonte longo, geração e consumo (12/10) | `piloto_horizonte.py` | geração: `encolhido` bate a climatologia no total do dia nos leads 1-7 nas duas usinas (+0,48/+0,49 no lead 1 a +0,18/+0,22 no 7, p ≤ 0,0002); leads 8-15 (só ~2 meses) sem ganho; consumo: `perfil_dia_util` bate `persist` nos leads 1-14 | **PASSA** (ver a seção no fim) |
+| Horizonte longo, geração e consumo (12/10) | `piloto_horizonte.py` | geração: `encolhido` bate a climatologia no total do dia nos leads 1-7 nas duas usinas (+0,48/+0,49 no lead 1 a +0,18/+0,22 no 7, p ≤ 0,0002); leads 8-15 não testáveis (amostra curta, ~2 meses); consumo: `perfil_dia_util` bate `persist` nos leads 1-14 | **PASSA** (ver a seção no fim) |
 
 ## F2(a) — várias previsões do tempo
 
@@ -208,9 +208,11 @@ fator 3 e a perda da reconfiguracao declarada.
 Pergunta: para marcar cargas pesadas na semana, ate que antecedencia k (dias) a previsao do tempo ainda ajuda a
 geracao FV contra a climatologia, com que metodo, e quanto confiar nela (fator a_k)? No consumo (sem clima), que
 regra de historico serve de 1 a 14 dias? Script `experimentos/testes_previsao/scripts/piloto_horizonte.py`;
-saidas `resultados/pilotos/horizonte.json` (todos os numeros abaixo saem dele) e `horizonte_usina_*.parquet`;
+saidas `resultados/pilotos/horizonte.json` (os numeros abaixo saem dele, exceto os da contagem de pedidos e das
+razoes Meteo-France/IFS dos leads 1-2, ver abaixo) e `horizonte_usina_*.parquet`;
 tempo baixado em `dados/previsao_tempo_horizonte.parquet` (Previous Runs, `previous_day1..7`, seis modelos,
-GHI, 4,7 MB, 84 pedidos, ~11 min, nenhum 429) e `dados/previsao_tempo_rodadas.parquet` (Single Runs, 0,2 MB,
+GHI, 4,7 MB, 84 pedidos, ~11 min, nenhum 429; o json guarda so a segunda usina, 42 pedidos e 338 s, porque o
+`grava` substituiu o dicionario: os 84 pedidos vem dos horarios do cache, 17:02-17:13) e `dados/previsao_tempo_rodadas.parquet` (Single Runs, 0,2 MB,
 256 pedidos, ~9 min). Antecedencia k = previsao do dia D emitida as 00:00 de D-k+1, com o observado ate 23:00 de
 D-k (k = 1 e o benchmark). Contas: ~4 s por usina, 1 s no consumo (CPU).
 
@@ -243,7 +245,10 @@ ICON e Meteo-France 0. O IFS dos leads 6-7 nao e um defeito isolado: o arquivo v
 interpolados, que espalham energia para as horas de manha cedo e fim da tarde (media do lead 7 em Cascavel: 1,59
 x ceu claro as 18 h e 4,0 x as 19 h; no lead 1, 0,84 e 1,96). O filtro pega essas horas de borda. Os dias
 descartados do IFS no lead 7 em Cascavel caem quase todos antes do teste (172 de 177 entre mar/2024 e abr/2025), isto e, no periodo que ajusta o
-a_k e o `ajustado`. Na Single Runs (rodadas das 12 UTC) o filtro nao descartou nada.
+a_k e o `ajustado`. Na Single Runs (rodadas das 12 UTC) o filtro nao descartou nada. Os descartes do IFS terminam
+por volta de 19-20/04/2025: o arquivo dos leads longos do IFS parece um produto diferente no comeco da calibracao e
+no teste (revisao). Efeito pequeno: sem o filtro, a_6 = 0,868 e a_7 = 0,820 (contra 0,855/0,785), e o skill de teste
+dos leads 6-7 muda no maximo 0,005.
 
 **Composicao dos modelos por lead (do arquivo, nao escolhida):** Meteo-France so tem `previous_day1..3`; ICON nao
 tem `previous_day7`; o CMA dos leads 5-7 para em 07/08/2025 (esta na calibracao, quase nao esta no teste). A
@@ -270,7 +275,11 @@ Por hora (horas de sol), contra a climatologia, o encolhido da +0,335/+0,295 no 
 +0,111/+0,116 no 7 (Cascavel/Curitiba), todos p < 0,001. A `persist_cs` perde da climatologia em todos os leads
 (dia: -0,10/-0,05 no lead 1, -0,34/-0,39 no 7): a climatologia ja ganha da persistencia no lead 1. a_k por usina:
 Cascavel 1,029 -> 0,806, Curitiba 1,133 -> 0,767 (lead 1 -> 7); o a_k > 1 dos leads 1-3 diz que, antes do teste,
-o fisico reagia de menos as nuvens previstas.
+o fisico reagia de menos as nuvens previstas. **Correcao da revisao independente (12/10): isso NAO se confirma no
+teste.** Ajustado nos proprios dias de teste (oraculo, so para conferir), o a_k fica abaixo de 1 em todos os leads
+nas duas usinas (lead 1: 0,943/0,984; lead 3: 0,951/0,984; lead 7: 0,595/0,715), e nos leads 1-3 o encolhido e o
+pior dos tres metodos de tempo (lead 1: +0,481/+0,495 contra fisico +0,490/+0,502 e ajustado +0,507/+0,516; DM
+encolhido x ajustado em Cascavel no lead 1, p 0,016): o a_k > 1 custa ~0,007-0,009 de skill nos leads 1-3.
 
 **G1:** skill medio no dia, leads 1-7, duas usinas: fisico +0,354, ajustado +0,3619, **encolhido +0,3620**. O
 encolhido e o escolhido pela regra, mas a diferenca para o ajustado e de 0,0001: e um EMPATE, nao um "melhor".
@@ -335,12 +344,15 @@ de so o IFS, e sem treino alem de kW_eff, orientacao e a_k) e perdem da mediana 
 reproduzidas exatamente pelas regras `persist`, `semana` e `media_7d`; `perfil_dia_util` +0,1595.
 (c) Meteo-France no arquivo: so ha `previous_day1..3` (4-7 vazios). No lead 3 o GHI fica alto mas nao
 impossivel (maximo 1.089 W/m2 em Cascavel, 1.083 em Curitiba; IFS 1.110/1.138), mas a razao Meteo-France/IFS da
-soma das 9-15 h cresce com o lead: 1,02 / 1,09 / 1,15 (Cascavel, leads 1/2/3) e 1,08 / 1,16 / 1,20 (Curitiba), e
-chega a 1,4-2,1 as 17-18 h. Nao e o 2-2,8x da Forecast API ao vivo, mas e um vies para cima de ~10-20% que entra
-na media dos leads 2-3. O filtro descartou 0 dias do Meteo-France.
+soma das 9-15 h cresce com o lead (Cascavel ~1,01 / 1,08 / 1,13, Curitiba ~1,07 / 1,14 / 1,19 nos leads 1/2/3,
+recontados pela revisao nas horas em que todos os modelos tem valor; os da 1a versao, 1,02/1,09/1,15 e
+1,08/1,16/1,20, nao saem do script, que so calcula o lead 3) e chega a 1,4-2,1 as 17-18 h. Nao e o 2-2,8x da
+Forecast API ao vivo, mas e ~10-20% acima dos OUTROS MODELOS (nao do medido) e entra na media dos leads 2-3. O filtro descartou 0 dias do Meteo-France.
 
 **Decisao:** padrao da biblioteca na geracao: `encolhido` com os a_k acima nos leads 1-7 (empatado com o
-`ajustado`; o encolhido nao precisa do arquivo de previsoes de cada lead depois de ajustado o a_k);
+`ajustado`; o encolhido nao precisa do arquivo de previsoes de cada lead depois de ajustado o a_k), **com o a_k
+limitado a 1 (decisao DEPOIS da revisao, portanto post hoc: nos leads 1-3 o a_k > 1 nao se confirmou no teste; com
+a_k = 1 o metodo e o fisico nesses leads)**;
 climatologia a partir do lead 8. Consumo: `perfil_dia_util` nos leads 1-14. Limites: duas usinas no mesmo estado;
 o lead 7 do IFS depende do filtro (interpolacao de passo de 6 h); a composicao dos modelos muda entre calibracao
 e teste nos leads 5-7; o Meteo-France puxa a media para cima nos leads 2-3; os leads 8-15 tem so ~2 meses; as

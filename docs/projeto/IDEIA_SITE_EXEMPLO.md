@@ -1,4 +1,13 @@
-# Ideia guardada: site de exemplo, local e cru (12/10/2026)
+# Site de exemplo, local e cru (ideia de 12/10/2026, FEITO no mesmo dia)
+
+**Feito em 12/10/2026 (noite):** `examples/site_local/` (`app.py` + `index.html`), sobre os quatro
+pré-requisitos abaixo, que entraram na biblioteca: `prosumer.forecast_ahead`/`best_windows` (módulo `outlook`, 1 a
+35 dias, não só amanhã, a pedido do usuário: planejar cargas pesadas na semana), `io.open_meteo.fetch_forecast`,
+`io.geocode` e inclinação/azimute na previsão (POA). Conferido por HTTP com uma casa de Dingle (endereço), Cascavel
+(coordenadas; arquivo com `;` e vírgula decimal) e consumo. Pendente: a confiança por dia de antecedência
+(`outlook.TRUST`) é provisória até o piloto `piloto_horizonte.py`.
+
+O texto abaixo é o registro da ideia como foi guardada.
 
 Pedido do usuário (12/10/2026): uma página HTML local, extremamente simples, que recebe os dados e devolve a
 previsão. O mínimo é o CSV e o endereço; opcionalmente mais variáveis (inclinação, azimute, coordenadas exatas, kWp,

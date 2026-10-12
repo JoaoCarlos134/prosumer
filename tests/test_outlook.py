@@ -153,3 +153,12 @@ def test_a_model_day_with_impossible_sun_is_left_out() -> None:
     np.testing.assert_allclose(o.daily["total"], truth.reshape(3, 24).sum(axis=1), rtol=0.03)
     assert o.daily["n_models"].tolist() == [2, 1, 2]
     assert any("broken 2024-01-02" in n for n in o.notes)
+
+
+def test_an_unidentified_roof_is_flagged() -> None:
+    # two planes facing east and west: one tilted plane explains them badly
+    s = _series(_plant(0.8, tilt=30, azimuth=90, second_plane=(30, 270)))
+    o = outlook.forecast_ahead(s, days=2, site=SITE)
+    assert any("unreliable" in n for n in o.notes) or o.method["series"]["p1"]["tilt"] < 30
+    clean = outlook.forecast_ahead(_series(_plant(0.8)), days=2, site=SITE)
+    assert not any("unreliable" in n for n in clean.notes)

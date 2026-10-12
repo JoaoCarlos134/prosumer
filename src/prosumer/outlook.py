@@ -42,6 +42,7 @@ from .diagnostics import (
     CLEAR_QUANTILE,
     CLEAR_RATIO,
     CLEAR_WINDOW_DAYS,
+    GOOD_FIT_R2,
     _clear,
     _complete_days,
     _hourly,
@@ -253,6 +254,14 @@ def _generation(
     method: dict[str, Any] = {"site": list(site), "trust": list(trust), "series": per_series}
     for uid in s.series:
         t, az, how = _orientation(uid, tilt, azimuth, fitted, site)
+        if how in ("fitted", "given + fitted") and fitted is not None:
+            row = fitted[fitted["unique_id"] == uid].iloc[0]
+            if bool(row["edge"]) or float(row["r2"]) < GOOD_FIT_R2:
+                notes.append(
+                    f"{uid}: the roof fitted from the data is unreliable (tilt {row['tilt']:.0f}, "
+                    f"R2 {row['r2']:.2f}; a tilt on the edge of the search or R2 < {GOOD_FIT_R2} means "
+                    "the data do not identify it). Give the tilt and azimuth if you know them."
+                )
         if how == "default":
             notes.append(
                 f"{uid}: the orientation could not be fitted from the data; assumed tilt {t:.0f} facing "

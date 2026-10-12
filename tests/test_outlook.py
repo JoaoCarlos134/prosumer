@@ -74,7 +74,7 @@ def test_perfect_weather_gives_the_truth_on_trusted_days() -> None:
     d = o.daily
     assert d["confidence"].tolist() == ["high"] * 3 + ["medium"] * 3 + ["low"] + ["seasonal only"] * 3
     assert (d.loc[d["lead_day"] >= 8, "source"] == "seasonal").all()
-    assert outlook.TRUST[0] > 1 and len(outlook.TRUST) == len(outlook.SKILL) == 7
+    assert max(outlook.TRUST) == 1.0 and len(outlook.TRUST) == len(outlook.SKILL) == 7  # capped at 1
 
 
 def test_beyond_the_last_model_is_seasonal_and_says_so() -> None:

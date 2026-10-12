@@ -459,7 +459,15 @@ previsao da Open-Meteo 1 h ANTES (corr 0,966 x 0,921 em L=0; Cascavel 0,968 em L
 saidas em `resultados/pilotos/`): NASA adiantada 1 h no B, Curitiba +0,471 -> +0,440; so o ceu claro atrasado 1 h no
 B, +0,471 -> +0,469; previsao + ceu claro atrasados 1 h no C, +0,326 -> +0,313. Leitura: o relogio da geracao de
 Curitiba nao e um +1 h limpo (talvez rotulo deslocado de fracao de hora); os numeros publicados ficam, o atraso
-do clima da NASA de Curitiba e DECLARADO no texto. Decisao de refazer algo: do usuario.
+do clima da NASA de Curitiba e DECLARADO no texto. **Decidido 12/10: nao refazer** (motivo abaixo).
+**Relogio por nuvens (12/10):** `prosumer.quality.clock_offset_weather` (+ `clock_weather_notes`, secao
+`clock_weather` do `analyze` quando ha `weather`): correlacao das anomalias horarias (serie menos o perfil do mes)
+da geracao e do GHI, pico refinado por parabola entre passos, IC 90% por reamostragem de dias; mede fracao de hora e
+ignora a orientacao do telhado (os pontos cegos do `clock_offset`). Nas usinas: a GERACAO de Curitiba tambem esta
+atrasada e quase compensa a NASA: -0,16 h da NASA do B, +0,45 h da previsao do C (Cascavel -0,11 e -0,36). Toda
+correcao de hora inteira afasta (por isso os dois pilotos pioraram); o conserto real seria reagregar Curitiba dos
+5 min do Lactec com deslocamento fracionario e refazer as usinas nos tres regimes: NAO vale. Paragrafo declarado em
+`experimentos/testes_previsao/LEIA-ME.md` secao 7. Testes: 434 passam, 10 pulados.
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

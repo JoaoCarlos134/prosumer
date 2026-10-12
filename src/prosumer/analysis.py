@@ -8,6 +8,8 @@ already do without training anything:
 - **quality**: coverage, gaps and the series that end on different dates (the leakage case of the benchmark);
   for generation with a site, the clock checked against the sun (`quality.clock_offset`) and, with a
   weather forecast, against its clouds to a fraction of an hour (`quality.clock_offset_weather`);
+- **diagnostics** (generation with a site): clear-day performance from the energy alone, the roof orientation
+  and the steps of that performance over time (`diagnostics.diagnose`);
 - **forecast check**: the day-ahead task of the benchmark (`DayAhead`) on the last `test_days` of the data,
   with the naive forecasts that need no training (same as yesterday, same day last week, mean of the last 7
   days) and their MEDIAN as the output (the library never picks "the best model": section 5c of the proposal),
@@ -17,9 +19,8 @@ Every report also lists its inputs (`Report.provenance`: the series, the weather
 licence and citation, and notes what has no known licence, is for non-commercial use only or sends the data
 out, so the app can say what an analysis used and under what terms.
 
-The sections that need modules not written yet (weather, trained and foundation models, diagnostics,
-economics) are listed in `Report.pending`, so the app can show what is missing instead of silently
-leaving it out.
+The sections that need what was not given or not written yet (weather, bands, economics) are listed in
+`Report.pending`, so the app can show what is missing instead of silently leaving it out.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ import pandas as pd
 
 from . import metrics, physics
 from .contracts import EnergySeries
+from .diagnostics import Diagnosis, diagnose
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
 from .postprocessing import conformal_quantiles, correct_bias
 from .protocol import DayAhead, H, Regime, Window
@@ -49,7 +51,7 @@ CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (c
 PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
     "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
-    "diagnostics": "soiling, string faults, shading: step E4",
+    "diagnostics": "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes",
     "economics": "time-of-use tariffs and the Brazilian module: step E6",
 }
 
@@ -70,6 +72,8 @@ class Report:
     clock_weather: pd.DataFrame | None = None
     # where each input came from and its licence: the series, the weather and each model (see `_provenance`)
     provenance: pd.DataFrame | None = None
+    # generation with a site: roof orientation, clear-day performance index, its segments and steps
+    diagnostics: Diagnosis | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
@@ -95,6 +99,7 @@ class Report:
             "clock": records(self.clock),
             "clock_weather": records(self.clock_weather),
             "provenance": records(self.provenance),
+            "diagnostics": None if self.diagnostics is None else self.diagnostics.to_dict(),
             "pending": dict(self.pending),
         }
 
@@ -131,6 +136,24 @@ class Report:
                 "",
                 _table(self.clock_weather),
             ]
+        d = self.diagnostics
+        if d is not None and not d.orientation.empty:
+            lines += [
+                "",
+                "## Diagnostics",
+                "",
+                "From the energy alone: the days the production itself shows as cloudless, the roof "
+                "orientation fitted on them, and the clear-day performance index (energy over the clear-sky "
+                "expectation on that plane; a performance ratio with `kwp`, the effective peak power in kW "
+                "without it) as a straight line per segment. Steps between segments are events: a cleaning "
+                "or a repair (up), a fault or new shading (down).",
+                "",
+                _table(d.orientation),
+            ]
+            if not d.segments.empty:
+                lines += ["", "### Segments", "", _table(d.segments)]
+            if not d.steps.empty:
+                lines += ["", "### Steps", "", _table(d.steps)]
         if self.notes:
             lines += ["", "## Notes", "", *[f"- {n}" for n in self.notes]]
         if self.forecast is not None:
@@ -189,6 +212,7 @@ def analyze(
     levels: dict[str, metrics.Level] | None = None,
     weather: pd.DataFrame | None = None,
     models: Sequence[Forecaster] = (),
+    kwp: float | dict[str, float] | None = None,
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -210,6 +234,10 @@ def analyze(
     days. A model whose card includes regime A (history only) is a regime A row and enters the median; one
     that takes covariates (e.g. `LightGBM(["ghi_mean"])`, `Chronos2(["ghi_mean"])`) is a regime C row and
     needs `weather`. Foundation models get 1024 hours of history, as in the benchmark.
+
+    Generation with a `site` also gets the diagnostics (`diagnostics.diagnose`: clear days, roof orientation,
+    clear-day performance index and its change points, `Report.diagnostics`); `kwp` (one value, or per
+    `unique_id`) turns the index into a performance ratio.
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
@@ -244,6 +272,14 @@ def analyze(
         if ghi is not None:
             clock_weather = clock_offset_weather(s, w, column=ghi)
             notes.extend(clock_weather_notes(clock_weather))
+    diag = None
+    base_pending = dict(PENDING)
+    if s.quantity == "generation" and site is not None:
+        diag = diagnose(s, site, kwp=kwp)
+        notes.extend(diag.notes)
+        base_pending["diagnostics"] = (
+            "soiling vs shading and string faults need DC or 5-minute data (not yet)"
+        )
 
     first = frame["ds"].min().normalize()
     if test_start - first < pd.Timedelta(hours=CONTEXT):
@@ -259,6 +295,8 @@ def analyze(
             clock=clock,
             clock_weather=clock_weather,
             provenance=sources,
+            diagnostics=diag,
+            pending=base_pending,
         )
 
     task = DayAhead(
@@ -275,6 +313,8 @@ def analyze(
             clock=clock,
             clock_weather=clock_weather,
             provenance=sources,
+            diagnostics=diag,
+            pending=base_pending,
         )
 
     generation = s.quantity == "generation"
@@ -446,7 +486,7 @@ def analyze(
                 else ""
             )
         )
-    pending = dict(PENDING)
+    pending = dict(base_pending)
     if weather is not None:
         pending.pop("weather (regimes B and C)")
     if bands is not None:
@@ -466,6 +506,7 @@ def analyze(
         clock_weather=clock_weather,
         pending=pending,
         provenance=sources,
+        diagnostics=diag,
     )
 
 

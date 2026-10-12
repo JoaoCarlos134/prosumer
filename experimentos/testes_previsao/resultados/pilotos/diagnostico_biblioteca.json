@@ -1,0 +1,179 @@
+{
+ "Cascavel": {
+  "serie": "Cascavel",
+  "r2": 0.9253098282178035,
+  "inclinacao": 15.0,
+  "azimute": 30.0,
+  "dias_claros": 892,
+  "semanas": 892,
+  "trechos": [
+   {
+    "inicio": "2019-07-28",
+    "fim": "2023-10-21",
+    "dias": 524,
+    "ini": 0.8521481830649579,
+    "fim_nivel": 0.6346517714350232,
+    "pct_ano": -6.977468569416201
+   },
+   {
+    "inicio": "2023-11-04",
+    "fim": "2024-08-11",
+    "dias": 113,
+    "ini": 0.7895589028120169,
+    "fim_nivel": 0.6723721831321797,
+    "pct_ano": -20.88341869779378
+   },
+   {
+    "inicio": "2024-08-12",
+    "fim": "2026-05-31",
+    "dias": 255,
+    "ini": 0.738189575761139,
+    "fim_nivel": 0.757037030396399,
+    "pct_ano": 1.400923101789457
+   }
+  ],
+  "degraus": [
+   {
+    "data": "2023-11-04",
+    "antes": 0.6346517714350232,
+    "depois": 0.7895589028120169,
+    "pct": 24.40820909185053
+   },
+   {
+    "data": "2024-08-12",
+    "antes": 0.6723721831321797,
+    "depois": 0.738189575761139,
+    "pct": 9.788833369393025
+   }
+  ],
+  "notas": [
+   "Series Cascavel: panels fitted at 15 degrees tilt facing 30 degrees (compass; R2 0.93 on clear days).",
+   "Series Cascavel: clear-day production stepped +24% around 2023-11-04: a cleaning, a repair or a change to the array.",
+   "Series Cascavel: clear-day production stepped +10% around 2024-08-12: a cleaning, a repair or a change to the array.",
+   "Series Cascavel: the latest period is 12% below the best level seen on clear days."
+  ],
+  "portao": [
+   {
+    "esperado": "2023-11",
+    "sentido": "sobe",
+    "rotulo": "limpeza",
+    "achado": "2023-11-04",
+    "pct": 24.4
+   },
+   {
+    "esperado": "2024-09",
+    "sentido": "sobe",
+    "rotulo": "limpeza",
+    "achado": "2024-08-12",
+    "pct": 9.8
+   }
+  ]
+ },
+ "Curitiba": {
+  "serie": "Curitiba",
+  "r2": 0.8050717141018809,
+  "inclinacao": 20.0,
+  "azimute": 320.0,
+  "dias_claros": 518,
+  "semanas": 518,
+  "trechos": [
+   {
+    "inicio": "2021-07-18",
+    "fim": "2022-11-19",
+    "dias": 145,
+    "ini": 0.6535794167321437,
+    "fim_nivel": 0.5260024334838043,
+    "pct_ano": -16.216347945746087
+   },
+   {
+    "inicio": "2022-12-07",
+    "fim": "2023-07-15",
+    "dias": 75,
+    "ini": 0.4370110947695304,
+    "fim_nivel": 0.34499345376844187,
+    "pct_ano": -39.85243152351685
+   },
+   {
+    "inicio": "2023-08-02",
+    "fim": "2024-01-16",
+    "dias": 45,
+    "ini": 0.6924501691705327,
+    "fim_nivel": 0.5251550396637942,
+    "pct_ano": -59.795824828418276
+   },
+   {
+    "inicio": "2024-02-06",
+    "fim": "2024-12-18",
+    "dias": 110,
+    "ini": 0.6675106102982424,
+    "fim_nivel": 0.5380726692100015,
+    "pct_ano": -24.798615792870503
+   },
+   {
+    "inicio": "2024-12-19",
+    "fim": "2026-05-31",
+    "dias": 143,
+    "ini": 0.6413101398136729,
+    "fim_nivel": 0.5947841248906951,
+    "pct_ano": -5.218243352420006
+   }
+  ],
+  "degraus": [
+   {
+    "data": "2022-12-07",
+    "antes": 0.5260024334838043,
+    "depois": 0.4370110947695304,
+    "pct": -16.91842718765938
+   },
+   {
+    "data": "2023-08-02",
+    "antes": 0.34499345376844187,
+    "depois": 0.6924501691705327,
+    "pct": 100.71400242721774
+   },
+   {
+    "data": "2024-02-06",
+    "antes": 0.5251550396637942,
+    "depois": 0.6675106102982424,
+    "pct": 27.107341619645254
+   },
+   {
+    "data": "2024-12-19",
+    "antes": 0.5380726692100015,
+    "depois": 0.6413101398136729,
+    "pct": 19.186529350253867
+   }
+  ],
+  "notas": [
+   "Series Curitiba: panels fitted at 20 degrees tilt facing 320 degrees (compass; R2 0.81 on clear days).",
+   "Series Curitiba: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series Curitiba: clear-day production stepped -17% around 2022-12-07: a fault, new shading or a change to the array. Uncertain (roof fit, see above).",
+   "Series Curitiba: clear-day production stepped +101% around 2023-08-02: a cleaning, a repair or a change to the array. Uncertain (roof fit, see above).",
+   "Series Curitiba: clear-day production stepped +27% around 2024-02-06: a cleaning, a repair or a change to the array. Uncertain (roof fit, see above).",
+   "Series Curitiba: clear-day production stepped +19% around 2024-12-19: a cleaning, a repair or a change to the array. Uncertain (roof fit, see above)."
+  ],
+  "portao": [
+   {
+    "esperado": "2022-12",
+    "sentido": "desce",
+    "rotulo": "falha string 1",
+    "achado": "2022-12-07",
+    "pct": -16.9
+   },
+   {
+    "esperado": "2023-07",
+    "sentido": "sobe",
+    "rotulo": "volta da string 1",
+    "achado": "2023-08-02",
+    "pct": 100.7
+   },
+   {
+    "esperado": "2025-06",
+    "sentido": "sobe",
+    "rotulo": "reconfiguracao",
+    "achado": null,
+    "pct": null
+   }
+  ]
+ }
+}

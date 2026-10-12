@@ -1,12 +1,14 @@
 """prosumer: day-ahead forecasting of energy prosumers' generation and consumption.
 
-Status: step E2 of the proposal (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
+Status: version 0.1 done (step E2) and step E4 started, of the proposal
+(`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
 `analysis` (the app's single call, `analyze(series) -> Report`), `contracts`, `protocol`, `metrics`
 (including metrics at several resolutions and bands), `postprocessing` (consumption bias correction),
 `physics` (sun position, clear sky, plane-of-array), `provenance` (source and licence of every input),
-`quality` (the clock of a generation series checked against the sun), `forecast`, `io` (Open-Meteo
+`quality` (the clock of a generation series checked against the sun), `diagnostics` (clear-day
+performance of a PV series from its energy alone, and its change points), `forecast`, `io` (Open-Meteo
 forecasts, NASA POWER weather, Fronius Solar.web exports, generic meter tables) and `data` (synthetic
-series and the real Dingle houses); the `diagnostics`, `embedded` and `economics` modules are not written yet.
+series and the real Dingle houses); the `embedded` and `economics` modules are not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported
@@ -16,7 +18,18 @@ example data.
 
 from __future__ import annotations
 
-from . import analysis, contracts, data, metrics, physics, postprocessing, protocol, provenance, quality
+from . import (
+    analysis,
+    contracts,
+    data,
+    diagnostics,
+    metrics,
+    physics,
+    postprocessing,
+    protocol,
+    provenance,
+    quality,
+)
 from .analysis import Report, analyze
 from .contracts import ContractError, EnergySeries
 from .protocol import DayAhead, Fold, Regime, SupportError, Window
@@ -44,6 +57,7 @@ __all__ = [
     "analyze",
     "contracts",
     "data",
+    "diagnostics",
     "metrics",
     "physics",
     "postprocessing",

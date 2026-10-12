@@ -177,7 +177,9 @@ def fit_orientation(
     "fits".
     """
     tilts = np.arange(0, 61, 5.0) if tilts is None else np.asarray(tilts, dtype=float)
-    azimuths = np.arange(90, 271, 10.0) if azimuths is None else np.asarray(azimuths, dtype=float)
+    # the whole circle: a grid of 90..270 (east through south to west) silently misses every north-facing
+    # roof of the southern hemisphere (Cascavel, 13 degrees facing 25, came out 5 degrees facing east)
+    azimuths = np.arange(0, 360, 10.0) if azimuths is None else np.asarray(azimuths, dtype=float)
     y, ghi = np.asarray(y, dtype=float), np.asarray(ghi, dtype=float)
     ok = np.isfinite(y) & (ghi > min_ghi)
     s = sun.loc[ok] if isinstance(sun, pd.DataFrame) else sun

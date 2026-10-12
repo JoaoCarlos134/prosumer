@@ -427,8 +427,9 @@ padrao, `PROSUMER_FULL=1` para as 9, ~3 min). Fundacionais: 3 janelas conferidas
 Windows (`prosumer_fila_noite`, 23:00, MODO_TESTE=1; apagar a tarefa depois). `analyze(models=[...])`: modelo de
 historico vira linha A e entra na mediana; modelo com covariaveis vira linha C (precisa de `weather`); fundacionais
 com 1024 h. Casas (consumo, 92 dias): LightGBM +0,199, mediana +0,145 -> +0,190. O extra `lightgbm` inclui o
-scikit-learn (o LGBMRegressor exige). Licencas do TiRex-2 e do Toto-2.0 NAO conferidas (o cartao manda ver o model
-card). **Faixas (11/10, tarde):** `LightGBMQuantile` (um LightGBM por nivel; refaz o piloto F2(c) com dif 0,0 em
+scikit-learn (o LGBMRegressor exige). Licencas conferidas em 11/10 (cartoes do HF e repositorios): TiRex-2, Toto-2.0 e Chronos-2 sao Apache-2.0
+nos pesos e no codigo, uso comercial permitido (o TiRex-2 traz NOTICE e um INTENDED_USE que exclui usos de alto risco do
+AI Act, sem mudar a licenca). **Faixas (11/10, tarde):** `LightGBMQuantile` (um LightGBM por nivel; refaz o piloto F2(c) com dif 0,0 em
 casas_prod A e usinas C), `EmpiricalQuantiles` (referencia: quantis do mesmo horario nos 14 dias; = a do piloto ate
 1e-15), quantis no `Chronos2` (= piloto ate 2e-6; o ponto e o nivel 0,5) e no `TiRex2`; `rolling_quantiles` (um ajuste
 serve ponto e faixa); secao `bands` no `analyze` (cobertura 80/60, largura, CRPS e skill contra a empirica nas mesmas

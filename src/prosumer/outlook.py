@@ -15,24 +15,35 @@ How (simple on purpose, every step can be explained to the person using it):
     calendar month in the data (how much of a clear day an average day of that month gave);
   - *forecast* = seasonal + trust(lead) x (weather - seasonal). The trust of each lead day says how much a
     weather forecast that far ahead is worth more than the season; it falls with the lead and is zero where
-    no model reaches (`TRUST`: PROVISIONAL values, to be set by the horizon pilot `piloto_horizonte.py`).
-- **Consumption** (no weather): per hour, the mean of the same weekday and hour in the last `weeks` weeks.
+    no model reaches (`TRUST`, measured by the horizon pilot, see below).
+- **Consumption** (no weather): per hour, the mean of that hour over the last `weeks` x 7 days of the same
+  kind as the forecast day (weekday or weekend).
   It does not depend on the lead: a household's week repeats; what changes it (holidays, a trip, a new
   appliance) is not in the data.
 
 The low/high columns are ranges, not calibrated intervals: across the weather models (generation, blended by
-the same trust with the seasonal 10-90% range of clearness) and across the last `weeks` weeks (consumption).
+the same trust with the seasonal 10-90% range of clearness) and across the days of the profile (consumption).
 
-Beyond the last weather model (~16 days) the generation is only the seasonal expectation: the average day of
-that month, not a forecast of that day's weather. It is labelled so (`source = "seasonal"`).
+Beyond lead 7 the generation is only the seasonal expectation (the pilot found no skill in the weather
+there): the average day of that month, not a forecast of that day's weather. It is labelled so
+(`source = "seasonal"`).
 
-**Not validated yet (2026-10-12).** Neither method went through a pilot before entering the library: the
-generation method was not compared with the benchmark's regime C models at lead 1 (linear physics +0.312,
-LightGBM +0.330 on the plants), the fitted roof is used by default although pilot F2(b) found that an
-estimated geometry did not help LightGBM, and the consumption rule is not one of the benchmark's references
-nor the median the library uses for the day-ahead check. The horizon pilot (`piloto_horizonte.py`) measures
-all of this; until then the confidence labels rest on the provisional `TRUST`, and every outlook says so in
-its notes.
+**What the horizon pilot measured** (`piloto_horizonte.py`, 2026-10-12, `docs/projeto/PILOTOS_F1_F2.md`):
+
+- Generation, the two Parana plants, archived forecasts of 6 models issued 1-7 days ahead, test Aug/2025 to
+  May/2026: the weather forecast beats the seasonal expectation on the daily total at every lead 1-7 at both
+  plants (DM p < 0.001, Cascavel lead 7 p 0.0002); the daily skill falls from ~+0.49 (lead 1) to ~+0.20
+  (lead 7). `TRUST` holds the fitted shrink factors a_1..a_7, pooled over the two plants (above 1 at leads
+  1-3). Leads 8-15 (one run a day, Apr-May 2026 only, no calibration): no lead showed skill, and lead 15 (GFS
+  alone) was worse than the season at Cascavel, so the weather is not used beyond lead 7. Two months of one
+  season do not prove there is none.
+- At lead 1, on the benchmark's hours: +0.321 against clear-sky persistence, a statistical tie with the
+  benchmark's LightGBM in regime C (+0.330, DM p 0.73) and below the median of the benchmark's models
+  (+0.367). It is the method that is simple to explain, not the best available.
+- Consumption, 20 Dingle houses, leads 1-14: the weekday/weekend profile of the last 4 weeks beat "same as the
+  last day" at every lead (mean hourly skill +0.234) and the same-weekday mean of 4 weeks (+0.187).
+- Not measured: the thresholds of the confidence labels (they follow the measured skill, `SKILL`), a roof the
+  person types in, other climates than Parana's.
 """
 
 from __future__ import annotations
@@ -62,23 +73,21 @@ MAX_DAYS = 35
 WEEKS = 4
 KW_EFF_DAYS = 60  # clear days of the last 60 days give the effective peak power
 MIN_CLEAR = 5
-# Trust in the weather forecast per lead day: lead 1 is the day after the forecast is issued (the archive's
-# `previous_day1`, the benchmark's day-ahead task); the rest of the issue day is lead 0, with lead 1's
-# trust.
-# PROVISIONAL until the horizon pilot (`piloto_horizonte.py`) measures it: full for the first days, falling
-# to 0.05 on day 16 and zero after.
-# fmt: off
-TRUST: tuple[float, ...] = (
-    1.0, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05,
-)
-# fmt: on
+# Shrink factor of the weather forecast toward the seasonal expectation per lead day. Lead 1 is the day after
+# the forecast is issued (the archive's `previous_day1`); the rest of the issue day is lead 0 and uses lead
+# 1's value. Fitted (least squares, before the test) by the horizon pilot on the two plants, leads 1-7; zero
+# after.
+TRUST: tuple[float, ...] = (1.0825, 1.0692, 1.0514, 0.9158, 0.9058, 0.8550, 0.7854)
+# Daily-total skill against the seasonal expectation at each lead (same pilot, mean of the two plants): what a
+# day's confidence label says. A day only partly covered by the weather gets it in proportion.
+SKILL: tuple[float, ...] = (0.488, 0.433, 0.406, 0.392, 0.344, 0.274, 0.199)
 # An hourly GHI above 1.2 x clear sky + 50 W/m2 is not weather but a broken value: on 2026-10-12 the live
 # `meteofrance_seamless` gave up to 2750 W/m2 at Cascavel on its 4th day (clear sky ~990). Brief cloud
 # enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The fault looked systematic in the
 # lead (2-2.8x the other models from lead 3), and a cloudy day under the limit cannot be caught, so the model
 # is left out from that day to the end of the forecast.
 IMPLAUSIBLE = (1.2, 50.0)
-HIGH, MEDIUM = 0.66, 0.33  # trust above which a day is labelled high / medium confidence
+HIGH, MEDIUM = 0.40, 0.25  # skill from which a day is labelled high / medium confidence (leads 1-3 / 4-6)
 
 Prefer = Literal["high", "low"]
 
@@ -193,12 +202,18 @@ def forecast_ahead(
         hourly, method, more = _consumption(s, hours, lead, weeks)
         if w is not None:
             more.append("The weather forecast is not used for consumption (the profile of recent weeks is).")
+        more.append(
+            "The consumption profile (weekdays and weekends apart, last 4 weeks) beat 'same as the last day' "
+            "at every lead 1-14 on 20 Dingle houses (autumn 2020); a holiday, a trip or a new appliance is "
+            "not in it."
+        )
     notes += more
     if s.quantity == "generation" and w is not None:
         if (hourly["source"] == "weather").any():
             notes.append(
-                "How much the weather forecast is trusted at each lead day is PROVISIONAL (not yet "
-                "measured), and so are the confidence labels."
+                "How much the weather forecast is trusted at each lead day, and the confidence labels, were "
+                "measured on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an "
+                "assumption."
             )
         else:
             notes.append(
@@ -207,7 +222,7 @@ def forecast_ahead(
     if lead.max() > len(trust) and s.quantity == "generation":
         notes.append(
             f"Days beyond day {len(trust)} are the seasonal expectation (an average day of the month), not a "
-            "forecast of their weather."
+            "forecast of their weather: beyond a week the weather forecasts showed no skill in the pilot."
         )
     daily = _daily(hourly)
     gaps = daily[daily["missing_hours"] > 0]
@@ -277,6 +292,7 @@ def _generation(
     sun = physics.mean_sun(hours, *site)
     cs = physics.clear_sky_ghi(hours, *site)
     a = np.array([trust[max(k, 1) - 1] if k <= len(trust) else 0.0 for k in lead])
+    sk = np.array([SKILL[max(k, 1) - 1] if k <= len(SKILL) else 0.0 for k in lead])
     ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs)
     if dropped:
         notes.append(
@@ -285,6 +301,7 @@ def _generation(
             f"{', '.join(dropped)}."
         )
     a = np.where(np.isfinite(ghi), a, 0.0)  # no model reaches the hour: seasonal only
+    sk = np.where(a > 0, sk, 0.0)
     out: list[pd.DataFrame] = []
     per_series: dict[str, Any] = {}
     method: dict[str, Any] = {"site": list(site), "trust": list(trust), "series": per_series}
@@ -340,6 +357,7 @@ def _generation(
                     "source": np.where(a > 0, "weather", "seasonal"),
                     "n_models": n_models,
                     "trust": a,
+                    "skill": sk,
                     "sun": cs > 0,
                 }
             )
@@ -460,16 +478,17 @@ def _consumption(
         g = f[(f["unique_id"] == uid) & f["valid"]]
         cut = g["ds"].max() - pd.Timedelta(weeks=weeks)
         g = g[g["ds"] > cut]
-        key = g["ds"].dt.dayofweek * 24 + g["ds"].dt.hour
+        # the horizon pilot's `perfil_dia_util`: that hour on the days of the same kind (weekday or weekend)
+        key = (g["ds"].dt.dayofweek >= 5).astype(int) * 24 + g["ds"].dt.hour
         prof = g.groupby(key)["y"].agg(["mean", "min", "max", "size"])
-        want = hours.dayofweek * 24 + hours.hour
+        want = (hours.dayofweek >= 5).astype(int) * 24 + hours.hour
         p = prof.reindex(want)
         if p["mean"].isna().any():
-            # an hour of the week never seen in the window: fall back to the mean of that hour of the day
+            # an hour never seen on that kind of day in the window: fall back to the mean of that hour
             by_hour = g.groupby(g["ds"].dt.hour)["y"].agg(["mean", "min", "max"]).reindex(hours.hour)
             for c in ("mean", "min", "max"):
                 p[c] = np.where(p[c].isna(), by_hour[c].to_numpy(), p[c].to_numpy())
-        if int(prof["size"].min() if len(prof) else 0) < weeks:
+        if int(prof["size"].min() if len(prof) else 0) < 2 * weeks:  # 2 weekend days a week
             notes.append(f"{uid}: fewer than {weeks} weeks of valid data behind some hours of the profile.")
         out.append(
             pd.DataFrame(
@@ -483,21 +502,25 @@ def _consumption(
                     "source": "profile",
                     "n_models": 0,
                     "trust": np.nan,
+                    "skill": np.nan,
                     "sun": True,
                 }
             )
         )
-    method = {"rule": f"mean of the same weekday and hour over the last {weeks} weeks", "weeks": weeks}
+    method = {
+        "rule": f"mean of the same hour over the last {weeks} weeks, weekdays and weekends apart",
+        "weeks": weeks,
+    }
     return pd.concat(out, ignore_index=True), method, notes
 
 
 # ---------------------------------------------------------------------- shared
 def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
     """Per series and day. Generation is labelled over its sun hours only (the night says nothing):
-    `trust` is their mean trust, `n_models` the fewest models behind any of them, `source` "weather" when at
-    least half of them have a weather forecast; the confidence follows the mean trust, so a day only partly
-    covered by the weather is not labelled by its best hour. `missing_hours`: hours with no forecast (not in
-    the totals)."""
+    `trust` and `skill` are their means (`skill`: the pilot's daily skill at that lead, 0 without weather),
+    `n_models` the fewest models behind any of them, `source` "weather" when at least half of them have a
+    weather forecast; the confidence follows the mean skill, so a day only partly covered by the weather is
+    not labelled by its best hour. `missing_hours`: hours with no forecast (not in the totals)."""
     h = hourly.assign(
         date=hourly["ds"].dt.tz_localize(None).dt.normalize(),
         weather=(hourly["source"] == "weather").astype(float),
@@ -517,7 +540,10 @@ def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
     by_sun = sun.groupby(keys).agg(
-        trust=("trust", "mean"), n_models=("n_models", "min"), weather=("weather", "mean")
+        trust=("trust", "mean"),
+        skill=("skill", "mean"),
+        n_models=("n_models", "min"),
+        weather=("weather", "mean"),
     )
     d = d.merge(by_sun.reset_index(), on=keys, how="left")
     profile = hourly.groupby(["unique_id"])["source"].first().eq("profile")
@@ -525,11 +551,11 @@ def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
     d["source"] = np.where(is_profile, "profile", np.where(d["weather"] >= 0.5, "weather", "seasonal"))
     d["n_models"] = d["n_models"].fillna(0).astype(int)
     d["confidence"] = np.select(
-        [is_profile, d["trust"] >= HIGH, d["trust"] >= MEDIUM, d["trust"] > 0],
+        [is_profile, d["skill"] >= HIGH, d["skill"] >= MEDIUM, d["skill"] > 0],
         ["typical week", "high", "medium", "low"],
         default="seasonal only",
     )
-    cols = ["unique_id", "date", "lead_day", "total", "low", "high", "source", "n_models", "trust"]
+    cols = ["unique_id", "date", "lead_day", "total", "low", "high", "source", "n_models", "trust", "skill"]
     return d[[*cols, "confidence", "missing_hours"]]
 
 
@@ -592,4 +618,4 @@ def _table(df: pd.DataFrame) -> str:
     return "\n".join([head, sep, *body])
 
 
-__all__ = ["MAX_DAYS", "TRUST", "Outlook", "best_windows", "forecast_ahead"]
+__all__ = ["MAX_DAYS", "SKILL", "TRUST", "Outlook", "best_windows", "forecast_ahead"]

@@ -58,7 +58,10 @@ def test_perfect_weather_gives_the_truth_on_trusted_days() -> None:
     hours, kc, truth = _future(10)
     issued = pd.Timestamp("2023-12-31 20:00", tz=TZ)
     w = _weather(hours, kc, {"long": 10 * 24, "short": 3 * 24}, issued)
-    o = outlook.forecast_ahead(_series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20)
+    full = (1.0,) * 10  # the mechanics with full trust; the measured defaults are checked below
+    o = outlook.forecast_ahead(
+        _series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20, trust=full
+    )
     assert o.method["series"]["p1"]["orientation"] == "given"
     d = o.daily
     true_days = truth.reshape(10, 24).sum(axis=1)
@@ -66,8 +69,12 @@ def test_perfect_weather_gives_the_truth_on_trusted_days() -> None:
     np.testing.assert_allclose(d.loc[first3, "total"], true_days[:3], rtol=0.03)
     assert (d.loc[first3, "confidence"] == "high").all()
     assert list(d["n_models"]) == [2, 2, 2] + [1] * 7  # the short model stops after 3 days
-    late = d["lead_day"] >= 8
-    assert (d.loc[late, "confidence"].isin(["medium", "low"])).all()
+    # with the measured defaults: weather to lead 7, labels from the pilot's skill, seasonal after
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20)
+    d = o.daily
+    assert d["confidence"].tolist() == ["high"] * 3 + ["medium"] * 3 + ["low"] + ["seasonal only"] * 3
+    assert (d.loc[d["lead_day"] >= 8, "source"] == "seasonal").all()
+    assert outlook.TRUST[0] > 1 and len(outlook.TRUST) == len(outlook.SKILL) == 7
 
 
 def test_beyond_the_last_model_is_seasonal_and_says_so() -> None:
@@ -91,7 +98,7 @@ def test_weather_that_starts_after_the_data_end() -> None:
 
 def test_consumption_repeats_the_recent_weeks() -> None:
     idx = pd.date_range("2020-08-10", periods=10 * 7 * 24, freq="h", tz="Europe/Dublin")
-    week = idx.dayofweek.to_numpy() * 0.1 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.2)
+    week = (idx.dayofweek.to_numpy() >= 5) * 0.5 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.2)
     s = EnergySeries.from_dataframe(
         pd.DataFrame({"unique_id": "H1", "ds": idx, "y": week}),
         unit="kWh",
@@ -101,7 +108,9 @@ def test_consumption_repeats_the_recent_weeks() -> None:
     )
     o = outlook.forecast_ahead(s, days=14)
     h = o.hourly
-    want = h["ds"].dt.dayofweek * 0.1 + np.where((h["ds"].dt.hour >= 18) & (h["ds"].dt.hour < 21), 1.0, 0.2)
+    want = (h["ds"].dt.dayofweek >= 5) * 0.5 + np.where(
+        (h["ds"].dt.hour >= 18) & (h["ds"].dt.hour < 21), 1.0, 0.2
+    )
     np.testing.assert_allclose(h["y_hat"], want)
     assert (o.daily["confidence"] == "typical week").all()
     # the October clock change: 2020-10-25 has 25 hours in Dublin and is still one day
@@ -178,7 +187,7 @@ def test_weather_in_another_zone_starting_late_in_the_local_day() -> None:
     o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w)
     assert o.daily["date"].min() == pd.Timestamp("2024-01-03")  # 2024-01-02 21:00 local is not a full day
     assert any("covers in full" in n for n in o.notes)
-    assert any("PROVISIONAL" in n for n in o.notes)
+    assert any("measured on two plants" in n for n in o.notes)
 
 
 def test_a_day_partly_past_the_horizon_is_not_labelled_by_its_best_hour() -> None:

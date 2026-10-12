@@ -514,7 +514,12 @@ impossivel no 4o dia** (2.750 W/m2 em Cascavel): modelo-dia com GHI > 1,2 x ceu 
 Site cru em `examples/site_local/` (stdlib `http.server`, 5 passos = 5 chamadas da biblioteca). **Revisao (12/10): o
 metodo do `outlook` entrou SEM piloto** (contra a regra): nao comparado ao regime C do benchmark no lead 1, telhado
 ajustado por padrao apesar do F2(b), regra do consumo fora das referencias; declarado no docstring e em toda saida
-ate o `piloto_horizonte.py` medir. Consertados: rotulo do dia pelas horas de sol (nao pela melhor hora), 1o dia
+ate o `piloto_horizonte.py` medir. **Piloto do horizonte (12/10, noite) PASSA** (G1-G4): o tempo bate a
+climatologia no total do dia nos leads 1-7 nas duas usinas (skill ~+0,49 -> ~+0,20); leads 8-15 (rodadas unicas,
+abr-mai/2026) sem skill: o tempo NAO e usado alem do lead 7. `TRUST` = a_k medidos (1,08 ... 0,79), `SKILL` por lead
+da o rotulo (alta 1-3, media 4-6, baixa 7). No lead 1 empata com o LightGBM C (+0,321 x +0,330, p 0,73), abaixo da
+mediana (+0,367). Consumo: perfil dia util/fim de semana das ultimas 4 semanas (+0,234 por hora contra `persist`).
+Arquivo da Meteo-France so tem leads 1-3; IFS leads 6-7 do arquivo com GHI impossivel nas pontas do dia (filtro). Consertados: rotulo do dia pelas horas de sol (nao pela melhor hora), 1o dia
 inteiro coberto pelo clima, modelo com GHI impossivel sai ate o fim, janelas com hora sem previsao, notas para
 recuos silenciosos, atribuicoes OSM/Open-Meteo na pagina. Agentes construtores
 `.claude/agents/library-builder.md` e `pilot-runner.md` (pedido do usuario).

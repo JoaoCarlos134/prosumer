@@ -6,6 +6,7 @@ back: a section of the report, with numbers and plain-language notes. Today it c
 already do without training anything:
 
 - **quality**: coverage, gaps and the series that end on different dates (the leakage case of the benchmark);
+  for generation with a site, the clock checked against the sun (`quality.clock_offset`);
 - **forecast check**: the day-ahead task of the benchmark (`DayAhead`) on the last `test_days` of the data,
   with the naive forecasts that need no training (same as yesterday, same day last week, mean of the last 7
   days) and their MEDIAN as the output (the library never picks "the best model": section 5c of the proposal),
@@ -30,6 +31,7 @@ from .contracts import EnergySeries
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
 from .postprocessing import conformal_quantiles
 from .protocol import DayAhead, H, Regime, Window
+from .quality import clock_notes, clock_offset
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
@@ -55,6 +57,7 @@ class Report:
     resolution: pd.DataFrame | None = None  # the output (median) and the weather forecast, per resolution
     weather: pd.DataFrame | None = None  # coverage of each weather model, when a forecast was given
     bands: pd.DataFrame | None = None  # calibration and CRPS of each model's quantile band
+    clock: pd.DataFrame | None = None  # generation with a site: clock offset against the sun, per period
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
@@ -77,6 +80,7 @@ class Report:
             "resolution": records(self.resolution),
             "weather": records(self.weather),
             "bands": records(self.bands),
+            "clock": records(self.clock),
             "pending": dict(self.pending),
         }
 
@@ -91,6 +95,16 @@ class Report:
             "",
             _table(self.quality),
         ]
+        if self.clock is not None and not self.clock.empty:
+            lines += [
+                "",
+                "### Clock against the sun",
+                "",
+                "Hours the production is late (+) or early (-) relative to the clear sky at the site, for "
+                "the whole series and per month; `confident` when most complete days agree.",
+                "",
+                _table(self.clock),
+            ]
         if self.notes:
             lines += ["", "## Notes", "", *[f"- {n}" for n in self.notes]]
         if self.forecast is not None:
@@ -144,7 +158,8 @@ def analyze(
     """Quality and a day-ahead forecast check of `series`, as one report.
 
     `site`: (latitude, longitude) of a generation series. With it the reference is clear-sky persistence and
-    only the hours with sun count, as in the benchmark's plants; without it the reference is "same as
+    only the hours with sun count, as in the benchmark's plants, and the clock of each series is checked
+    against the sun (`Report.clock`, with a note when it is off); without it the reference is "same as
     yesterday" and the hours count by the training profile. `test_days`: the last days of the data used as the
     test. `issue_hour`: as in `DayAhead` (12 = the evening issued at noon). `levels`: resolutions of
     `metrics.by_resolution` (default: hour, day/night, evening peak, day; `metrics.by_blocks` for a tariff).
@@ -179,6 +194,10 @@ def analyze(
         "end": frame["ds"].max(),
     }
     quality, notes = _quality(s)
+    clock = None
+    if s.quantity == "generation" and site is not None:
+        clock = clock_offset(s, site)
+        notes.extend(clock_notes(clock))
 
     first = frame["ds"].min().normalize()
     if test_start - first < pd.Timedelta(hours=CONTEXT):
@@ -186,7 +205,7 @@ def analyze(
             f"Forecast check skipped: it needs {CONTEXT // 24} days of history "
             f"before the {test_days} test days."
         )
-        return Report(summary=summary, quality=quality, notes=notes)
+        return Report(summary=summary, quality=quality, notes=notes, clock=clock)
 
     task = DayAhead(
         s, test_start=test_start, test_end=end, refit_days=test_days, context=CONTEXT, issue_hour=issue_hour
@@ -194,7 +213,7 @@ def analyze(
     windows = task.windows()
     if not windows:
         notes.append("Forecast check skipped: no test day has all its target hours measured.")
-        return Report(summary=summary, quality=quality, notes=notes)
+        return Report(summary=summary, quality=quality, notes=notes, clock=clock)
 
     generation = s.quantity == "generation"
     reference = "clear_sky_persistence" if generation and site is not None else "persistence_24h"
@@ -354,6 +373,7 @@ def analyze(
         resolution=resolution,
         weather=weather_table,
         bands=bands,
+        clock=clock,
         pending=pending,
     )
 

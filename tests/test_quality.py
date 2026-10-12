@@ -1,0 +1,115 @@
+"""Clock check of a generation series against the sun (`prosumer.quality`)."""
+
+from __future__ import annotations
+
+import warnings
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from prosumer import EnergySeries, analyze, data, physics
+from prosumer.quality import clock_notes, clock_offset
+
+SITE = (-24.83, -53.65)  # rounded, as everywhere in the project
+TZ = "America/Sao_Paulo"
+
+
+def _pv(
+    *,
+    tz: str = TZ,
+    site: tuple[float, float] = SITE,
+    days: int = 120,
+    start: str = "2024-01-01",
+    tilt: float = 20.0,
+    azimuth: float = 0.0,
+    seed: int = 0,
+) -> tuple[pd.DatetimeIndex, np.ndarray]:
+    """Physical PV: clear sky x a daily clear-sky index on a tilted plane, with 10% hourly noise."""
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range(start, periods=days * 24, freq="h", tz=tz)
+    ghi = physics.clear_sky_ghi(idx, *site) * np.repeat(rng.uniform(0.3, 1.0, days), 24)
+    y = physics.poa_isotropic(ghi, physics.mean_sun(idx, *site), tilt, azimuth) / 1000
+    return idx, np.clip(y * (1 + 0.1 * rng.standard_normal(len(idx))), 0, None)
+
+
+def _series(ds: pd.DatetimeIndex | pd.Series, y: np.ndarray, tz: str = TZ, **kw: str) -> EnergySeries:
+    frame = pd.DataFrame({"unique_id": "pv", "ds": ds, "y": y})
+    return EnergySeries.from_dataframe(frame, unit="kWh", quantity="generation", tz=tz, freq="h", **kw)
+
+
+def _whole(table: pd.DataFrame) -> pd.Series:
+    return table[table["period"] == "all"].iloc[0]
+
+
+@pytest.mark.parametrize("azimuth", [0.0, 90.0, 270.0])
+def test_correct_clock_gives_zero_whatever_the_orientation(azimuth: float) -> None:
+    idx, y = _pv(azimuth=azimuth, tilt=30.0)
+    t = clock_offset(_series(idx, y), SITE)
+    assert (t["offset_h"] == 0).all() and t["confident"].all()
+    assert abs(_whole(t)["centroid_shift_h"]) < 0.3
+    assert clock_notes(t) == []
+
+
+@pytest.mark.parametrize("hours", [1, -3])
+def test_shifted_series_is_detected(hours: int) -> None:
+    idx, y = _pv()
+    t = clock_offset(_series(idx + pd.Timedelta(hours=hours), y), SITE)
+    r = _whole(t)
+    assert r["offset_h"] == hours and r["confident"]
+    assert (t["offset_h"] == hours).all()
+    assert r["centroid_shift_h"] == pytest.approx(hours, abs=0.3)
+    (note,) = clock_notes(t)
+    assert f"shift the timestamps by {-hours:+d} h" in note
+
+
+def test_utc_file_read_as_local_time_is_plus_three_hours() -> None:
+    idx, y = _pv()
+    utc_wall = idx.tz_convert("UTC").tz_localize(None)  # what a UTC export looks like
+    t = clock_offset(_series(utc_wall, y), SITE)  # read as local (Sao Paulo) time
+    assert _whole(t)["offset_h"] == 3
+
+
+def test_logger_without_daylight_saving_shows_up_month_by_month() -> None:
+    site = (52.14, -10.27)  # the Dingle peninsula (public CC0 houses), rounded
+    idx, y = _pv(tz="Europe/Dublin", site=site, days=365, azimuth=180.0)
+    # logged in GMT all year, read as Dublin local time: one hour early in summer, right in winter
+    gmt_wall = idx.tz_convert("UTC").tz_localize(None)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # the hour that does not exist in spring is dropped
+        s = _series(gmt_wall, y, tz="Europe/Dublin", dst="drop")
+    t = clock_offset(s, site)
+    month = t[t["confident"] & (t["period"] != "all")].set_index("period")["offset_h"]
+    assert month["2024-01"] == 0 and month["2024-12"] == 0
+    assert month["2024-06"] == -1 and month["2024-08"] == -1
+    (note,) = clock_notes(t)
+    assert "changes over the year" in note and "-1 h" in note and "+0 h" in note
+    # the correct series in the same zone is right in every month
+    assert (clock_offset(_series(idx, y, tz="Europe/Dublin"), site)["offset_h"] == 0).all()
+
+
+def test_noise_is_not_confident_and_gives_no_note() -> None:
+    idx = pd.date_range("2024-01-01", periods=60 * 24, freq="h", tz=TZ)
+    y = np.random.default_rng(1).uniform(0, 1, len(idx))
+    t = clock_offset(_series(idx, y), SITE)
+    assert not t["confident"].any()
+    assert clock_notes(t) == []
+
+
+def test_consumption_is_refused() -> None:
+    with pytest.raises(ValueError, match="generation"):
+        clock_offset(data.example_house(days=10), SITE)
+
+
+def test_analyze_reports_the_clock_and_notes_an_offset() -> None:
+    s, _ = data.example_plant()
+    r = analyze(s, site=(-25.43, -49.27), test_days=14)
+    assert r.clock is not None and (r.clock["offset_h"] == 0).all()
+    assert not any("clock" in n or "than the sun" in n for n in r.notes)
+    assert "### Clock against the sun" in r.to_markdown()
+    assert r.to_dict()["clock"]
+
+    idx, y = _pv(days=40)
+    late = analyze(_series(idx + pd.Timedelta(hours=2), y), site=SITE, test_days=7)
+    assert any("2 h later than the sun" in n for n in late.notes)
+    assert analyze(s, test_days=14).clock is None  # no site, no clock check

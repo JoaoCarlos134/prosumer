@@ -107,3 +107,24 @@ outros fundacionais ficam em ~−20%). Nenhum perto do grupo da frente (+0,210).
 dezenas de kWh/h contra carga média de 0,6), com a faixa de 80% cobrindo só 49%–62% das horas: CRPS 2,6 a 14 vezes
 o da referência. Leitura: prédios simulados dos EUA não transferem para casas irlandesas reais melhor que os
 fundacionais gerais; o tamanho não ajuda (L pior que M). **Não passa.**
+
+## Correção de viés do consumo x composição da mediana (12/10/2026) — NÃO vira saída do `analyze`
+
+O piloto de 09/10 ("correção de viés só no consumo") usou a mediana de TODOS os ~40 modelos. Ao levar a regra
+para o `analyze`, a mediana dele é pequena (ingênuas, + os modelos pedidos), e a correção piorou nas casas reais.
+`scripts/piloto_vies_composicao.py` (previsões gravadas de casas_cons A, horas avaliadas do benchmark, mesma
+`correct_bias` de 14 dias por casa):
+
+| Mediana de | skill antes → depois | MBE antes → depois |
+|---|---|---|
+| ingênuas | +0,145 → +0,113 | -7,5% → +0,9% |
+| ingênuas + LightGBM | +0,192 → +0,175 | -5,4% → +0,8% |
+| ingênuas + TiRex-2, Toto-2.0, Chronos-2 | +0,193 → +0,186 | -18,2% → -0,6% |
+| ingênuas + LightGBM + os 3 fundacionais | +0,200 → +0,195 | -16,5% → -0,5% |
+| só os 3 fundacionais | +0,190 → +0,188 | -20,6% → -0,9% |
+| todos (~40, o piloto de 09/10) | +0,194 → +0,209 | -18,9% → -0,6% |
+
+A correção tira o viés de todas, mas só melhora o skill da mediana grande: o fator de 14 dias por casa é ruidoso
+e só compensa quando há muito viés a tirar e a mediana já é estável. **Decisão:** no `analyze` a saída continua a
+mediana; `median_corrected` (com os 14 dias antes do teste, então já corrige o primeiro dia) é uma linha a mais no
+consumo, com nota quando a saída tem viés > 5%. O `Ensemble-mediana-corrigida` do benchmark não muda.

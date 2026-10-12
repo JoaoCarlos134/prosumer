@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -20,7 +21,8 @@ def test_house_report_has_every_section() -> None:
     assert r.summary["reference"] == "persistence_24h"
     assert r.forecast is not None and r.resolution is not None
     f = r.forecast.set_index("forecast")
-    assert list(f.index) == ["median", "persistence_24h", "seasonal_168h", "mean_7d"]
+    assert list(f.index) == ["median", "median_corrected", "persistence_24h", "seasonal_168h", "mean_7d"]
+    assert r.summary["output"] == "median"
     assert f.loc["persistence_24h", "skill"] == pytest.approx(0.0)
     assert f.loc["median", "skill_ci_low"] <= f.loc["median", "skill"] <= f.loc["median", "skill_ci_high"]
     # synthetic houses: lognormal noise around a fixed weekly shape, so averaging days beats yesterday
@@ -198,8 +200,9 @@ def test_models_become_rows_and_history_models_enter_the_median() -> None:
     assert base.forecast is not None and r.forecast is not None
     f = r.forecast.set_index("forecast")
     assert f.loc["LightGBM", "regime"] == "A"
-    assert list(r.forecast["forecast"])[:5] == [
+    assert list(r.forecast["forecast"])[:6] == [
         "median",
+        "median_corrected",
         "persistence_24h",
         "seasonal_168h",
         "mean_7d",
@@ -248,3 +251,38 @@ def test_bands_section_scores_each_band_against_the_14_day_reference() -> None:
     assert "bands (quantiles)" not in r.pending
     assert "### Bands" in r.to_markdown()
     json.dumps(r.to_dict())
+
+
+class _Shrunk:
+    """A history model that forecasts 60% of the last week's mean: the foundation models' bias on houses."""
+
+    def __init__(self, name: str) -> None:
+        from prosumer.forecast import Naive
+
+        self.inner = Naive("mean_7d")
+        self.card = dataclasses.replace(self.inner.card, name=name)
+
+    def fit(self, series, cutoff, covariates=None) -> None:  # type: ignore[no-untyped-def]
+        pass
+
+    def predict(self, windows):  # type: ignore[no-untyped-def]
+        return 0.6 * self.inner.predict(windows)
+
+
+def test_consumption_output_is_the_median_without_its_recent_bias() -> None:
+    """Consumption gets a bias-corrected median row, ready from the first test day (it looks at the 14 days
+    before the test); the output stays the plain median (the correction costs skill unless the median is
+    strongly biased, as here). Generation gets no such row."""
+    s = data.example_house(n_series=2, days=60)
+    r = analyze(s, test_days=14, models=[_Shrunk(f"shrunk_{i}") for i in range(4)])
+    assert r.forecast is not None and r.summary["output"] == "median"
+    f = r.forecast.set_index("forecast")
+    assert f.loc["median", "MBE"] < -0.2  # four of seven members forecast 60%
+    assert abs(f.loc["median_corrected", "MBE"]) < 0.05
+    assert f.loc["median_corrected", "skill"] > f.loc["median", "skill"]
+    assert r.resolution is not None and set(r.resolution["forecast"]) == {"median"}
+    assert any("`median_corrected` removes it" in n for n in r.notes)
+    plant, _ = data.example_plant()
+    g = analyze(plant, site=(-25.43, -49.27), test_days=14)
+    assert g.summary["output"] == "median" and g.forecast is not None
+    assert "median_corrected" not in set(g.forecast["forecast"])

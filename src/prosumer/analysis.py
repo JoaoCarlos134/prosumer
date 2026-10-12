@@ -34,7 +34,7 @@ import pandas as pd
 from . import metrics, physics
 from .contracts import EnergySeries
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
-from .postprocessing import conformal_quantiles
+from .postprocessing import conformal_quantiles, correct_bias
 from .protocol import DayAhead, H, Regime, Window
 from .provenance import Provenance
 from .provenance import of as provenance_of
@@ -42,11 +42,12 @@ from .quality import clock_notes, clock_offset, clock_offset_weather, clock_weat
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
+CORRECTED = "median_corrected"  # consumption: the median with its recent bias removed (a row, not the output)
+BIAS_DAYS = 14  # days of past forecasts the bias factor of consumption looks at (`correct_bias`)
 CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (conformal)
 
 PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
-    "trained and foundation models": "needs the `forecast` module (adapters with metadata): step E2",
     "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
     "diagnostics": "soiling, string faults, shading: step E4",
     "economics": "time-of-use tariffs and the Brazilian module: step E6",
@@ -285,6 +286,12 @@ def analyze(
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
     bands_raw: dict[str, pd.DataFrame] = {}
+    # consumption: every median forecast also over the BIAS_DAYS before the test, so the bias factor of the
+    # first test day already has its days (the benchmark had only the test and left its first week as is)
+    point_past: dict[str, pd.DataFrame] = {}
+    consumption = s.quantity == "consumption"
+    if consumption:
+        point_past = _past_naive(task, test_start)
     bands_past: dict[str, pd.DataFrame] = {}  # the same model's bands over the calibration days
     for model in models:
         name = model.card.name
@@ -307,10 +314,15 @@ def analyze(
         if hasattr(model, "predict_quantiles") and hasattr(model, "levels"):
             qf = rolling_quantiles(cast(Probabilistic, model), task_m)  # one fit: point = the 0.5 level
             bands_raw[name] = qf.drop(columns="yhat")
-            bands_past[name] = _calibration_bands(cast(Probabilistic, model), task_m, test_start)
+            past_q = _calibration_bands(cast(Probabilistic, model), task_m, test_start)
+            bands_past[name] = past_q.drop(columns="yhat")
             out = qf[["unique_id", "ds", "yhat"]]
+            if consumption and history_only:
+                point_past[name] = past_q[["unique_id", "ds", "yhat"]]
         else:
             out = rolling_forecast(model, task_m)
+            if consumption and history_only:
+                point_past[name] = rolling_forecast(model, _before(task_m, test_start, BIAS_DAYS))
         fc = fc.merge(out.rename(columns={"yhat": name}), on=["unique_id", "ds"], how="left")
         regimes[name] = "A" if history_only else "C"
     # the output: median of every regime A forecast (the naive ones and the A models; not the reference alone)
@@ -319,6 +331,10 @@ def analyze(
         *[n for n, r in regimes.items() if r == "A" and n not in (OUTPUT, reference, *_NAIVE)],
     ]
     fc[OUTPUT] = fc[in_median].median(axis=1)
+    output = OUTPUT
+    if consumption:
+        fc = _corrected_median(fc, point_past, in_median, frame, test_start)
+        regimes[CORRECTED] = "A"
     if w is not None:
         weather_table = _weather_coverage(w, frame["ds"].min(), end + pd.Timedelta(hours=H - 1))
         if generation:
@@ -353,7 +369,8 @@ def analyze(
     order = list(
         dict.fromkeys(
             [
-                OUTPUT,
+                output,
+                CORRECTED,
                 *_NAIVE,
                 *[n for n, r in regimes.items() if r == "A" and n != reference],
                 "weather_linear",
@@ -366,7 +383,7 @@ def analyze(
     resolution = pd.concat(
         [
             metrics.by_resolution(*aligned[n], levels).assign(forecast=n)
-            for n in [OUTPUT, *[n for n, r in regimes.items() if r == "C"]]
+            for n in [output, *[n for n, r in regimes.items() if r == "C"]]
             if n in aligned
         ],
         ignore_index=True,
@@ -411,15 +428,24 @@ def analyze(
         "issue_hour": issue_hour,
         "test_windows": len(windows),
         "reference": reference,
+        "output": output,
     }
     if generation and site is None:
         notes.append(
             "Generation without a site: the reference is 'same as yesterday', weaker than the clear-sky "
             "persistence of the benchmark. Pass site=(lat, lon) for the benchmark's reference."
         )
-    bias = float(table.loc[table["forecast"] == OUTPUT, "MBE"].to_numpy(float)[0])
+    bias = float(table.loc[table["forecast"] == output, "MBE"].to_numpy(float)[0])
     if abs(bias) > 0.05:
-        notes.append(f"The output is biased by {bias:+.0%} of the mean (MBE).")
+        notes.append(
+            f"The output is biased by {bias:+.0%} of the mean (MBE)."
+            + (
+                f" `{CORRECTED}` removes it, but in the benchmark that raised the skill only for a median of "
+                "~40 models; with few models it lowered it."
+                if consumption
+                else ""
+            )
+        )
     pending = dict(PENDING)
     if weather is not None:
         pending.pop("weather (regimes B and C)")
@@ -527,21 +553,65 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
     return fc
 
 
-def _calibration_bands(model: Probabilistic, task: DayAhead, test_start: pd.Timestamp) -> pd.DataFrame:
-    """The model's bands over the `CALIBRATION_DAYS` days before the test (one fold, fitted before them): the
-    errors the conformal recalibration learns from, as a running system would have them."""
-    start = test_start - pd.Timedelta(days=CALIBRATION_DAYS)
-    past = DayAhead(
+def _before(task: DayAhead, test_start: pd.Timestamp, days: int) -> DayAhead:
+    """The same task over the `days` days before the test, as one fold fitted before them."""
+    return DayAhead(
         task.series,
-        test_start=start,
+        test_start=test_start - pd.Timedelta(days=days),
         test_end=test_start - pd.Timedelta(days=1),
-        refit_days=CALIBRATION_DAYS,
+        refit_days=days,
         context=task.context,
         min_history=task.min_history,
         issue_hour=task.issue_hour,
         covariates=task.covariates,
     )
-    return rolling_quantiles(model, past).drop(columns="yhat")
+
+
+def _calibration_bands(model: Probabilistic, task: DayAhead, test_start: pd.Timestamp) -> pd.DataFrame:
+    """The model's bands (and point, `yhat`) over the `CALIBRATION_DAYS` days before the test (one fold,
+    fitted before them): the errors the conformal recalibration learns from, as a running system would have
+    them."""
+    return rolling_quantiles(model, _before(task, test_start, CALIBRATION_DAYS))
+
+
+def _past_naive(task: DayAhead, test_start: pd.Timestamp) -> dict[str, pd.DataFrame]:
+    """The naive forecasts over the `BIAS_DAYS` before the test, one frame per forecast."""
+    windows = _before(task, test_start, BIAS_DAYS).windows()
+    if not windows:
+        return {}
+    fc = _naive_forecasts(windows, None, "persistence_24h")
+    return {n: fc[["unique_id", "ds", n]].rename(columns={n: "yhat"}) for n in _NAIVE}
+
+
+def _corrected_median(
+    fc: pd.DataFrame,
+    past: dict[str, pd.DataFrame],
+    in_median: list[str],
+    frame: pd.DataFrame,
+    test_start: pd.Timestamp,
+) -> pd.DataFrame:
+    """Consumption: the median times the actual/forecast factor of its previous `BIAS_DAYS` days
+    (`postprocessing.correct_bias`), a row next to the output, not the output. The days before the test use
+    the median of the same forecasts there (those that have it), so the first test day is corrected too.
+
+    Why not the output (pilot 2026-10-12 on the benchmark's saved forecasts, houses' consumption, regime A):
+    it removes the bias of every median (MBE within 1%), but it lifts the skill only for the median of ~40
+    models (+0.194 -> +0.209, the 2026-10-09 pilot). For the medians this library runs it costs skill: naive
+    only +0.145 -> +0.113; + LightGBM +0.192 -> +0.175; + TiRex-2, Toto-2.0 and Chronos-2 +0.193 -> +0.186;
+    all of them +0.200 -> +0.195. A per-house factor of 14 days is noisy, and only a strongly biased
+    median (foundation models, -20%) has more bias to remove than noise to add."""
+    have = [n for n in in_median if n in past]
+    median = fc[["unique_id", "ds", OUTPUT]].rename(columns={OUTPUT: "yhat"})
+    if have:
+        p = past[have[0]].rename(columns={"yhat": have[0]})
+        for n in have[1:]:
+            p = p.merge(past[n].rename(columns={"yhat": n}), on=["unique_id", "ds"], how="outer")
+        p = p.assign(yhat=p[have].median(axis=1))[["unique_id", "ds", "yhat"]]
+        median = pd.concat([p[p["ds"] < test_start], median], ignore_index=True)
+    actual = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
+    out = correct_bias(median, actual, quantity="consumption", days=BIAS_DAYS)
+    out = out[out["ds"] >= test_start].rename(columns={"yhat": CORRECTED})
+    return fc.merge(out[["unique_id", "ds", CORRECTED]], on=["unique_id", "ds"], how="left")
 
 
 def _production_hours(

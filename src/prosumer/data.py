@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 from .contracts import EnergySeries, step
+from .provenance import Provenance, attach, synthetic
 
 DEFAULT_TZ = "America/Sao_Paulo"
 
@@ -80,8 +81,10 @@ def example_plant(
         quantity="generation",
         tz=tz,
         freq=freq,
+        provenance=synthetic(f"example_plant(seed={seed})"),
     )
-    return series, pd.concat(weather, ignore_index=True)
+    weather_frame = pd.concat(weather, ignore_index=True)
+    return series, attach(weather_frame, synthetic(f"example_plant(seed={seed}) weather"))
 
 
 def example_house(
@@ -116,6 +119,7 @@ def example_house(
         quantity="consumption",
         tz=tz,
         freq=freq,
+        provenance=synthetic(f"example_house(seed={seed})"),
     )
 
 
@@ -149,7 +153,12 @@ def with_gaps(
         out = (x["unique_id"] == short_series) & (x["ds"] > cut)
         x = x.loc[~out].reset_index(drop=True)
     return EnergySeries.from_dataframe(
-        x, unit=series.unit, quantity=series.quantity, tz=series.tz, freq=series.freq
+        x,
+        unit=series.unit,
+        quantity=series.quantity,
+        tz=series.tz,
+        freq=series.freq,
+        provenance=series.provenance,
     )
 
 
@@ -212,6 +221,12 @@ DINGLE_FILES: dict[str, tuple[int, str]] = {
     "H20": (46657123, "f0a370af1c07ef5781de74edd6894470"),
 }
 DINGLE_URL = "https://ndownloader.figshare.com/files/{file_id}"
+DINGLE_PROVENANCE = Provenance(
+    source="Dingle Peninsula houses, Ireland, 2020 (Khadem et al. 2024), H1-H20",
+    license="CC0-1.0",
+    citation=DINGLE_CITATION,
+    url="https://doi.org/10.6084/m9.figshare.c.6829134",
+)
 _DINGLE_COLUMNS = {"generation": "Production(Wh)", "consumption": "Consumption(Wh)"}
 _PARQUET_COLUMNS = {"generation": "prod_kWh", "consumption": "cons_kWh"}
 
@@ -234,7 +249,7 @@ def dingle_houses(
     Source: Khadem et al. (2024), "Comprehensive Dataset on Electrical Load Profiles for Energy Community in
     Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2; files on figshare,
     doi:10.6084/m9.figshare.c.6829134, licence CC0 (cite the paper: `DINGLE_CITATION`). These are the
-    benchmark's `casas_*` cases.
+    benchmark's `casas_*` cases. The series carries `DINGLE_PROVENANCE`, so `analyze` cites it.
 
     Where the data comes from, in order:
     - `path` to a FILE: the benchmark's `dados/casas_horario.parquet` (columns `casa`, `ds`, `prod_kWh`,
@@ -293,6 +308,7 @@ def dingle_houses(
         freq="h",
         source_tz=tz if tz == "Etc/GMT" else "Europe/Dublin",
         dst="drop",
+        provenance=DINGLE_PROVENANCE,
     )
 
 

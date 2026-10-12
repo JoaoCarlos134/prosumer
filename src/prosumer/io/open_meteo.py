@@ -34,6 +34,8 @@ from typing import Any
 
 import pandas as pd
 
+from ..provenance import OPEN_METEO_CITATION, Provenance, attach, today
+
 URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
 
 # name in the result -> (API variable, "interval" = mean over the preceding hour | "instant")
@@ -105,7 +107,24 @@ def fetch_previous_runs(
     lo = pd.Timestamp(a.date(), tz=tz)
     hi = pd.Timestamp(b.date(), tz=tz) + pd.Timedelta(hours=23)
     out = out[(out["ds"] >= lo) & (out["ds"] <= hi)]
-    return out[["model", "ds", *names]].reset_index(drop=True)
+    result = out[["model", "ds", *names]].reset_index(drop=True)
+    return attach(result, provenance([str(m) for m in pd.unique(result["model"])], lead_days))
+
+
+def provenance(models: Iterable[str], lead_days: int = 1, retrieved: str | None = None) -> Provenance:
+    """Where a Previous Runs download comes from: CC BY 4.0 data, free API for non-commercial use only
+    (licence and terms checked on 2026-10-11, see `prosumer.provenance`). `fetch_previous_runs` attaches it to
+    its result (`frame.attrs["provenance"]`) and `wide` carries it over; attach it yourself to a frame read
+    back from a file (`prosumer.provenance.attach`), with the date it was downloaded."""
+    return Provenance(
+        source=f"Open-Meteo Previous Runs API, previous_day{lead_days}: {', '.join(models)}",
+        license="CC-BY-4.0",
+        citation=OPEN_METEO_CITATION,
+        url="https://open-meteo.com/en/docs/previous-runs-api",
+        retrieved=retrieved or today(),
+        notes="free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
+        "their paid API",
+    )
 
 
 def parse_hourly(
@@ -178,10 +197,11 @@ def wide(frame: pd.DataFrame, *, unique_id: str | Iterable[str] | None = None) -
         w[f"{v}_mean"] = w[cols].mean(axis=1)
         w[f"{v}_spread"] = w[cols].std(axis=1, ddof=0)
     w = w.sort_index().reset_index()
-    if unique_id is None:
-        return w
-    ids = [unique_id] if isinstance(unique_id, str) else list(unique_id)
-    return pd.concat([w.assign(unique_id=u) for u in ids], ignore_index=True)[["unique_id", *w.columns]]
+    if unique_id is not None:
+        ids = [unique_id] if isinstance(unique_id, str) else list(unique_id)
+        w = pd.concat([w.assign(unique_id=u) for u in ids], ignore_index=True)[["unique_id", *w.columns]]
+    w.attrs = dict(frame.attrs)  # the provenance of the download, when it carries one
+    return w
 
 
 # ---------------------------------------------------------------------- transport
@@ -222,5 +242,6 @@ __all__ = [
     "coverage",
     "fetch_previous_runs",
     "parse_hourly",
+    "provenance",
     "wide",
 ]

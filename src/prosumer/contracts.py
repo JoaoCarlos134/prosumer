@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
+from .provenance import Provenance
+
 if TYPE_CHECKING:
     import pandera.pandas as pa
 
@@ -76,6 +78,8 @@ class EnergySeries:
     quantity: Quantity
     tz: str
     freq: str  # pandas frequency alias: "h", "5min", "D"
+    # where the data came from and its licence (see `prosumer.provenance`); None = nobody said
+    provenance: Provenance | None = None
 
     # ------------------------------------------------------------------ construction
     @classmethod
@@ -90,6 +94,7 @@ class EnergySeries:
         value_column: str = "y",
         source_tz: str | None = None,
         dst: DstPolicy = "raise",
+        provenance: Provenance | None = None,
     ) -> EnergySeries:
         """Validate and wrap. `value_column` reads a frame whose value column is not called `y`.
 
@@ -103,6 +108,9 @@ class EnergySeries:
         file merged both). "raise" (default) raises `ContractError`; "drop" removes those rows and warns
         how many. This is the case of the Dingle houses: Dublin local time on a gap-free grid, with the
         rows of 29/03 01:00 and 25/10 01:00 filled in by the dataset's preprocessing (checked 2026-10-07).
+
+        `provenance`: where the data came from and its licence; `analyze` reports it (and notes when it is
+        missing). Operations that derive a series (`to_kwh`, ...) keep it.
         """
         if frame.empty:
             raise ContractError("Empty series: nothing to infer or validate")
@@ -132,7 +140,7 @@ class EnergySeries:
         except (pa.errors.SchemaError, pa.errors.SchemaErrors) as e:
             raise ContractError(f"Series breaks the contract: {e}") from e
         ordered = validated.sort_values(["unique_id", "ds"], kind="stable").reset_index(drop=True)
-        return cls(frame=ordered, unit=unit, quantity=quantity, tz=tz, freq=freq)
+        return cls(frame=ordered, unit=unit, quantity=quantity, tz=tz, freq=freq, provenance=provenance)
 
     # ------------------------------------------------------------------ metadata
     @property

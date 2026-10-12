@@ -3,9 +3,10 @@
 Status: step E2 of the proposal (`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
 `analysis` (the app's single call, `analyze(series) -> Report`), `contracts`, `protocol`, `metrics`
 (including metrics at several resolutions and bands), `postprocessing` (consumption bias correction),
-`physics` (sun position, clear sky, plane-of-array), `quality` (the clock of a generation series checked
-against the sun), `forecast`, `io` (Open-Meteo forecasts, NASA POWER weather) and `data` (synthetic series
-and the real Dingle houses); the `diagnostics`, `embedded` and `economics` modules are not written yet.
+`physics` (sun position, clear sky, plane-of-array), `provenance` (source and licence of every input),
+`quality` (the clock of a generation series checked against the sun), `forecast`, `io` (Open-Meteo
+forecasts, NASA POWER weather) and `data` (synthetic series and the real Dingle houses); the
+`diagnostics`, `embedded` and `economics` modules are not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported
@@ -15,10 +16,11 @@ example data.
 
 from __future__ import annotations
 
-from . import analysis, contracts, data, metrics, physics, postprocessing, protocol, quality
+from . import analysis, contracts, data, metrics, physics, postprocessing, protocol, provenance, quality
 from .analysis import Report, analyze
 from .contracts import ContractError, EnergySeries
 from .protocol import DayAhead, Fold, Regime, SupportError, Window
+from .provenance import Provenance
 
 try:  # pragma: no cover - depends on the package being installed
     from importlib.metadata import PackageNotFoundError, version
@@ -32,6 +34,7 @@ __all__ = [
     "DayAhead",
     "EnergySeries",
     "Fold",
+    "Provenance",
     "Regime",
     "Report",
     "SupportError",
@@ -45,5 +48,6 @@ __all__ = [
     "physics",
     "postprocessing",
     "protocol",
+    "provenance",
     "quality",
 ]

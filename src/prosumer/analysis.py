@@ -12,6 +12,10 @@ already do without training anything:
   days) and their MEDIAN as the output (the library never picks "the best model": section 5c of the proposal),
   scored against the benchmark's reference, with a day-bootstrap CI and the metrics at several resolutions.
 
+Every report also lists its inputs (`Report.provenance`: the series, the weather, each model) with source,
+licence and citation, and notes what has no known licence, is for non-commercial use only or sends the data
+out, so the app can say what an analysis used and under what terms.
+
 The sections that need modules not written yet (weather, trained and foundation models, diagnostics,
 economics) are listed in `Report.pending`, so the app can show what is missing instead of silently
 leaving it out.
@@ -31,6 +35,8 @@ from .contracts import EnergySeries
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
 from .postprocessing import conformal_quantiles
 from .protocol import DayAhead, H, Regime, Window
+from .provenance import Provenance
+from .provenance import of as provenance_of
 from .quality import clock_notes, clock_offset
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
@@ -58,6 +64,8 @@ class Report:
     weather: pd.DataFrame | None = None  # coverage of each weather model, when a forecast was given
     bands: pd.DataFrame | None = None  # calibration and CRPS of each model's quantile band
     clock: pd.DataFrame | None = None  # generation with a site: clock offset against the sun, per period
+    # where each input came from and its licence: the series, the weather and each model (see `_provenance`)
+    provenance: pd.DataFrame | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
@@ -81,6 +89,7 @@ class Report:
             "weather": records(self.weather),
             "bands": records(self.bands),
             "clock": records(self.clock),
+            "provenance": records(self.provenance),
             "pending": dict(self.pending),
         }
 
@@ -140,6 +149,15 @@ class Report:
                 "Coverage of each model, from the first day of data to the end of the test.",
                 "",
                 _table(self.weather),
+            ]
+        if self.provenance is not None and not self.provenance.empty:
+            lines += [
+                "",
+                "## Data sources and licences",
+                "",
+                "What this analysis used, under what licence, and what to cite when sharing its results.",
+                "",
+                _table(self.provenance[[c for c in _PROVENANCE_SHOWN if c in self.provenance.columns]]),
             ]
         lines += ["", "## Not available yet", "", *[f"- **{k}**: {v}" for k, v in self.pending.items()]]
         return "\n".join(lines) + "\n"
@@ -205,7 +223,10 @@ def analyze(
             f"Forecast check skipped: it needs {CONTEXT // 24} days of history "
             f"before the {test_days} test days."
         )
-        return Report(summary=summary, quality=quality, notes=notes, clock=clock)
+        sources, source_notes = _provenance(s, None, ())
+        return Report(
+            summary=summary, quality=quality, notes=notes + source_notes, clock=clock, provenance=sources
+        )
 
     task = DayAhead(
         s, test_start=test_start, test_end=end, refit_days=test_days, context=CONTEXT, issue_hour=issue_hour
@@ -213,7 +234,10 @@ def analyze(
     windows = task.windows()
     if not windows:
         notes.append("Forecast check skipped: no test day has all its target hours measured.")
-        return Report(summary=summary, quality=quality, notes=notes, clock=clock)
+        sources, source_notes = _provenance(s, None, ())
+        return Report(
+            summary=summary, quality=quality, notes=notes + source_notes, clock=clock, provenance=sources
+        )
 
     generation = s.quantity == "generation"
     reference = "clear_sky_persistence" if generation and site is not None else "persistence_24h"
@@ -365,6 +389,9 @@ def analyze(
         pending.pop("weather (regimes B and C)")
     if bands is not None:
         pending.pop("bands (quantiles)")
+    used = [m for m in models if m.card.name in regimes]
+    sources, source_notes = _provenance(s, weather, used)
+    notes.extend(source_notes)
     return Report(
         summary=summary,
         quality=quality,
@@ -375,11 +402,60 @@ def analyze(
         bands=bands,
         clock=clock,
         pending=pending,
+        provenance=sources,
     )
 
 
 # ---------------------------------------------------------------------- pieces
 _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
+_PROVENANCE_SHOWN = ("role", "name", "license", "sends_data", "source", "citation", "retrieved", "conditions")
+
+
+def _provenance(
+    s: EnergySeries, weather: pd.DataFrame | None, models: Sequence[Forecaster]
+) -> tuple[pd.DataFrame, list[str]]:
+    """One row per input of the analysis (the series, the weather when given, each model that ran) with its
+    source and licence, and the notes the app must show: unknown licences, non-commercial terms and models
+    that send the data out. The built-in naive forecasts are rules of this library and need no row."""
+    undeclared = Provenance(source="not declared")
+    entries: list[tuple[str, str, Provenance, bool]] = [
+        ("series", s.quantity, s.provenance or undeclared, False)
+    ]
+    if weather is not None:
+        entries.append(("weather", "weather forecast", provenance_of(weather) or undeclared, False))
+    for m in models:
+        c = m.card
+        card = Provenance(source=c.source or "not declared", license=c.license)
+        entries.append(("model", c.name, card, c.sends_data))
+    rows = [
+        {
+            "role": role,
+            "name": name,
+            "license": p.license,
+            "sends_data": sends,
+            "source": p.source,
+            "citation": p.citation,
+            "url": p.url,
+            "retrieved": p.retrieved or "",
+            "conditions": p.notes,
+        }
+        for role, name, p, sends in entries
+    ]
+    notes = []
+    unknown = [f"{role} ({name})" for role, name, p, _ in entries if not p.license_known]
+    if unknown:
+        notes.append(
+            f"Licence unknown for: {', '.join(unknown)}. Find it out before sharing or publishing these "
+            "results (`EnergySeries.from_dataframe(provenance=...)`; `prosumer.provenance.attach` for a "
+            "weather frame)."
+        )
+    for role, name, p, _ in entries:
+        if p.non_commercial:
+            notes.append(f"The {role} {name!r} is for non-commercial use only ({p.license}; {p.notes}).")
+    out = [name for _, name, _, sends in entries if sends]
+    if out:
+        notes.append(f"These models send the series outside this machine: {', '.join(out)} (model card).")
+    return pd.DataFrame(rows), notes
 
 
 def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, reference: str) -> pd.DataFrame:

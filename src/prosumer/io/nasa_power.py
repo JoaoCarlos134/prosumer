@@ -34,6 +34,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ..provenance import NASA_POWER_CITATION, Provenance, attach, today
 from . import _http
 
 URL = "https://power.larc.nasa.gov/api/temporal/hourly/point"
@@ -120,7 +121,23 @@ def fetch_hourly(
         parts.append(parse_hourly(get(URL, params), api, tz=tz))
     out = pd.concat(parts, ignore_index=True).drop_duplicates("ds").set_index("ds").sort_index()
     grid = pd.date_range(lo, hi, freq="h", name="ds")
-    return out.reindex(grid)[names].reset_index()
+    return attach(out.reindex(grid)[names].reset_index(), provenance(community))
+
+
+def provenance(community: str = "RE", retrieved: str | None = None) -> Provenance:
+    """Where a POWER hourly download comes from: NASA open data (CC0 under NASA's data use guidance, no
+    restriction on use), cited with POWER's two references (checked on 2026-10-11, see `prosumer.provenance`).
+    `fetch_hourly` attaches it to its result (`frame.attrs["provenance"]`)."""
+    date = retrieved or today()
+    return Provenance(
+        source=f"NASA POWER hourly point API (community {community}; CERES SYN1deg, MERRA-2)",
+        license="CC0-1.0",
+        citation=NASA_POWER_CITATION.format(date=date.replace("-", "/")),
+        url="https://power.larc.nasa.gov/",
+        retrieved=date,
+        notes="NASA asks to be cited and told of publications and redistribution "
+        "(larc-power-project@mail.nasa.gov); the weather of the day itself: regime B, not a forecast",
+    )
 
 
 def parse_hourly(response: dict[str, Any], api: dict[str, str], *, tz: str) -> pd.DataFrame:
@@ -181,4 +198,13 @@ def _aware(value: str | pd.Timestamp, tz: Any) -> pd.Timestamp:
     return t.tz_localize(tz) if t.tzinfo is None else t.tz_convert(tz)
 
 
-__all__ = ["FILL_VALUE", "MAX_PARAMETERS", "URL", "VARIABLES", "coverage", "fetch_hourly", "parse_hourly"]
+__all__ = [
+    "FILL_VALUE",
+    "MAX_PARAMETERS",
+    "URL",
+    "VARIABLES",
+    "coverage",
+    "fetch_hourly",
+    "parse_hourly",
+    "provenance",
+]

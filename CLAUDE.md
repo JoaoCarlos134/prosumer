@@ -443,8 +443,19 @@ usinas, perfil de ANTES do teste na FV das casas; sem isso a noite enche a calib
 calibradas contra 7 de 11 brutas, inclusive as 4 que falhavam (LightGBM FV 0,651 -> 0,814; C 0,741 -> 0,810;
 Chronos-2 C largo demais 0,837/0,654 -> 0,804/0,605); CQR por par fica em 9. Na biblioteca:
 `postprocessing.conformal_quantiles` (= piloto, dif 0,0) e linha `<modelo>+conformal` na secao `bands` do `analyze`
-(28 dias de previsoes antes do teste). Casas 92 dias: FV 0,618/0,423 -> 0,783/0,593, calibrada. Proximo: ler a
-conferencia; o aplicativo. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
+(28 dias de previsoes antes do teste). Casas 92 dias: FV 0,618/0,423 -> 0,783/0,593, calibrada. **Noite de 11/10 (agentes em
+worktrees, juntados em `main`):** `prosumer.quality.clock_offset`/`clock_notes` (relogio da geracao pelo sol: perfil medio
+x ceu claro em 17 orientacoes, por serie e por mes, `confident` quando a maioria dos dias concorda; secao `clock` do
+`analyze` com `site`); `prosumer.io.nasa_power` (POWER horario, pedido em UTC, -999 -> NaN, regime B) e
+`data.dingle_houses()` (figshare CC0 com MD5 e cache em `$PROSUMER_DATA` ou `~/.cache/prosumer`, ou o parquet do
+benchmark; H1 baixada bate com `casas_horario.parquet` com dif 0,0); Fronius/medidores NAO feitos (nao ha amostra do
+formato bruto aqui). **ACHADO a declarar (benchmark):** o GHI da NASA de Curitiba (`ghi_horario` e, derivados,
+`poa_estimada`/`temp_ar_horaria`, regime B e B-curto) esta **1 h atrasado**: o script de Curitiba reusou o deslocamento
+de -55 min de Cascavel, mas Curitiba esta noutra faixa de hora solar local (LST = UTC-3, Cascavel UTC-4).
+`clock_offset` da +1 h confiante em TODOS os meses de 2021-2026; Cascavel 0. A geracao de Curitiba sai ambigua (0 ou
++1 conforme o mes; geometria desconhecida). O C (Open-Meteo convertido certo) nao e afetado. Piloto do efeito
+(LightGBM B nas usinas com o clima de Curitiba adiantado 1 h) depois da fila. Paridade completa da fila de 11/10:
+LightGBM e LightGBM quantilico, 11/11 testes. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

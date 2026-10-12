@@ -6,7 +6,8 @@ back: a section of the report, with numbers and plain-language notes. Today it c
 already do without training anything:
 
 - **quality**: coverage, gaps and the series that end on different dates (the leakage case of the benchmark);
-  for generation with a site, the clock checked against the sun (`quality.clock_offset`);
+  for generation with a site, the clock checked against the sun (`quality.clock_offset`) and, with a
+  weather forecast, against its clouds to a fraction of an hour (`quality.clock_offset_weather`);
 - **forecast check**: the day-ahead task of the benchmark (`DayAhead`) on the last `test_days` of the data,
   with the naive forecasts that need no training (same as yesterday, same day last week, mean of the last 7
   days) and their MEDIAN as the output (the library never picks "the best model": section 5c of the proposal),
@@ -37,7 +38,7 @@ from .postprocessing import conformal_quantiles
 from .protocol import DayAhead, H, Regime, Window
 from .provenance import Provenance
 from .provenance import of as provenance_of
-from .quality import clock_notes, clock_offset
+from .quality import clock_notes, clock_offset, clock_offset_weather, clock_weather_notes
 
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
@@ -64,6 +65,8 @@ class Report:
     weather: pd.DataFrame | None = None  # coverage of each weather model, when a forecast was given
     bands: pd.DataFrame | None = None  # calibration and CRPS of each model's quantile band
     clock: pd.DataFrame | None = None  # generation with a site: clock offset against the sun, per period
+    # generation with `weather`: clock offset against the clouds of the forecast, to a fraction of an hour
+    clock_weather: pd.DataFrame | None = None
     # where each input came from and its licence: the series, the weather and each model (see `_provenance`)
     provenance: pd.DataFrame | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
@@ -89,6 +92,7 @@ class Report:
             "weather": records(self.weather),
             "bands": records(self.bands),
             "clock": records(self.clock),
+            "clock_weather": records(self.clock_weather),
             "provenance": records(self.provenance),
             "pending": dict(self.pending),
         }
@@ -113,6 +117,18 @@ class Report:
                 "the whole series and per month; `confident` when most complete days agree.",
                 "",
                 _table(self.clock),
+            ]
+        if self.clock_weather is not None and not self.clock_weather.empty:
+            lines += [
+                "",
+                "### Clock against the weather",
+                "",
+                "Hours the production follows the clouds of the weather forecast late (+) or early (-), to a "
+                "fraction of an hour, with a 90% interval by resampling days; independent of the roof's "
+                "orientation. A day-ahead forecast can carry its own timing error of a few tenths of an "
+                "hour.",
+                "",
+                _table(self.clock_weather),
             ]
         if self.notes:
             lines += ["", "## Notes", "", *[f"- {n}" for n in self.notes]]
@@ -216,6 +232,17 @@ def analyze(
     if s.quantity == "generation" and site is not None:
         clock = clock_offset(s, site)
         notes.extend(clock_notes(clock))
+    w = None if weather is None else _weather_frame(weather, s.series)
+    clock_weather = None
+    if s.quantity == "generation" and w is not None:
+        ghi = (
+            "ghi_mean"
+            if "ghi_mean" in w.columns
+            else next((c for c in w.columns if c.startswith("ghi")), None)
+        )
+        if ghi is not None:
+            clock_weather = clock_offset_weather(s, w, column=ghi)
+            notes.extend(clock_weather_notes(clock_weather))
 
     first = frame["ds"].min().normalize()
     if test_start - first < pd.Timedelta(hours=CONTEXT):
@@ -225,7 +252,12 @@ def analyze(
         )
         sources, source_notes = _provenance(s, None, ())
         return Report(
-            summary=summary, quality=quality, notes=notes + source_notes, clock=clock, provenance=sources
+            summary=summary,
+            quality=quality,
+            notes=notes + source_notes,
+            clock=clock,
+            clock_weather=clock_weather,
+            provenance=sources,
         )
 
     task = DayAhead(
@@ -236,7 +268,12 @@ def analyze(
         notes.append("Forecast check skipped: no test day has all its target hours measured.")
         sources, source_notes = _provenance(s, None, ())
         return Report(
-            summary=summary, quality=quality, notes=notes + source_notes, clock=clock, provenance=sources
+            summary=summary,
+            quality=quality,
+            notes=notes + source_notes,
+            clock=clock,
+            clock_weather=clock_weather,
+            provenance=sources,
         )
 
     generation = s.quantity == "generation"
@@ -247,7 +284,6 @@ def analyze(
     actual = actual.loc[keep]
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
-    w = None if weather is None else _weather_frame(weather, s.series)
     bands_raw: dict[str, pd.DataFrame] = {}
     bands_past: dict[str, pd.DataFrame] = {}  # the same model's bands over the calibration days
     for model in models:
@@ -401,6 +437,7 @@ def analyze(
         weather=weather_table,
         bands=bands,
         clock=clock,
+        clock_weather=clock_weather,
         pending=pending,
         provenance=sources,
     )

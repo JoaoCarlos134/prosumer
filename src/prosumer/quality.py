@@ -20,6 +20,16 @@ one counts. The estimated offset is the k with the highest score. The confidence
 share of complete days whose own best shift agrees with the period's (`agreement`).
 
 Only generation series: a consumption profile has no physical clock to compare with.
+
+The sun check has two blind spots: it resolves whole steps only (an hourly series 30 min late comes out as a
+noisy 0 or +1 depending on the month), and the roof's unknown orientation can mimic up to about an hour of
+offset. `clock_offset_weather` closes both when an irradiance series is available (measured or forecast, e.g.
+`io.open_meteo.wide`): it lines up the CLOUDS, not the daily shape. Both series lose their mean hourly profile
+of the month (what is left is the passing weather of each day), and the correlation of the two anomalies is
+computed for each shift; the peak, refined between steps by a parabola, is the offset in fractions of a step.
+The orientation drops out (it scales the anomaly, it does not move it in time). Found on the benchmark's
+Curitiba plant (2026-10-12): about +0.5 h against a forecast whose clock is right, where the sun check gave
+-1 to +2 h depending on the month.
 """
 
 from __future__ import annotations
@@ -144,7 +154,166 @@ def clock_notes(table: pd.DataFrame) -> list[str]:
     return notes
 
 
+def clock_offset_weather(
+    series: EnergySeries,
+    weather: pd.DataFrame,
+    *,
+    column: str = "ghi",
+    max_shift_h: float = 6,
+    by: By = "month",
+    min_days: int = 14,
+    max_interval_h: float = 1.0,
+    n_boot: int = 200,
+    seed: int = 0,
+) -> pd.DataFrame:
+    """Clock offset of each generation series against an irradiance series, to a fraction of a step.
+
+    `weather`: `ds` (with a time zone, values labelled by the START of the interval, as the library's readers
+    return them), `column` (irradiance, W/m2) and optionally `unique_id` (one weather per series; without it
+    the same for all). A day-ahead forecast works: its cloud timing is imprecise day by day, but not late on
+    average. Returns one row per series and period (`"all"`, and each month with `by="month"`):
+
+    - `offset_h`: hours the production labels are LATE relative to the weather (fix: `ds - offset_h`);
+      continuous, from the correlation peak refined between steps;
+    - `low_h`, `high_h`: 90% interval of `offset_h` by resampling days;
+    - `corr`, `corr_zero`: correlation of the anomalies at the best whole-step shift and at 0;
+    - `days`: days with daylight hours in both; `confident`: `days >= min_days` and the interval no wider than
+      `max_interval_h`.
+    """
+    if series.quantity != "generation":
+        raise ValueError(f"The clock check needs a generation series, not {series.quantity!r}")
+    if "ds" not in weather.columns or column not in weather.columns:
+        raise ValueError(f"weather needs `ds` and {column!r} columns")
+    if getattr(weather["ds"].dt, "tz", None) is None:
+        raise ValueError("weather.ds must carry a time zone")
+    st = step(series.freq)
+    spd = pd.Timedelta(days=1) / st
+    if spd != int(spd) or spd < 2:
+        raise ValueError(f"The step must divide a day into several intervals, not {series.freq!r}")
+    max_k = max(1, min(round(pd.Timedelta(hours=max_shift_h) / st), int(spd) // 2))
+    shifts = np.arange(-max_k, max_k + 1)
+    hours_per_step = st.total_seconds() / 3600
+    rng = np.random.default_rng(seed)
+
+    v = series.frame.loc[series.frame["valid"] & series.frame["y"].notna(), ["unique_id", "ds", "y"]]
+    w = weather.assign(ds=weather["ds"].dt.tz_convert(series.tz))
+    rows = []
+    for uid, g in v.groupby("unique_id", sort=True):
+        wu = w[w["unique_id"].astype(str) == str(uid)] if "unique_id" in w.columns else w
+        x = wu.dropna(subset=[column]).drop_duplicates("ds").set_index("ds")[column].astype(float)
+        if x.empty:
+            continue
+        y = pd.Series(g["y"].to_numpy(float), index=pd.DatetimeIndex(g["ds"]))
+        ya, day_y = _anomaly(y)
+        xa, _ = _anomaly(x)
+        times = pd.DatetimeIndex(y.index)
+        wall = times.tz_localize(None)
+        month = wall.strftime("%Y-%m").to_numpy()
+        date = wall.normalize().to_numpy()
+        # x shifted by k steps: a series late by k lines up with the weather k steps BEFORE
+        xk = np.stack([xa.reindex(times - int(k) * st).to_numpy() for k in shifts])  # (K, n)
+        periods: list[tuple[str, np.ndarray]] = [("all", np.ones(len(y), bool))]
+        if by == "month":
+            periods += [(str(m), month == m) for m in np.unique(month)]
+        for name, sel in periods:
+            row = _fit_weather(ya.to_numpy()[sel], xk[:, sel], date[sel], day_y[sel], shifts, rng, n_boot)
+            if row is None or (name != "all" and row["days"] < min_days):
+                continue
+            for c in ("offset_h", "low_h", "high_h"):
+                row[c] *= hours_per_step
+            row["confident"] = bool(
+                row["days"] >= min_days and row["high_h"] - row["low_h"] <= max_interval_h
+            )
+            rows.append({"unique_id": str(uid), "period": name, **row})
+    cols = ["unique_id", "period", "offset_h", "low_h", "high_h", "corr", "corr_zero", "days", "confident"]
+    return pd.DataFrame(rows, columns=cols)
+
+
+def clock_weather_notes(table: pd.DataFrame, min_offset_h: float = 0.25) -> list[str]:
+    """A note per series whose whole-series offset against the weather is confident, at least `min_offset_h`
+    and with an interval that excludes 0."""
+    notes = []
+    for r in table[table["period"] == "all"].to_dict(orient="records"):
+        off, low, high = float(r["offset_h"]), float(r["low_h"]), float(r["high_h"])
+        if not r["confident"] or abs(off) < min_offset_h or low <= 0 <= high:
+            continue
+        notes.append(
+            f"Series {r['unique_id']}: the production follows the clouds {abs(off):.1f} h "
+            f"{'later' if off > 0 else 'earlier'} than the weather data (90% interval "
+            f"{low:+.1f} to {high:+.1f} h). A fraction of an hour usually means intervals "
+            "labelled by their end or a logger clock that drifted; check the source before using the "
+            "weather as an input."
+        )
+    return notes
+
+
 # ---------------------------------------------------------------------- pieces
+def _anomaly(s: pd.Series) -> tuple[pd.Series, np.ndarray]:
+    """The series minus its mean profile of the month (local wall clock), and the daylight mask: steps whose
+    mean of the month is above 5% of that month's peak."""
+    wall = pd.DatetimeIndex(s.index).tz_localize(None)
+    key = [wall.strftime("%Y-%m"), wall.hour * 60 + wall.minute]
+    mean = s.groupby(key).transform("mean")
+    peak = mean.groupby(wall.strftime("%Y-%m")).transform("max")
+    return s - mean, (mean > 0.05 * peak).to_numpy()
+
+
+def _fit_weather(
+    ya: np.ndarray,
+    xk: np.ndarray,
+    date: np.ndarray,
+    day: np.ndarray,
+    shifts: np.ndarray,
+    rng: np.random.Generator,
+    n_boot: int,
+) -> dict[str, float | int] | None:
+    """Offset (in steps) from the anomaly correlation, with a day bootstrap. Sums per day and shift are kept
+    so each resample is a weighted sum, not a new pass over the hours."""
+    ok = day[None] & np.isfinite(ya)[None] & np.isfinite(xk)  # (K, n)
+    dates, d_idx = np.unique(date, return_inverse=True)
+    if not ok.any():
+        return None
+    n_days = len(dates)
+    stats = np.zeros((len(shifts), n_days, 6))  # n, sx, sy, sxx, syy, sxy
+    for i in range(len(shifts)):
+        m = ok[i]
+        a, b, d = xk[i, m], ya[m], d_idx[m]
+        for j, val in enumerate((np.ones_like(a), a, b, a * a, b * b, a * b)):
+            stats[i, :, j] = np.bincount(d, weights=val, minlength=n_days)
+    used = stats[:, :, 0].max(axis=0) > 0
+    if used.sum() < 2:
+        return None
+
+    def offset(weights: np.ndarray) -> tuple[float, np.ndarray]:
+        t = np.einsum("d,kdj->kj", weights, stats)
+        n, sx, sy, sxx, syy, sxy = t.T
+        with np.errstate(invalid="ignore", divide="ignore"):
+            r = (n * sxy - sx * sy) / np.sqrt((n * sxx - sx * sx) * (n * syy - sy * sy))
+        k = int(np.nanargmax(np.where(np.isnan(r), -np.inf, r)))
+        delta = 0.0
+        if 0 < k < len(r) - 1:  # parabola through the peak and its neighbours
+            den = r[k - 1] - 2 * r[k] + r[k + 1]
+            if den < 0:
+                delta = float(np.clip(0.5 * (r[k - 1] - r[k + 1]) / den, -0.5, 0.5))
+        return float(shifts[k] + delta), r
+
+    est, r = offset(np.ones(n_days))
+    idx = np.flatnonzero(used)
+    boot = [
+        offset(np.bincount(rng.choice(idx, len(idx)), minlength=n_days).astype(float))[0]
+        for _ in range(n_boot)
+    ]
+    zero = int(np.flatnonzero(shifts == 0)[0])
+    return {
+        "offset_h": est,
+        "low_h": float(np.quantile(boot, 0.05)),
+        "high_h": float(np.quantile(boot, 0.95)),
+        "corr": float(np.nanmax(r)),
+        "corr_zero": float(r[zero]),
+        "days": int(used.sum()),
+    }
+
+
 def _fit(
     cells: pd.DataFrame, cs: np.ndarray, spd: int, shifts: np.ndarray, hours_per_step: float
 ) -> dict[str, float | int] | None:

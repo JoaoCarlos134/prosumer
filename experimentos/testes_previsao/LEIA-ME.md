@@ -318,6 +318,21 @@ Outras limitações:
   `DISPOSITIVO`. GPU e CPU podem mudar o último dígito; os fundacionais rodaram em CPU.
 - **As casas são de outro país**, sem localização, e o teste é um único inverno.
 - **`pot_nominal_kWp` de Curitiba é estimada** (~9,6 kWp): todo número por kWp é provisório.
+- **Relógio de Curitiba (achado em 11-12/10/2026, números mantidos).** O GHI da NASA de Curitiba
+  (`ghi_horario` e, derivados, `poa_estimada` e `temp_ar_horaria`; regimes B e B-curto) está 1 h atrasado em
+  relação ao sol: o preparo dos dados reusou o deslocamento de -55 min achado para Cascavel, mas a hora solar
+  local da NASA é UTC-4 em Cascavel e UTC-3 em Curitiba (`prosumer.quality.clock_offset` dá +1 h confiante em
+  todos os meses de 2021-2026; Cascavel 0). A **geração** de Curitiba também está atrasada, o que quase
+  compensa: alinhando as NUVENS (anomalia horária em relação ao perfil do mês, independente da orientação do
+  telhado; `prosumer.quality.clock_offset_weather`), a geração fica a -0,16 h (IC 90% -0,20 a -0,12) do clima
+  da NASA usado no B e a +0,45 h (+0,34 a +0,57) da previsão ECMWF usada no C, cujo relógio está certo
+  (Cascavel: -0,11 e -0,36 h). Ou seja, as entradas de clima ficam a menos de meia hora da usina nos dois
+  regimes, e qualquer correção de hora inteira afasta mais: medido com o LightGBM
+  (`scripts/piloto_curitiba_hora.py`), NASA adiantada 1 h no B leva Curitiba de +0,471 a +0,440; previsão e
+  céu claro atrasados 1 h no C, de +0,326 a +0,313 (as duas usinas). O conserto real seria reagregar
+  Curitiba dos dados de 5 min do Lactec com o deslocamento de fração de hora, o que muda o alvo e obriga a
+  refazer todos os modelos das usinas nos três regimes, por um ganho pequeno num teto (B). Decisão: os
+  números publicados ficam, e este parágrafo os acompanha.
 
 ## 8. Como reproduzir
 

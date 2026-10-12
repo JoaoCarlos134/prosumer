@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from prosumer import EnergySeries, analyze, data, physics
-from prosumer.quality import clock_notes, clock_offset
+from prosumer.quality import clock_notes, clock_offset, clock_offset_weather, clock_weather_notes
 
 SITE = (-24.83, -53.65)  # rounded, as everywhere in the project
 TZ = "America/Sao_Paulo"
@@ -113,3 +113,91 @@ def test_analyze_reports_the_clock_and_notes_an_offset() -> None:
     late = analyze(_series(idx + pd.Timedelta(hours=2), y), site=SITE, test_days=7)
     assert any("2 h later than the sun" in n for n in late.notes)
     assert analyze(s, test_days=14).clock is None  # no site, no clock check
+
+
+# ------------------------------------------------------------ clock against the weather (clouds)
+def _cloudy(days: int = 90, tilt: float = 20.0, azimuth: float = 0.0, seed: int = 2):
+    """5-min truth: clear sky x a cloud index with ~1 h memory; returns the 5-min GHI and PV (true clock)."""
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range("2024-03-01", periods=days * 288, freq="5min", tz=TZ)
+    e = rng.standard_normal(len(idx))
+    k = np.empty(len(idx))
+    k[0] = 0.0
+    for i in range(1, len(idx)):  # AR(1), time constant ~1 h
+        k[i] = 0.92 * k[i - 1] + 0.4 * e[i]
+    kt = np.clip(0.65 + 0.25 * k, 0.05, 1.0)
+    ghi = physics.clear_sky_ghi(idx, *SITE, interval="300s") * kt
+    pv = physics.poa_isotropic(ghi, physics.mean_sun(idx, *SITE, interval="300s"), tilt, azimuth) / 1000
+    return pd.Series(ghi, idx), pd.Series(pv, idx)
+
+
+def _hourly(s: pd.Series, late_min: int = 0) -> pd.Series:
+    """Hourly mean labelled by the START, with the labels `late_min` minutes late."""
+    return s.shift(late_min // 5).resample("h").mean().dropna()
+
+
+def _weather(ghi: pd.Series, noise: float = 0.15, seed: int = 3) -> pd.DataFrame:
+    """A forecast-like hourly GHI: the true clouds with multiplicative noise."""
+    h = _hourly(ghi)
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame({"ds": h.index, "ghi": h.to_numpy() * (1 + noise * rng.standard_normal(len(h)))})
+
+
+@pytest.mark.parametrize("late_min", [0, 30, -60])
+def test_weather_clock_finds_fractions_of_an_hour(late_min: int) -> None:
+    ghi, pv = _cloudy()
+    h = _hourly(pv, late_min)
+    t = clock_offset_weather(_series(h.index, h.to_numpy()), _weather(ghi))
+    r = _whole(t)
+    assert r["offset_h"] == pytest.approx(late_min / 60, abs=0.15)
+    assert r["confident"] and r["low_h"] <= late_min / 60 + 0.15 and r["high_h"] >= late_min / 60 - 0.15
+    notes = clock_weather_notes(t)
+    if late_min == 0:
+        assert notes == []
+    else:
+        (note,) = notes
+        assert f"{abs(late_min) / 60:.1f} h {'later' if late_min > 0 else 'earlier'}" in note
+
+
+def test_weather_clock_ignores_the_orientation() -> None:
+    """A west-facing roof skews the daily shape (the sun check's blind spot), not the timing of the clouds."""
+    ghi, pv = _cloudy(azimuth=270.0, tilt=40.0)
+    h = _hourly(pv)
+    r = _whole(clock_offset_weather(_series(h.index, h.to_numpy()), _weather(ghi)))
+    assert abs(r["offset_h"]) < 0.15 and r["confident"]
+
+
+def test_weather_clock_without_clouds_is_not_confident() -> None:
+    """Clear sky as the 'weather' has no passing clouds to line up: no confident answer, no note."""
+    _, pv = _cloudy(days=60)
+    h = _hourly(pv)
+    idx = h.index
+    clear = pd.DataFrame({"ds": idx, "ghi": physics.clear_sky_ghi(idx, *SITE)})
+    t = clock_offset_weather(_series(idx, h.to_numpy()), clear)
+    assert not t["confident"].any() and clock_weather_notes(t) == []
+
+
+def test_weather_clock_checks_its_inputs() -> None:
+    ghi, pv = _cloudy(days=10)
+    h = _hourly(pv)
+    s = _series(h.index, h.to_numpy())
+    w = _weather(ghi)
+    with pytest.raises(ValueError, match="generation"):
+        clock_offset_weather(data.example_house(days=10), w)
+    with pytest.raises(ValueError, match="time zone"):
+        clock_offset_weather(s, w.assign(ds=w["ds"].dt.tz_localize(None)))
+    with pytest.raises(ValueError, match="'ghi_mean'"):
+        clock_offset_weather(s, w, column="ghi_mean")
+
+
+def test_analyze_reports_the_clock_against_the_weather() -> None:
+    ghi, pv = _cloudy(days=60)
+    h = _hourly(pv, 30)
+    w = _weather(ghi).rename(columns={"ghi": "ghi_mean"})
+    r = analyze(_series(h.index, h.to_numpy()), site=SITE, test_days=7, weather=w)
+    assert r.clock_weather is not None
+    assert _whole(r.clock_weather)["offset_h"] == pytest.approx(0.5, abs=0.15)
+    assert any("follows the clouds 0.5 h later" in n for n in r.notes)
+    assert "### Clock against the weather" in r.to_markdown()
+    assert r.to_dict()["clock_weather"]
+    assert analyze(_series(h.index, h.to_numpy()), site=SITE, test_days=7).clock_weather is None

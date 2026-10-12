@@ -75,6 +75,15 @@ Uso (ambiente da biblioteca, .venv; rede so no baixa/rodadas):
   python piloto_horizonte.py usina Cascavel              # metodos de uma usina (medir o tempo)
   python piloto_horizonte.py avalia                      # a_k, metricas, portao G1-G3 (as duas usinas)
   python piloto_horizonte.py casas                       # consumo, portao G4
+  python piloto_horizonte.py compara                     # EXTRA declarado, fora do portao (ver abaixo)
+
+COMPARACAO EXTRA (acrescentada DEPOIS do commit do portao, a pedido da sessao principal, antes de rodar o
+`avalia`; NAO faz parte do portao G1-G4): (a) no lead 1, o fisico e o encolhido ao lado das linhas do regime C do
+benchmark (linear_fisico, LightGBM, Ensemble-mediana), nas horas avaliadas do benchmark (05_avalia.real: ceu
+claro > 0) e nos dias de teste em que todos tem valor, skill contra a mesma referencia do benchmark
+(persist_ceu_claro|A) e DM contra o LightGBM|C; (b) consumo: as referencias do benchmark (persist_24h,
+semanal_168h, media_7d) no lead 1 ao lado das quatro regras; (c) o arquivo previous_day3 do meteofrance_seamless
+(o unico lead >= 3 que existe dele) contra o IFS e o GFS, hora a hora.
 Saidas: resultados/pilotos/horizonte.json (+ horizonte_usina_<serie>.parquet). Nunca previsoes/ nem metricas.csv.
 """
 import json
@@ -653,6 +662,65 @@ def casas():
     print("G4:", g4, "\nconferencia:", conf, f"\n{time.time() - t0:.0f} s")
 
 
+# ------------------------------------------------------------------ comparacao extra (fora do portao)
+def compara():
+    import importlib
+
+    from comum import PREV
+    AV = importlib.import_module("05_avalia")
+    tudo = json.loads(SAIDA.read_text(encoding="utf-8"))
+    ak = float(tudo["geracao"]["a_k"]["1"]["a"])
+    base = AV.real("usinas")
+    base = base[base.avalia].set_index(["unique_id", "ds"]).y
+    ref = pd.read_parquet(PREV / "persist_ceu_claro__usinas__A.parquet").set_index(["unique_id", "ds"]).yhat
+    S = {}
+    for nome in ("linear_fisico", "LightGBM", "Ensemble-mediana"):
+        S[nome + "|C"] = pd.read_parquet(PREV / f"{nome}__usinas__C.parquet").set_index(["unique_id", "ds"]).yhat.clip(lower=0)
+    meus = []
+    for serie in SITIOS:
+        t = pd.read_parquet(PILOTOS / f"horizonte_usina_{serie}.parquet")
+        t = t[(t.lead == 1) & (t.dia >= INI_TESTE)].copy()
+        t["encolhido"] = t.climatologia + ak * (t.fisico - t.climatologia)
+        meus.append(t.rename(columns={"serie": "unique_id"}).set_index(["unique_id", "ds"]))
+    M = pd.concat(meus)
+    for m in ("fisico", "encolhido", "climatologia", "persist_cs"):
+        S[m] = M[m].clip(lower=0)
+    idx = base.index.intersection(ref.dropna().index)
+    for s_ in S.values():
+        idx = idx.intersection(s_.dropna().index)
+    y = base.loc[idx]
+    rr = float(np.sqrt(np.mean((ref.loc[idx] - y) ** 2)))
+    e = {n: ((s_.loc[idx] - y) ** 2) for n, s_ in S.items()}
+    out = dict(horas=len(idx), skill_vs_persist_ceu_claro={}, dm_p_vs_LightGBM_C={},
+               skill_publicado_metricas_csv={})
+    for n in S:
+        out["skill_vs_persist_ceu_claro"][n] = round(1 - float(np.sqrt(e[n].mean())) / rr, 4)
+        if n != "LightGBM|C":
+            out["dm_p_vs_LightGBM_C"][n] = round(float(pm.diebold_mariano(e[n], e["LightGBM|C"])[2]), 4)
+    bench = pd.read_csv(PILOTOS.parent / "metricas.csv", sep=";", decimal=",", encoding="utf-8-sig")
+    b = bench[(bench.caso == "usinas") & (bench.regime == "C")].set_index("modelo").skill
+    out["skill_publicado_metricas_csv"] = {n: round(float(b[n]), 4) for n in ("linear_fisico", "LightGBM",
+                                                                                "Ensemble-mediana")}
+    # (b) consumo: referencias do benchmark no lead 1
+    bc = bench[(bench.caso == "casas_cons") & (bench.regime == "A")].set_index("modelo").skill
+    regras = {m: v["skill_vs_persist"] for m, v in tudo["consumo"]["leads"]["1"]["hora"].items()}
+    cons = dict(benchmark={n: round(float(bc[n]), 4) for n in ("persist_24h", "semanal_168h", "media_7d")},
+                regras_lead1=regras)
+    # (c) meteofrance previous_day3 contra IFS e GFS, por hora local (media no periodo inteiro)
+    P = pd.read_parquet(ARQ_PREV)
+    mf = {}
+    for serie in SITIOS:
+        q = P[(P.serie == serie) & (P.lead == 3)].pivot_table(index="ds", columns="modelo_nwp", values="ghi")
+        h = q.groupby(q.index.hour).mean()
+        mf[serie] = {f"{hh:02d}h": dict(mf_ifs=round(float(h.loc[hh, "meteofrance_seamless"] / h.loc[hh, "ecmwf_ifs025"]), 2),
+                                         mf_gfs=round(float(h.loc[hh, "meteofrance_seamless"] / h.loc[hh, "gfs_seamless"]), 2))
+                     for hh in range(7, 19)}
+        mf[serie]["max_ghi_mf_lead3"] = round(float(q["meteofrance_seamless"].max()), 1)
+        mf[serie]["max_ghi_ifs_lead3"] = round(float(q["ecmwf_ifs025"].max()), 1)
+    grava({"comparacao_extra": dict(usinas_lead1=out, consumo_lead1=cons, meteofrance_lead3=mf)}, junta=False)
+    print(json.dumps(dict(usinas_lead1=out, consumo_lead1=cons, meteofrance_lead3=mf), indent=1))
+
+
 # ------------------------------------------------------------------ saida
 def grava(parte, junta=True):
     tudo = json.loads(SAIDA.read_text(encoding="utf-8")) if SAIDA.exists() else {}
@@ -682,5 +750,7 @@ if __name__ == "__main__":
         avalia()
     elif cmd == "casas":
         casas()
+    elif cmd == "compara":
+        compara()
     else:
         raise SystemExit(__doc__)

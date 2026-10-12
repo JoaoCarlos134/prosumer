@@ -19,6 +19,7 @@ test runs on a CPU.
 ```bash
 uv pip install -e ".[lightgbm,net]"          # core + LightGBM + downloads behind TLS-inspecting proxies
 uv pip install -e ".[chronos]"               # optional: Chronos-2 (each foundation model is its own extra)
+uv pip install -e ".[fronius]"               # optional: read Fronius .xlsx exports
 ```
 
 Python 3.11+. The core needs numpy, pandas, pyarrow, scipy and pandera only.
@@ -38,6 +39,12 @@ The report has: data quality (coverage, gaps, series ending apart), a day-ahead 
 day-bootstrap 95% CI, nRMSE, bias, R²), the same at several resolutions (hour, day/night, evening peak,
 day), the data sources and licences, plain-language notes and the list of what is not available yet.
 `report.to_dict()` is JSON-ready, for the app.
+
+Your own data: `io.fronius.read_solarweb(["2024.xlsx", "2025.xlsx"], tz="America/Sao_Paulo", site=site)`
+reads the inverter's 5-minute export into hourly kWh (one series per inverter); `io.meter.read_table(...)`
+reads any CSV/Excel table of a meter (interval energy, a cumulative counter or average power, `;` and decimal
+comma included). Whether Fronius stamps mark the start or the end of each 5 minutes is not documented: run
+`analyze` with a site and look at the clock sections.
 
 Add models and weather as you have them:
 
@@ -91,7 +98,7 @@ for window in task.windows():
 | `postprocessing` | `conformal_quantiles` (causal band recalibration), `correct_bias` (consumption) |
 | `physics` | sun position, clear sky, plane-of-array irradiance, orientation fit (numpy only) |
 | `quality` | the clock of a PV series checked against the sun (`clock_offset`) and the clouds (`clock_offset_weather`) |
-| `io` | Open-Meteo day-ahead forecasts (several models), NASA POWER hourly weather |
+| `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo day-ahead forecasts (several models), NASA POWER hourly weather |
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |
 

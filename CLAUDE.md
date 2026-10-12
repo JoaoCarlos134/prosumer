@@ -467,7 +467,18 @@ ignora a orientacao do telhado (os pontos cegos do `clock_offset`). Nas usinas: 
 atrasada e quase compensa a NASA: -0,16 h da NASA do B, +0,45 h da previsao do C (Cascavel -0,11 e -0,36). Toda
 correcao de hora inteira afasta (por isso os dois pilotos pioraram); o conserto real seria reagregar Curitiba dos
 5 min do Lactec com deslocamento fracionario e refazer as usinas nos tres regimes: NAO vale. Paragrafo declarado em
-`experimentos/testes_previsao/LEIA-ME.md` secao 7. Testes: 434 passam, 10 pulados.
+`experimentos/testes_previsao/LEIA-ME.md` secao 7.
+**E2 FECHADA, versao 0.1.0 (12/10/2026, tag `v0.1.0`).** Entraram por ultimo: `io.fronius` (`read_solarweb`,
+`read_solarweb_raw`, `canonical`/`ALIASES`; formato dos exportadores antigos do `legado`: xlsx por ano, linha 1
+nomes `Energia | <aparelho>`, linha 2 unidades, 5 min em Wh, `n/a`, anos sobrepostos; regra 11/12 por hora;
+`site=` zera a noite; extra `fronius` = openpyxl) e `io.meter.read_table` (CSV/Excel de medidor ou estacao:
+`interval`, `cumulative` com reset detectado, `power`; `;` e virgula decimal). **Rotulo do Fronius NAO confirmado**
+(`label="start"` como o benchmark; conferir com `clock_offset`/`clock_offset_weather` no primeiro arquivo real; so
+os nomes em portugues vieram de arquivo real). `analyze`: linha `median_corrected` no consumo (14 dias antes do
+teste) mas a SAIDA continua a mediana: piloto `piloto_vies_composicao.py` (PILOTOS_F1_F2.md) mostrou que a
+correcao so ajuda a mediana de ~40 modelos (+0,194 -> +0,209) e piora as pequenas (ingenuas +0,145 -> +0,113;
++LightGBM +0,192 -> +0,175). README reescrito para a 0.1. Testes: 461 passam, 10 pulados. Proximo: E4 (diagnostico,
+embarcado).
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

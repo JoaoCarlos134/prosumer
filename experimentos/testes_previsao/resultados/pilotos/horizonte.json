@@ -1,0 +1,3180 @@
+{
+ "download_previous_runs": {
+  "segundos": 338,
+  "pedidos": 42,
+  "bytes": 19879950,
+  "espera_429_s": 0.0
+ },
+ "data": "2026-10-12",
+ "consumo": {
+  "leads": {
+   "1": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.1258,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1011,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1575,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.1595,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.2927,
+      "dm_p_vs_persist": 0.0003
+     },
+     "media_4sem": {
+      "skill_vs_persist": -0.0614,
+      "dm_p_vs_persist": 0.2523
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.0398,
+      "dm_p_vs_persist": 0.2791
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.0107,
+      "dm_p_vs_persist": 0.8712
+     }
+    }
+   },
+   "2": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.0692,
+      "dm_p_vs_persist": 0.0059
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1463,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1754,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.1959,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.1226,
+      "dm_p_vs_persist": 0.057
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.0782,
+      "dm_p_vs_persist": 0.1419
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1202,
+      "dm_p_vs_persist": 0.0005
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.1268,
+      "dm_p_vs_persist": 0.009
+     }
+    }
+   },
+   "3": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.0419,
+      "dm_p_vs_persist": 0.0519
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1681,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1797,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2159,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0648,
+      "dm_p_vs_persist": 0.2495
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1257,
+      "dm_p_vs_persist": 0.0347
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1393,
+      "dm_p_vs_persist": 0.0005
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.1729,
+      "dm_p_vs_persist": 0.0029
+     }
+    }
+   },
+   "4": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.0143,
+      "dm_p_vs_persist": 0.438
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1901,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1902,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2361,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0159,
+      "dm_p_vs_persist": 0.7206
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1658,
+      "dm_p_vs_persist": 0.0163
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1648,
+      "dm_p_vs_persist": 0.0006
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2109,
+      "dm_p_vs_persist": 0.0023
+     }
+    }
+   },
+   "5": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.0092,
+      "dm_p_vs_persist": 0.5605
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1943,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1874,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2397,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0034,
+      "dm_p_vs_persist": 0.8973
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1761,
+      "dm_p_vs_persist": 0.0146
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1676,
+      "dm_p_vs_persist": 0.0015
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.22,
+      "dm_p_vs_persist": 0.0029
+     }
+    }
+   },
+   "6": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.003,
+      "dm_p_vs_persist": 0.7572
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1992,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1866,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2438,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": 0.0014,
+      "dm_p_vs_persist": 0.9707
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.18,
+      "dm_p_vs_persist": 0.0064
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1619,
+      "dm_p_vs_persist": 0.0011
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2219,
+      "dm_p_vs_persist": 0.0014
+     }
+    }
+   },
+   "7": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0,
+      "dm_p_vs_persist": 1.0
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2016,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.185,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2451,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": 0.0,
+      "dm_p_vs_persist": 1.0
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1789,
+      "dm_p_vs_persist": 0.0031
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1515,
+      "dm_p_vs_persist": 0.0023
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2174,
+      "dm_p_vs_persist": 0.001
+     }
+    }
+   },
+   "8": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": -0.0025,
+      "dm_p_vs_persist": 0.9263
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1975,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1868,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2464,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0331,
+      "dm_p_vs_persist": 0.6655
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1567,
+      "dm_p_vs_persist": 0.0176
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1504,
+      "dm_p_vs_persist": 0.0044
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2159,
+      "dm_p_vs_persist": 0.0009
+     }
+    }
+   },
+   "9": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0055,
+      "dm_p_vs_persist": 0.8522
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2039,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1923,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2505,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0182,
+      "dm_p_vs_persist": 0.7924
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1689,
+      "dm_p_vs_persist": 0.0082
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1564,
+      "dm_p_vs_persist": 0.0036
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2212,
+      "dm_p_vs_persist": 0.0005
+     }
+    }
+   },
+   "10": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0037,
+      "dm_p_vs_persist": 0.8882
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2025,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1903,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2487,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0328,
+      "dm_p_vs_persist": 0.5972
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1569,
+      "dm_p_vs_persist": 0.0086
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1409,
+      "dm_p_vs_persist": 0.0068
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2078,
+      "dm_p_vs_persist": 0.0004
+     }
+    }
+   },
+   "11": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.008,
+      "dm_p_vs_persist": 0.7153
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2059,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1934,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2516,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0277,
+      "dm_p_vs_persist": 0.5984
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1611,
+      "dm_p_vs_persist": 0.0035
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1395,
+      "dm_p_vs_persist": 0.0054
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.21,
+      "dm_p_vs_persist": 0.0001
+     }
+    }
+   },
+   "12": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0067,
+      "dm_p_vs_persist": 0.694
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2049,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1926,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2509,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": -0.0017,
+      "dm_p_vs_persist": 0.9668
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1823,
+      "dm_p_vs_persist": 0.0011
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1574,
+      "dm_p_vs_persist": 0.0024
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2293,
+      "dm_p_vs_persist": 0.0
+     }
+    }
+   },
+   "13": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0035,
+      "dm_p_vs_persist": 0.7121
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.2023,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1911,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.248,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": 0.0018,
+      "dm_p_vs_persist": 0.9244
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1852,
+      "dm_p_vs_persist": 0.0004
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1624,
+      "dm_p_vs_persist": 0.0009
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2307,
+      "dm_p_vs_persist": 0.0
+     }
+    }
+   },
+   "14": {
+    "horas": 43680,
+    "dias_casa": 1820,
+    "hora": {
+     "semana": {
+      "skill_vs_persist": 0.0,
+      "dm_p_vs_persist": 1.0
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1995,
+      "dm_p_vs_persist": 0.0
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1894,
+      "dm_p_vs_persist": 0.0
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.244,
+      "dm_p_vs_persist": 0.0
+     }
+    },
+    "dia": {
+     "semana": {
+      "skill_vs_persist": 0.0,
+      "dm_p_vs_persist": 1.0
+     },
+     "media_4sem": {
+      "skill_vs_persist": 0.1837,
+      "dm_p_vs_persist": 0.0002
+     },
+     "media_7d": {
+      "skill_vs_persist": 0.1656,
+      "dm_p_vs_persist": 0.0006
+     },
+     "perfil_dia_util": {
+      "skill_vs_persist": 0.2273,
+      "dm_p_vs_persist": 0.0
+     }
+    }
+   }
+  },
+  "G4": {
+   "skill_medio_hora": {
+    "semana": -0.017,
+    "media_4sem": 0.1869,
+    "media_7d": 0.1855,
+    "perfil_dia_util": 0.234
+   },
+   "escolhido": "perfil_dia_util",
+   "passa": true,
+   "leads_que_falham": []
+  },
+  "conferencia_lead1": {
+   "media_7d_lead1": 0.1575,
+   "media_7d_benchmark": 0.1575,
+   "semana_lead1": -0.1258,
+   "semanal_168h_benchmark": -0.1258
+  },
+  "segundos": 1.3
+ },
+ "conferencia_lead1": {
+  "Cascavel|cma_grapes_global": {
+   "horas_comuns": 18095,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Cascavel|ecmwf_ifs025": {
+   "horas_comuns": 19594,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Cascavel|gem_seamless": {
+   "horas_comuns": 19688,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Cascavel|gfs_seamless": {
+   "horas_comuns": 19727,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Cascavel|icon_seamless": {
+   "horas_comuns": 19650,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Cascavel|meteofrance_seamless": {
+   "horas_comuns": 19727,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|cma_grapes_global": {
+   "horas_comuns": 18095,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|ecmwf_ifs025": {
+   "horas_comuns": 19594,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|gem_seamless": {
+   "horas_comuns": 19688,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|gfs_seamless": {
+   "horas_comuns": 19727,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|icon_seamless": {
+   "horas_comuns": 19650,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  },
+  "Curitiba|meteofrance_seamless": {
+   "horas_comuns": 19727,
+   "max_dif": 0.0,
+   "so_novo": 1,
+   "so_benchmark": 0
+  }
+ },
+ "usinas": {
+  "Cascavel": {
+   "inclinacao": 15.0,
+   "azimute": 30.0,
+   "r2": 0.919,
+   "dias_claros": 869,
+   "kw_eff_mediana_teste": 2.973,
+   "segundos": 4.8,
+   "descartes_qualidade": {
+    "1": {
+     "cma_grapes_global": 3,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 0,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "2": {
+     "cma_grapes_global": 5,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 0,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "3": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 1,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "4": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 1,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "5": {
+     "cma_grapes_global": 0,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 1,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "6": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 54,
+     "gem_seamless": 3,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "7": {
+     "cma_grapes_global": 0,
+     "ecmwf_ifs025": 177,
+     "gem_seamless": 10,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    }
+   },
+   "descartes_qualidade_rodadas": {
+    "1": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "2": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "3": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "4": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "5": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "6": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "7": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "8": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "9": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "10": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "11": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "12": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "13": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "14": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "15": {
+     "gfs_seamless": 0
+    }
+   },
+   "leads_rodadas": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ]
+  },
+  "Curitiba": {
+   "inclinacao": 20.0,
+   "azimute": 320.0,
+   "r2": 0.819,
+   "dias_claros": 498,
+   "kw_eff_mediana_teste": 5.848,
+   "segundos": 3.7,
+   "descartes_qualidade": {
+    "1": {
+     "cma_grapes_global": 2,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 0,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "2": {
+     "cma_grapes_global": 7,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 0,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "3": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 7,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "4": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 0,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "5": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 0,
+     "gem_seamless": 4,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "6": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 99,
+     "gem_seamless": 2,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    },
+    "7": {
+     "cma_grapes_global": 1,
+     "ecmwf_ifs025": 178,
+     "gem_seamless": 3,
+     "gfs_seamless": 0,
+     "icon_seamless": 0,
+     "meteofrance_seamless": 0
+    }
+   },
+   "descartes_qualidade_rodadas": {
+    "1": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "2": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "3": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "4": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "5": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "6": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "7": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "8": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "9": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "10": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "11": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "12": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "13": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "14": {
+     "ecmwf_ifs025": 0,
+     "gfs_seamless": 0
+    },
+    "15": {
+     "gfs_seamless": 0
+    }
+   },
+   "leads_rodadas": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ]
+  }
+ },
+ "download_single_runs": {
+  "segundos": 565,
+  "primeira_rodada": {
+   "ecmwf_ifs025": "2026-04-02 12:00:00",
+   "gfs_seamless": "2026-04-02 12:00:00"
+  },
+  "indisponiveis": 20,
+  "exemplos_indisponiveis": [
+   "Cascavel|ecmwf_ifs025|2026-03-28T12:00",
+   "Cascavel|ecmwf_ifs025|2026-03-29T12:00",
+   "Cascavel|ecmwf_ifs025|2026-03-30T12:00",
+   "Cascavel|ecmwf_ifs025|2026-03-31T12:00",
+   "Cascavel|ecmwf_ifs025|2026-04-01T12:00",
+   "Cascavel|gfs_seamless|2026-03-28T12:00"
+  ],
+  "pedidos": 256,
+  "bytes": 2221760,
+  "espera_429_s": 0.0
+ },
+ "geracao": {
+  "a_k": {
+   "1": {
+    "a": 1.0825,
+    "por_usina": {
+     "Cascavel": {
+      "a": 1.0287,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 1.133,
+      "horas": 6295
+     }
+    }
+   },
+   "2": {
+    "a": 1.0692,
+    "por_usina": {
+     "Cascavel": {
+      "a": 1.01,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 1.1289,
+      "horas": 6295
+     }
+    }
+   },
+   "3": {
+    "a": 1.0514,
+    "por_usina": {
+     "Cascavel": {
+      "a": 1.0018,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 1.1012,
+      "horas": 6295
+     }
+    }
+   },
+   "4": {
+    "a": 0.9158,
+    "por_usina": {
+     "Cascavel": {
+      "a": 0.8804,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 0.9515,
+      "horas": 6295
+     }
+    }
+   },
+   "5": {
+    "a": 0.9058,
+    "por_usina": {
+     "Cascavel": {
+      "a": 0.8684,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 0.9424,
+      "horas": 6295
+     }
+    }
+   },
+   "6": {
+    "a": 0.855,
+    "por_usina": {
+     "Cascavel": {
+      "a": 0.8158,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 0.8944,
+      "horas": 6295
+     }
+    }
+   },
+   "7": {
+    "a": 0.7854,
+    "por_usina": {
+     "Cascavel": {
+      "a": 0.8062,
+      "horas": 6426
+     },
+     "Curitiba": {
+      "a": 0.7669,
+      "horas": 6295
+     }
+    }
+   }
+  },
+  "leads": {
+   "1": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3424,
+       "skill_vs_persist_cs": 0.3861,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3523,
+       "skill_vs_persist_cs": 0.3954,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3346,
+       "skill_vs_persist_cs": 0.3788,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0665
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0712
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.4903,
+       "skill_vs_persist_cs": 0.5377,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.5072,
+       "skill_vs_persist_cs": 0.553,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.4812,
+       "skill_vs_persist_cs": 0.5294,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.093
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1025
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2984,
+       "skill_vs_persist_cs": 0.3166,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3051,
+       "skill_vs_persist_cs": 0.3231,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2949,
+       "skill_vs_persist_cs": 0.3132,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0259
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0266
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.5024,
+       "skill_vs_persist_cs": 0.526,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.5158,
+       "skill_vs_persist_cs": 0.5388,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.4947,
+       "skill_vs_persist_cs": 0.5187,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0475
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0499
+      }
+     }
+    }
+   },
+   "2": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3119,
+       "skill_vs_persist_cs": 0.4317,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3176,
+       "skill_vs_persist_cs": 0.4364,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3065,
+       "skill_vs_persist_cs": 0.4273,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1741
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2109
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.4499,
+       "skill_vs_persist_cs": 0.5699,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.4603,
+       "skill_vs_persist_cs": 0.5781,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.4452,
+       "skill_vs_persist_cs": 0.5662,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2182
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2791
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2562,
+       "skill_vs_persist_cs": 0.3652,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2626,
+       "skill_vs_persist_cs": 0.3707,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.253,
+       "skill_vs_persist_cs": 0.3625,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1466
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1718
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.428,
+       "skill_vs_persist_cs": 0.5543,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.4467,
+       "skill_vs_persist_cs": 0.5689,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.4215,
+       "skill_vs_persist_cs": 0.5492,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2208
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2833
+      }
+     }
+    }
+   },
+   "3": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2889,
+       "skill_vs_persist_cs": 0.4348,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2944,
+       "skill_vs_persist_cs": 0.4392,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2859,
+       "skill_vs_persist_cs": 0.4325,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2052
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2582
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.4183,
+       "skill_vs_persist_cs": 0.5712,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.4282,
+       "skill_vs_persist_cs": 0.5785,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.4163,
+       "skill_vs_persist_cs": 0.5697,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2628
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3565
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2365,
+       "skill_vs_persist_cs": 0.377,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2405,
+       "skill_vs_persist_cs": 0.3803,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2352,
+       "skill_vs_persist_cs": 0.376,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.184
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2256
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3972,
+       "skill_vs_persist_cs": 0.5599,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.4121,
+       "skill_vs_persist_cs": 0.5708,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3949,
+       "skill_vs_persist_cs": 0.5583,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.27
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3698
+      }
+     }
+    }
+   },
+   "4": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2549,
+       "skill_vs_persist_cs": 0.416,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2665,
+       "skill_vs_persist_cs": 0.425,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2637,
+       "skill_vs_persist_cs": 0.4229,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2162
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2758
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3865,
+       "skill_vs_persist_cs": 0.555,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.4026,
+       "skill_vs_persist_cs": 0.5666,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3943,
+       "skill_vs_persist_cs": 0.5606,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2746
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3785
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2236,
+       "skill_vs_persist_cs": 0.3745,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2284,
+       "skill_vs_persist_cs": 0.3784,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2271,
+       "skill_vs_persist_cs": 0.3773,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1943
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2412
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3852,
+       "skill_vs_persist_cs": 0.5591,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3825,
+       "skill_vs_persist_cs": 0.5571,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3898,
+       "skill_vs_persist_cs": 0.5624,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2828
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3943
+      }
+     }
+    }
+   },
+   "5": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2348,
+       "skill_vs_persist_cs": 0.4127,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2447,
+       "skill_vs_persist_cs": 0.4204,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2449,
+       "skill_vs_persist_cs": 0.4205,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2326
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.303
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.345,
+       "skill_vs_persist_cs": 0.536,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3572,
+       "skill_vs_persist_cs": 0.5447,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3564,
+       "skill_vs_persist_cs": 0.5441,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2916
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.4116
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1912,
+       "skill_vs_persist_cs": 0.3436,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.1939,
+       "skill_vs_persist_cs": 0.3458,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.1971,
+       "skill_vs_persist_cs": 0.3484,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1885
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2322
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3213,
+       "skill_vs_persist_cs": 0.51,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.3198,
+       "skill_vs_persist_cs": 0.5089,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3312,
+       "skill_vs_persist_cs": 0.5172,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2781
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3853
+      }
+     }
+    }
+   },
+   "6": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1271,
+       "skill_vs_persist_cs": 0.3135,
+       "dm_p_vs_climatologia": 0.0016
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.1369,
+       "skill_vs_persist_cs": 0.3212,
+       "dm_p_vs_climatologia": 0.0005
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.1551,
+       "skill_vs_persist_cs": 0.3355,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2136
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2716
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2068,
+       "skill_vs_persist_cs": 0.4177,
+       "dm_p_vs_climatologia": 0.001
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.2178,
+       "skill_vs_persist_cs": 0.4258,
+       "dm_p_vs_climatologia": 0.0003
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2393,
+       "skill_vs_persist_cs": 0.4416,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2659
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3622
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1714,
+       "skill_vs_persist_cs": 0.3209,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.1764,
+       "skill_vs_persist_cs": 0.3251,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.176,
+       "skill_vs_persist_cs": 0.3247,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1805
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2203
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3011,
+       "skill_vs_persist_cs": 0.489,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.296,
+       "skill_vs_persist_cs": 0.4853,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.3076,
+       "skill_vs_persist_cs": 0.4938,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2689
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3678
+      }
+     }
+    }
+   },
+   "7": {
+    "Cascavel": {
+     "horas": 4014,
+     "dias": 297,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0648,
+       "skill_vs_persist_cs": 0.2543,
+       "dm_p_vs_climatologia": 0.0482
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.0678,
+       "skill_vs_persist_cs": 0.2567,
+       "dm_p_vs_climatologia": 0.0399
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.1109,
+       "skill_vs_persist_cs": 0.2911,
+       "dm_p_vs_climatologia": 0.0005
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2026
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2541
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1281,
+       "skill_vs_persist_cs": 0.349,
+       "dm_p_vs_climatologia": 0.0188
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.1302,
+       "skill_vs_persist_cs": 0.3505,
+       "dm_p_vs_climatologia": 0.0145
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.1766,
+       "skill_vs_persist_cs": 0.3852,
+       "dm_p_vs_climatologia": 0.0002
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2533
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3393
+      }
+     }
+    },
+    "Curitiba": {
+     "horas": 4025,
+     "dias": 301,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0975,
+       "skill_vs_persist_cs": 0.2706,
+       "dm_p_vs_climatologia": 0.0006
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.0984,
+       "skill_vs_persist_cs": 0.2713,
+       "dm_p_vs_climatologia": 0.0003
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.116,
+       "skill_vs_persist_cs": 0.2855,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1918
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2373
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1996,
+       "skill_vs_persist_cs": 0.4249,
+       "dm_p_vs_climatologia": 0.0001
+      },
+      "ajustado": {
+       "skill_vs_climatologia": 0.1905,
+       "skill_vs_persist_cs": 0.4184,
+       "dm_p_vs_climatologia": 0.0001
+      },
+      "encolhido": {
+       "skill_vs_climatologia": 0.2196,
+       "skill_vs_persist_cs": 0.4393,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2815
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3918
+      }
+     }
+    }
+   }
+  },
+  "G1": {
+   "skill_medio_dia_vs_climatologia": {
+    "fisico": 0.3543,
+    "ajustado": 0.3619,
+    "encolhido": 0.362
+   },
+   "escolhido": "encolhido",
+   "a_k_padrao": {
+    "1": 1.0825,
+    "2": 1.0692,
+    "3": 1.0514,
+    "4": 0.9158,
+    "5": 0.9058,
+    "6": 0.855,
+    "7": 0.7854
+   }
+  },
+  "G2": {
+   "1": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.4812,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.4947,
+     "p": 0.0
+    }
+   },
+   "2": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.4452,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.4215,
+     "p": 0.0
+    }
+   },
+   "3": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.4163,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.3949,
+     "p": 0.0
+    }
+   },
+   "4": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.3943,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.3898,
+     "p": 0.0
+    }
+   },
+   "5": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.3564,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.3312,
+     "p": 0.0
+    }
+   },
+   "6": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.2393,
+     "p": 0.0
+    },
+    "Curitiba": {
+     "skill": 0.3076,
+     "p": 0.0
+    }
+   },
+   "7": {
+    "passa": true,
+    "Cascavel": {
+     "skill": 0.1766,
+     "p": 0.0002
+    },
+    "Curitiba": {
+     "skill": 0.2196,
+     "p": 0.0
+    }
+   }
+  },
+  "espalhamento_x_erro": {
+   "1": {
+    "Cascavel": {
+     "spearman_rel": 0.347,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.366,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.135
+    },
+    "Curitiba": {
+     "spearman_rel": 0.097,
+     "p_rel": 0.0922,
+     "spearman_kwh": 0.098,
+     "p_kwh": 0.0909,
+     "espalhamento_mediano": 0.172
+    }
+   },
+   "2": {
+    "Cascavel": {
+     "spearman_rel": 0.381,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.39,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.149
+    },
+    "Curitiba": {
+     "spearman_rel": 0.156,
+     "p_rel": 0.0067,
+     "spearman_kwh": 0.151,
+     "p_kwh": 0.0087,
+     "espalhamento_mediano": 0.193
+    }
+   },
+   "3": {
+    "Cascavel": {
+     "spearman_rel": 0.427,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.432,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.173
+    },
+    "Curitiba": {
+     "spearman_rel": 0.185,
+     "p_rel": 0.0013,
+     "spearman_kwh": 0.177,
+     "p_kwh": 0.002,
+     "espalhamento_mediano": 0.199
+    }
+   },
+   "4": {
+    "Cascavel": {
+     "spearman_rel": 0.434,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.459,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.162
+    },
+    "Curitiba": {
+     "spearman_rel": 0.114,
+     "p_rel": 0.048,
+     "spearman_kwh": 0.118,
+     "p_kwh": 0.0408,
+     "espalhamento_mediano": 0.204
+    }
+   },
+   "5": {
+    "Cascavel": {
+     "spearman_rel": 0.429,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.433,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.168
+    },
+    "Curitiba": {
+     "spearman_rel": 0.094,
+     "p_rel": 0.1029,
+     "spearman_kwh": 0.079,
+     "p_kwh": 0.1723,
+     "espalhamento_mediano": 0.187
+    }
+   },
+   "6": {
+    "Cascavel": {
+     "spearman_rel": 0.392,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.385,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.166
+    },
+    "Curitiba": {
+     "spearman_rel": 0.074,
+     "p_rel": 0.2032,
+     "spearman_kwh": 0.063,
+     "p_kwh": 0.2765,
+     "espalhamento_mediano": 0.203
+    }
+   },
+   "7": {
+    "Cascavel": {
+     "spearman_rel": 0.292,
+     "p_rel": 0.0,
+     "spearman_kwh": 0.292,
+     "p_kwh": 0.0,
+     "espalhamento_mediano": 0.165
+    },
+    "Curitiba": {
+     "spearman_rel": 0.208,
+     "p_rel": 0.0003,
+     "spearman_kwh": 0.204,
+     "p_kwh": 0.0004,
+     "espalhamento_mediano": 0.229
+    }
+   }
+  },
+  "rodadas": {
+   "1": {
+    "Cascavel": {
+     "horas": 685,
+     "dias": 55,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3807,
+       "skill_vs_persist_cs": 0.408,
+       "dm_p_vs_climatologia": 0.0005
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.044
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.046
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.4637,
+       "skill_vs_persist_cs": 0.5119,
+       "dm_p_vs_climatologia": 0.0054
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0897
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0986
+      }
+     },
+     "primeiro_dia": "2026-04-03",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 714,
+     "dias": 58,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3851,
+       "skill_vs_persist_cs": 0.3708,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": -0.0233
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": 0.0227
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.5216,
+       "skill_vs_persist_cs": 0.5125,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": -0.019
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": 0.0186
+      }
+     },
+     "primeiro_dia": "2026-04-03",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "2": {
+    "Cascavel": {
+     "horas": 672,
+     "dias": 54,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3102,
+       "skill_vs_persist_cs": 0.458,
+       "dm_p_vs_climatologia": 0.0027
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2143
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2728
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3739,
+       "skill_vs_persist_cs": 0.5443,
+       "dm_p_vs_climatologia": 0.0249
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2722
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.374
+      }
+     },
+     "primeiro_dia": "2026-04-04",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 701,
+     "dias": 57,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3718,
+       "skill_vs_persist_cs": 0.4442,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1153
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1303
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.5049,
+       "skill_vs_persist_cs": 0.5822,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.156
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1848
+      }
+     },
+     "primeiro_dia": "2026-04-04",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "3": {
+    "Cascavel": {
+     "horas": 659,
+     "dias": 53,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2694,
+       "skill_vs_persist_cs": 0.4136,
+       "dm_p_vs_climatologia": 0.0052
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1974
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2459
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3474,
+       "skill_vs_persist_cs": 0.5278,
+       "dm_p_vs_climatologia": 0.0364
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2764
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.382
+      }
+     },
+     "primeiro_dia": "2026-04-05",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 688,
+     "dias": 56,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3506,
+       "skill_vs_persist_cs": 0.461,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.17
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2048
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.4818,
+       "skill_vs_persist_cs": 0.5932,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2149
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2737
+      }
+     },
+     "primeiro_dia": "2026-04-05",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "4": {
+    "Cascavel": {
+     "horas": 646,
+     "dias": 52,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2983,
+       "skill_vs_persist_cs": 0.4365,
+       "dm_p_vs_climatologia": 0.0019
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.197
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2453
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3483,
+       "skill_vs_persist_cs": 0.5283,
+       "dm_p_vs_climatologia": 0.03
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2761
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3815
+      }
+     },
+     "primeiro_dia": "2026-04-06",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 675,
+     "dias": 55,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3414,
+       "skill_vs_persist_cs": 0.4499,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1647
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1972
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.442,
+       "skill_vs_persist_cs": 0.5566,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2053
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2583
+      }
+     },
+     "primeiro_dia": "2026-04-06",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "5": {
+    "Cascavel": {
+     "horas": 633,
+     "dias": 51,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2214,
+       "skill_vs_persist_cs": 0.3501,
+       "dm_p_vs_climatologia": 0.0092
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1653
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.198
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2269,
+       "skill_vs_persist_cs": 0.3961,
+       "dm_p_vs_climatologia": 0.0944
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2189
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2802
+      }
+     },
+     "primeiro_dia": "2026-04-07",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 662,
+     "dias": 54,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2954,
+       "skill_vs_persist_cs": 0.3966,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1435
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1676
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.3912,
+       "skill_vs_persist_cs": 0.5022,
+       "dm_p_vs_climatologia": 0.0
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1824
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2231
+      }
+     },
+     "primeiro_dia": "2026-04-07",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "6": {
+    "Cascavel": {
+     "horas": 620,
+     "dias": 50,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1154,
+       "skill_vs_persist_cs": 0.2149,
+       "dm_p_vs_climatologia": 0.0746
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1125
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1267
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0671,
+       "skill_vs_persist_cs": 0.1915,
+       "dm_p_vs_climatologia": 0.6516
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1334
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.154
+      }
+     },
+     "primeiro_dia": "2026-04-08",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 649,
+     "dias": 53,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1983,
+       "skill_vs_persist_cs": 0.2524,
+       "dm_p_vs_climatologia": 0.0009
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0675
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0723
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2315,
+       "skill_vs_persist_cs": 0.2976,
+       "dm_p_vs_climatologia": 0.0029
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0859
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.094
+      }
+     },
+     "primeiro_dia": "2026-04-08",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "7": {
+    "Cascavel": {
+     "horas": 607,
+     "dias": 49,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1632,
+       "skill_vs_persist_cs": 0.277,
+       "dm_p_vs_climatologia": 0.0551
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.136
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1574
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1142,
+       "skill_vs_persist_cs": 0.2499,
+       "dm_p_vs_climatologia": 0.4608
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1531
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1808
+      }
+     },
+     "primeiro_dia": "2026-04-09",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 636,
+     "dias": 52,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.099,
+       "skill_vs_persist_cs": 0.2041,
+       "dm_p_vs_climatologia": 0.1254
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1167
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1321
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.1459,
+       "skill_vs_persist_cs": 0.2771,
+       "dm_p_vs_climatologia": 0.0855
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1536
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1814
+      }
+     },
+     "primeiro_dia": "2026-04-09",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "8": {
+    "Cascavel": {
+     "horas": 594,
+     "dias": 48,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0547,
+       "skill_vs_persist_cs": 0.1628,
+       "dm_p_vs_climatologia": 0.2672
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1143
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1291
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0289,
+       "skill_vs_persist_cs": 0.1286,
+       "dm_p_vs_climatologia": 0.8167
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.153
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1807
+      }
+     },
+     "primeiro_dia": "2026-04-10",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 623,
+     "dias": 51,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.168,
+       "skill_vs_persist_cs": 0.3073,
+       "dm_p_vs_climatologia": 0.0242
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1675
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2011
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.2173,
+       "skill_vs_persist_cs": 0.3791,
+       "dm_p_vs_climatologia": 0.0296
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2068
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2607
+      }
+     },
+     "primeiro_dia": "2026-04-10",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "9": {
+    "Cascavel": {
+     "horas": 581,
+     "dias": 47,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0482,
+       "skill_vs_persist_cs": 0.1764,
+       "dm_p_vs_climatologia": 0.3232
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1347
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1556
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0247,
+       "skill_vs_persist_cs": 0.2038,
+       "dm_p_vs_climatologia": 0.8627
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1836
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2249
+      }
+     },
+     "primeiro_dia": "2026-04-11",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 610,
+     "dias": 50,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0606,
+       "skill_vs_persist_cs": 0.2219,
+       "dm_p_vs_climatologia": 0.3255
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1717
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2072
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0717,
+       "skill_vs_persist_cs": 0.268,
+       "dm_p_vs_climatologia": 0.4116
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2114
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2681
+      }
+     },
+     "primeiro_dia": "2026-04-11",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "10": {
+    "Cascavel": {
+     "horas": 568,
+     "dias": 46,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0751,
+       "skill_vs_persist_cs": 0.2137,
+       "dm_p_vs_climatologia": 0.2511
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1499
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1763
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0452,
+       "skill_vs_persist_cs": 0.2563,
+       "dm_p_vs_climatologia": 0.7495
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.221
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2838
+      }
+     },
+     "primeiro_dia": "2026-04-13",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 597,
+     "dias": 49,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0639,
+       "skill_vs_persist_cs": 0.2219,
+       "dm_p_vs_climatologia": 0.3168
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1687
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2029
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0788,
+       "skill_vs_persist_cs": 0.2745,
+       "dm_p_vs_climatologia": 0.3675
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2124
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2696
+      }
+     },
+     "primeiro_dia": "2026-04-12",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "11": {
+    "Cascavel": {
+     "horas": 556,
+     "dias": 46,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0369,
+       "skill_vs_persist_cs": 0.1883,
+       "dm_p_vs_climatologia": 0.443
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1572
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1866
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0686,
+       "skill_vs_persist_cs": 0.2546,
+       "dm_p_vs_climatologia": 0.5892
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1998
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2497
+      }
+     },
+     "primeiro_dia": "2026-04-13",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 585,
+     "dias": 48,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0287,
+       "skill_vs_persist_cs": 0.1896,
+       "dm_p_vs_climatologia": 0.6651
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1656
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1985
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0459,
+       "skill_vs_persist_cs": 0.2414,
+       "dm_p_vs_climatologia": 0.6082
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2049
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2578
+      }
+     },
+     "primeiro_dia": "2026-04-13",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "12": {
+    "Cascavel": {
+     "horas": 543,
+     "dias": 45,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0925,
+       "skill_vs_persist_cs": 0.0371,
+       "dm_p_vs_climatologia": 0.5301
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1186
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1345
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0892,
+       "skill_vs_persist_cs": 0.1122,
+       "dm_p_vs_climatologia": 0.5436
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1849
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2268
+      }
+     },
+     "primeiro_dia": "2026-04-14",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 573,
+     "dias": 47,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0034,
+       "skill_vs_persist_cs": 0.2231,
+       "dm_p_vs_climatologia": 0.9658
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2205
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2829
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0056,
+       "skill_vs_persist_cs": 0.2647,
+       "dm_p_vs_climatologia": 0.9436
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2606
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3524
+      }
+     },
+     "primeiro_dia": "2026-04-15",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "13": {
+    "Cascavel": {
+     "horas": 530,
+     "dias": 44,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.1101,
+       "skill_vs_persist_cs": -0.0435,
+       "dm_p_vs_climatologia": 0.5315
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0601
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.0639
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.1695,
+       "skill_vs_persist_cs": -0.0581,
+       "dm_p_vs_climatologia": 0.2132
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.0952
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1052
+      }
+     },
+     "primeiro_dia": "2026-04-15",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 562,
+     "dias": 47,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0406,
+       "skill_vs_persist_cs": 0.1549,
+       "dm_p_vs_climatologia": 0.6082
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1878
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2313
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0431,
+       "skill_vs_persist_cs": 0.188,
+       "dm_p_vs_climatologia": 0.6557
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2215
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2846
+      }
+     },
+     "primeiro_dia": "2026-04-15",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "14": {
+    "Cascavel": {
+     "horas": 517,
+     "dias": 43,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0578,
+       "skill_vs_persist_cs": 0.0745,
+       "dm_p_vs_climatologia": 0.6631
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1251
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.143
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0917,
+       "skill_vs_persist_cs": 0.0847,
+       "dm_p_vs_climatologia": 0.4338
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1615
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1927
+      }
+     },
+     "primeiro_dia": "2026-04-16",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 550,
+     "dias": 46,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0445,
+       "skill_vs_persist_cs": 0.2212,
+       "dm_p_vs_climatologia": 0.5691
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1849
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2268
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": 0.0562,
+       "skill_vs_persist_cs": 0.2649,
+       "dm_p_vs_climatologia": 0.5585
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2212
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2839
+      }
+     },
+     "primeiro_dia": "2026-04-16",
+     "ultimo_dia": "2026-05-31"
+    }
+   },
+   "15": {
+    "Cascavel": {
+     "horas": 504,
+     "dias": 42,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.355,
+       "skill_vs_persist_cs": -0.0718,
+       "dm_p_vs_climatologia": 0.0026
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.209
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2642
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.403,
+       "skill_vs_persist_cs": -0.0625,
+       "dm_p_vs_climatologia": 0.0146
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.2427
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.3205
+      }
+     },
+     "primeiro_dia": "2026-04-17",
+     "ultimo_dia": "2026-05-31"
+    },
+    "Curitiba": {
+     "horas": 538,
+     "dias": 45,
+     "hora": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0731,
+       "skill_vs_persist_cs": 0.0862,
+       "dm_p_vs_climatologia": 0.3697
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1484
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.1743
+      }
+     },
+     "dia": {
+      "fisico": {
+       "skill_vs_climatologia": -0.0556,
+       "skill_vs_persist_cs": 0.1338,
+       "dm_p_vs_climatologia": 0.5763
+      },
+      "climatologia": {
+       "skill_vs_persist_cs": 0.1794
+      },
+      "persist_cs": {
+       "skill_vs_climatologia": -0.2187
+      }
+     },
+     "primeiro_dia": "2026-04-17",
+     "ultimo_dia": "2026-05-31"
+    }
+   }
+  },
+  "G3": {
+   "1": {
+    "indicativo": true
+   },
+   "2": {
+    "indicativo": true
+   },
+   "3": {
+    "indicativo": true
+   },
+   "4": {
+    "indicativo": true
+   },
+   "5": {
+    "indicativo": false
+   },
+   "6": {
+    "indicativo": false
+   },
+   "7": {
+    "indicativo": false
+   },
+   "8": {
+    "indicativo": false
+   },
+   "9": {
+    "indicativo": false
+   },
+   "10": {
+    "indicativo": false
+   },
+   "11": {
+    "indicativo": false
+   },
+   "12": {
+    "indicativo": false
+   },
+   "13": {
+    "indicativo": false
+   },
+   "14": {
+    "indicativo": false
+   },
+   "15": {
+    "indicativo": false
+   }
+  }
+ },
+ "comparacao_extra": {
+  "usinas_lead1": {
+   "horas": 8940,
+   "skill_vs_persist_ceu_claro": {
+    "linear_fisico|C": 0.3118,
+    "LightGBM|C": 0.3303,
+    "Ensemble-mediana|C": 0.3673,
+    "fisico": 0.3251,
+    "encolhido": 0.321,
+    "climatologia": 0.031,
+    "persist_cs": 0.0041
+   },
+   "dm_p_vs_LightGBM_C": {
+    "linear_fisico|C": 0.1469,
+    "Ensemble-mediana|C": 0.0,
+    "fisico": 0.8822,
+    "encolhido": 0.7266,
+    "climatologia": 0.0,
+    "persist_cs": 0.0
+   },
+   "skill_publicado_metricas_csv": {
+    "linear_fisico": 0.3118,
+    "LightGBM": 0.3303,
+    "Ensemble-mediana": 0.3673
+   }
+  },
+  "consumo_lead1": {
+   "benchmark": {
+    "persist_24h": 0.0,
+    "semanal_168h": -0.1258,
+    "media_7d": 0.1575
+   },
+   "regras_lead1": {
+    "semana": -0.1258,
+    "media_4sem": 0.1011,
+    "media_7d": 0.1575,
+    "perfil_dia_util": 0.1595
+   }
+  },
+  "meteofrance_lead3": {
+   "Cascavel": {
+    "07h": {
+     "mf_ifs": 1.23,
+     "mf_gfs": 1.36
+    },
+    "08h": {
+     "mf_ifs": 1.21,
+     "mf_gfs": 1.22
+    },
+    "09h": {
+     "mf_ifs": 1.14,
+     "mf_gfs": 1.14
+    },
+    "10h": {
+     "mf_ifs": 1.1,
+     "mf_gfs": 1.11
+    },
+    "11h": {
+     "mf_ifs": 1.1,
+     "mf_gfs": 1.1
+    },
+    "12h": {
+     "mf_ifs": 1.12,
+     "mf_gfs": 1.09
+    },
+    "13h": {
+     "mf_ifs": 1.15,
+     "mf_gfs": 1.16
+    },
+    "14h": {
+     "mf_ifs": 1.18,
+     "mf_gfs": 1.22
+    },
+    "15h": {
+     "mf_ifs": 1.24,
+     "mf_gfs": 1.35
+    },
+    "16h": {
+     "mf_ifs": 1.31,
+     "mf_gfs": 1.45
+    },
+    "17h": {
+     "mf_ifs": 1.42,
+     "mf_gfs": 1.7
+    },
+    "18h": {
+     "mf_ifs": 1.71,
+     "mf_gfs": 2.27
+    },
+    "max_ghi_mf_lead3": 1088.7,
+    "max_ghi_ifs_lead3": 1110.0
+   },
+   "Curitiba": {
+    "07h": {
+     "mf_ifs": 1.43,
+     "mf_gfs": 1.55
+    },
+    "08h": {
+     "mf_ifs": 1.38,
+     "mf_gfs": 1.4
+    },
+    "09h": {
+     "mf_ifs": 1.26,
+     "mf_gfs": 1.26
+    },
+    "10h": {
+     "mf_ifs": 1.18,
+     "mf_gfs": 1.19
+    },
+    "11h": {
+     "mf_ifs": 1.16,
+     "mf_gfs": 1.16
+    },
+    "12h": {
+     "mf_ifs": 1.16,
+     "mf_gfs": 1.17
+    },
+    "13h": {
+     "mf_ifs": 1.18,
+     "mf_gfs": 1.22
+    },
+    "14h": {
+     "mf_ifs": 1.22,
+     "mf_gfs": 1.28
+    },
+    "15h": {
+     "mf_ifs": 1.3,
+     "mf_gfs": 1.38
+    },
+    "16h": {
+     "mf_ifs": 1.39,
+     "mf_gfs": 1.52
+    },
+    "17h": {
+     "mf_ifs": 1.58,
+     "mf_gfs": 1.83
+    },
+    "18h": {
+     "mf_ifs": 2.12,
+     "mf_gfs": 2.65
+    },
+    "max_ghi_mf_lead3": 1083.3,
+    "max_ghi_ifs_lead3": 1138.0
+   }
+  }
+ }
+}

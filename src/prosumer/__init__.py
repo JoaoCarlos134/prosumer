@@ -1,17 +1,17 @@
 """prosumer: day-ahead forecasting of energy prosumers' generation and consumption.
 
 Status: version 0.1 done (step E2) and step E4 started, of the proposal
-(`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are
-`analysis` (the app's single call, `analyze(series) -> Report`), `contracts`, `protocol`, `metrics`
-(including metrics at several resolutions and bands), `postprocessing` (consumption bias correction),
-`physics` (sun position, clear sky, plane-of-array), `provenance` (source and licence of every input),
-`quality` (the clock of a generation series checked against the sun), `diagnostics` (clear-day
-performance of a PV series from its energy alone, and its change points), `forecast`, `io` (Open-Meteo
-forecasts, NASA POWER weather, Fronius Solar.web exports, generic meter tables) and `data` (synthetic
-series and the real Dingle houses); `embedded` (a fitted linear or tree model with its preprocessing as one C
-header, for an ESP32) and `outlook` (`forecast_ahead`: the next days to weeks, hourly and per day, with the
-weather forecast trusted less as the lead grows; `best_windows` places a heavy load); the `economics` module
-is not written yet.
+(`docs/proposta/PROPOSTA_BIBLIOTECA.md`). So far there are `analysis` (the app's single call,
+`analyze(series) -> Report`), `contracts`, `protocol`, `metrics` (including metrics at several resolutions
+and bands), `postprocessing` (consumption bias correction), `physics` (sun position, clear sky,
+plane-of-array), `provenance` (source and licence of every input), `quality` (the clock of a generation series
+checked against the sun), `diagnostics` (clear-day performance of a PV series from its energy alone, and its
+change points), `forecast`, `io` (Open-Meteo forecasts, NASA POWER weather, Fronius Solar.web exports,
+generic meter tables) and `data` (synthetic series and the real Dingle houses); `embedded` (a fitted linear
+or tree model with its preprocessing, or the benchmark's SparseTSF/CycleNet, as one C header for an ESP32)
+and `outlook` (`forecast_ahead`: the next days to weeks, hourly and per day, with the weather forecast
+trusted less as the lead grows; `best_windows` places a heavy load); the `economics` module is not written
+yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported

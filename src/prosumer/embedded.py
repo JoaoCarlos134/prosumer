@@ -465,7 +465,12 @@ class CycleNet:
     a linear map 168 -> 24 of the residual. The phase is the position in the cycle of the window's first hour:
     hour of day (W = 24) or weekday * 24 + hour (W = 168, Monday = 0). For a day-ahead window issued at
     midnight the first hour is 00:00 of the same weekday a week before, so the phase is 0 (W = 24) or
-    weekday(day) * 24 (`day_phase`)."""
+    weekday(day) * 24 (`day_phase`).
+
+    The clock is the training's: the benchmark used fixed offsets (`Etc/GMT` for the houses, `Etc/GMT+3`
+    for the plants) and Q was learnt on those hours. A device that feeds local daylight-saving time is one
+    hour off all summer (in Europe/Dublin the window of 2020-04-01 starts at 23:00 local: phase 47, not
+    48); give it the history and the weekday on the fixed-offset clock."""
 
     cycle: np.ndarray  # (n_series, W)
     weight: np.ndarray  # (24, 168)
@@ -586,10 +591,15 @@ def to_c(model: Model, name: str, *, day_ahead: bool = True, clip_negative: bool
     A `SparseTSF` or a one-series `CycleNet` (see `CycleNet.fix`) gives only `<name>_forecast_day` with the
     same arguments (the networks do not use `doy` and `series_code`; SparseTSF not `dow` either): the gaps
     are filled as the benchmark windows (`causal_fill`), not imputed per feature as the other models do.
+    `hist` and `dow` must be on the training's clock (fixed offset in the benchmark, see `CycleNet`).
     """
     if not name.isidentifier():
         raise ValueError(f"{name!r} is not a C identifier")
     if isinstance(model, SparseTSF | CycleNet):
+        if not day_ahead:
+            raise ValueError(
+                "a network header is always the day-ahead forecast; day_ahead=False is for trees"
+            )
         return _c_network(model, name, clip_negative)
     if day_ahead and model.features != FEATURES:
         raise ValueError(f"day_ahead needs the features {FEATURES}; fix() drops nothing for trees")

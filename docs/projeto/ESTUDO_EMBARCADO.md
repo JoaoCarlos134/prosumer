@@ -239,13 +239,19 @@ Achado: o treino do CycleNet em CPU depende do número de threads. A 1ª rodada 
 kWh de diferença na FV das casas; com 5, como o `04`, deu 0,0 na FV das casas e nas usinas. No consumo (ciclo de
 168 h, 20 séries), a dobra 1 com 1, 4, 8 e 20 threads diferiu até 0,024–0,037 kWh da gravada, com 2 e 5 bateu
 (≤ 1,4e-6), e **com 5 threads também não é determinístico entre rodadas**: três rodadas no mesmo processo deram
-0,024, 0,024 e 1,2e-6 kWh; na FV das casas, 0,0 nas três (medição avulsa, script fora do repositório). O skill do
+0,024, 0,024 e 1,2e-6 kWh; na FV das casas, 0,0 nas três. **Esses números (a 1ª rodada com threads padrão, a
+varredura de threads e as três rodadas) vêm de uma medição avulsa cujo script e saída NÃO estão no repositório
+(a saída da 1ª rodada foi sobrescrita): não são reproduzíveis a partir dele** (revisão de 12/10). O skill do
 CycleNet refeito no consumo é o do benchmark até a 4ª casa (+0,1659). O "determinístico em CPU" do `04` vale para a
 FV das casas e as usinas, não para o consumo.
 
 ### Redes: resultado do portão
 
 O skill é o das previsões **do C** (o que o dispositivo calcula), com a máscara de horas avaliadas do benchmark.
+Nas árvores e no Ridge da geração (abaixo) é diferente: o skill do portão (c) é o das previsões **em Python** em
+todas as dobras, e o C é conferido só na última dobra (critério (a)). Ordem das rodadas: o portão foi commitado
+(7f2cc63) 47 s antes do `.npz` final; a ordem "1ª rodada depois do commit" não tem registro além dos horários dos
+arquivos. Em pilotos futuros, gravar a hora de início no JSON de saída.
 
 | Rede | Caso | Skill do C (benchmark) | Posição (DM p vs melhor) | Flash / RAM | C − torch máx. (razão à tolerância) | Portão |
 |---|---|---|---|---|---|---|

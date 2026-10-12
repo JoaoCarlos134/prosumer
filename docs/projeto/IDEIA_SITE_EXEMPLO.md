@@ -4,8 +4,15 @@
 pré-requisitos abaixo, que entraram na biblioteca: `prosumer.forecast_ahead`/`best_windows` (módulo `outlook`, 1 a
 35 dias, não só amanhã, a pedido do usuário: planejar cargas pesadas na semana), `io.open_meteo.fetch_forecast`,
 `io.geocode` e inclinação/azimute na previsão (POA). Conferido por HTTP com uma casa de Dingle (endereço), Cascavel
-(coordenadas; arquivo com `;` e vírgula decimal) e consumo. Pendente: a confiança por dia de antecedência
-(`outlook.TRUST`) é provisória até o piloto `piloto_horizonte.py`.
+(coordenadas; arquivo com `;` e vírgula decimal) e consumo, à mão (saídas não guardadas: Cascavel é dado privado).
+Pendente: a confiança por dia de antecedência (`outlook.TRUST`) é provisória até o piloto `piloto_horizonte.py`.
+
+**Correção da revisão independente (12/10):** o pré-requisito 1 NÃO entrou como especificado abaixo
+(`forecast_next_day` com a mediana dos modelos de histórico, faixas conformais, `DayAhead`): entrou um método mais
+simples (potência efetiva x POA da previsão, puxada para a estação; perfil de 4 semanas no consumo), **sem piloto**,
+contra a regra do projeto. Está declarado no docstring do `prosumer.outlook` e em toda saída; o
+`piloto_horizonte.py` compara no lead 1 com o regime C do benchmark e com as referências do consumo. A geometria
+digitada pelo usuário também não teve piloto próprio (pré-requisito 4).
 
 O texto abaixo é o registro da ideia como foi guardada.
 

@@ -34,7 +34,9 @@ Open-Meteo). The CSV stays local. The free Open-Meteo API is for non-commercial 
 
 - The ranges are not calibrated intervals (across weather models and the season's spread).
 - How much the weather is trusted at each lead (`prosumer.outlook.TRUST`) is provisional until the horizon
-  pilot measures it (`docs/projeto/PILOTOS_F1_F2.md`).
-- If your data ended long ago, the forecast starts today anyway (the weather forecast starts today); the
-  days in between are not forecast.
+  pilot (`piloto_horizonte.py`) measures it; so are the confidence labels.
+- Production: if your data ended long ago, the forecast starts today anyway (the weather forecast starts
+  today); the days in between are not forecast. Consumption uses no weather and starts the day after your data
+  end, whenever that was: check the dates (the page shows the year).
+- The method itself is not validated yet: see "Not validated yet" in the docstring of `prosumer.outlook`.
 - Only localhost: it is not meant to be exposed on a network.

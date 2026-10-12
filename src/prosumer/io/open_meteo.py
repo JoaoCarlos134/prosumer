@@ -59,7 +59,9 @@ DEFAULT_MODELS = (
 
 # How far ahead each model reaches in the live API, in days from 00 UTC of the request day (measured on
 # 2026-10-12 at the Dingle houses: last hour with a GHI value). The mean of the models therefore rests on
-# fewer models as the lead grows: past ~5 days only IFS, GFS, GEM and ICON remain, past ~10 only IFS and GFS.
+# fewer models as the lead grows: past ~5.5 days only IFS, GFS, GEM and ICON remain, past 8 IFS, GFS and GEM,
+# past ~10.5 only IFS and GFS. `meteofrance_seamless` gave impossible GHI from its 3rd-4th day at Cascavel on
+# 2026-10-12 (see `prosumer.outlook.IMPLAUSIBLE`).
 HORIZON_DAYS = {
     "ecmwf_ifs025": 15.0,
     "gfs_seamless": 16.0,

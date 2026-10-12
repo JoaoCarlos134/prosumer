@@ -15,7 +15,7 @@ How (simple on purpose, every step can be explained to the person using it):
     calendar month in the data (how much of a clear day an average day of that month gave);
   - *forecast* = seasonal + trust(lead) x (weather - seasonal). The trust of each lead day says how much a
     weather forecast that far ahead is worth more than the season; it falls with the lead and is zero where
-    no model reaches (`TRUST`, set by the horizon pilot, `docs/projeto/PILOTOS_F1_F2.md`).
+    no model reaches (`TRUST`: PROVISIONAL values, to be set by the horizon pilot `piloto_horizonte.py`).
 - **Consumption** (no weather): per hour, the mean of the same weekday and hour in the last `weeks` weeks.
   It does not depend on the lead: a household's week repeats; what changes it (holidays, a trip, a new
   appliance) is not in the data.
@@ -25,6 +25,14 @@ the same trust with the seasonal 10-90% range of clearness) and across the last 
 
 Beyond the last weather model (~16 days) the generation is only the seasonal expectation: the average day of
 that month, not a forecast of that day's weather. It is labelled so (`source = "seasonal"`).
+
+**Not validated yet (2026-10-12).** Neither method went through a pilot before entering the library: the
+generation method was not compared with the benchmark's regime C models at lead 1 (linear physics +0.312,
+LightGBM +0.330 on the plants), the fitted roof is used by default although pilot F2(b) found that an
+estimated geometry did not help LightGBM, and the consumption rule is not one of the benchmark's references
+nor the median the library uses for the day-ahead check. The horizon pilot (`piloto_horizonte.py`) measures
+all of this; until then the confidence labels rest on the provisional `TRUST`, and every outlook says so in
+its notes.
 """
 
 from __future__ import annotations
@@ -55,9 +63,10 @@ WEEKS = 4
 KW_EFF_DAYS = 60  # clear days of the last 60 days give the effective peak power
 MIN_CLEAR = 5
 # Trust in the weather forecast per lead day: lead 1 is the day after the forecast is issued (the archive's
-# `previous_day1`, the benchmark's day-ahead task); the rest of the issue day itself counts as lead 1.
+# `previous_day1`, the benchmark's day-ahead task); the rest of the issue day is lead 0, with lead 1's
+# trust.
 # PROVISIONAL until the horizon pilot (`piloto_horizonte.py`) measures it: full for the first days, falling
-# to zero by day 16.
+# to 0.05 on day 16 and zero after.
 # fmt: off
 TRUST: tuple[float, ...] = (
     1.0, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05,
@@ -65,7 +74,9 @@ TRUST: tuple[float, ...] = (
 # fmt: on
 # An hourly GHI above 1.2 x clear sky + 50 W/m2 is not weather but a broken value: on 2026-10-12 the live
 # `meteofrance_seamless` gave up to 2750 W/m2 at Cascavel on its 4th day (clear sky ~990). Brief cloud
-# enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The whole model-day is left out.
+# enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The fault looked systematic in the
+# lead (2-2.8x the other models from lead 3), and a cloudy day under the limit cannot be caught, so the model
+# is left out from that day to the end of the forecast.
 IMPLAUSIBLE = (1.2, 50.0)
 HIGH, MEDIUM = 0.66, 0.33  # trust above which a day is labelled high / medium confidence
 
@@ -159,13 +170,18 @@ def forecast_ahead(
     if start is not None:
         t = pd.Timestamp(start)
         first = (t.tz_localize(s.tz) if t.tzinfo is None else t.tz_convert(s.tz)).normalize()
-    elif w is not None and w["ds"].min().normalize() > first:
+        if first <= last:
+            notes.append(
+                f"The outlook starts on {first.date()}, before the data end ({last.date()}): those days are "
+                "already in the data, so they are not forecasts and say nothing about skill."
+            )
+    elif w is not None and s.quantity == "generation" and _first_full_day(w["ds"]) > first:
+        covered = _first_full_day(w["ds"])
         notes.append(
-            f"The data end on {last.date()}; the forecast starts on {w['ds'].min().date()}, the first day of "
-            "the "
-            "weather forecast. The days in between are not forecast."
+            f"The data end on {last.date()}; the forecast starts on {covered.date()}, the first local day "
+            "the weather forecast covers in full. The days in between are not forecast."
         )
-        first = w["ds"].min().normalize()
+        first = covered
     end = (first.tz_localize(None) + pd.Timedelta(days=days)).tz_localize(s.tz, nonexistent="shift_forward")
     hours = pd.date_range(first, end, freq="h", inclusive="left")
     issue = _issue_day(w, first)
@@ -178,12 +194,28 @@ def forecast_ahead(
         if w is not None:
             more.append("The weather forecast is not used for consumption (the profile of recent weeks is).")
     notes += more
+    if s.quantity == "generation" and w is not None:
+        if (hourly["source"] == "weather").any():
+            notes.append(
+                "How much the weather forecast is trusted at each lead day is PROVISIONAL (not yet "
+                "measured), and so are the confidence labels."
+            )
+        else:
+            notes.append(
+                "The weather forecast covers none of these hours: every day is the seasonal expectation."
+            )
     if lead.max() > len(trust) and s.quantity == "generation":
         notes.append(
             f"Days beyond day {len(trust)} are the seasonal expectation (an average day of the month), not a "
             "forecast of their weather."
         )
     daily = _daily(hourly)
+    gaps = daily[daily["missing_hours"] > 0]
+    if len(gaps):
+        notes.append(
+            f"{int(gaps['missing_hours'].sum())} hours have no forecast (never seen in the recent data) and "
+            "are left out of the daily totals and of the load windows."
+        )
     return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
 
 
@@ -204,10 +236,14 @@ def best_windows(
     rows = []
     for (uid, date), g in h.groupby(["unique_id", h["ds"].dt.tz_localize(None).dt.normalize()], sort=True):
         y = g["y_hat"].to_numpy(dtype=float)
-        if len(y) < hours or not np.isfinite(y).any():
+        if len(y) < hours:
             continue
         sums = np.convolve(np.nan_to_num(y), np.ones(hours), mode="valid")
-        i = int(np.argmax(sums) if prefer == "high" else np.argmin(sums))
+        gaps = np.convolve(~np.isfinite(y), np.ones(hours), mode="valid") > 0
+        if gaps.all():
+            continue
+        sums = np.where(gaps, np.nan, sums)  # a block with an hour of unknown forecast is not a candidate
+        i = int(np.nanargmax(sums) if prefer == "high" else np.nanargmin(sums))
         rows.append(
             {
                 "unique_id": uid,
@@ -244,7 +280,7 @@ def _generation(
     ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs)
     if dropped:
         notes.append(
-            "Weather model-days left out because their GHI exceeds what the sun can give "
+            "Weather models left out from the first day their GHI exceeds what the sun can give "
             f"(> {IMPLAUSIBLE[0]} x clear sky + {IMPLAUSIBLE[1]:.0f} W/m2 in some hour): "
             f"{', '.join(dropped)}."
         )
@@ -304,6 +340,7 @@ def _generation(
                     "source": np.where(a > 0, "weather", "seasonal"),
                     "n_models": n_models,
                     "trust": a,
+                    "sun": cs > 0,
                 }
             )
         )
@@ -390,9 +427,10 @@ def _weather_at(
     bad = m > IMPLAUSIBLE[0] * cs[:, None] + IMPLAUSIBLE[1]
     dropped = []
     for j, name in enumerate(models):
-        for d in pd.unique(day[bad[:, j]]):
-            m[day == d, j] = np.nan
-            dropped.append(f"{name.removeprefix('ghi_')} {pd.Timestamp(d).date()}")
+        if bad[:, j].any():
+            d0 = day[bad[:, j]].min()
+            m[day >= d0, j] = np.nan
+            dropped.append(f"{name.removeprefix('ghi_')} from {pd.Timestamp(d0).date()}")
     n = np.isfinite(m).sum(axis=1)
     ok = np.isfinite(m)
     mean = np.where(n > 0, np.where(ok, m, 0).sum(axis=1) / np.maximum(n, 1), np.nan)
@@ -445,6 +483,7 @@ def _consumption(
                     "source": "profile",
                     "n_models": 0,
                     "trust": np.nan,
+                    "sun": True,
                 }
             )
         )
@@ -454,26 +493,52 @@ def _consumption(
 
 # ---------------------------------------------------------------------- shared
 def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
-    h = hourly.assign(date=hourly["ds"].dt.tz_localize(None).dt.normalize())
+    """Per series and day. Generation is labelled over its sun hours only (the night says nothing):
+    `trust` is their mean trust, `n_models` the fewest models behind any of them, `source` "weather" when at
+    least half of them have a weather forecast; the confidence follows the mean trust, so a day only partly
+    covered by the weather is not labelled by its best hour. `missing_hours`: hours with no forecast (not in
+    the totals)."""
+    h = hourly.assign(
+        date=hourly["ds"].dt.tz_localize(None).dt.normalize(),
+        weather=(hourly["source"] == "weather").astype(float),
+        missing=hourly["y_hat"].isna().astype(int),
+    )
+    sun = h[h["sun"]]
+    keys = ["unique_id", "date"]
     d = (
-        h.groupby(["unique_id", "date"], sort=True)
+        h.groupby(keys, sort=True)
         .agg(
             lead_day=("lead_day", "first"),
             total=("y_hat", "sum"),
             low=("low", "sum"),
             high=("high", "sum"),
-            source=("source", lambda v: v.mode().iloc[0]),
-            n_models=("n_models", "max"),
-            trust=("trust", "max"),
+            missing_hours=("missing", "sum"),
         )
         .reset_index()
     )
+    by_sun = sun.groupby(keys).agg(
+        trust=("trust", "mean"), n_models=("n_models", "min"), weather=("weather", "mean")
+    )
+    d = d.merge(by_sun.reset_index(), on=keys, how="left")
+    profile = hourly.groupby(["unique_id"])["source"].first().eq("profile")
+    is_profile = d["unique_id"].map(profile).fillna(False).astype(bool)
+    d["source"] = np.where(is_profile, "profile", np.where(d["weather"] >= 0.5, "weather", "seasonal"))
+    d["n_models"] = d["n_models"].fillna(0).astype(int)
     d["confidence"] = np.select(
-        [d["source"] == "profile", d["trust"] >= HIGH, d["trust"] >= MEDIUM, d["trust"] > 0],
+        [is_profile, d["trust"] >= HIGH, d["trust"] >= MEDIUM, d["trust"] > 0],
         ["typical week", "high", "medium", "low"],
         default="seasonal only",
     )
-    return d
+    cols = ["unique_id", "date", "lead_day", "total", "low", "high", "source", "n_models", "trust"]
+    return d[[*cols, "confidence", "missing_hours"]]
+
+
+def _first_full_day(ds: pd.Series) -> pd.Timestamp:
+    """The first local day whose midnight is in `ds` (a frame that starts at 21:00 covers that day only in
+    part)."""
+    t0 = pd.Timestamp(ds.min())
+    day = t0.normalize()
+    return day if t0 == day else day + pd.Timedelta(days=1)
 
 
 def _wide(weather: pd.DataFrame, tz: str) -> pd.DataFrame:

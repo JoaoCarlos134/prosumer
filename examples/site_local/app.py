@@ -32,6 +32,7 @@ import pandas as pd
 
 import prosumer
 from prosumer.io import geocode, meter, open_meteo
+from prosumer.provenance import of
 
 HERE = Path(__file__).resolve().parent
 HOST, PORT = "127.0.0.1", 8000
@@ -41,6 +42,7 @@ HOST, PORT = "127.0.0.1", 8000
 def forecast_page(form: dict[str, str], csv: bytes) -> str:
     """Form fields + CSV bytes -> the result page (HTML). Each step adds a line to `log`, shown below."""
     log: list[str] = []
+    credits: list = []  # where each piece of outside data came from, shown at the end (licences require it)
     quantity = form.get("quantity") or "generation"
 
     # 1. Read the CSV. Without column names: the first column is the time, the second the energy.
@@ -58,6 +60,7 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
             raise ValueError(f"Address not found: {form['address']!r}. Type the coordinates instead.")
         lat, lon = float(found["latitude"].to_numpy()[0]), float(found["longitude"].to_numpy()[0])
         log.append(f"Address found: {found.loc[0, 'name']}.")
+        credits.append(of(found))
     else:
         raise ValueError("Give an address or the latitude and longitude.")
     site = geocode.round_site(lat, lon)  # ~1 km: enough for the weather and the sun
@@ -84,6 +87,7 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     if quantity == "generation":
         weather = open_meteo.fetch_forecast(*site, days=min(days, open_meteo.MAX_FORECAST_DAYS), tz=tz)
         log.append(f"Weather forecast downloaded: {weather['model'].nunique()} models.")
+        credits.append(of(weather))
 
     # 4. The forecast. Tilt, azimuth and kWp are optional: without them the library learns them from the data.
     def number(key: str) -> float | None:
@@ -98,24 +102,24 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     hours = int(form.get("load_hours") or 3)
     windows = prosumer.best_windows(out, hours)
 
-    return _render(out, windows, hours, log)
+    return _render(out, windows, hours, log, [c for c in credits if c is not None])
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)
-def _render(out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[str]) -> str:
+def _render(out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[str], credits: list) -> str:
     daily = out.daily
     top = max(float(daily["high"].max()), 1e-9)
     rows = []
     for _, d in daily.iterrows():
         bar = int(300 * d["total"] / top)
         rows.append(
-            f"<tr><td>{d['date']:%a %d %b}</td><td>{d['lead_day']}</td>"
+            f"<tr><td>{d['date']:%a %d %b %Y}</td><td>{d['lead_day']}</td>"
             f"<td>{d['total']:.1f}</td><td>{d['low']:.1f} - {d['high']:.1f}</td>"
             f"<td>{html.escape(str(d['confidence']))}</td>"
             f"<td><span class=bar style='width:{bar}px'></span></td></tr>"
         )
     best = "".join(
-        f"<tr><td>{w['date']:%a %d %b}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
+        f"<tr><td>{w['date']:%a %d %b %Y}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
         f"<td>{w['energy']:.1f}</td><td>{html.escape(str(w['confidence']))}</td></tr>"
         for _, w in windows.iterrows()
     )
@@ -136,6 +140,7 @@ def _render(out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[
 <table><tr><th>Day</th><th>Hours</th><th>kWh in the block</th><th>Confidence</th></tr>{best}</table>
 <h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + log)}</ul>
 <h2>What the library learnt</h2><pre>{method}</pre>
+<h2>Data sources</h2><ul>{"".join(f"<li>{html.escape(c.citation or c.source)}</li>" for c in credits)}</ul>
 <details><summary>Every hour</summary>{hourly.to_html(index=False)}</details>
 """
     )

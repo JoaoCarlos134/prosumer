@@ -151,14 +151,68 @@ def test_a_model_day_with_impossible_sun_is_left_out() -> None:
     w.loc[broken, "ghi"] = 2.5 * cs
     o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w, tilt=15, azimuth=20)
     np.testing.assert_allclose(o.daily["total"], truth.reshape(3, 24).sum(axis=1), rtol=0.03)
-    assert o.daily["n_models"].tolist() == [2, 1, 2]
-    assert any("broken 2024-01-02" in n for n in o.notes)
+    assert o.daily["n_models"].tolist() == [2, 1, 1]  # left out from its first broken day to the end
+    assert any("broken from 2024-01-02" in n for n in o.notes)
 
 
 def test_an_unidentified_roof_is_flagged() -> None:
-    # two planes facing east and west: one tilted plane explains them badly
-    s = _series(_plant(0.8, tilt=30, azimuth=90, second_plane=(30, 270)))
-    o = outlook.forecast_ahead(s, days=2, site=SITE)
-    assert any("unreliable" in n for n in o.notes) or o.method["series"]["p1"]["tilt"] < 30
+    """Review finding (2026-10-12): the old test passed through `or tilt < 30` and never reached the note."""
+    f = _plant(0.8)
+    rng = np.random.default_rng(3)
+    f["y"] *= rng.uniform(0.2, 1.0, len(f))  # hour-to-hour noise no single plane explains: R2 well below 0.85
+    o = outlook.forecast_ahead(_series(f), days=2, site=SITE)
+    assert any("unreliable" in n for n in o.notes)
     clean = outlook.forecast_ahead(_series(_plant(0.8)), days=2, site=SITE)
     assert not any("unreliable" in n for n in clean.notes)
+
+
+def test_weather_in_another_zone_starting_late_in_the_local_day() -> None:
+    """Review finding: weather in UTC from 00 UTC (21:00 in Sao Paulo) made a 'high' day of 3 hours."""
+    hours, kc, _ = _future(6)
+    utc = pd.date_range("2024-01-03 00:00", periods=4 * 24, freq="h", tz="UTC")
+    local_day = utc.tz_convert(TZ).tz_localize(None).normalize()
+    kc_utc = pd.Series(kc, index=hours.tz_localize(None).normalize()).groupby(level=0).first()
+    k = kc_utc.reindex(local_day).to_numpy()
+    w = pd.DataFrame({"model": "m", "ds": utc, "ghi": physics.clear_sky_ghi(utc, *SITE) * k})
+    w.attrs["issued"] = "2024-01-02T23:00:00+00:00"
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w)
+    assert o.daily["date"].min() == pd.Timestamp("2024-01-03")  # 2024-01-02 21:00 local is not a full day
+    assert any("covers in full" in n for n in o.notes)
+    assert any("PROVISIONAL" in n for n in o.notes)
+
+
+def test_a_day_partly_past_the_horizon_is_not_labelled_by_its_best_hour() -> None:
+    hours, kc, _ = _future(3)
+    w = _weather(
+        hours, kc, {"m": 24 + 11}, pd.Timestamp("2023-12-31 20:00", tz=TZ)
+    )  # stops at 11:00 of day 2
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w)
+    d2 = o.daily.iloc[1]
+    assert 0 < d2["trust"] < 1.0  # mean over the sun hours, about half of them with weather
+    assert o.daily.iloc[2]["confidence"] == "seasonal only"
+
+
+def test_unknown_hours_are_never_a_load_window() -> None:
+    idx = pd.date_range("2020-08-10", periods=5 * 7 * 24, freq="h", tz="Etc/GMT")
+    y = np.where(idx.hour == 3, np.nan, 1.0 + (idx.hour >= 18))
+    s = EnergySeries.from_dataframe(
+        pd.DataFrame({"unique_id": "H", "ds": idx, "y": y}),
+        unit="kWh",
+        quantity="consumption",
+        tz="Etc/GMT",
+        freq="h",
+    )
+    o = outlook.forecast_ahead(s, days=2)
+    b = outlook.best_windows(o, 1)
+    assert not (b["start"].dt.hour == 3).any()
+    assert (o.daily["missing_hours"] == 1).all()
+    assert any("no forecast" in n for n in o.notes)
+
+
+def test_silent_fallbacks_now_say_so() -> None:
+    hours, kc, _ = _future(3)
+    w = _weather(hours, kc, {"m": 0}, pd.Timestamp("2023-12-31 20:00", tz=TZ))  # every value NaN
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w)
+    assert any("covers none" in n for n in o.notes)
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=2, site=SITE, start="2023-12-30")
+    assert any("not forecasts" in n for n in o.notes)

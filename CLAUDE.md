@@ -500,10 +500,15 @@ revisao achou e foi consertado: floresta sem imputador mandava todo NaN para a e
 hora e dia; geracao = potencia efetiva e telhado aprendidos nos dias claros x POA da previsao do tempo, puxada para o
 esperado da estacao conforme a antecedencia cresce (`TRUST`, PROVISORIO ate o piloto `piloto_horizonte.py`); consumo
 = perfil das ultimas 4 semanas; `best_windows` para cargas pesadas); `io.open_meteo.fetch_forecast` (API ao vivo;
-alcance medido: IFS/GFS/AIFS ~15-16 dias, GEM 10,5, ICON 8, CMA 5,5, Meteo-France 4,75); `io.geocode` (Nominatim
+alcance medido: IFS/GFS ~15-16 dias, GEM 10,5, ICON 8, CMA 5,5, Meteo-France 4,75); `io.geocode` (Nominatim
 para enderecos; Open-Meteo so nomes de lugar), `round_site`, `timezone_at`. **Meteo-France ao vivo da GHI
 impossivel no 4o dia** (2.750 W/m2 em Cascavel): modelo-dia com GHI > 1,2 x ceu claro + 50 e descartado, com nota.
-Site cru em `examples/site_local/` (stdlib `http.server`, 5 passos = 5 chamadas da biblioteca). Agentes construtores
+Site cru em `examples/site_local/` (stdlib `http.server`, 5 passos = 5 chamadas da biblioteca). **Revisao (12/10): o
+metodo do `outlook` entrou SEM piloto** (contra a regra): nao comparado ao regime C do benchmark no lead 1, telhado
+ajustado por padrao apesar do F2(b), regra do consumo fora das referencias; declarado no docstring e em toda saida
+ate o `piloto_horizonte.py` medir. Consertados: rotulo do dia pelas horas de sol (nao pela melhor hora), 1o dia
+inteiro coberto pelo clima, modelo com GHI impossivel sai ate o fim, janelas com hora sem previsao, notas para
+recuos silenciosos, atribuicoes OSM/Open-Meteo na pagina. Agentes construtores
 `.claude/agents/library-builder.md` e `pilot-runner.md` (pedido do usuario).
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes

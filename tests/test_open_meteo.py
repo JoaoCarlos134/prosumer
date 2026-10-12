@@ -201,7 +201,7 @@ class FakeForecastAPI:
 def test_live_forecast_from_today_with_each_models_horizon() -> None:
     api = FakeForecastAPI({"long": 16 * 24, "short": 4 * 24})
     f = om.fetch_forecast(0, 0, days=10, models=["long", "short"], tz="America/Sao_Paulo", get=api, pause_s=0)
-    today = pd.Timestamp.now(tz="America/Sao_Paulo").normalize()
+    today = pd.Timestamp(f.attrs["issued"]).tz_convert("America/Sao_Paulo").normalize()  # no midnight race
     assert f["ds"].min() == today
     assert f["ds"].max() == today + pd.Timedelta(days=10) - pd.Timedelta(hours=1)
     assert f.groupby("model").size().eq(240).all()  # hourly, no hour duplicated or dropped

@@ -47,7 +47,11 @@ toto2 = ["toto-2==2.0.0"]
 timesfm = ["timesfm>=3.0"]
 ttm = ["granite-tsfm"]
 networks = ["neuralforecast>=3.1", "torch>=2.2"]
-embedded = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21"]
+# `prosumer.embedded` (C headers for the ESP32) needs only numpy plus the library that fitted the model
+# (scikit-learn or LightGBM). This extra is for the other routes of the study (docs/projeto/ESTUDO_EMBARCADO.md):
+# ONNX on the Raspberry Pi, emlearn for comparison, and ziglang to compile the C in the tests (C -> WebAssembly,
+# run with Node: the Smart App Control of the home machine blocks locally built .exe files).
+embedded = ["onnx>=1.16", "onnxruntime>=1.18", "skl2onnx>=1.17", "emlearn>=0.21", "ziglang>=0.13"]
 plots = ["matplotlib>=3.8"]
 dev = [
   "pytest>=8",

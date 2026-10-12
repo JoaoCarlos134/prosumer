@@ -167,3 +167,60 @@ def test_reproduces_the_benchmark_conversion_of_the_saved_archive() -> None:
     np.testing.assert_array_equal(raw["ghi"].to_numpy(), ghi.to_numpy())
     np.testing.assert_allclose(raw["temperature"].to_numpy(), tmp.to_numpy(), rtol=0, atol=1e-12)
     assert raw["ghi"].notna().all()
+
+
+class FakeForecastAPI:
+    """Answers like the live Forecast API: `past_days` before and `forecast_days` from 00 UTC of today, each
+    model with values only up to its horizon (in hours from 00 UTC of today)."""
+
+    def __init__(self, horizons: dict[str, int]) -> None:
+        self.horizons, self.calls = horizons, []
+
+    def __call__(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
+        assert url == om.FORECAST_URL
+        self.calls.append(params)
+        today = pd.Timestamp.now(tz="UTC").normalize().tz_localize(None)
+        t = pd.date_range(
+            today - pd.Timedelta(days=params["past_days"]),
+            today + pd.Timedelta(days=params["forecast_days"]) - pd.Timedelta(hours=1),
+            freq="h",
+        )
+        lead = (t - today) / pd.Timedelta(hours=1)
+        ok = lead <= self.horizons[params["models"]]
+        ghi = [float(i % 24) * 50 if k else None for i, k in enumerate(ok)]
+        temp = [15.0 if k else None for k in ok]
+        return {
+            "hourly": {
+                "time": [x.strftime("%Y-%m-%dT%H:%M") for x in t],
+                "shortwave_radiation": ghi,
+                "temperature_2m": temp,
+            }
+        }
+
+
+def test_live_forecast_from_today_with_each_models_horizon() -> None:
+    api = FakeForecastAPI({"long": 16 * 24, "short": 4 * 24})
+    f = om.fetch_forecast(0, 0, days=10, models=["long", "short"], tz="America/Sao_Paulo", get=api, pause_s=0)
+    today = pd.Timestamp.now(tz="America/Sao_Paulo").normalize()
+    assert f["ds"].min() == today
+    assert f["ds"].max() == today + pd.Timedelta(days=10) - pd.Timedelta(hours=1)
+    assert f.groupby("model").size().eq(240).all()  # hourly, no hour duplicated or dropped
+    cov = om.coverage(f).set_index("model")["fraction"]
+    assert cov["long"] == 1.0
+    assert 0.3 < cov["short"] < 0.6  # the short model stops after ~4 of the 10 days
+    w = om.wide(f)
+    late = w["ds"] > today + pd.Timedelta(days=6)
+    assert w.loc[late, "ghi_short"].isna().all()
+    np.testing.assert_array_equal(w.loc[late, "ghi_mean"], w.loc[late, "ghi_long"])  # mean of the models left
+    assert "issued" in f.attrs and f.attrs["provenance"].license == "CC-BY-4.0"
+    assert all(c["timezone"] == "GMT" for c in api.calls)
+    with pytest.raises(ValueError):
+        om.fetch_forecast(0, 0, days=17, get=api)
+
+
+def test_live_forecast_label_convention_matches_the_archive() -> None:
+    api = FakeForecastAPI({"m": 16 * 24})
+    f = om.fetch_forecast(0, 0, days=2, models=["m"], tz="UTC", get=api, pause_s=0)
+    # the API labels a radiation value by the end of its hour: the hour starting at h gets the label h+1
+    first = f.iloc[0]
+    assert first["ds"].hour == 0 and first["ghi"] == 50.0

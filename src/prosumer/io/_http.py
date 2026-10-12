@@ -25,12 +25,16 @@ def ssl_context() -> ssl.SSLContext | None:  # pragma: no cover - depends on the
     return ctx
 
 
-def get_bytes(url: str, *, tries: int = 3, timeout: float = 300.0) -> bytes:  # pragma: no cover - network
-    """GET `url` and return the body, retrying network errors with a growing pause."""
+def get_bytes(
+    url: str, *, tries: int = 3, timeout: float = 300.0, headers: dict[str, str] | None = None
+) -> bytes:  # pragma: no cover - network
+    """GET `url` and return the body, retrying network errors with a growing pause. `headers`: extra request
+    headers (Nominatim requires a `User-Agent` that identifies the application)."""
     ctx = ssl_context()
+    req = urllib.request.Request(url, headers=headers or {})
     for k in range(tries):
         try:
-            with urllib.request.urlopen(url, timeout=timeout, context=ctx) as r:
+            with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
                 body: bytes = r.read()
             return body
         except urllib.error.HTTPError as e:

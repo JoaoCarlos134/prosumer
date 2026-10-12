@@ -1,4 +1,5 @@
-"""Archived day-ahead weather forecasts from several models (Open-Meteo Previous Runs API).
+"""Weather forecasts from several models (Open-Meteo): the archive of past day-ahead forecasts (Previous Runs
+API, `fetch_previous_runs`) and the live forecast for the coming days (`fetch_forecast`).
 
 Why several: in the benchmark the gap between regime C (the real forecast) and B (the weather of the day
 itself) is the quality of the weather forecast, not the training (B-short x B was not significant). Pilot
@@ -37,6 +38,8 @@ import pandas as pd
 from ..provenance import OPEN_METEO_CITATION, Provenance, attach, today
 
 URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
+FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+MAX_FORECAST_DAYS = 16  # the API's limit; most models stop earlier (see `HORIZON_DAYS`)
 
 # name in the result -> (API variable, "interval" = mean over the preceding hour | "instant")
 VARIABLES: dict[str, tuple[str, str]] = {
@@ -53,6 +56,18 @@ DEFAULT_MODELS = (
     "gem_seamless",
     "cma_grapes_global",
 )
+
+# How far ahead each model reaches in the live API, in days from 00 UTC of the request day (measured on
+# 2026-10-12 at the Dingle houses: last hour with a GHI value). The mean of the models therefore rests on
+# fewer models as the lead grows: past ~5 days only IFS, GFS, GEM and ICON remain, past ~10 only IFS and GFS.
+HORIZON_DAYS = {
+    "ecmwf_ifs025": 15.0,
+    "gfs_seamless": 16.0,
+    "icon_seamless": 8.0,
+    "meteofrance_seamless": 4.75,
+    "gem_seamless": 10.5,
+    "cma_grapes_global": 5.5,
+}
 
 Getter = Callable[[str, dict[str, Any]], dict[str, Any]]
 
@@ -109,6 +124,78 @@ def fetch_previous_runs(
     out = out[(out["ds"] >= lo) & (out["ds"] <= hi)]
     result = out[["model", "ds", *names]].reset_index(drop=True)
     return attach(result, provenance([str(m) for m in pd.unique(result["model"])], lead_days))
+
+
+def fetch_forecast(
+    lat: float,
+    lon: float,
+    *,
+    days: int = MAX_FORECAST_DAYS,
+    models: Iterable[str] = DEFAULT_MODELS,
+    variables: Iterable[str] = ("ghi", "temperature"),
+    tz: str = "UTC",
+    get: Getter | None = None,
+    pause_s: float = 1.0,
+) -> pd.DataFrame:
+    """Download the live forecast of each model for today and the next `days - 1` days, one request per model.
+
+    Same long frame and conventions as `fetch_previous_runs` (`model`, `ds` aware in `tz` and labelling the
+    start of its hour, one column per variable), from 00:00 of today in `tz`. Each model stops at its own
+    horizon (`HORIZON_DAYS`); its later hours are NaN, and `coverage` or `wide` (the mean uses the models with
+    a value) show it. `frame.attrs["issued"]` keeps the UTC time of the download: the lead of an hour is
+    counted from it.
+
+    Forecast skill falls with the lead, cloud cover above all: beyond about a week a single model's hourly
+    GHI says little more than the season does. `prosumer.outlook` decides how much to trust each lead.
+
+    The coordinates are sent to Open-Meteo: round them first if the site is private.
+    """
+    if not 1 <= days <= MAX_FORECAST_DAYS:
+        raise ValueError(f"days must be in 1-{MAX_FORECAST_DAYS} (the API's limit)")
+    names = list(variables)
+    unknown = set(names) - set(VARIABLES)
+    if unknown:
+        raise ValueError(f"Unknown variables {sorted(unknown)}; known: {sorted(VARIABLES)}")
+    get = get or _get
+    api = {VARIABLES[n][0]: n for n in names}
+    issued = pd.Timestamp.now(tz="UTC").floor("min")
+    parts = []
+    for i, model in enumerate(models):
+        if i and pause_s:
+            time.sleep(pause_s)
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "models": model,
+            # one day of margin: the time zone moves the ends by a few hours
+            "past_days": 1,
+            "forecast_days": min(days + 1, MAX_FORECAST_DAYS),
+            "hourly": ",".join(api),
+            "timezone": "GMT",
+        }
+        parts.append(parse_hourly(get(FORECAST_URL, params)["hourly"], api, tz=tz).assign(model=model))
+    out = pd.concat(parts, ignore_index=True)
+    lo = issued.tz_convert(tz).normalize()
+    out = out[(out["ds"] >= lo) & (out["ds"] < lo + pd.Timedelta(days=days))]
+    result = attach(
+        out[["model", "ds", *names]].reset_index(drop=True),
+        forecast_provenance([str(m) for m in pd.unique(out["model"])]),
+    )
+    result.attrs["issued"] = issued.isoformat()
+    return result
+
+
+def forecast_provenance(models: Iterable[str], retrieved: str | None = None) -> Provenance:
+    """Where a live forecast download comes from (same licence and terms as the archive, see `provenance`)."""
+    return Provenance(
+        source=f"Open-Meteo Forecast API: {', '.join(models)}",
+        license="CC-BY-4.0",
+        citation=OPEN_METEO_CITATION,
+        url="https://open-meteo.com/en/docs",
+        retrieved=retrieved or today(),
+        notes="free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
+        "their paid API",
+    )
 
 
 def provenance(models: Iterable[str], lead_days: int = 1, retrieved: str | None = None) -> Provenance:
@@ -237,10 +324,15 @@ def _aware(value: str | pd.Timestamp, tz: Any) -> pd.Timestamp:
 
 __all__ = [
     "DEFAULT_MODELS",
+    "FORECAST_URL",
+    "HORIZON_DAYS",
+    "MAX_FORECAST_DAYS",
     "URL",
     "VARIABLES",
     "coverage",
+    "fetch_forecast",
     "fetch_previous_runs",
+    "forecast_provenance",
     "parse_hourly",
     "provenance",
     "wide",

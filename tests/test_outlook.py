@@ -1,0 +1,155 @@
+"""prosumer.outlook on synthetic plants and households whose future is known."""
+
+from __future__ import annotations
+
+import json
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from prosumer import EnergySeries, outlook, physics
+from test_diagnostics import SITE, TZ, _plant, _series
+
+
+def _weather(
+    hours: pd.DatetimeIndex, kc: np.ndarray, models: dict[str, int], issued: pd.Timestamp
+) -> pd.DataFrame:
+    """Long frame like `fetch_forecast`: each model gives the true GHI up to its horizon (hours)."""
+    cs = physics.clear_sky_ghi(hours, *SITE)
+    parts = []
+    for m, horizon in models.items():
+        ghi = np.where(np.arange(len(hours)) < horizon, cs * kc, np.nan)
+        parts.append(pd.DataFrame({"model": m, "ds": hours, "ghi": ghi}))
+    w = pd.concat(parts, ignore_index=True)
+    w.attrs["issued"] = issued.isoformat()
+    return w
+
+
+def _future(days: int, seed: int = 9) -> tuple[pd.DatetimeIndex, np.ndarray, np.ndarray]:
+    """The 'true' next days of `_plant(0.8)` (kWp 4, tilt 15, azimuth 20): hours, clouds and energy."""
+    rng = np.random.default_rng(seed)
+    hours = pd.date_range(
+        "2024-01-01", periods=days * 24, freq="h", tz=TZ
+    )  # _plant(730 days) ends 2023-12-31
+    kc = np.repeat(rng.uniform(0.2, 1.0, days), 24)
+    sun = physics.mean_sun(hours, *SITE)
+    truth = 4.0 * physics.poa_isotropic(physics.clear_sky_ghi(hours, *SITE) * kc, sun, 15, 20) / 1000 * 0.8
+    return hours, kc, truth
+
+
+def test_seasonal_only_learns_the_plant() -> None:
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=7, site=SITE)
+    m = o.method["series"]["p1"]
+    assert m["orientation"] == "fitted"
+    assert abs(m["tilt"] - 15) <= 5 and abs(((m["azimuth"] - 20 + 180) % 360) - 180) <= 20
+    assert m["kw_eff"] == pytest.approx(3.2, rel=0.05)  # kWp 4 x level 0.8
+    assert len(o.hourly) == 7 * 24 and o.hourly["ds"].min() == pd.Timestamp("2024-01-01", tz=TZ)
+    assert (o.hourly["source"] == "seasonal").all()
+    assert (o.daily["confidence"] == "seasonal only").all()
+    assert (o.hourly["low"] <= o.hourly["y_hat"]).all() and (o.hourly["y_hat"] <= o.hourly["high"]).all()
+    # an average January day: between the cloudiest and the clearest synthetic days (0.2-1 of clear sky)
+    _, _, truth = _future(7)
+    clear_day = truth.reshape(7, 24).sum(axis=1).max() / 1.0
+    assert 0.3 * clear_day < o.daily["total"].mean() < 1.0 * clear_day * 1.1
+
+
+def test_perfect_weather_gives_the_truth_on_trusted_days() -> None:
+    hours, kc, truth = _future(10)
+    issued = pd.Timestamp("2023-12-31 20:00", tz=TZ)
+    w = _weather(hours, kc, {"long": 10 * 24, "short": 3 * 24}, issued)
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20)
+    assert o.method["series"]["p1"]["orientation"] == "given"
+    d = o.daily
+    true_days = truth.reshape(10, 24).sum(axis=1)
+    first3 = d["lead_day"] <= 3  # trust 1: the forecast is the weather's
+    np.testing.assert_allclose(d.loc[first3, "total"], true_days[:3], rtol=0.03)
+    assert (d.loc[first3, "confidence"] == "high").all()
+    assert list(d["n_models"]) == [2, 2, 2] + [1] * 7  # the short model stops after 3 days
+    late = d["lead_day"] >= 8
+    assert (d.loc[late, "confidence"].isin(["medium", "low"])).all()
+
+
+def test_beyond_the_last_model_is_seasonal_and_says_so() -> None:
+    hours, kc, _ = _future(20)
+    w = _weather(hours, kc, {"m": 16 * 24}, pd.Timestamp("2023-12-31 20:00", tz=TZ))
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=20, site=SITE, weather=w)
+    tail = o.daily[o.daily["lead_day"] > 16]
+    assert len(tail) == 4 and (tail["source"] == "seasonal").all()
+    assert any("seasonal expectation" in n for n in o.notes)
+
+
+def test_weather_that_starts_after_the_data_end() -> None:
+    hours, kc, _ = _future(12)
+    later = hours[48:]
+    w = _weather(later, kc[48:], {"m": 10 * 24}, pd.Timestamp("2024-01-02 06:00", tz=TZ))
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=5, site=SITE, weather=w)
+    assert o.daily["date"].min() == pd.Timestamp("2024-01-03")
+    assert o.daily["lead_day"].tolist() == [1, 2, 3, 4, 5]
+    assert any("not forecast" in n for n in o.notes)
+
+
+def test_consumption_repeats_the_recent_weeks() -> None:
+    idx = pd.date_range("2020-08-10", periods=10 * 7 * 24, freq="h", tz="Europe/Dublin")
+    week = idx.dayofweek.to_numpy() * 0.1 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.2)
+    s = EnergySeries.from_dataframe(
+        pd.DataFrame({"unique_id": "H1", "ds": idx, "y": week}),
+        unit="kWh",
+        quantity="consumption",
+        tz="Europe/Dublin",
+        freq="h",
+    )
+    o = outlook.forecast_ahead(s, days=14)
+    h = o.hourly
+    want = h["ds"].dt.dayofweek * 0.1 + np.where((h["ds"].dt.hour >= 18) & (h["ds"].dt.hour < 21), 1.0, 0.2)
+    np.testing.assert_allclose(h["y_hat"], want)
+    assert (o.daily["confidence"] == "typical week").all()
+    # the October clock change: 2020-10-25 has 25 hours in Dublin and is still one day
+    oct25 = o.daily[o.daily["date"] == pd.Timestamp("2020-10-25")]
+    assert len(oct25) == 1 and (h["ds"].dt.tz_localize(None).dt.normalize() == "2020-10-25").sum() == 25
+    b = outlook.best_windows(o, 3)
+    assert (b["start"].dt.hour.isin(range(0, 16))).all()  # lowest use: never the 18-21 h peak
+    assert len(b) == 14
+
+
+def test_best_windows_for_generation_is_midday() -> None:
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE)
+    b = outlook.best_windows(o, 3)
+    assert len(b) == 3
+    assert b["start"].dt.hour.between(9, 12).all()
+    assert (b["end"] - b["start"] == pd.Timedelta(hours=3)).all()
+
+
+def test_report_forms_and_errors() -> None:
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=2, site=SITE)
+    json.dumps(o.to_dict())
+    assert "| unique_id |" in o.to_markdown()
+    s = _series(_plant(0.8))
+    with pytest.raises(ValueError, match="site"):
+        outlook.forecast_ahead(s)
+    with pytest.raises(ValueError):
+        outlook.forecast_ahead(s, site=SITE, days=0)
+    with pytest.raises(ValueError):
+        outlook.forecast_ahead(s, site=SITE, tilt={"other": 10}, azimuth=0)
+
+
+def test_too_few_clear_days_needs_kwp() -> None:
+    s = _series(_plant(0.8, days=3))
+    with pytest.raises(ValueError, match="kwp"):
+        outlook.forecast_ahead(s, site=SITE, tilt=15, azimuth=20)
+    o = outlook.forecast_ahead(s, site=SITE, tilt=15, azimuth=20, kwp=4.0)
+    assert o.method["series"]["p1"]["kw_eff"] == pytest.approx(3.2)
+
+
+def test_a_model_day_with_impossible_sun_is_left_out() -> None:
+    hours, kc, truth = _future(3)
+    w = _weather(hours, kc, {"good": 3 * 24, "broken": 3 * 24}, pd.Timestamp("2023-12-31 20:00", tz=TZ))
+    broken = (w["model"] == "broken") & (w["ds"].dt.day == 2)
+    # like meteofrance_seamless on its 4th day (2026-10-12): far above clear sky. A wrong value that stays
+    # below the physical limit cannot be told from weather and is not caught.
+    cs = physics.clear_sky_ghi(pd.DatetimeIndex(w.loc[broken, "ds"]), *SITE)
+    w.loc[broken, "ghi"] = 2.5 * cs
+    o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE, weather=w, tilt=15, azimuth=20)
+    np.testing.assert_allclose(o.daily["total"], truth.reshape(3, 24).sum(axis=1), rtol=0.03)
+    assert o.daily["n_models"].tolist() == [2, 1, 2]
+    assert any("broken 2024-01-02" in n for n in o.notes)

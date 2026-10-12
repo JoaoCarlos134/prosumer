@@ -9,7 +9,9 @@ Status: version 0.1 done (step E2) and step E4 started, of the proposal
 performance of a PV series from its energy alone, and its change points), `forecast`, `io` (Open-Meteo
 forecasts, NASA POWER weather, Fronius Solar.web exports, generic meter tables) and `data` (synthetic
 series and the real Dingle houses); `embedded` (a fitted linear or tree model with its preprocessing as one C
-header, for an ESP32); the `economics` module is not written yet.
+header, for an ESP32) and `outlook` (`forecast_ahead`: the next days to weeks, hourly and per day, with the
+weather forecast trusted less as the lead grows; `best_windows` places a heavy load); the `economics` module
+is not written yet.
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported
@@ -26,6 +28,7 @@ from . import (
     diagnostics,
     embedded,
     metrics,
+    outlook,
     physics,
     postprocessing,
     protocol,
@@ -34,6 +37,7 @@ from . import (
 )
 from .analysis import Report, analyze
 from .contracts import ContractError, EnergySeries
+from .outlook import Outlook, best_windows, forecast_ahead
 from .protocol import DayAhead, Fold, Regime, SupportError, Window
 from .provenance import Provenance
 
@@ -49,6 +53,7 @@ __all__ = [
     "DayAhead",
     "EnergySeries",
     "Fold",
+    "Outlook",
     "Provenance",
     "Regime",
     "Report",
@@ -57,11 +62,14 @@ __all__ = [
     "__version__",
     "analysis",
     "analyze",
+    "best_windows",
     "contracts",
     "data",
     "diagnostics",
     "embedded",
+    "forecast_ahead",
     "metrics",
+    "outlook",
     "physics",
     "postprocessing",
     "protocol",

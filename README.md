@@ -98,8 +98,9 @@ for window in task.windows():
 | `postprocessing` | `conformal_quantiles` (causal band recalibration), `correct_bias` (consumption) |
 | `physics` | sun position, clear sky, plane-of-array irradiance, orientation fit (numpy only) |
 | `quality` | the clock of a PV series checked against the sun (`clock_offset`) and the clouds (`clock_offset_weather`) |
+| `outlook` | `forecast_ahead`: the next 1-35 days, hourly and per day (generation: effective power and roof learnt from the clear days x the weather forecast, trusted less as the lead grows, then the season; consumption: the recent weeks' profile), with a confidence label per day; `best_windows` for heavy loads |
 | `diagnostics` | from the energy alone: clear days, roof orientation, clear-day performance index and its steps (cleanings, faults) over time; `analyze(site=..., kwp=...)` |
-| `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo day-ahead forecasts (several models), NASA POWER hourly weather |
+| `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo forecasts (archive of day-ahead runs and the live forecast up to 16 days, several models), `geocode` (address to coordinates, time zone, rounding), NASA POWER hourly weather |
 | `embedded` | a fitted Ridge, forest or LightGBM with its preprocessing and the day-ahead features, as one C header for an ESP32 (`to_c`, `footprint`, `block_totals`) |
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |

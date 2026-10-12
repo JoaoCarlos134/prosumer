@@ -129,50 +129,75 @@ e só compensa quando há muito viés a tirar e a mediana já é estável. **Dec
 mediana; `median_corrected` (com os 14 dias antes do teste, então já corrige o primeiro dia) é uma linha a mais no
 consumo, com nota quando a saída tem viés > 5%. O `Ensemble-mediana-corrigida` do benchmark não muda.
 
-## E4: diagnostico da usina so com a energia horaria (12/10/2026) — PASSA
+## E4: diagnostico da usina so com a energia horaria (12/10/2026) — PASSA EM PARTE (4 de 5)
 
 Pergunta: sem corrente/tensao CC e sem geometria (o caso comum de um prossumidor), a energia horaria CA e o local
 reencontram os achados da analise de 5 min (`docs/projeto/ia_solar/ESTADO_DO_PROJETO.md`, "Diagnosticos
 fechados")? Script `experimentos/testes_previsao/scripts/piloto_diagnostico.py` (sem `--biblioteca`: a 1a
-versao; com: `prosumer.diagnostics.diagnose`); saidas `resultados/pilotos/diagnostico*.json`. Segundos de CPU.
+versao; com: `prosumer.diagnostics.diagnose`, mais a varredura do fator da penalidade e a conferencia nas casas);
+saidas `resultados/pilotos/diagnostico.json` e `diagnostico_biblioteca.json` (todos os numeros abaixo saem
+dela). Segundos de CPU (a varredura, ~30 s).
 
 Cadeia: dias claros pela propria serie (energia do dia / GHI de ceu claro >= 0,9 x percentil 90 da janela de
 31 dias); orientacao ajustada nesses dias (bussola inteira); indice diario = energia / (kWp x POA de ceu claro);
-retas por trecho (DP exato + BIC); degraus entre trechos = eventos.
+retas por trecho (DP exato + BIC); degraus >= 5% entre trechos = eventos.
 
-PORTAO (fixado antes): achar a +-1 mes Cascavel limpezas nov/2023 e set/2024 (para cima); Curitiba falha da
-string 1 dez/2022 (para baixo) e volta jul/2023 (para cima), reconfiguracao jun/2025 (para cima).
+PORTAO (escrito antes, no `ESPERADO` do script): achar a +-1 mes Cascavel limpezas nov/2023 e set/2024 (para
+cima); Curitiba falha da string 1 dez/2022 (para baixo), volta jul/2023 (para cima) e reconfiguracao jun/2025
+(para cima). **Resultado com o fator escolhido (3): 4 de 5.**
 
-| Evento | Biblioteca (final) |
-|---|---|
-| Cascavel limpeza nov/2023 | 2023-11-04, +24% |
-| Cascavel limpeza set/2024 | 2024-08-12, +10% |
-| Curitiba falha dez/2022 | 2022-12-07, -17% |
-| Curitiba volta jul/2023 | 2023-08-02, +101% |
-| Curitiba reconfiguracao jun/2025 | nao achado |
+| Evento | Fator 3 (biblioteca) | Fator 2 |
+|---|---|---|
+| Cascavel limpeza nov/2023 | 2023-11-04, +24% | 2023-11-04, +24% |
+| Cascavel limpeza set/2024 | 2024-08-12, +10% | 2024-08-12, +10% |
+| Curitiba falha dez/2022 | 2022-12-07, -17% | 2022-12-07, -21% |
+| Curitiba volta jul/2023 | 2023-08-02, +101% | 2023-08-02, +103% |
+| Curitiba reconfiguracao jun/2025 | nao achado | 2025-07-29, +15% |
+| Degraus a mais nas usinas | Curitiba +27% fev/2024, +19% dez/2024 | Cascavel -5% ago/2021; Curitiba -19% mar/2022, +23% dez/2024 |
+| Degraus nas 10 casas de Dingle (sem evento conhecido) | 1 | 8 |
 
-A reconfiguracao foi vista nas TENSOES CC das strings; no indice CA mensal nao ha degrau (0,632 -> 0,663), entao
-nao e detectavel so com energia CA: fica fora do portao, DECLARADO (o portao foi escrito antes de olhar isso).
+Os tamanhos de Curitiba (+101%) sao medidos do fim de uma reta muito inclinada ao inicio da seguinte, num telhado
+mal descrito por um plano: valem como "houve um evento", nao como tamanho (na analise de 5 min a string 1 caiu
+-50% e a 2, -18%). As notas da biblioteca chamam esses degraus de incertos.
 
-O que o piloto mudou no caminho (declarar):
+**Correcao (revisao independente de 12/10):** a 1a versao deste texto dizia PASSA, tirava a reconfiguracao do
+portao ("vista so nas tensoes CC, sem degrau no indice CA") e dizia que o fator 3 era "o unico que da as duas
+limpezas e nada mais em Cascavel". As tres coisas estavam erradas: o portao foi REDUZIDO depois da rodada; com o
+fator 2 a reconfiguracao aparece (+15% em 2025-07-29), entao ela e visivel na energia CA; e o fator 4 da as mesmas
+duas limpezas em Cascavel (mas perde a falha de Curitiba). O numero citado para o indice mensal (0,632 -> 0,663)
+nao tinha script nem saida gravada e saiu.
+
+**Escolha do fator (declarar: feita NESTAS usinas e casas):** fatores 1, 2, 3, 4, 6 na cadeia inteira. So o 2
+passa o portao completo, mas da 8 degraus nas casas, varios em 26-29/03/2020 (mudanca de horario na Irlanda; a
+fonte tem 20 linhas em hora impossivel nessa data). O 3 perde a reconfiguracao e da 1 degrau nas casas. Fica o 3:
+o aplicativo e para leigo e um alarme falso custa mais que um evento de +15% perdido. Limite da conferencia nas
+casas: ~65-70 dias claros por casa e ajuste do telhado nao confiavel em 8 de 10 (inclinacao no limite da grade),
+entao ela mede alarme falso so onde o modulo ja avisa que nao confia; nao vale como prova para telhados bem
+ajustados.
+
+O que o piloto mudou no caminho:
 
 1. **Defeito na biblioteca:** `physics.fit_orientation` buscava azimutes 90-270 (leste-sul-oeste) por padrao;
-   no hemisferio sul o painel olha para o norte. Cascavel saia 5 graus para leste e o indice tinha um vai e vem
-   sazonal de +-30% que escondia as limpezas. Padrao agora: bussola inteira (Cascavel 15 graus / 30, a geometria
-   conhecida e 13 / 25). Nenhum numero publicado usou o padrao (o piloto da geometria das casas passa a grade).
-2. **Indice diario, nao horario semanal:** a 1a versao (mediana semanal do indice por hora) era ruidosa demais
-   em Curitiba (relogio deslocado de fracao de hora, telhado de varios planos).
-3. **Penalidade do BIC x3:** com o BIC comum as usinas tinham 9-11 degraus, quase todos sazonais (o residuo
-   diario nao e ruido independente: autocorrelacao 0,15-0,17 e resto sazonal). O fator 3 foi ESCOLHIDO NESTAS
-   DUAS USINAS (fatores 1, 2, 3, 4, 6 testados; 3 e o unico que da as duas limpezas e nada mais em Cascavel).
-   Conferencia fora delas: nas 10 casas com FV de Dingle (1 ano, nenhum evento conhecido) da 1 degrau no total.
+   no hemisferio sul o painel olha para o norte. Cascavel saia 5 graus para leste e o indice ficava com um vai e
+   vem sazonal que escondia as limpezas. Padrao agora: bussola inteira (Cascavel 15 graus / 30; a geometria
+   conhecida e 13 / 25). Nenhum numero publicado usou o padrao (os dois chamadores passam a grade).
+2. **Indice diario, nao horario semanal:** a 1a versao (mediana semanal do indice por hora) era ruidosa demais em
+   Curitiba (relogio deslocado de fracao de hora, telhado de varios planos).
+3. **Penalidade do BIC x3:** com o BIC comum (fator 1) as usinas tem 9 e 11 degraus, quase todos sazonais (o
+   residuo diario nao e ruido independente).
 4. **Orientacao em varias passadas:** um degrau de nivel puxa o ajuste conjunto (falha sintetica 0,8 -> 0,55:
-   20 graus em vez de 15). Escala por dia tira o degrau mas tambem a amplitude sazonal (Cascavel 10 graus / 50 e
-   um degrau falso todo abril). Ficou: ajuste conjunto, depois de novo com o nivel de cada trecho entre degraus
-   >= 5% dividido, ate a orientacao parar.
+   20 graus, R2 0,84, 5 degraus; com as passadas, 15 graus e 1 degrau - guardado em
+   `tests/test_diagnostics.py`). Uma variante descartada (escala por dia, que tira tambem a amplitude sazonal)
+   deu em Cascavel 10 graus / 50 e um degrau falso todo abril; o codigo dela nao foi guardado.
 
-Limites: telhado de varios planos diferentes (Curitiba R2 0,81) deixa resto sazonal que vira degraus extras
-(Curitiba +27% fev/2024, +19% dez/2024); com R2 < 0,85 ou inclinacao no limite da grade as notas chamam todo
-degrau de incerto e nao relatam tendencia nem perda. Um telhado leste+oeste simetrico vira um plano equivalente
-mais deitado (R2 0,996) e funciona. Sujeira x sombra x falha de string pedem dados de 5 min ou CC (proximo).
-Decisao: entra na biblioteca (`prosumer.diagnostics`, secao `diagnostics` do `analyze` com `site`, `kwp=`).
+Defeitos achados pela revisao e consertados antes de seguir: serie toda zero derrubava `diagnose` e `analyze`
+(divisao por zero); inversor que morre no meio dava orientacao sem sentido (R2 -1: os dias mortos contavam como
+claros, 0 >= 0,9 x 0); `kwp` por serie incompleto dava nota falsa (agora e erro). Testes novos para cada um, mais
+hemisferio norte com horario de verao e buracos.
+
+Limites: telhado de varios planos diferentes (Curitiba R2 0,81) deixa resto sazonal que vira degraus extras; com
+R2 < 0,85 ou inclinacao no limite da grade as notas chamam todo degrau de incerto e nao relatam tendencia nem
+perda. Um telhado leste+oeste simetrico vira um plano equivalente mais deitado (R2 > 0,99 no teste) e funciona.
+Sujeira x sombra x falha de string pedem dados de 5 min ou CC (proximo).
+Decisao: entra na biblioteca (`prosumer.diagnostics`, secao `diagnostics` do `analyze` com `site`, `kwp=`), com
+fator 3 e a perda da reconfiguracao declarada.

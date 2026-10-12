@@ -17,6 +17,7 @@ PORTAO: reencontrar, a +-1 mes, Cascavel: limpezas (degrau para CIMA) em nov/202
 dez/2022 com volta em jul/2023 e degrau para cima em jun/2025 (reconfiguracao, +15% CC). Sem rodar modelo.
 
 Uso (ambiente da biblioteca): python piloto_diagnostico.py [--biblioteca]
+(--biblioteca grava tambem a varredura do fator da penalidade e a conferencia nas 10 casas de Dingle)
 (--biblioteca: a mesma cadeia pela `prosumer.diagnostics.diagnose`, que exige o dia com todas as horas de sol
 medidas; o piloto aceita dia com >= 8 horas)
 """
@@ -133,15 +134,9 @@ def confere(res):
 
 def biblioteca(serie):
     """O mesmo pela biblioteca (`prosumer.diagnostics.diagnose`), no formato de `diagnostica` para o portao."""
-    from prosumer import EnergySeries
     from prosumer.diagnostics import diagnose
 
-    d = comum.carrega("usinas").query("unique_id == @serie").reset_index(drop=True)
-    x = pd.DataFrame({"unique_id": serie, "ds": pd.to_datetime(d.ds).dt.tz_localize(comum.FUSO["usinas"]),
-                      "y": d.y.astype(float)})
-    x["valid"] = x.y.notna()
-    s = EnergySeries(frame=x, unit="kWh", quantity="generation", tz=comum.FUSO["usinas"], freq="h")
-    kwp = float(pd.read_parquet(comum.DADOS / "usinas_horario.parquet").query("serie == @serie").kwp.iloc[0])
+    s, kwp = _serie_biblioteca(serie)
     dg = diagnose(s, comum.SITIOS[serie], kwp=kwp)
     o = dg.orientation.iloc[0]
     trechos = [dict(inicio=str(r.start.date()), fim=str(r.end.date()), dias=int(r.days), ini=r.level_start,
@@ -150,6 +145,61 @@ def biblioteca(serie):
                for r in dg.steps.itertuples()]
     return dict(serie=serie, r2=float(o.r2), inclinacao=float(o.tilt), azimute=float(o.azimuth),
                 dias_claros=len(dg.index), semanas=len(dg.index), trechos=trechos, degraus=degraus, notas=dg.notes)
+
+
+def varredura(fatores=(1, 2, 3, 4, 6)):
+    """Fator da penalidade do BIC x eventos, nas duas usinas, na cadeia INTEIRA (o fator vale tambem nas
+    passadas do ajuste da orientacao, que usam a segmentacao). Registro da escolha do fator, feita NESTAS usinas."""
+    from prosumer import diagnostics as D
+
+    padrao = D.changepoints.__kwdefaults__["penalty"]
+    out = {}
+    try:
+        for f in fatores:
+            D.changepoints.__kwdefaults__["penalty"] = f
+            for serie in ("Cascavel", "Curitiba"):
+                s, kwp = _serie_biblioteca(serie)
+                dg = D.diagnose(s, comum.SITIOS[serie], kwp=kwp)
+                ev = dg.steps[dg.steps.event]
+                o = dg.orientation.iloc[0]
+                res = dict(serie=serie, degraus=[dict(data=str(r.date.date()), pct=float(r.step_pct))
+                                                 for r in ev.itertuples()])
+                out.setdefault(str(f), {})[serie] = dict(inclinacao=float(o.tilt), azimute=float(o.azimuth),
+                                                         degraus=res["degraus"], portao=confere(res))
+    finally:
+        D.changepoints.__kwdefaults__["penalty"] = padrao
+    return out
+
+
+def casas(fator=3):
+    """Falso alarme nas 10 casas com FV de Dingle (2020, nenhum evento conhecido), no fuso certo (Europe/Dublin).
+    Limite: ~65-70 dias claros por casa e ajuste do telhado nao confiavel em quase todas (inclinacao no limite)."""
+    from prosumer import data
+    from prosumer import diagnostics as D
+
+    s = data.dingle_houses("generation", path=comum.DADOS / "casas_horario.parquet", tz="Europe/Dublin")
+    padrao = D.changepoints.__kwdefaults__["penalty"]
+    try:
+        D.changepoints.__kwdefaults__["penalty"] = fator
+        dg = D.diagnose(s, (52.14, -10.27))  # peninsula de Dingle, aproximado
+    finally:
+        D.changepoints.__kwdefaults__["penalty"] = padrao
+    ev = dg.steps[dg.steps.event]
+    return dict(orientacao=dg.orientation.to_dict(orient="records"),
+                dias_claros=dg.index.groupby("unique_id").size().to_dict(),
+                eventos=[dict(casa=r.unique_id, data=str(r.date.date()), pct=float(r.step_pct)) for r in ev.itertuples()])
+
+
+def _serie_biblioteca(serie):
+    from prosumer import EnergySeries
+
+    d = comum.carrega("usinas").query("unique_id == @serie").reset_index(drop=True)
+    x = pd.DataFrame({"unique_id": serie, "ds": pd.to_datetime(d.ds).dt.tz_localize(comum.FUSO["usinas"]),
+                      "y": d.y.astype(float)})
+    x["valid"] = x.y.notna()
+    s = EnergySeries(frame=x, unit="kWh", quantity="generation", tz=comum.FUSO["usinas"], freq="h")
+    kwp = float(pd.read_parquet(comum.DADOS / "usinas_horario.parquet").query("serie == @serie").kwp.iloc[0])
+    return s, kwp
 
 
 if __name__ == "__main__":
@@ -175,4 +225,18 @@ if __name__ == "__main__":
             print("  nota:", n)
     comum.RES.joinpath("pilotos").mkdir(exist_ok=True)
     nome = "diagnostico_biblioteca.json" if fonte is biblioteca else "diagnostico.json"
+    if fonte is biblioteca:
+        saida["varredura_penalidade"] = varredura()
+        saida["casas_dingle"] = casas()
+        saida["casas_dingle_fator2"] = casas(2)
+        for f, r in saida["varredura_penalidade"].items():
+            ev = {k: [(g["data"], round(g["pct"])) for g in v["degraus"]] for k, v in r.items()}
+            print()
+            print("fator", f, ev)
+            print("   portao:", {k: sum(p["achado"] is not None for p in v["portao"]) for k, v in r.items()})
+        print()
+        print("casas: eventos", saida["casas_dingle"]["eventos"])
+        print("casas, fator 2: eventos", saida["casas_dingle_fator2"]["eventos"])
+        print("   orientacao:", [(o["unique_id"], o["tilt"], o["azimuth"], round(o["r2"], 2), o["edge"])
+                                for o in saida["casas_dingle"]["orientacao"]])
     (comum.RES / "pilotos" / nome).write_text(json.dumps(saida, indent=1, default=float))

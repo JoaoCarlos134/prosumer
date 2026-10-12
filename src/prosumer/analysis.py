@@ -282,6 +282,22 @@ def analyze(
         )
 
     first = frame["ds"].min().normalize()
+    if not (frame.loc[frame["valid"], "y"] != 0).any():
+        # nothing to forecast, and every reference has zero error (the skill would divide by zero)
+        notes.append(
+            "Forecast check skipped: every value is zero (a dead meter or inverter, or the wrong column)."
+        )
+        sources, source_notes = _provenance(s, None, ())
+        return Report(
+            summary=summary,
+            quality=quality,
+            notes=notes + source_notes,
+            clock=clock,
+            clock_weather=clock_weather,
+            provenance=sources,
+            diagnostics=diag,
+            pending=base_pending,
+        )
     if test_start - first < pd.Timedelta(hours=CONTEXT):
         notes.append(
             f"Forecast check skipped: it needs {CONTEXT // 24} days of history "

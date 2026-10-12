@@ -175,5 +175,649 @@
     "pct": null
    }
   ]
+ },
+ "varredura_penalidade": {
+  "1": {
+   "Cascavel": {
+    "inclinacao": 15.0,
+    "azimute": 30.0,
+    "degraus": [
+     {
+      "data": "2020-03-23",
+      "pct": 6.139650839131838
+     },
+     {
+      "data": "2020-08-28",
+      "pct": -5.768926652704575
+     },
+     {
+      "data": "2021-08-07",
+      "pct": -8.705062864430047
+     },
+     {
+      "data": "2022-03-21",
+      "pct": 8.688570392122541
+     },
+     {
+      "data": "2022-07-29",
+      "pct": 7.995530836430342
+     },
+     {
+      "data": "2023-04-02",
+      "pct": 10.879645728296538
+     },
+     {
+      "data": "2023-11-04",
+      "pct": 30.674768661578213
+     },
+     {
+      "data": "2024-08-12",
+      "pct": 8.390139164745335
+     },
+     {
+      "data": "2026-02-08",
+      "pct": -6.482551265886105
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2023-11",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2023-11-04",
+      "pct": 30.7
+     },
+     {
+      "esperado": "2024-09",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2024-08-12",
+      "pct": 8.4
+     }
+    ]
+   },
+   "Curitiba": {
+    "inclinacao": 20.0,
+    "azimute": 320.0,
+    "degraus": [
+     {
+      "data": "2021-12-21",
+      "pct": -11.91304228936838
+     },
+     {
+      "data": "2022-03-11",
+      "pct": -16.41348385287218
+     },
+     {
+      "data": "2022-12-07",
+      "pct": -23.94120631348927
+     },
+     {
+      "data": "2023-08-02",
+      "pct": 82.57431656469039
+     },
+     {
+      "data": "2023-09-23",
+      "pct": -10.858849045168395
+     },
+     {
+      "data": "2024-02-06",
+      "pct": 25.947646074831443
+     },
+     {
+      "data": "2024-06-01",
+      "pct": -8.46715734663449
+     },
+     {
+      "data": "2024-10-22",
+      "pct": -20.57294667548075
+     },
+     {
+      "data": "2024-12-19",
+      "pct": 29.388084243683377
+     },
+     {
+      "data": "2025-04-30",
+      "pct": -11.13132851671972
+     },
+     {
+      "data": "2025-11-27",
+      "pct": -11.925152358749102
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2022-12",
+      "sentido": "desce",
+      "rotulo": "falha string 1",
+      "achado": "2022-12-07",
+      "pct": -23.9
+     },
+     {
+      "esperado": "2023-07",
+      "sentido": "sobe",
+      "rotulo": "volta da string 1",
+      "achado": "2023-08-02",
+      "pct": 82.6
+     },
+     {
+      "esperado": "2025-06",
+      "sentido": "sobe",
+      "rotulo": "reconfiguracao",
+      "achado": null,
+      "pct": null
+     }
+    ]
+   }
+  },
+  "2": {
+   "Cascavel": {
+    "inclinacao": 15.0,
+    "azimute": 30.0,
+    "degraus": [
+     {
+      "data": "2021-08-17",
+      "pct": -5.165551890803465
+     },
+     {
+      "data": "2023-11-04",
+      "pct": 24.470487407390106
+     },
+     {
+      "data": "2024-08-12",
+      "pct": 9.788833369393025
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2023-11",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2023-11-04",
+      "pct": 24.5
+     },
+     {
+      "esperado": "2024-09",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2024-08-12",
+      "pct": 9.8
+     }
+    ]
+   },
+   "Curitiba": {
+    "inclinacao": 25.0,
+    "azimute": 330.0,
+    "degraus": [
+     {
+      "data": "2022-03-24",
+      "pct": -18.60936968772243
+     },
+     {
+      "data": "2022-12-07",
+      "pct": -20.64947683562579
+     },
+     {
+      "data": "2023-08-02",
+      "pct": 103.08677359462739
+     },
+     {
+      "data": "2024-12-19",
+      "pct": 22.917645998733427
+     },
+     {
+      "data": "2025-07-29",
+      "pct": 14.78342244475157
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2022-12",
+      "sentido": "desce",
+      "rotulo": "falha string 1",
+      "achado": "2022-12-07",
+      "pct": -20.6
+     },
+     {
+      "esperado": "2023-07",
+      "sentido": "sobe",
+      "rotulo": "volta da string 1",
+      "achado": "2023-08-02",
+      "pct": 103.1
+     },
+     {
+      "esperado": "2025-06",
+      "sentido": "sobe",
+      "rotulo": "reconfiguracao",
+      "achado": "2025-07-29",
+      "pct": 14.8
+     }
+    ]
+   }
+  },
+  "3": {
+   "Cascavel": {
+    "inclinacao": 15.0,
+    "azimute": 30.0,
+    "degraus": [
+     {
+      "data": "2023-11-04",
+      "pct": 24.40820909185053
+     },
+     {
+      "data": "2024-08-12",
+      "pct": 9.788833369393025
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2023-11",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2023-11-04",
+      "pct": 24.4
+     },
+     {
+      "esperado": "2024-09",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2024-08-12",
+      "pct": 9.8
+     }
+    ]
+   },
+   "Curitiba": {
+    "inclinacao": 20.0,
+    "azimute": 320.0,
+    "degraus": [
+     {
+      "data": "2022-12-07",
+      "pct": -16.91842718765938
+     },
+     {
+      "data": "2023-08-02",
+      "pct": 100.71400242721774
+     },
+     {
+      "data": "2024-02-06",
+      "pct": 27.107341619645254
+     },
+     {
+      "data": "2024-12-19",
+      "pct": 19.186529350253867
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2022-12",
+      "sentido": "desce",
+      "rotulo": "falha string 1",
+      "achado": "2022-12-07",
+      "pct": -16.9
+     },
+     {
+      "esperado": "2023-07",
+      "sentido": "sobe",
+      "rotulo": "volta da string 1",
+      "achado": "2023-08-02",
+      "pct": 100.7
+     },
+     {
+      "esperado": "2025-06",
+      "sentido": "sobe",
+      "rotulo": "reconfiguracao",
+      "achado": null,
+      "pct": null
+     }
+    ]
+   }
+  },
+  "4": {
+   "Cascavel": {
+    "inclinacao": 15.0,
+    "azimute": 30.0,
+    "degraus": [
+     {
+      "data": "2023-11-04",
+      "pct": 24.40820909185053
+     },
+     {
+      "data": "2024-08-12",
+      "pct": 9.788833369393025
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2023-11",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2023-11-04",
+      "pct": 24.4
+     },
+     {
+      "esperado": "2024-09",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2024-08-12",
+      "pct": 9.8
+     }
+    ]
+   },
+   "Curitiba": {
+    "inclinacao": 20.0,
+    "azimute": 320.0,
+    "degraus": [
+     {
+      "data": "2023-08-02",
+      "pct": 70.32399356515818
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2022-12",
+      "sentido": "desce",
+      "rotulo": "falha string 1",
+      "achado": null,
+      "pct": null
+     },
+     {
+      "esperado": "2023-07",
+      "sentido": "sobe",
+      "rotulo": "volta da string 1",
+      "achado": "2023-08-02",
+      "pct": 70.3
+     },
+     {
+      "esperado": "2025-06",
+      "sentido": "sobe",
+      "rotulo": "reconfiguracao",
+      "achado": null,
+      "pct": null
+     }
+    ]
+   }
+  },
+  "6": {
+   "Cascavel": {
+    "inclinacao": 15.0,
+    "azimute": 30.0,
+    "degraus": [
+     {
+      "data": "2023-11-04",
+      "pct": 15.22103275372746
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2023-11",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": "2023-11-04",
+      "pct": 15.2
+     },
+     {
+      "esperado": "2024-09",
+      "sentido": "sobe",
+      "rotulo": "limpeza",
+      "achado": null,
+      "pct": null
+     }
+    ]
+   },
+   "Curitiba": {
+    "inclinacao": 20.0,
+    "azimute": 320.0,
+    "degraus": [
+     {
+      "data": "2023-08-02",
+      "pct": 70.32399356515818
+     }
+    ],
+    "portao": [
+     {
+      "esperado": "2022-12",
+      "sentido": "desce",
+      "rotulo": "falha string 1",
+      "achado": null,
+      "pct": null
+     },
+     {
+      "esperado": "2023-07",
+      "sentido": "sobe",
+      "rotulo": "volta da string 1",
+      "achado": "2023-08-02",
+      "pct": 70.3
+     },
+     {
+      "esperado": "2025-06",
+      "sentido": "sobe",
+      "rotulo": "reconfiguracao",
+      "achado": null,
+      "pct": null
+     }
+    ]
+   }
+  }
+ },
+ "casas_dingle": {
+  "orientacao": [
+   {
+    "unique_id": "H1",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.7434206312129272,
+    "edge": true
+   },
+   {
+    "unique_id": "H10",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7327330758191319,
+    "edge": true
+   },
+   {
+    "unique_id": "H11",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7637302812820962,
+    "edge": true
+   },
+   {
+    "unique_id": "H13",
+    "tilt": 60.0,
+    "azimuth": 210.0,
+    "r2": 0.7814349566473527,
+    "edge": true
+   },
+   {
+    "unique_id": "H17",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7507092522060316,
+    "edge": true
+   },
+   {
+    "unique_id": "H2",
+    "tilt": 60.0,
+    "azimuth": 180.0,
+    "r2": 0.7336551825024764,
+    "edge": true
+   },
+   {
+    "unique_id": "H3",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.692377128062224,
+    "edge": true
+   },
+   {
+    "unique_id": "H4",
+    "tilt": 55.0,
+    "azimuth": 230.0,
+    "r2": 0.7693155517478445,
+    "edge": false
+   },
+   {
+    "unique_id": "H5",
+    "tilt": 50.0,
+    "azimuth": 200.0,
+    "r2": 0.6887841901332512,
+    "edge": false
+   },
+   {
+    "unique_id": "H7",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7048806575923074,
+    "edge": true
+   }
+  ],
+  "dias_claros": {
+   "H1": 69,
+   "H10": 71,
+   "H11": 70,
+   "H13": 68,
+   "H17": 70,
+   "H2": 67,
+   "H3": 65,
+   "H4": 68,
+   "H5": 64,
+   "H7": 69
+  },
+  "eventos": [
+   {
+    "casa": "H10",
+    "data": "2020-09-05",
+    "pct": 18.744095277488306
+   }
+  ]
+ },
+ "casas_dingle_fator2": {
+  "orientacao": [
+   {
+    "unique_id": "H1",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.7468760968635683,
+    "edge": true
+   },
+   {
+    "unique_id": "H10",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7327330758191319,
+    "edge": true
+   },
+   {
+    "unique_id": "H11",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7613482433720385,
+    "edge": true
+   },
+   {
+    "unique_id": "H13",
+    "tilt": 60.0,
+    "azimuth": 210.0,
+    "r2": 0.7814349566473527,
+    "edge": true
+   },
+   {
+    "unique_id": "H17",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7507092522060316,
+    "edge": true
+   },
+   {
+    "unique_id": "H2",
+    "tilt": 60.0,
+    "azimuth": 180.0,
+    "r2": 0.7342666231708302,
+    "edge": true
+   },
+   {
+    "unique_id": "H3",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.6963225095991223,
+    "edge": true
+   },
+   {
+    "unique_id": "H4",
+    "tilt": 55.0,
+    "azimuth": 230.0,
+    "r2": 0.7662959968212185,
+    "edge": false
+   },
+   {
+    "unique_id": "H5",
+    "tilt": 50.0,
+    "azimuth": 200.0,
+    "r2": 0.6883854341388558,
+    "edge": false
+   },
+   {
+    "unique_id": "H7",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7081192462634575,
+    "edge": true
+   }
+  ],
+  "dias_claros": {
+   "H1": 69,
+   "H10": 71,
+   "H11": 70,
+   "H13": 68,
+   "H17": 70,
+   "H2": 67,
+   "H3": 65,
+   "H4": 68,
+   "H5": 64,
+   "H7": 69
+  },
+  "eventos": [
+   {
+    "casa": "H1",
+    "data": "2020-03-27",
+    "pct": 66.38850181637291
+   },
+   {
+    "casa": "H10",
+    "data": "2020-09-05",
+    "pct": 18.744095277488306
+   },
+   {
+    "casa": "H11",
+    "data": "2020-08-26",
+    "pct": -12.271152740644375
+   },
+   {
+    "casa": "H2",
+    "data": "2020-03-26",
+    "pct": 20.647645672856306
+   },
+   {
+    "casa": "H3",
+    "data": "2020-03-27",
+    "pct": 25.554728184562947
+   },
+   {
+    "casa": "H4",
+    "data": "2020-06-06",
+    "pct": -10.076545205017284
+   },
+   {
+    "casa": "H5",
+    "data": "2020-03-29",
+    "pct": 39.10932828065372
+   },
+   {
+    "casa": "H7",
+    "data": "2020-03-29",
+    "pct": 42.40630599912514
+   }
+  ]
  }
 }

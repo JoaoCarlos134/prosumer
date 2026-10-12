@@ -479,6 +479,16 @@ teste) mas a SAIDA continua a mediana: piloto `piloto_vies_composicao.py` (PILOT
 correcao so ajuda a mediana de ~40 modelos (+0,194 -> +0,209) e piora as pequenas (ingenuas +0,145 -> +0,113;
 +LightGBM +0,192 -> +0,175). README reescrito para a 0.1. Testes: 461 passam, 10 pulados. Proximo: E4 (diagnostico,
 embarcado).
+**E4 comecou (12/10/2026): `prosumer.diagnostics` feito.** So com energia horaria CA + local: dias claros pela propria
+serie, orientacao do telhado (varias passadas, nivel entre degraus dividido), indice diario de dia claro, retas por
+trecho (DP + BIC x3), notas com regra de confianca (R2 < 0,85 ou inclinacao no limite: degraus "incertos", sem
+tendencia/perda); secao `diagnostics` do `analyze(site=, kwp=)`. Piloto `piloto_diagnostico.py --biblioteca`
+(PILOTOS_F1_F2.md): **4 de 5** eventos da analise de 5 min (perde a reconfiguracao de Curitiba jun/2025, que o fator 2
+acha a custo de 8 alarmes falsos nas casas); fator escolhido NESTAS usinas, declarado. Conserto:
+`physics.fit_orientation` buscava so azimutes 90-270 (perdia telhado virado ao norte). **Revisor pos-trabalho**
+(`.claude/agents/work-reviewer.md`, pedido do usuario): rodar apos cada etapa; a 1a revisao achou 2 quebras (serie toda
+zero, inversor que morre) e um portao reduzido depois da rodada - consertados e declarados. Embarcado: agente em
+worktree (estudo + piloto emlearn), ainda nao juntado. Falta no diagnostico: sujeira x sombra x string (5 min/CC).
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

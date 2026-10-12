@@ -16,20 +16,21 @@ geometry. The project's original analyses used 5-minute DC current and voltage a
    ~0.75-0.85); without it, the effective peak power in kW.
 4. **Change points** (`changepoints`): the index as a straight line per segment, the segments chosen by
    exact dynamic programming and a BIC with 3 x its usual penalty (the daily index is not independent noise:
-   with the plain BIC the plants got 9 to 11 steps, most of them seasonal). Soiling is a sawtooth (a slow
+   with the plain BIC the plants got 9 and 11 steps, most of them seasonal). Soiling is a sawtooth (a slow
    decline, a step up at the cleaning), so each segment has its own slope, and the steps are the events.
 
-Pilot (`experimentos/testes_previsao/scripts/piloto_diagnostico.py --biblioteca`, 2026-10-12): on the
-benchmark's two plants it found, from hourly AC energy and the site only, every event the 5-minute DC analysis
-had found that shows in AC energy, within a month: the Cascavel cleanings of November 2023 (+24%) and
-September 2024 (dated 2024-08-12, +10%), and nothing else there; the Curitiba string fault of December 2022
-(-17%) and its repair in July 2023 (dated 2023-08-02, +101%). The Curitiba reconfiguration of June 2025 was
-seen in the DC string voltages and does not show in AC energy. The penalty factor was chosen on these same two
-plants; on the ten PV houses of the Dingle data (one year, no known events) it gives one step in total.
-Limits: a roof of several unlike planes fits one plane poorly (Curitiba R2 0.81) and leaves a seasonal
-residual that the segmentation reads as extra steps (Curitiba: +27% in February 2024, +19% in December 2024);
-the notes then call every step uncertain and report no trend or loss. Telling soiling from shading or a
-string fault needs sub-hourly or DC data (not here yet).
+Pilot (`experimentos/testes_previsao/scripts/piloto_diagnostico.py --biblioteca`, 2026-10-12, details in
+`docs/projeto/PILOTOS_F1_F2.md`): the gate, written before the run, asked for five events the 5-minute DC
+analysis had found on the benchmark's two plants. With the penalty factor 3 it finds four, within a month: the
+Cascavel cleanings of November 2023 (+24%) and September 2024 (dated 2024-08-12, +10%), and nothing else
+there; the Curitiba string fault of December 2022 (-17%) and its repair in July 2023 (dated 2023-08-02). It
+misses the Curitiba reconfiguration of June 2025, which factor 2 finds (+15%, 2025-07-29) at the cost of three
+more steps on the plants and eight on the ten PV houses of the Dingle data (none known there; factor 3 gives
+one). The factor was chosen on these same plants and houses. Limits: a roof of several unlike planes fits one
+plane poorly (Curitiba R2 0.81) and leaves a seasonal residual that the segmentation reads as extra steps
+(Curitiba: +27% in February 2024, +19% in December 2024), and step sizes there are not reliable; the notes
+then call every step uncertain and report no trend or loss. Telling soiling from shading or a string fault
+needs sub-hourly or DC data (not here yet).
 """
 
 from __future__ import annotations
@@ -54,13 +55,19 @@ GOOD_FIT_R2 = 0.85  # below it a single plane does not describe the roof well
 STEP_NOTE_PCT = 5.0  # steps smaller than this are not worth a note
 TREND_NOTE_PCT = 5.0  # %/year
 TILTS = np.arange(0, 61, 5.0)
+DEAD_LEVEL = 0.05  # relative level below which a stretch counts as dead in the refit
 ROOF_PASSES = 4  # refits of the orientation with the segment levels divided out
 AZIMUTHS = np.arange(0, 360, 10.0)  # compass: the whole circle (north-facing roofs in the south)
 
 
 @dataclass
 class Diagnosis:
-    """What `diagnose` returns: one table per stage and plain-language notes."""
+    """What `diagnose` returns: one table per stage and plain-language notes.
+
+    `to_dict` leaves out the daily `index` table (hundreds of rows per series): the app plots it from
+    `Diagnosis.index`. `edge` flags only the steepest tilt of the grid; a fit at 0 degrees is a flat roof,
+    which is a possible answer.
+    """
 
     orientation: pd.DataFrame  # unique_id, tilt, azimuth, r2, edge (orientation on the edge of the grid)
     index: pd.DataFrame  # unique_id, date, energy, expected, index (clear days only)
@@ -142,7 +149,13 @@ def _clear(d: pd.DataFrame, window_days: int, quantile: float, ratio: float) -> 
         top = daily.rolling(window_days, center=True, min_periods=max(3, window_days // 3)).quantile(quantile)
         t = pd.DataFrame({"unique_id": uid, "date": r.index, "ratio": r.to_numpy()})
         t["top"] = top.reindex(r.index).to_numpy()
-        t["clear"] = t["ratio"] >= ratio * t["top"]
+        # a stretch where even the best days produce ~nothing (dead inverter) has no clear days: 0 >= 0.9 x 0
+        alive = (
+            t["top"] >= DEAD_LEVEL * float(np.nanquantile(t["top"], 0.95))
+            if t["top"].notna().any()
+            else False
+        )
+        t["clear"] = (t["ratio"] >= ratio * t["top"]) & alive & (t["ratio"] > 0)
         out.append(t)
     if not out:
         return pd.DataFrame(columns=["unique_id", "date", "ratio", "top", "clear"])
@@ -176,10 +189,17 @@ def _orientation(
         if g["date"].nunique() < 5:
             rows.append(dict(unique_id=uid, tilt=np.nan, azimuth=np.nan, r2=np.nan, edge=False))
             continue
-        y = g["y"].to_numpy(dtype=float)
         if level is not None:
-            lv = level[level["unique_id"] == uid].set_index("date")["level"]
-            y = y / lv.reindex(g["date"]).to_numpy(dtype=float)
+            lv = level[level["unique_id"] == uid].set_index("date")["level"].reindex(g["date"])
+            # a day whose stretch produced ~nothing (a dead inverter) says nothing about the plane
+            alive = (lv > DEAD_LEVEL).to_numpy()
+            g = g[alive]
+            y = g["y"].to_numpy(dtype=float) / lv.to_numpy(dtype=float)[alive]
+        else:
+            y = g["y"].to_numpy(dtype=float)
+        if g["date"].nunique() < 5 or not np.nanstd(y) > 0:  # all zero, or constant: no shape to fit
+            rows.append(dict(unique_id=uid, tilt=np.nan, azimuth=np.nan, r2=np.nan, edge=False))
+            continue
         sun = physics.mean_sun(pd.DatetimeIndex(g["ds"]), *site)
         r2, tilt, az = physics.fit_orientation(y, g["cs"].to_numpy(), sun, tilts=TILTS, azimuths=AZIMUTHS)
         rows.append(dict(unique_id=uid, tilt=tilt, azimuth=az, r2=r2, edge=bool(tilt == TILTS[-1])))
@@ -203,6 +223,11 @@ def _roof(f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float]) -> pd
         if segments.empty:
             break
         new = _orientation(f, clear, site, _level(index, segments, steps))
+        # a refit that failed (no finite R2) keeps the previous pass for that series
+        failed = ~np.isfinite(new["r2"].to_numpy(dtype=float)) & np.isfinite(
+            table["r2"].to_numpy(dtype=float)
+        )
+        new.loc[failed] = table.loc[failed].to_numpy()
         same = np.allclose(
             new[["tilt", "azimuth"]].to_numpy(float),
             table[["tilt", "azimuth"]].to_numpy(float),
@@ -243,7 +268,7 @@ def performance_index(
     orientation: pd.DataFrame | tuple[float, float] | None = None,
     clear: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Daily performance index on the clear days of each series.
+    """Daily performance index on the clear days of each series (`kwp` per series must cover them all).
 
     `energy` is the day's measured energy (kWh), `expected` the clear-sky irradiation on the panel plane
     (kWh/m2) times `kwp` (kW) when given, and `index` their ratio: a performance ratio against clear sky with
@@ -263,6 +288,10 @@ def _kwp(kwp: float | dict[str, float] | None, ids: list[str]) -> dict[str, floa
     if kwp is None:
         return {}
     if isinstance(kwp, dict):
+        # all or none: a partial map would mix a performance ratio and an effective kW in one column
+        missing = [u for u in ids if u not in {str(k) for k in kwp}]
+        if missing:
+            raise ValueError(f"kwp has no value for series {missing}; give one per series, or none")
         return {str(k): float(v) for k, v in kwp.items()}
     return {u: float(kwp) for u in ids}
 
@@ -389,7 +418,8 @@ def changepoints(
             )
         best = max(sg["level_start"] for sg in segs)
         for sg in segs:
-            sg["lost_pct"] = float(100 * (1 - sg.pop("mean") / best))
+            mean = sg.pop("mean")
+            sg["lost_pct"] = float(100 * (1 - mean / best)) if best > 0 else np.nan
         seg_rows += segs
         for i, b in enumerate(breaks):
             before, after = float(segs[i]["level_end"]), float(segs[i + 1]["level_start"])
@@ -533,7 +563,9 @@ def _notes(
 def _recurs(steps: pd.DataFrame, r: dict[Any, Any], days: int = 45) -> bool:
     """Another step of the same sign in the same series within `days` of the same day of the year."""
     same = steps[(steps["unique_id"] == r["unique_id"]) & (steps["date"] != r["date"])]
-    same = same[np.sign(same["step_pct"]) == np.sign(r["step_pct"])]
+    same = same[
+        (np.sign(same["step_pct"]) == np.sign(r["step_pct"])) & (same["step_pct"].abs() >= STEP_NOTE_PCT)
+    ]
     if same.empty:
         return False
     doy = pd.DatetimeIndex(same["date"]).dayofyear.to_numpy()

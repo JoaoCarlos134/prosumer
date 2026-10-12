@@ -52,7 +52,10 @@ PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
     "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
     "diagnostics": "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes",
-    "economics": "time-of-use tariffs and the Brazilian module: step E6",
+    "economics": "not a section of the report yet: call `economics.bill` (flat or time-of-use tariff; net "
+    "metering, net billing or self-consumption) or `economics.brazil.bill` (tarifa cheia, bandeira, custo de "
+    "disponibilidade, Lei 14.300 GD I/II; tariffs from `io.aneel`); not modelled: COSIP, tarifa branca with "
+    "generation, grupo A",
 }
 
 

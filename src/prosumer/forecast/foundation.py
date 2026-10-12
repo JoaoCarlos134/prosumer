@@ -11,7 +11,10 @@ Benchmark rank (v2, rolling origin): TiRex-2 is the best single model on the pla
 Toto-2.0-313m is first on the houses' PV; Chronos-2 is among the leaders with covariates. All three run on
 CPU, which is why the library and the app are CPU only.
 
-Licences: check each model card before commercial use; the card's `license` field says what was checked.
+Licences (checked 2026-10-11 on the Hugging Face model cards and the GitHub repos of the code): weights and
+code of all three are Apache-2.0, commercial use allowed. Redistributing the weights must keep the licence and
+any NOTICE file (TiRex-2 ships one). NX-AI's INTENDED_USE.md (TiRex-2) excludes high-risk uses under the EU AI
+Act and use as a safety component; it says it does not change the licence.
 """
 
 from __future__ import annotations
@@ -130,7 +133,7 @@ class TiRex2(_ZeroShot):
     card = ModelCard(
         name="TiRex-2",
         family="foundation",
-        license="see the NX-AI model card (NX-AI/TiRex-2)",
+        license="Apache-2.0",
         device="cpu",
         sends_data=False,
         regimes=_ALL,
@@ -183,7 +186,7 @@ class Toto2(_ZeroShot):
         self.card = ModelCard(
             name=f"Toto-2.0-{size}",
             family="foundation",
-            license=f"see the Datadog model card ({self.hf})",
+            license="Apache-2.0",
             device="cpu or gpu",
             sends_data=False,
             regimes=(Regime.HISTORY,),

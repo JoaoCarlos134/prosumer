@@ -75,6 +75,9 @@ def confere(nome, caso, regime, smoke=False):
     dt = time.time() - t0
     gravada = pd.read_parquet(PREV / f"{nome}__{caso}__{regime}.parquet")
     gravada["ds"] = gravada.ds.dt.tz_localize(FUSO[caso])
+    # as rodadas v1 dos fundacionais (casas_prod A) incluiam as 10 casas sem FV; o 05_avalia so avalia as 10 com FV
+    extras = sorted(set(gravada.unique_id) - set(nossa.unique_id))
+    gravada = gravada[gravada.unique_id.isin(set(nossa.unique_id))]
     m = nossa.merge(gravada[["unique_id", "ds", "yhat"]], on=["unique_id", "ds"], how="outer", suffixes=("", "_g"))
     if len(m) != len(nossa) or len(m) != len(gravada):
         return dict(erro=f"series-horas diferentes: nossa {len(nossa)}, gravada {len(gravada)}, juntas {len(m)}")
@@ -89,7 +92,7 @@ def confere(nome, caso, regime, smoke=False):
                                                      on=["unique_id", "ds"]).dropna()
     rmse = lambda c: float(np.sqrt(np.mean((j[c].clip(lower=0) - j.y) ** 2)))
     import torch
-    return dict(segundos=round(dt, 1), torch=torch.__version__, horas=int(len(m)),
+    return dict(segundos=round(dt, 1), torch=torch.__version__, horas=int(len(m)), series_extra_gravada=len(extras),
                 max_dif=float(dif.max()), media_dif=float(dif.mean()),
                 skill_biblioteca=round(1 - rmse("yhat") / rmse("r"), 6), skill_gravada=round(1 - rmse("yhat_g") / rmse("r"), 6))
 

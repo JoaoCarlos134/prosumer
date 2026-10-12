@@ -2121,5 +2121,89 @@
   "skill_melhor": 0.2095,
   "dm_p_vs_melhor": 0.0,
   "grupo_da_frente": false
+ },
+ "LightGBM-B-curitiba-1h|usinas|B": {
+  "modelo": "LightGBM-B-curitiba-1h",
+  "caso": "usinas",
+  "regime": "B",
+  "skill": 0.4529,
+  "ic95": [
+   0.4186,
+   0.4864
+  ],
+  "R2": 0.894,
+  "nRMSE": 0.3599,
+  "MBE": 0.0005,
+  "posicao": "16o de 24",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.5089,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "gravado_LightGBM_B": {
+   "Cascavel": 0.5263,
+   "Curitiba": 0.4712,
+   "juntas": 0.4798
+  },
+  "corrigido": {
+   "Cascavel": 0.5237,
+   "Curitiba": 0.4401,
+   "juntas": 0.4529
+  }
+ },
+ "LightGBM-B-curitiba-ceuclaro+1h|usinas|B": {
+  "modelo": "LightGBM-B-curitiba-ceuclaro+1h",
+  "caso": "usinas",
+  "regime": "B",
+  "skill": 0.4783,
+  "ic95": [
+   0.4479,
+   0.509
+  ],
+  "R2": 0.9036,
+  "nRMSE": 0.3432,
+  "MBE": -0.0082,
+  "posicao": "13o de 24",
+  "melhor": "TiRex-2",
+  "skill_melhor": 0.5089,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "gravado": {
+   "Cascavel": 0.5263,
+   "Curitiba": 0.4712,
+   "juntas": 0.4798
+  },
+  "variante": {
+   "Cascavel": 0.5264,
+   "Curitiba": 0.4694,
+   "juntas": 0.4783
+  }
+ },
+ "LightGBM-C-curitiba+1h|usinas|C": {
+  "modelo": "LightGBM-C-curitiba+1h",
+  "caso": "usinas",
+  "regime": "C",
+  "skill": 0.3197,
+  "ic95": [
+   0.2783,
+   0.3599
+  ],
+  "R2": 0.836,
+  "nRMSE": 0.4475,
+  "MBE": 0.0001,
+  "posicao": "15o de 24",
+  "melhor": "Ensemble-mediana",
+  "skill_melhor": 0.3673,
+  "dm_p_vs_melhor": 0.0,
+  "grupo_da_frente": false,
+  "gravado": {
+   "Cascavel": 0.3556,
+   "Curitiba": 0.3255,
+   "juntas": 0.3303
+  },
+  "variante": {
+   "Cascavel": 0.3541,
+   "Curitiba": 0.3132,
+   "juntas": 0.3197
+  }
  }
 }

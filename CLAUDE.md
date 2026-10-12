@@ -453,9 +453,20 @@ formato bruto aqui). **ACHADO a declarar (benchmark):** o GHI da NASA de Curitib
 `poa_estimada`/`temp_ar_horaria`, regime B e B-curto) esta **1 h atrasado**: o script de Curitiba reusou o deslocamento
 de -55 min de Cascavel, mas Curitiba esta noutra faixa de hora solar local (LST = UTC-3, Cascavel UTC-4).
 `clock_offset` da +1 h confiante em TODOS os meses de 2021-2026; Cascavel 0. A geracao de Curitiba sai ambigua (0 ou
-+1 conforme o mes; geometria desconhecida). O C (Open-Meteo convertido certo) nao e afetado. Piloto do efeito
-(LightGBM B nas usinas com o clima de Curitiba adiantado 1 h) depois da fila. Paridade completa da fila de 11/10:
-LightGBM e LightGBM quantilico, 11/11 testes. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
++1 conforme o mes; geometria desconhecida). Confirmado por fora do sol: o GHI da NASA de Curitiba casa com a
+previsao da Open-Meteo 1 h ANTES (corr 0,966 x 0,921 em L=0; Cascavel 0,968 em L=0), e a previsao da Open-Meteo da
+0 h no `clock_offset` nas duas usinas. **Mas corrigir nao melhora o modelo** (`piloto_curitiba_hora.py`, LightGBM,
+saidas em `resultados/pilotos/`): NASA adiantada 1 h no B, Curitiba +0,471 -> +0,440; so o ceu claro atrasado 1 h no
+B, +0,471 -> +0,469; previsao + ceu claro atrasados 1 h no C, +0,326 -> +0,313. Leitura: o relogio da geracao de
+Curitiba nao e um +1 h limpo (talvez rotulo deslocado de fracao de hora); os numeros publicados ficam, o atraso
+do clima da NASA de Curitiba e DECLARADO no texto. Decisao de refazer algo: do usuario.
+**Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
+quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
+iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);
+quantis do Chronos-2 = piloto com dif 0,0 nos 4. `resultados/conferencia_biblioteca.json`, 24 entradas, nenhum erro.
+As rodadas v1 dos fundacionais em casas_prod A (Chronos-2, Chronos-Bolt-small, Moirai-2.0-small, TTM-r2, TiRex,
+TimesFM-2.5 e o Ensemble) gravaram as 20 casas, inclusive as 10 sem FV: o 05_avalia so avalia as 10, nenhum numero
+muda; a conferencia compara nas comuns e anota `series_extra_gravada`. Modo teste: `scripts/modo_teste.ps1` (`MODO_TESTE=1` na fila da noite).
 
 Descartado SO com evidencia (testado): escolher "o melhor modelo" (piora/instavel) e correcao de vies na geracao
 solar (piora ate -0,10); TimesNet so no A porque ignora o clima. Nada mais sai sem estudo + piloto (etapa A).

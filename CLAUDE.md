@@ -496,14 +496,34 @@ de 13.920 com 0,026 kWh, float32 x float64, criterio relaxado depois e declarado
 bloqueado: o C e conferido via `zig cc` -> WebAssembly -> Node. emlearn diverge do sklearn (4-42 h): rota propria.
 No `.venv`: importar `lightgbm` ANTES de `sklearn.ensemble` (senao o ajuste do LightGBM quebra o processo). A
 revisao achou e foi consertado: floresta sem imputador mandava todo NaN para a esquerda (ate 0,45 kWh). Falta no diagnostico: sujeira x sombra x string (5 min/CC).
+**Embarcado, redes e geracao (12/10, tarde; ESTUDO_EMBARCADO secao 8):** `embedded.SparseTSF` e `embedded.CycleNet`
+(arrays numpy, `from_torch` sem importar torch, cabecalho C com o preenchimento causal e a normalizacao por janela do
+benchmark). Piloto `piloto_embarcado_redes.py` (gera no `previsao_gpu`, avalia no `.venv`), portao commitado antes:
+as 6 combinacoes (2 redes x 3 casos) PASSAM; C = torch ate 2,5e-6 kWh; SparseTSF 128 B, CycleNet ~16-17 KB por serie;
+empatam com o melhor so o CycleNet na FV das casas (p 0,12). Retreino em CPU (5 threads, como o 04) = gravado em
+CycleNet casas_prod/usinas (0,0); CycleNet casas_cons NAO e deterministico em CPU entre rodadas (ate 0,035 kWh, skill
+igual a 4 casas); SparseTSF (gravado em GPU) ate 4e-4. Arvores na geracao (`piloto_embarcado.py casas_prod|usinas`):
+passam todas menos a RF 50x10 na FV das casas (C ponta a ponta fora da tolerancia em 1 hora, 6,6e-4 kWh).
 **Previsao dos proximos dias e site de exemplo (12/10, noite):** `prosumer.outlook` (`forecast_ahead`, 1-35 dias,
 hora e dia; geracao = potencia efetiva e telhado aprendidos nos dias claros x POA da previsao do tempo, puxada para o
 esperado da estacao conforme a antecedencia cresce (`TRUST`, PROVISORIO ate o piloto `piloto_horizonte.py`); consumo
 = perfil das ultimas 4 semanas; `best_windows` para cargas pesadas); `io.open_meteo.fetch_forecast` (API ao vivo;
-alcance medido: IFS/GFS/AIFS ~15-16 dias, GEM 10,5, ICON 8, CMA 5,5, Meteo-France 4,75); `io.geocode` (Nominatim
+alcance medido: IFS/GFS ~15-16 dias, GEM 10,5, ICON 8, CMA 5,5, Meteo-France 4,75); `io.geocode` (Nominatim
 para enderecos; Open-Meteo so nomes de lugar), `round_site`, `timezone_at`. **Meteo-France ao vivo da GHI
 impossivel no 4o dia** (2.750 W/m2 em Cascavel): modelo-dia com GHI > 1,2 x ceu claro + 50 e descartado, com nota.
-Site cru em `examples/site_local/` (stdlib `http.server`, 5 passos = 5 chamadas da biblioteca). Agentes construtores
+Site cru em `examples/site_local/` (stdlib `http.server`, 5 passos = 5 chamadas da biblioteca). **Revisao (12/10): o
+metodo do `outlook` entrou SEM piloto** (contra a regra): nao comparado ao regime C do benchmark no lead 1, telhado
+ajustado por padrao apesar do F2(b), regra do consumo fora das referencias; declarado no docstring e em toda saida
+ate o `piloto_horizonte.py` medir. **Piloto do horizonte (12/10, noite) PASSA** (G1-G4): o tempo bate a
+climatologia no total do dia nos leads 1-7 nas duas usinas (skill ~+0,49 -> ~+0,20); leads 8-15 (rodadas unicas,
+abr-mai/2026) sem skill: o tempo NAO e usado alem do lead 7. `TRUST` = a_k medidos (1,08 ... 0,79), `SKILL` por lead
+da o rotulo (alta 1-3, media 4-6, baixa 7). **Revisao do piloto:** o a_k > 1 dos leads 1-3 NAO se confirmou no
+teste: `TRUST` limitado a 1 (post hoc, declarado); o `outlook` agora calcula dias claros, kW_eff e climatologia
+como o piloto (diferencas restantes declaradas no docstring). No lead 1 empata com o LightGBM C (+0,321 x +0,330, p 0,73), abaixo da
+mediana (+0,367). Consumo: perfil dia util/fim de semana das ultimas 4 semanas (+0,234 por hora contra `persist`).
+Arquivo da Meteo-France so tem leads 1-3; IFS leads 6-7 do arquivo com GHI impossivel nas pontas do dia (filtro). Consertados: rotulo do dia pelas horas de sol (nao pela melhor hora), 1o dia
+inteiro coberto pelo clima, modelo com GHI impossivel sai ate o fim, janelas com hora sem previsao, notas para
+recuos silenciosos, atribuicoes OSM/Open-Meteo na pagina. Agentes construtores
 `.claude/agents/library-builder.md` e `pilot-runner.md` (pedido do usuario).
 **E6 comecou (12/10/2026): `prosumer.economics`.** Nucleo internacional: `Tariff` (tarifa como dado: plana ou
 blocos por hora, dia util x fim de semana/feriado, hora dividida entre blocos, preco de exportacao, fixo mensal,

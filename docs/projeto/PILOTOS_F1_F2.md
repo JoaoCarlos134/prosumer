@@ -21,6 +21,7 @@ venha só do que foi acrescentado.
 | F2(c) faixas (quantis) | `piloto_quantis.py` | ver a tabela abaixo: há uma fonte calibrada em cada caso do regime A | **PASSA** no regime A; no C falta calibrar |
 | F2(d) atualização ao meio-dia (pico 17–20 h, consumo) | `piloto_meio_dia.py` | emitida às 12:00 **+0,265** contra +0,237 do melhor das 00:00 (Timer-XL-84m), p 0,023; +0,07 sobre o mesmo LightGBM das 00:00 | **PASSA** |
 | F2(f) modelo direto do total do dia (consumo) | `piloto_total_dia.py` | direto +0,147 contra +0,146 da soma do Timer-XL-84m (p 0,98) e +0,095 da soma do LightGBM | **não passa** (empata com o melhor; registro: um LightGBM de 300 árvores empata com um fundacional de 84 M no total do dia) |
+| Horizonte longo, geração e consumo (12/10) | `piloto_horizonte.py` | geração: `encolhido` bate a climatologia no total do dia nos leads 1-7 nas duas usinas (+0,48/+0,49 no lead 1 a +0,18/+0,22 no 7, p ≤ 0,0002); leads 8-15 não testáveis (amostra curta, ~2 meses); consumo: `perfil_dia_util` bate `persist` nos leads 1-14 | **PASSA** (ver a seção no fim) |
 
 ## F2(a) — várias previsões do tempo
 
@@ -201,3 +202,158 @@ perda. Um telhado leste+oeste simetrico vira um plano equivalente mais deitado (
 Sujeira x sombra x falha de string pedem dados de 5 min ou CC (proximo).
 Decisao: entra na biblioteca (`prosumer.diagnostics`, secao `diagnostics` do `analyze` com `site`, `kwp=`), com
 fator 3 e a perda da reconfiguracao declarada.
+
+## Horizonte longo: a proxima semana, por hora e no total do dia (12/10/2026) — PASSA nos leads 1-7 (geracao) e 1-14 (consumo)
+
+Pergunta: para marcar cargas pesadas na semana, ate que antecedencia k (dias) a previsao do tempo ainda ajuda a
+geracao FV contra a climatologia, com que metodo, e quanto confiar nela (fator a_k)? No consumo (sem clima), que
+regra de historico serve de 1 a 14 dias? Script `experimentos/testes_previsao/scripts/piloto_horizonte.py`;
+saidas `resultados/pilotos/horizonte.json` (os numeros abaixo saem dele, exceto os da contagem de pedidos e das
+razoes Meteo-France/IFS dos leads 1-2, ver abaixo) e `horizonte_usina_*.parquet`;
+tempo baixado em `dados/previsao_tempo_horizonte.parquet` (Previous Runs, `previous_day1..7`, seis modelos,
+GHI, 4,7 MB, 84 pedidos, ~11 min, nenhum 429; o json guarda so a segunda usina, 42 pedidos e 338 s, porque o
+`grava` substituiu o dicionario: os 84 pedidos vem dos horarios do cache, 17:02-17:13) e `dados/previsao_tempo_rodadas.parquet` (Single Runs, 0,2 MB,
+256 pedidos, ~9 min). Antecedencia k = previsao do dia D emitida as 00:00 de D-k+1, com o observado ate 23:00 de
+D-k (k = 1 e o benchmark). Contas: ~4 s por usina, 1 s no consumo (CPU).
+
+**Ordem dos commits (para a revisao):** `f5509d7` = script com o portao G1-G4 e o filtro de qualidade, ANTES de
+qualquer download ou conta (so a disponibilidade da Single Runs foi sondada antes, sem numero de previsao: o
+arquivo comeca em 02/04/2026). `7e8e003` = comparacao EXTRA pedida pela sessao principal (linhas do regime C do
+benchmark no lead 1, referencias do consumo, Meteo-France no lead 3), acrescentada DEPOIS do commit do portao e
+antes de rodar o `avalia` e o `compara`; NAO faz parte do portao. O consumo (`casas`) e o calculo da usina
+Cascavel rodaram entre os dois commits; nada no portao mudou.
+
+Metodos da geracao (orientacao do telhado por `diagnostics.roof_orientation` antes do teste: Cascavel 15 graus /
+30, R2 0,919; Curitiba 20 / 320, R2 0,819; kW_eff = mediana do `performance_index` dos dias claros CAUSAIS dos
+60 dias anteriores): `fisico` = kW_eff x POA da media do GHI previsto; `ajustado` = b x POA prevista, b de
+minimos quadrados nos 90 dias anteriores com o arquivo do proprio lead; `climatologia` = kW_eff x POA de ceu
+claro x claridade mediana do mesmo mes em anos anteriores; `persist_cs` = indice de ceu claro do ultimo dia
+completo; `encolhido` = climatologia + a_k (fisico - climatologia), a_k ajustado antes do teste (duas usinas
+juntas, normalizadas). Teste: 297 dias em Cascavel, 301 em Curitiba (dias com todas as horas de sol validas);
+4.014 e 4.025 horas de sol.
+
+PORTAO (no docstring, commit `f5509d7`): G1 metodo de tempo escolhido = maior skill medio contra a climatologia
+no total do dia, leads 1-7, duas usinas; G2 usa o tempo no lead k so se o escolhido bate a climatologia no total
+do dia com skill > 0 e DM p < 0,05 nas DUAS usinas; G3 leads 8-15 so relato ("indicativo" se o fisico bate a
+climatologia com p < 0,05 nas duas, nunca adotado); G4 consumo: maior skill medio por hora contra `persist` nos
+leads 1-14, desde que bata `persist` em todos (skill > 0 e p < 0,05).
+
+**Filtro de qualidade do tempo (declarado antes de rodar, aviso da sessao principal):** um modelo sai da media no
+dia se alguma hora tem GHI > 1,2 x ceu claro + 50 W/m2. Descartes (modelo-dias, todo o periodo baixado,
+Cascavel / Curitiba): IFS 0/0 nos leads 1-5, **54/99 no lead 6 e 177/178 no lead 7**; GEM 0-10; CMA 0-7; GFS,
+ICON e Meteo-France 0. O IFS dos leads 6-7 nao e um defeito isolado: o arquivo vem de passos de 3 ou 6 h
+interpolados, que espalham energia para as horas de manha cedo e fim da tarde (media do lead 7 em Cascavel: 1,59
+x ceu claro as 18 h e 4,0 x as 19 h; no lead 1, 0,84 e 1,96). O filtro pega essas horas de borda. Os dias
+descartados do IFS no lead 7 em Cascavel caem quase todos antes do teste (172 de 177 entre mar/2024 e abr/2025), isto e, no periodo que ajusta o
+a_k e o `ajustado`. Na Single Runs (rodadas das 12 UTC) o filtro nao descartou nada. Os descartes do IFS terminam
+por volta de 19-20/04/2025: o arquivo dos leads longos do IFS parece um produto diferente no comeco da calibracao e
+no teste (revisao). Efeito pequeno: sem o filtro, a_6 = 0,868 e a_7 = 0,820 (contra 0,855/0,785), e o skill de teste
+dos leads 6-7 muda no maximo 0,005.
+
+**Composicao dos modelos por lead (do arquivo, nao escolhida):** Meteo-France so tem `previous_day1..3`; ICON nao
+tem `previous_day7`; o CMA dos leads 5-7 para em 07/08/2025 (esta na calibracao, quase nao esta no teste). A
+media dos leads 1-3 tem seis modelos; a do lead 7, IFS (filtrado), GFS e GEM. Media e espalhamento mudam de
+composicao entre calibracao e teste nos leads 5-7.
+
+Conferencia: o lead 1 baixado agora reproduz os arquivos do regime C do benchmark (`previsao_tempo.parquet` +
+`previsao_tempo_extra.parquet`) com **diferenca maxima 0,0** nos seis modelos e nas duas usinas (18.095-19.727
+horas comuns por modelo; 1 hora a mais no novo, a ultima, que o deslocamento do rotulo deixa vazia no benchmark).
+
+### Geracao: skill do total do dia contra a climatologia
+
+| lead | fisico Casc. / Curit. | ajustado Casc. / Curit. | encolhido Casc. / Curit. | p encolhido | a_k | G2 |
+|---|---|---|---|---|---|---|
+| 1 | +0,490 / +0,502 | +0,507 / +0,516 | +0,481 / +0,495 | < 0,0001 | 1,083 | passa |
+| 2 | +0,450 / +0,428 | +0,460 / +0,447 | +0,445 / +0,421 | < 0,0001 | 1,069 | passa |
+| 3 | +0,418 / +0,397 | +0,428 / +0,412 | +0,416 / +0,395 | < 0,0001 | 1,051 | passa |
+| 4 | +0,387 / +0,385 | +0,403 / +0,383 | +0,394 / +0,390 | < 0,0001 | 0,916 | passa |
+| 5 | +0,345 / +0,321 | +0,357 / +0,320 | +0,356 / +0,331 | < 0,0001 | 0,906 | passa |
+| 6 | +0,207 / +0,301 | +0,218 / +0,296 | +0,239 / +0,308 | < 0,0001 | 0,855 | passa |
+| 7 | +0,128 / +0,200 | +0,130 / +0,191 | +0,177 / +0,220 | 0,0002 / < 0,0001 | 0,785 | passa |
+
+Por hora (horas de sol), contra a climatologia, o encolhido da +0,335/+0,295 no lead 1, +0,264/+0,227 no 4 e
++0,111/+0,116 no 7 (Cascavel/Curitiba), todos p < 0,001. A `persist_cs` perde da climatologia em todos os leads
+(dia: -0,10/-0,05 no lead 1, -0,34/-0,39 no 7): a climatologia ja ganha da persistencia no lead 1. a_k por usina:
+Cascavel 1,029 -> 0,806, Curitiba 1,133 -> 0,767 (lead 1 -> 7); o a_k > 1 dos leads 1-3 diz que, antes do teste,
+o fisico reagia de menos as nuvens previstas. **Correcao da revisao independente (12/10): isso NAO se confirma no
+teste.** Ajustado nos proprios dias de teste (oraculo, so para conferir), o a_k fica abaixo de 1 em todos os leads
+nas duas usinas (lead 1: 0,943/0,984; lead 3: 0,951/0,984; lead 7: 0,595/0,715), e nos leads 1-3 o encolhido e o
+pior dos tres metodos de tempo (lead 1: +0,481/+0,495 contra fisico +0,490/+0,502 e ajustado +0,507/+0,516; DM
+encolhido x ajustado em Cascavel no lead 1, p 0,016): o a_k > 1 custa ~0,007-0,009 de skill nos leads 1-3.
+
+**G1:** skill medio no dia, leads 1-7, duas usinas: fisico +0,354, ajustado +0,3619, **encolhido +0,3620**. O
+encolhido e o escolhido pela regra, mas a diferenca para o ajustado e de 0,0001: e um EMPATE, nao um "melhor".
+Nos leads 1-3 o ajustado tem o maior skill pontual e o encolhido o menor dos tres; o encolhido so se separa nos
+leads 6-7 (onde o a_k < 1 puxa para a climatologia). **G2: passa nos sete leads.** Padrao da biblioteca:
+encolhido com a_k = 1,083 / 1,069 / 1,051 / 0,916 / 0,906 / 0,855 / 0,785 (leads 1-7).
+
+Espalhamento x erro (Spearman entre o desvio relativo do GHI entre os modelos e o erro absoluto relativo do total
+do dia do encolhido): Cascavel +0,29 a +0,43, p < 0,001 em todos os leads; Curitiba +0,07 a +0,21, p < 0,05 so
+nos leads 2, 3, 4 e 7 (p 0,09-0,20 nos 1, 5, 6). O espalhamento diz algo sobre o erro, de forma fraca, e mais
+em Cascavel.
+
+### Leads 8-15 (Single Runs, so relato — G3)
+
+O arquivo de rodadas unicas comeca na rodada de 02/04/2026 12 UTC (IFS e GFS; as de 28/03-01/04 nao existem).
+Avaliavel so em ~42-58 dias de abr-mai/2026 (outono), sem periodo anterior ao teste: nem `ajustado` nem a_k.
+Media de IFS e GFS; o IFS vai ate o lead 14, o lead 15 e so GFS. Skill do fisico no total do dia contra a
+climatologia (p do DM):
+
+| lead | Cascavel | Curitiba | lead | Cascavel | Curitiba |
+|---|---|---|---|---|---|
+| 1 | +0,464 (0,005) | +0,522 (< 0,001) | 9 | +0,025 (0,86) | +0,072 (0,41) |
+| 4 | +0,348 (0,030) | +0,442 (< 0,001) | 10 | +0,045 (0,75) | +0,079 (0,37) |
+| 5 | +0,227 (0,094) | +0,391 (< 0,001) | 12 | -0,089 (0,54) | +0,006 (0,94) |
+| 6 | +0,067 (0,65) | +0,232 (0,003) | 13 | -0,170 (0,21) | -0,043 (0,66) |
+| 7 | +0,114 (0,46) | +0,146 (0,086) | 14 | -0,092 (0,43) | +0,056 (0,56) |
+| 8 | -0,029 (0,82) | +0,217 (0,030) | 15 | **-0,403 (0,015)** | -0,056 (0,58) |
+
+Nenhum lead de 8 a 15 fica "indicativo" (G3). Nesta amostra curta o fisico ja nao se separa da climatologia em
+Cascavel a partir do lead 5 (no arquivo longo de Previous Runs separa ate o 7: a amostra de 2 meses tem pouco
+poder); Curitiba separa ate o 6 e no 8. No lead 15 (so GFS) o fisico e significativamente PIOR que a
+climatologia em Cascavel. Leitura: alem de 7 dias este piloto nao da base para usar o tempo; a amostra (2 meses,
+uma estacao) tambem nao prova que nao ha nada.
+
+### Consumo (20 casas, teste out-dez/2020): skill por hora contra `persist` (p do DM)
+
+| lead | semana | media_4sem | media_7d | perfil_dia_util |
+|---|---|---|---|---|
+| 1 | -0,126 (< 0,001) | +0,101 | +0,158 | +0,160 |
+| 2 | -0,069 (0,006) | +0,146 | +0,175 | +0,196 |
+| 4 | -0,014 (0,44) | +0,190 | +0,190 | +0,236 |
+| 7 | 0,000 (= persist) | +0,202 | +0,185 | +0,245 |
+| 10 | +0,004 (0,89) | +0,203 | +0,190 | +0,249 |
+| 14 | 0,000 (= persist) | +0,200 | +0,189 | +0,244 |
+
+(as tres medias: p < 0,001 em todos os leads; tabela completa, leads 1-14, no json.) No total do dia o
+`perfil_dia_util` da +0,011 (p 0,87) no lead 1, empata com `persist`; +0,127 (p 0,009) no 2 e +0,21 a +0,23
+(p <= 0,003) do 4 ao 14. **G4: perfil_dia_util (skill medio por hora +0,234; media_4sem +0,187; media_7d +0,186)
+bate `persist` nos 14 leads: passa.** Nos leads 7 e 14 a `semana` e o proprio `persist` (o mesmo dia da semana e
+o ultimo observado). O skill cresce com o lead porque a referencia piora (o dia observado fica mais longe), nao
+porque a regra melhora.
+
+### Comparacao extra (fora do portao, commit `7e8e003`)
+
+(a) Lead 1 nas usinas, nas 8.940 horas avaliadas do benchmark, skill contra `persist_ceu_claro|A` (p do DM contra
+o LightGBM|C): Ensemble-mediana|C +0,367 (p < 0,001), LightGBM|C +0,330, **fisico +0,325 (p 0,88)**,
+**encolhido +0,321 (p 0,73)**, linear_fisico|C +0,312 (p 0,15), climatologia +0,031, persist_cs +0,004. Os
+skills recalculados das linhas do benchmark sao iguais aos do `metricas.csv` (0,3118 / 0,3303 / 0,3673): as
+horas sao as mesmas. O fisico e o encolhido EMPATAM com o LightGBM do regime C (com seis modelos de tempo em vez
+de so o IFS, e sem treino alem de kW_eff, orientacao e a_k) e perdem da mediana de todos os modelos.
+(b) Consumo, lead 1: as referencias do benchmark `persist_24h` 0, `semanal_168h` -0,1258 e `media_7d` +0,1575 sao
+reproduzidas exatamente pelas regras `persist`, `semana` e `media_7d`; `perfil_dia_util` +0,1595.
+(c) Meteo-France no arquivo: so ha `previous_day1..3` (4-7 vazios). No lead 3 o GHI fica alto mas nao
+impossivel (maximo 1.089 W/m2 em Cascavel, 1.083 em Curitiba; IFS 1.110/1.138), mas a razao Meteo-France/IFS da
+soma das 9-15 h cresce com o lead (Cascavel ~1,01 / 1,08 / 1,13, Curitiba ~1,07 / 1,14 / 1,19 nos leads 1/2/3,
+recontados pela revisao nas horas em que todos os modelos tem valor; os da 1a versao, 1,02/1,09/1,15 e
+1,08/1,16/1,20, nao saem do script, que so calcula o lead 3) e chega a 1,4-2,1 as 17-18 h. Nao e o 2-2,8x da
+Forecast API ao vivo, mas e ~10-20% acima dos OUTROS MODELOS (nao do medido) e entra na media dos leads 2-3. O filtro descartou 0 dias do Meteo-France.
+
+**Decisao:** padrao da biblioteca na geracao: `encolhido` com os a_k acima nos leads 1-7 (empatado com o
+`ajustado`; o encolhido nao precisa do arquivo de previsoes de cada lead depois de ajustado o a_k), **com o a_k
+limitado a 1 (decisao DEPOIS da revisao, portanto post hoc: nos leads 1-3 o a_k > 1 nao se confirmou no teste; com
+a_k = 1 o metodo e o fisico nesses leads)**;
+climatologia a partir do lead 8. Consumo: `perfil_dia_util` nos leads 1-14. Limites: duas usinas no mesmo estado;
+o lead 7 do IFS depende do filtro (interpolacao de passo de 6 h); a composicao dos modelos muda entre calibracao
+e teste nos leads 5-7; o Meteo-France puxa a media para cima nos leads 2-3; os leads 8-15 tem so ~2 meses; as
+casas sao um outono irlandes.

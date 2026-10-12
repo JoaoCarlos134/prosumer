@@ -173,7 +173,9 @@ No consumo não ganha do SparseTSF, que continua sendo o candidato pequeno para 
 **Entrou no benchmark em 09/10/2026** (`04_redes_treinadas.py --modelos CycleNet`, código em
 `redes_proprias.py`, rodado em **CPU** de propósito: na GPU o `torch.gather` do ciclo tem retropropagação não
 determinística e duas rodadas iguais diferem em até 0,06; em CPU o resultado é bit a bit reprodutível e leva
-6–14 s por caso). Resultado no benchmark: usinas +0,062 (17º/51), FV das casas **+0,138 (7º/49, empata com o
+6–14 s por caso; **corrigido em 12/10/2026:** vale para a FV das casas e as usinas com 5 threads, NÃO para o
+consumo (ciclo de 168 h), que difere até 0,035 kWh entre rodadas em CPU, skill igual a 4 casas; ver
+`ESTUDO_EMBARCADO.md` seção 8). Resultado no benchmark: usinas +0,062 (17º/51), FV das casas **+0,138 (7º/49, empata com o
 melhor também com a correção de Holm, p ajustado 0,82)**, consumo +0,166 (24º/50).
 
 ---

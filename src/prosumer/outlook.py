@@ -15,16 +15,42 @@ How (simple on purpose, every step can be explained to the person using it):
     calendar month in the data (how much of a clear day an average day of that month gave);
   - *forecast* = seasonal + trust(lead) x (weather - seasonal). The trust of each lead day says how much a
     weather forecast that far ahead is worth more than the season; it falls with the lead and is zero where
-    no model reaches (`TRUST`, set by the horizon pilot, `docs/projeto/PILOTOS_F1_F2.md`).
-- **Consumption** (no weather): per hour, the mean of the same weekday and hour in the last `weeks` weeks.
+    no model reaches (`TRUST`, measured by the horizon pilot, see below).
+- **Consumption** (no weather): per hour, the mean of that hour over the last `weeks` x 7 days of the same
+  kind as the forecast day (weekday or weekend).
   It does not depend on the lead: a household's week repeats; what changes it (holidays, a trip, a new
   appliance) is not in the data.
 
 The low/high columns are ranges, not calibrated intervals: across the weather models (generation, blended by
-the same trust with the seasonal 10-90% range of clearness) and across the last `weeks` weeks (consumption).
+the same trust with the seasonal 10-90% range of clearness) and across the days of the profile (consumption).
 
-Beyond the last weather model (~16 days) the generation is only the seasonal expectation: the average day of
-that month, not a forecast of that day's weather. It is labelled so (`source = "seasonal"`).
+Beyond lead 7 the generation is only the seasonal expectation (the pilot found no skill in the weather
+there): the average day of that month, not a forecast of that day's weather. It is labelled so
+(`source = "seasonal"`).
+
+**What the horizon pilot measured** (`piloto_horizonte.py`, 2026-10-12, `docs/projeto/PILOTOS_F1_F2.md`):
+
+- Generation, the two Parana plants, archived forecasts of 6 models issued 1-7 days ahead, test Aug/2025 to
+  May/2026: the weather forecast beats the seasonal expectation on the daily total at every lead 1-7 at both
+  plants (DM p < 0.001, Cascavel lead 7 p 0.0002); the daily skill falls from ~+0.49 (lead 1) to ~+0.20 (lead
+  7). `TRUST` holds the fitted shrink factors a_1..a_7, pooled over the two plants, capped at 1 after the
+  review (above 1 at leads 1-3 in the calibration, below 1 on the test). Leads 8-15 (one run a day, Apr-May
+  2026 only, no calibration): no lead showed skill, and lead 15 (GFS alone) was worse than the season at
+  Cascavel, so the weather is not used beyond lead 7. Two months of one season do not prove there is none.
+- At lead 1, on the benchmark's hours: +0.325 against clear-sky persistence (the weather forecast alone, which
+  is what a factor of 1 gives), a statistical tie with the benchmark's LightGBM in regime C (+0.330, DM p
+  0.88) and below the median of the benchmark's models (+0.367). It is the method that is simple to explain,
+  not the best available.
+- Consumption, 20 Dingle houses, leads 1-14: the weekday/weekend profile of the last 4 weeks beat "same as the
+  last day" at every lead (mean hourly skill +0.234) and the same-weekday mean of 4 weeks (+0.187).
+- Still different from the pilot, on purpose: the roof is fitted on all the data at forecast time (the pilot
+  fitted it once before its test); a model with impossible GHI is dropped from that day to the end of the
+  forecast (the pilot dropped it for the day only); the live API's mix of models by lead is not the archive's
+  the factors were fitted on (Meteo-France only to lead 3 there, no ICON at lead 7); one set of factors for
+  every site, pooled over the two plants (per plant they differ by up to 0.1 at lead 1); the rest of the issue
+  day (lead 0) uses lead 1's factor.
+- Not measured: the thresholds of the confidence labels (they follow the measured skill, `SKILL`), a roof the
+  person types in, other climates than Parana's.
 """
 
 from __future__ import annotations
@@ -52,22 +78,27 @@ from .diagnostics import (
 
 MAX_DAYS = 35
 WEEKS = 4
-KW_EFF_DAYS = 60  # clear days of the last 60 days give the effective peak power
-MIN_CLEAR = 5
-# Trust in the weather forecast per lead day: lead 1 is the day after the forecast is issued (the archive's
-# `previous_day1`, the benchmark's day-ahead task); the rest of the issue day itself counts as lead 1.
-# PROVISIONAL until the horizon pilot (`piloto_horizonte.py`) measures it: full for the first days, falling
-# to zero by day 16.
-# fmt: off
-TRUST: tuple[float, ...] = (
-    1.0, 1.0, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05,
-)
-# fmt: on
+KW_EFF_DAYS = 60  # clear days of the 60 days before the data end give the effective peak power ...
+KW_EFF_FALLBACK_DAYS = 120  # ... or of the 120 days if there is none (the horizon pilot's rule)
+MIN_MONTH_DAYS = 5  # days of the same month in earlier years for the typical clearness, else the last 30 days
+# Shrink factor of the weather forecast toward the seasonal expectation per lead day. Lead 1 is the day after
+# the forecast is issued (the archive's `previous_day1`); the rest of the issue day is lead 0 and uses lead
+# 1's value. Fitted (least squares, before the test) by the horizon pilot on the two plants, leads 1-7; zero
+# after. CAPPED AT 1 (decided after the review of the pilot, 2026-10-12, so post hoc): the fitted 1.08, 1.07
+# and 1.05 at leads 1-3 did not hold on the test (fitted there, every factor is below 1) and cost 0.007-0.009
+# of skill against the plain weather forecast; a factor above 1 would push the forecast past the weather.
+TRUST: tuple[float, ...] = (1.0, 1.0, 1.0, 0.9158, 0.9058, 0.8550, 0.7854)
+# Daily-total skill against the seasonal expectation at each lead (same pilot, mean of the two plants; leads
+# 1-3 are the plain weather forecast's, `fisico`, since the factor is 1 there): what a day's confidence label
+# says. A day only partly covered by the weather gets it in proportion.
+SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199)
 # An hourly GHI above 1.2 x clear sky + 50 W/m2 is not weather but a broken value: on 2026-10-12 the live
 # `meteofrance_seamless` gave up to 2750 W/m2 at Cascavel on its 4th day (clear sky ~990). Brief cloud
-# enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The whole model-day is left out.
+# enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The fault looked systematic in the
+# lead (2-2.8x the other models from lead 3), and a cloudy day under the limit cannot be caught, so the model
+# is left out from that day to the end of the forecast.
 IMPLAUSIBLE = (1.2, 50.0)
-HIGH, MEDIUM = 0.66, 0.33  # trust above which a day is labelled high / medium confidence
+HIGH, MEDIUM = 0.40, 0.25  # skill from which a day is labelled high / medium confidence (leads 1-3 / 4-6)
 
 Prefer = Literal["high", "low"]
 
@@ -159,13 +190,18 @@ def forecast_ahead(
     if start is not None:
         t = pd.Timestamp(start)
         first = (t.tz_localize(s.tz) if t.tzinfo is None else t.tz_convert(s.tz)).normalize()
-    elif w is not None and w["ds"].min().normalize() > first:
+        if first <= last:
+            notes.append(
+                f"The outlook starts on {first.date()}, before the data end ({last.date()}): those days are "
+                "already in the data, so they are not forecasts and say nothing about skill."
+            )
+    elif w is not None and s.quantity == "generation" and _first_full_day(w["ds"]) > first:
+        covered = _first_full_day(w["ds"])
         notes.append(
-            f"The data end on {last.date()}; the forecast starts on {w['ds'].min().date()}, the first day of "
-            "the "
-            "weather forecast. The days in between are not forecast."
+            f"The data end on {last.date()}; the forecast starts on {covered.date()}, the first local day "
+            "the weather forecast covers in full. The days in between are not forecast."
         )
-        first = w["ds"].min().normalize()
+        first = covered
     end = (first.tz_localize(None) + pd.Timedelta(days=days)).tz_localize(s.tz, nonexistent="shift_forward")
     hours = pd.date_range(first, end, freq="h", inclusive="left")
     issue = _issue_day(w, first)
@@ -177,13 +213,35 @@ def forecast_ahead(
         hourly, method, more = _consumption(s, hours, lead, weeks)
         if w is not None:
             more.append("The weather forecast is not used for consumption (the profile of recent weeks is).")
+        more.append(
+            "The consumption profile (weekdays and weekends apart, last 4 weeks) beat 'same as the last day' "
+            "at every lead 1-14 on 20 Dingle houses (autumn 2020); a holiday, a trip or a new appliance is "
+            "not in it."
+        )
     notes += more
+    if s.quantity == "generation" and w is not None:
+        if (hourly["source"] == "weather").any():
+            notes.append(
+                "How much the weather forecast is trusted at each lead day, and the confidence labels, were "
+                "measured on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an "
+                "assumption."
+            )
+        else:
+            notes.append(
+                "The weather forecast covers none of these hours: every day is the seasonal expectation."
+            )
     if lead.max() > len(trust) and s.quantity == "generation":
         notes.append(
             f"Days beyond day {len(trust)} are the seasonal expectation (an average day of the month), not a "
-            "forecast of their weather."
+            "forecast of their weather: beyond a week the weather forecasts showed no skill in the pilot."
         )
     daily = _daily(hourly)
+    gaps = daily[daily["missing_hours"] > 0]
+    if len(gaps):
+        notes.append(
+            f"{int(gaps['missing_hours'].sum())} hours have no forecast (never seen in the recent data) and "
+            "are left out of the daily totals and of the load windows."
+        )
     return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
 
 
@@ -204,10 +262,14 @@ def best_windows(
     rows = []
     for (uid, date), g in h.groupby(["unique_id", h["ds"].dt.tz_localize(None).dt.normalize()], sort=True):
         y = g["y_hat"].to_numpy(dtype=float)
-        if len(y) < hours or not np.isfinite(y).any():
+        if len(y) < hours:
             continue
         sums = np.convolve(np.nan_to_num(y), np.ones(hours), mode="valid")
-        i = int(np.argmax(sums) if prefer == "high" else np.argmin(sums))
+        gaps = np.convolve(~np.isfinite(y), np.ones(hours), mode="valid") > 0
+        if gaps.all():
+            continue
+        sums = np.where(gaps, np.nan, sums)  # a block with an hour of unknown forecast is not a candidate
+        i = int(np.nanargmax(sums) if prefer == "high" else np.nanargmin(sums))
         rows.append(
             {
                 "unique_id": uid,
@@ -238,17 +300,20 @@ def _generation(
     days = _complete_days(f)
     clear = _clear(days, CLEAR_WINDOW_DAYS, CLEAR_QUANTILE, CLEAR_RATIO)
     fitted = _roof(f, clear, site) if tilt is None or azimuth is None else None
+    causal = _clear_trailing(days)  # the horizon pilot's clear days: window ending on the day
     sun = physics.mean_sun(hours, *site)
     cs = physics.clear_sky_ghi(hours, *site)
     a = np.array([trust[max(k, 1) - 1] if k <= len(trust) else 0.0 for k in lead])
+    sk = np.array([SKILL[max(k, 1) - 1] if k <= len(SKILL) else 0.0 for k in lead])
     ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs)
     if dropped:
         notes.append(
-            "Weather model-days left out because their GHI exceeds what the sun can give "
+            "Weather models left out from the first day their GHI exceeds what the sun can give "
             f"(> {IMPLAUSIBLE[0]} x clear sky + {IMPLAUSIBLE[1]:.0f} W/m2 in some hour): "
             f"{', '.join(dropped)}."
         )
     a = np.where(np.isfinite(ghi), a, 0.0)  # no model reaches the hour: seasonal only
+    sk = np.where(a > 0, sk, 0.0)
     out: list[pd.DataFrame] = []
     per_series: dict[str, Any] = {}
     method: dict[str, Any] = {"site": list(site), "trust": list(trust), "series": per_series}
@@ -268,24 +333,28 @@ def _generation(
                 f"{az:.0f}. "
                 "Give tilt and azimuth for a better forecast."
             )
-        idx = _index(f[f["unique_id"] == uid], clear, site, {}, (t, az))
-        recent = idx[idx["date"] > idx["date"].max() - pd.Timedelta(days=KW_EFF_DAYS)] if len(idx) else idx
-        if len(recent) < MIN_CLEAR:
-            recent = idx.tail(15)
-        k_src = "clear days"
-        if len(recent) >= MIN_CLEAR:
-            kw_eff = float(recent["index"].median())
-        elif kwp is not None:
-            kw_eff, k_src = 0.8 * _per(kwp, uid), "0.8 x kwp (too few clear days)"
-            notes.append(f"{uid}: too few clear days to learn the plant; used 80% of the given kWp.")
-        else:
-            raise ValueError(f"{uid}: too few clear days to learn the plant's power; give kwp")
-        clearness = _clearness(days[days["unique_id"] == uid], site, (t, az), kw_eff, s.tz)
+        idx = _index(f[f["unique_id"] == uid], causal, site, {}, (t, az))
+        g = f[(f["unique_id"] == uid) & f["y"].notna()]
+        anchor = pd.Timestamp(g["date"].max()) + pd.Timedelta(days=1)  # issue = the day after the data
+        k_dates = pd.DatetimeIndex(idx["date"]).to_numpy()
+        k_vals = idx["index"].to_numpy(dtype=float)
+        kw_eff = float(_kw_at(k_dates, k_vals, np.array([anchor.to_datetime64()]))[0])
+        used, k_src = _window_count(k_dates, anchor)
+        if not np.isfinite(kw_eff):
+            if kwp is None:
+                raise ValueError(
+                    f"{uid}: no clear day in the {KW_EFF_FALLBACK_DAYS} days before the data end to learn "
+                    "the plant's power; give kwp"
+                )
+            kw_eff, k_src = 0.8 * _per(kwp, uid), "0.8 x kwp (no recent clear day)"
+            notes.append(f"{uid}: no recent clear day to learn the plant; used 80% of the given kWp.")
+        clearness = _clearness(
+            days[days["unique_id"] == uid], site, (t, az), (k_dates, k_vals), anchor, s.tz, hours
+        )
         cs_poa = physics.poa_isotropic(cs, sun, t, az) / 1000.0
-        month = hours.month.to_numpy()
-        med = np.array([clearness["median"].get(m, clearness["fallback"][0]) for m in month])
-        p10 = np.array([clearness["p10"].get(m, clearness["fallback"][1]) for m in month])
-        p90 = np.array([clearness["p90"].get(m, clearness["fallback"][2]) for m in month])
+        med, p10, p90 = clearness["median"], clearness["p10"], clearness["p90"]
+        if clearness["note"]:
+            notes.append(f"{uid}: {clearness['note']}")
         seasonal = kw_eff * cs_poa * med
         y_w = _poa(ghi, sun, t, az) * kw_eff
         lo_w, hi_w = _poa(lo_ghi, sun, t, az) * kw_eff, _poa(hi_ghi, sun, t, az) * kw_eff
@@ -304,6 +373,8 @@ def _generation(
                     "source": np.where(a > 0, "weather", "seasonal"),
                     "n_models": n_models,
                     "trust": a,
+                    "skill": sk,
+                    "sun": cs > 0,
                 }
             )
         )
@@ -313,8 +384,8 @@ def _generation(
             "orientation": how,
             "kw_eff": kw_eff,
             "kw_eff_from": k_src,
-            "clear_days_used": len(recent),
-            "clearness_by_month": {int(m): round(v, 3) for m, v in clearness["median"].items()},
+            "clear_days_used": used,
+            "clearness": clearness["summary"],
         }
     if w is None:
         notes.append("No weather forecast given: every day is the seasonal expectation.")
@@ -340,35 +411,104 @@ def _orientation(
     return min(abs(lat), 30.0), 0.0 if lat < 0 else 180.0, "default"  # facing the equator
 
 
+def _clear_trailing(days: pd.DataFrame) -> pd.DataFrame:
+    """Clear days judged with a window of `CLEAR_WINDOW_DAYS` that ENDS on the day (the horizon pilot's causal
+    rule; `diagnostics` centres the window): ratio >= 0.9 x the window's 90% quantile."""
+    out = []
+    for uid, g in days.groupby("unique_id", sort=False):
+        r = (g.set_index("date")["energy"] / g.set_index("date")["cs"]).sort_index()
+        full = r.reindex(pd.date_range(r.index.min(), r.index.max(), freq="D"))
+        top = full.rolling(CLEAR_WINDOW_DAYS, min_periods=10).quantile(CLEAR_QUANTILE)
+        t = pd.DataFrame({"unique_id": uid, "date": r.index, "ratio": r.to_numpy()})
+        t["top"] = top.reindex(r.index).to_numpy()
+        t["clear"] = (t["ratio"] >= CLEAR_RATIO * t["top"]) & (t["ratio"] > 0)
+        out.append(t)
+    if not out:
+        return pd.DataFrame(columns=["unique_id", "date", "ratio", "top", "clear"])
+    return pd.concat(out, ignore_index=True)
+
+
+def _kw_at(dates: np.ndarray, values: np.ndarray, at: np.ndarray) -> np.ndarray:
+    """Effective power for an issue on each day of `at`: the median clear-day index of the `KW_EFF_DAYS` days
+    before it, else of the `KW_EFF_FALLBACK_DAYS` days, else NaN (the pilot's `kw_eff_por_emissao`)."""
+    order = np.argsort(dates)
+    d, v = dates[order], values[order]
+    out = np.full(len(at), np.nan)
+    for i, t in enumerate(at):
+        for days in (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS):
+            a = np.searchsorted(d, t - np.timedelta64(days, "D"))
+            b = np.searchsorted(d, t)
+            if b > a:
+                out[i] = np.median(v[a:b])
+                break
+    return out
+
+
+def _window_count(dates: np.ndarray, anchor: pd.Timestamp) -> tuple[int, str]:
+    """How many clear days gave the effective power, and from which window."""
+    for days in (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS):
+        lo = (anchor - pd.Timedelta(days=days)).to_datetime64()
+        n = int(((dates >= lo) & (dates < anchor.to_datetime64())).sum())
+        if n:
+            return n, f"median of the clear days of the {days} days before the data end"
+    return 0, "none"
+
+
 def _clearness(
-    days: pd.DataFrame, site: tuple[float, float], orientation: tuple[float, float], kw_eff: float, tz: str
+    days: pd.DataFrame,
+    site: tuple[float, float],
+    orientation: tuple[float, float],
+    kw: tuple[np.ndarray, np.ndarray],
+    anchor: pd.Timestamp,
+    tz: str,
+    hours: pd.DatetimeIndex,
 ) -> dict[str, Any]:
-    """Day energy / (kw_eff x clear-sky irradiation on the panel plane): median and 10-90% by calendar "
-    "month."""
-    if days.empty or kw_eff <= 0:
-        return {"median": {}, "p10": {}, "p90": {}, "fallback": (0.7, 0.3, 1.0)}
-    d = days.copy()
+    """Typical clearness at each forecast hour, as the horizon pilot's climatology: the clearness of a past
+    day is its energy / (the effective power at that day, from the clear days before it, x its clear-sky
+    irradiation on the panel plane); for each forecast month, the median (and 10-90%) over the same calendar
+    month of EARLIER years when there are at least `MIN_MONTH_DAYS` such days, else over the 30 days before
+    the data end."""
+    nan = np.full(len(hours), np.nan)
+    if days.empty:
+        note = "no complete day to learn the season"
+        return {"median": nan, "p10": nan, "p90": nan, "note": note, "summary": {}}
+    d = days.sort_values("date").copy()
     start = pd.Timestamp(d["date"].min()).tz_localize(tz)
     stop = (pd.Timestamp(d["date"].max()) + pd.Timedelta(days=1)).tz_localize(tz)
     t = pd.date_range(start, stop, freq="h", inclusive="left")
     sun = physics.mean_sun(t, *site)
     poa = physics.poa_isotropic(physics.clear_sky_ghi(t, *site), sun, *orientation) / 1000.0
     expected = pd.Series(poa).groupby(t.tz_localize(None).normalize()).sum()
-    d["r"] = (d["energy"] / (kw_eff * expected.reindex(pd.DatetimeIndex(d["date"])).to_numpy())).clip(0, 1.5)
+    when = pd.DatetimeIndex(d["date"])
+    kw_day = _kw_at(*kw, when.to_numpy())
+    d["r"] = d["energy"].to_numpy() / (kw_day * expected.reindex(when).to_numpy())
     d = d[np.isfinite(d["r"])]
-    by = d.groupby(pd.DatetimeIndex(d["date"]).month)["r"]
-    recent = d[d["date"] > d["date"].max() - pd.Timedelta(days=30)]["r"]
-    fb = (
-        (float(recent.median()), float(recent.quantile(0.1)), float(recent.quantile(0.9)))
-        if len(recent)
-        else (0.7, 0.3, 1.0)
-    )
-    return {
-        "median": by.median().to_dict(),
-        "p10": by.quantile(0.1).to_dict(),
-        "p90": by.quantile(0.9).to_dict(),
-        "fallback": fb,
-    }
+    when = pd.DatetimeIndex(d["date"])
+    last30 = d.loc[(when >= anchor - pd.Timedelta(days=30)) & (when < anchor), "r"]
+    if len(last30):
+        fallback = (float(last30.median()), float(last30.quantile(0.1)), float(last30.quantile(0.9)))
+    else:
+        fallback = (np.nan, np.nan, np.nan)
+    out = {"median": nan.copy(), "p10": nan.copy(), "p90": nan.copy()}
+    summary: dict[str, Any] = {}
+    note = ""
+    local = hours.tz_localize(None)
+    ym = local.year.to_numpy() * 100 + local.month.to_numpy()
+    for code in np.unique(ym):
+        year, month = int(code) // 100, int(code) % 100
+        pos = np.flatnonzero(ym == code)
+        same = d.loc[(when.month == month) & (when.year < year), "r"]
+        if len(same) >= MIN_MONTH_DAYS:
+            vals = (float(same.median()), float(same.quantile(0.1)), float(same.quantile(0.9)))
+            src = f"{len(same)} days of the same month in earlier years"
+        else:
+            vals, src = fallback, f"the {len(last30)} days before the data end"
+        for key, v in zip(("median", "p10", "p90"), vals, strict=True):
+            out[key][pos] = v
+        summary[f"{year}-{month:02d}"] = {"median": round(vals[0], 3), "from": src}
+        if not np.isfinite(vals[0]):
+            note = "too little history to learn the season: some days have no seasonal expectation"
+    return {**out, "note": note, "summary": summary}
 
 
 def _weather_at(
@@ -390,9 +530,10 @@ def _weather_at(
     bad = m > IMPLAUSIBLE[0] * cs[:, None] + IMPLAUSIBLE[1]
     dropped = []
     for j, name in enumerate(models):
-        for d in pd.unique(day[bad[:, j]]):
-            m[day == d, j] = np.nan
-            dropped.append(f"{name.removeprefix('ghi_')} {pd.Timestamp(d).date()}")
+        if bad[:, j].any():
+            d0 = day[bad[:, j]].min()
+            m[day >= d0, j] = np.nan
+            dropped.append(f"{name.removeprefix('ghi_')} from {pd.Timestamp(d0).date()}")
     n = np.isfinite(m).sum(axis=1)
     ok = np.isfinite(m)
     mean = np.where(n > 0, np.where(ok, m, 0).sum(axis=1) / np.maximum(n, 1), np.nan)
@@ -422,16 +563,17 @@ def _consumption(
         g = f[(f["unique_id"] == uid) & f["valid"]]
         cut = g["ds"].max() - pd.Timedelta(weeks=weeks)
         g = g[g["ds"] > cut]
-        key = g["ds"].dt.dayofweek * 24 + g["ds"].dt.hour
+        # the horizon pilot's `perfil_dia_util`: that hour on the days of the same kind (weekday or weekend)
+        key = (g["ds"].dt.dayofweek >= 5).astype(int) * 24 + g["ds"].dt.hour
         prof = g.groupby(key)["y"].agg(["mean", "min", "max", "size"])
-        want = hours.dayofweek * 24 + hours.hour
+        want = (hours.dayofweek >= 5).astype(int) * 24 + hours.hour
         p = prof.reindex(want)
         if p["mean"].isna().any():
-            # an hour of the week never seen in the window: fall back to the mean of that hour of the day
+            # an hour never seen on that kind of day in the window: fall back to the mean of that hour
             by_hour = g.groupby(g["ds"].dt.hour)["y"].agg(["mean", "min", "max"]).reindex(hours.hour)
             for c in ("mean", "min", "max"):
                 p[c] = np.where(p[c].isna(), by_hour[c].to_numpy(), p[c].to_numpy())
-        if int(prof["size"].min() if len(prof) else 0) < weeks:
+        if int(prof["size"].min() if len(prof) else 0) < 2 * weeks:  # 2 weekend days a week
             notes.append(f"{uid}: fewer than {weeks} weeks of valid data behind some hours of the profile.")
         out.append(
             pd.DataFrame(
@@ -445,35 +587,69 @@ def _consumption(
                     "source": "profile",
                     "n_models": 0,
                     "trust": np.nan,
+                    "skill": np.nan,
+                    "sun": True,
                 }
             )
         )
-    method = {"rule": f"mean of the same weekday and hour over the last {weeks} weeks", "weeks": weeks}
+    method = {
+        "rule": f"mean of the same hour over the last {weeks} weeks, weekdays and weekends apart",
+        "weeks": weeks,
+    }
     return pd.concat(out, ignore_index=True), method, notes
 
 
 # ---------------------------------------------------------------------- shared
 def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
-    h = hourly.assign(date=hourly["ds"].dt.tz_localize(None).dt.normalize())
+    """Per series and day. Generation is labelled over its sun hours only (the night says nothing):
+    `trust` and `skill` are their means (`skill`: the pilot's daily skill at that lead, 0 without weather),
+    `n_models` the fewest models behind any of them, `source` "weather" when at least half of them have a
+    weather forecast; the confidence follows the mean skill, so a day only partly covered by the weather is
+    not labelled by its best hour. `missing_hours`: hours with no forecast (not in the totals)."""
+    h = hourly.assign(
+        date=hourly["ds"].dt.tz_localize(None).dt.normalize(),
+        weather=(hourly["source"] == "weather").astype(float),
+        missing=hourly["y_hat"].isna().astype(int),
+    )
+    sun = h[h["sun"]]
+    keys = ["unique_id", "date"]
     d = (
-        h.groupby(["unique_id", "date"], sort=True)
+        h.groupby(keys, sort=True)
         .agg(
             lead_day=("lead_day", "first"),
             total=("y_hat", "sum"),
             low=("low", "sum"),
             high=("high", "sum"),
-            source=("source", lambda v: v.mode().iloc[0]),
-            n_models=("n_models", "max"),
-            trust=("trust", "max"),
+            missing_hours=("missing", "sum"),
         )
         .reset_index()
     )
+    by_sun = sun.groupby(keys).agg(
+        trust=("trust", "mean"),
+        skill=("skill", "mean"),
+        n_models=("n_models", "min"),
+        weather=("weather", "mean"),
+    )
+    d = d.merge(by_sun.reset_index(), on=keys, how="left")
+    profile = hourly.groupby(["unique_id"])["source"].first().eq("profile")
+    is_profile = d["unique_id"].map(profile).fillna(False).astype(bool)
+    d["source"] = np.where(is_profile, "profile", np.where(d["weather"] >= 0.5, "weather", "seasonal"))
+    d["n_models"] = d["n_models"].fillna(0).astype(int)
     d["confidence"] = np.select(
-        [d["source"] == "profile", d["trust"] >= HIGH, d["trust"] >= MEDIUM, d["trust"] > 0],
+        [is_profile, d["skill"] >= HIGH, d["skill"] >= MEDIUM, d["skill"] > 0],
         ["typical week", "high", "medium", "low"],
         default="seasonal only",
     )
-    return d
+    cols = ["unique_id", "date", "lead_day", "total", "low", "high", "source", "n_models", "trust", "skill"]
+    return d[[*cols, "confidence", "missing_hours"]]
+
+
+def _first_full_day(ds: pd.Series) -> pd.Timestamp:
+    """The first local day whose midnight is in `ds` (a frame that starts at 21:00 covers that day only in
+    part)."""
+    t0 = pd.Timestamp(ds.min())
+    day = t0.normalize()
+    return day if t0 == day else day + pd.Timedelta(days=1)
 
 
 def _wide(weather: pd.DataFrame, tz: str) -> pd.DataFrame:
@@ -527,4 +703,4 @@ def _table(df: pd.DataFrame) -> str:
     return "\n".join([head, sep, *body])
 
 
-__all__ = ["MAX_DAYS", "TRUST", "Outlook", "best_windows", "forecast_ahead"]
+__all__ = ["MAX_DAYS", "SKILL", "TRUST", "Outlook", "best_windows", "forecast_ahead"]

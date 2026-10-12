@@ -101,12 +101,12 @@ for window in task.windows():
 | `outlook` | `forecast_ahead`: the next 1-35 days, hourly and per day (generation: effective power and roof learnt from the clear days x the weather forecast, trusted less as the lead grows, then the season; consumption: the recent weeks' profile), with a confidence label per day; `best_windows` for heavy loads |
 | `diagnostics` | from the energy alone: clear days, roof orientation, clear-day performance index and its steps (cleanings, faults) over time; `analyze(site=..., kwp=...)` |
 | `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo forecasts (archive of day-ahead runs and the live forecast up to 16 days, several models), `geocode` (address to coordinates, time zone, rounding), NASA POWER hourly weather, ANEEL open data (homologated tariffs, bandeiras, tariff components; ODbL) |
-| `embedded` | a fitted Ridge, forest or LightGBM with its preprocessing and the day-ahead features, as one C header for an ESP32 (`to_c`, `footprint`, `block_totals`) |
+| `embedded` | a fitted Ridge, forest or LightGBM with its preprocessing and the day-ahead features, or the benchmark's SparseTSF / CycleNet (numpy arrays, `from_torch` without importing torch, causal gap fill), as one C header for an ESP32 (`to_c`, `footprint`, `block_totals`) |
 | `economics` | tariffs as data (flat, time-of-use blocks for weekdays and weekends/holidays, export price, fixed charge); the monthly `bill` under net metering, net billing or self-consumption (hourly netting); `cheapest_windows` ranks the hours of the forecast days for a flexible load by price and sun. `economics.brazil`: tarifa cheia with ICMS and PIS/COFINS "por dentro", bandeiras, custo de disponibilidade, tarifa branca postos and holidays, Lei 14.300/2022 (GD I until 2045, GD II Fio B ramp, 60-month credits), each rule cited to the law or ANEEL resolution |
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |
 
-Not written yet: SparseTSF/TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data),
+Not written yet: TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data),
 economics with time-of-use tariffs and the Brazilian module (E6).
 
 ## What the benchmark found (the defaults come from here)

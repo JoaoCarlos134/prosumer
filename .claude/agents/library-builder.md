@@ -29,8 +29,8 @@ merges; an independent `work-reviewer` checks everything you claim, so be exact.
 - Line length 110. Editing with Python on Windows can write CRLF: write with `newline="\n"`.
 
 ## Before every commit (all must pass; report the output, never claim a pass you did not see)
-    .venv/Scripts/python.exe -m ruff check src tests
-    .venv/Scripts/python.exe -m ruff format --check src tests
+    .venv/Scripts/python.exe -m ruff check src tests examples
+    .venv/Scripts/python.exe -m ruff format --check src tests examples
     .venv/Scripts/python.exe -m mypy
     .venv/Scripts/python.exe -m pytest -p no:hypothesispytest --ignore=tests/test_contracts.py -q
 If the `mixed-line-ending` hook fails once, re-add and commit again. Commit messages end with

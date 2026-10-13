@@ -9,7 +9,17 @@ You give a CSV (a time column and an energy column), say whether it is solar pro
 where it is (an address or the coordinates). Optional fields help: tilt, azimuth, kWp, the time zone, the
 column names and units, and how many hours your heavy load runs.
 
-## The backend in five steps (`forecast_page` in `app.py`)
+Optionally, what you pay: one price for every hour, a simple time-of-use price (a peak price on weekdays in
+the hours you give, another price the rest of the time and all weekend), with a fixed monthly charge, what an
+exported kWh is worth and how exports are paid (net metering, net billing or nothing); or, in Brazil, the
+tarifa convencional of Copel, Cemig, Enel SP or Light, downloaded from ANEEL's open data (ODbL; the page
+credits ANEEL), with the ICMS and PIS/COFINS you read on your own bill (no defaults: they change by state and
+month), the connection (custo de disponibilidade), the GD class of your PV (Lei 14.300) and the COSIP. The
+page then shows the cheapest block of each day by expected cost next to the best one by energy and, for a
+consumption file, your bill month by month with the expected monthly bill (the mean of the complete months).
+Without a connection the Brazilian tariff fails with a clear message (choose a flat or time-of-use price).
+
+## The backend in seven steps (`forecast_page` in `app.py`)
 
 | Step | What | Library call |
 |---|---|---|
@@ -18,6 +28,11 @@ column names and units, and how many hours your heavy load runs.
 | 3 | the weather forecast of the next days, six models (production only) | `prosumer.io.open_meteo.fetch_forecast` |
 | 4 | the forecast, hourly and per day, with a confidence label | `prosumer.forecast_ahead` |
 | 5 | the best block of hours of each day for a heavy load | `prosumer.best_windows` |
+| 6 | with a price: the cheapest block of each day by expected cost, with the day's confidence | `prosumer.economics.windows_by_cost` |
+| 7 | with a price and a consumption file: the bill of each month of your data and the expected monthly bill | `Plan.bill(...).totals()` / `brazil.Setup.bill(...).totals()` |
+
+The price itself is read from the form by `_pricing`: `economics.Tariff` + `economics.Plan`, or
+`economics.brazil.TariffBook.from_aneel` (one download from ANEEL) + `economics.brazil.Setup`.
 
 How step 4 works: for production, the plant's effective power and the roof's orientation are learnt from
 its own clear days; each hour is that power times the sunlight on the panel plane computed from the weather
@@ -28,8 +43,9 @@ the measured numbers: the docstring of `prosumer.outlook`.
 
 ## What leaves the computer
 
-Only the address (to Nominatim/OpenStreetMap, if you type one) and the coordinates rounded to 2 decimals (to
-Open-Meteo). The CSV stays local. The free Open-Meteo API is for non-commercial use.
+Only the address (to Nominatim/OpenStreetMap, if you type one), the coordinates rounded to 2 decimals (to
+Open-Meteo) and, for a Brazilian tariff, the distributor's name (to ANEEL). The CSV stays local. The free
+Open-Meteo API is for non-commercial use.
 
 ## Limits
 
@@ -41,4 +57,8 @@ Open-Meteo). The CSV stays local. The free Open-Meteo API is for non-commercial 
   today); the days in between are not forecast. Consumption uses no weather and starts the day after your data
   end, whenever that was: check the dates (the page shows the year).
 - A roof you type in was not piloted; the one fitted from the data was.
+- Money: expected costs from point forecasts (a cloudy surprise moves them); calendar months, not the
+  meter's reading cycle; hourly netting. Brazil: tarifa convencional only (tarifa branca with PV is not
+  modelled), no real bill of these distributors was checked against; a month without a published bandeira
+  takes the last one, with a note.
 - Only localhost: it is not meant to be exposed on a network.

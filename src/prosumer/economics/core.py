@@ -27,19 +27,21 @@ from __future__ import annotations
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Literal
+from typing import Any, Literal, Protocol, runtime_checkable
 
 import numpy as np
 import pandas as pd
 
 from ..contracts import EnergySeries
 from ..outlook import Outlook, _plain, _table
+from ..provenance import NOT_APPLICABLE, Provenance
 
 Scheme = Literal["net_metering", "net_billing", "self_consumption"]
 SCHEMES: tuple[str, ...] = ("net_metering", "net_billing", "self_consumption")
 # hour of day -> block name, or -> {block: share of the hour} when a block starts inside the hour
 Blocks = Mapping[int, str | Mapping[str, float]]
 Holidays = Callable[[pd.DatetimeIndex], np.ndarray] | Collection[date] | None
+_TOTALS = ("consumption", "generation", "grid_import", "export", "total", "without_pv", "savings")
 
 
 @dataclass(frozen=True)
@@ -239,6 +241,37 @@ class Bill:
             "notes": list(self.notes),
         }
 
+    def totals(self) -> pd.DataFrame:
+        """One row per site: `unique_id, months, complete_months, consumption, generation, grid_import,
+        export, total, without_pv, savings` (sums over all months) and `mean_month`, the mean bill of the
+        complete months (NaN when none): the expected monthly bill.
+
+        A month is complete when every hour of the calendar month (in the series' time zone, so 743 or 745
+        hours in a month with a clock change) has a measured consumption, and generation when given: a series
+        that starts on the 20th has a `coverage` of 1 for its first month, which is still a partial month.
+        """
+        h = self.hourly[self.hourly["consumption"].notna()]
+        counted = h.groupby(
+            [h["unique_id"].astype(str), h["ds"].dt.tz_localize(None).dt.to_period("M")]
+        ).size()
+        tz = self.hourly["ds"].dt.tz
+        rows = []
+        for uid, g in self.monthly.groupby("unique_id", sort=True):
+            full = []
+            for m in pd.to_datetime(g["month"]):
+                start, stop = (
+                    pd.Timestamp(t).tz_localize(tz, ambiguous=True, nonexistent="shift_forward")
+                    for t in (m, m + pd.offsets.MonthBegin(1))
+                )
+                n = int(counted.get((str(uid), pd.Period(m, "M")), 0))
+                full.append(n >= int((stop - start) / pd.Timedelta(hours=1)))
+            complete = g[np.array(full, dtype=bool)]
+            row: dict[str, Any] = {"unique_id": uid, "months": len(g), "complete_months": len(complete)}
+            row |= {c: float(g[c].sum()) for c in _TOTALS if c in g.columns}
+            row["mean_month"] = float(complete["total"].mean()) if len(complete) else float("nan")
+            rows.append(row)
+        return pd.DataFrame(rows)
+
     def to_markdown(self) -> str:
         """Readable summary: the monthly table and the notes."""
         m = self.monthly.copy()
@@ -267,7 +300,9 @@ def bill(
 
     Monthly columns: `unique_id, month, hours, coverage, consumption, generation, self_consumption,
     grid_import, export, compensated, credit_used, credit_new, credit_expired, credit_balance, energy_cost,
-    export_value, fixed, total` (energy in kWh, money in `tariff.currency`). `compensated` is the import
+    export_value, fixed, total, without_pv, savings` (energy in kWh, money in `tariff.currency`). `without_pv`
+    is the bill of the same consumption all bought from the grid on the same hours (fixed charge included),
+    `savings` = `without_pv - total` (zero without generation). `compensated` is the import
     offset by the month's own export, `credit_used` the import offset by older credits (net metering only).
     `credit_months`: credits expire after that many months (None: never): a credit earned in month m is
     usable through month m + credit_months - 1; `initial_credit`: kWh already banked before the first month
@@ -285,9 +320,10 @@ def bill(
     h["month"] = h["ds"].dt.tz_localize(None).dt.to_period("M").dt.to_timestamp()
     imp = np.nan_to_num(h["grid_import"].to_numpy())[:, None] * sh
     exp = np.nan_to_num(h["export"].to_numpy())[:, None] * sh
+    con = np.nan_to_num(h["consumption"].to_numpy())[:, None] * sh  # for the bill without PV
     blk = pd.DataFrame(
-        np.hstack([imp, exp]),
-        columns=[f"i:{b}" for b in names] + [f"e:{b}" for b in names],
+        np.hstack([imp, exp, con]),
+        columns=[f"i:{b}" for b in names] + [f"e:{b}" for b in names] + [f"c:{b}" for b in names],
     ).assign(unique_id=h["unique_id"].to_numpy(), month=h["month"].to_numpy())
     per_block = blk.groupby(["unique_id", "month"], sort=True).sum()
     sums = h.groupby(["unique_id", "month"], sort=True).agg(
@@ -350,6 +386,9 @@ def bill(
             else:
                 energy_cost, export_value = float(ib @ price), 0.0
             fixed = float(tariff.fixed)
+            cb = per_block.loc[(uid, month), [f"c:{b}" for b in names]].to_numpy(dtype=float)
+            without = float(cb @ price) + fixed
+            total = energy_cost - export_value + fixed
             rows.append(
                 {
                     "unique_id": uid,
@@ -373,7 +412,9 @@ def bill(
                     "energy_cost": energy_cost,
                     "export_value": export_value,
                     "fixed": fixed,
-                    "total": energy_cost - export_value + fixed,
+                    "total": total,
+                    "without_pv": without,
+                    "savings": without - total,
                 }
             )
     monthly = pd.DataFrame(rows)
@@ -516,6 +557,150 @@ def cheapest_windows(
     return out.sort_values(["unique_id", "date", "rank"], kind="stable").reset_index(drop=True)
 
 
+# ---------------------------------------------------------------------- what the app passes
+@runtime_checkable
+class Pricing(Protocol):
+    """What `analyze(economics=...)` and `windows_by_cost` need from a tariff setup: `Plan` (the core) and
+    `economics.brazil.Setup` (the Brazilian bill) both are one."""
+
+    @property
+    def currency(self) -> str: ...
+
+    @property
+    def window_scheme(self) -> Scheme: ...
+
+    def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill: ...
+
+    def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]: ...
+
+    def sources(self) -> list[tuple[str, Provenance]]: ...
+
+    def describe(self) -> str: ...
+
+
+@dataclass(frozen=True)
+class Plan:
+    """A tariff and the rule for the energy a PV system exports: the core's `Pricing`.
+
+    `scheme`, `credit_months` and `initial_credit` are those of `bill`. `source`: where the prices came from
+    (default: typed by the user, so no licence applies).
+    """
+
+    tariff: Tariff
+    scheme: Scheme = "net_metering"
+    credit_months: int | None = None
+    initial_credit: float | Mapping[str, float] = 0.0
+    source: Provenance | None = None
+
+    def __post_init__(self) -> None:
+        if self.scheme not in SCHEMES:
+            raise ValueError(f"scheme must be one of {SCHEMES}")
+
+    @property
+    def currency(self) -> str:
+        return self.tariff.currency
+
+    @property
+    def window_scheme(self) -> Scheme:
+        return self.scheme
+
+    def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill:
+        return bill(
+            consumption,
+            generation,
+            tariff=self.tariff,
+            scheme=self.scheme,
+            credit_months=self.credit_months,
+            initial_credit=self.initial_credit,
+        )
+
+    def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]:
+        """The same tariff every month (no notes)."""
+        return self.tariff, []
+
+    def sources(self) -> list[tuple[str, Provenance]]:
+        name = self.tariff.name or "tariff"
+        p = self.source or Provenance(source=f"{name}: prices typed by the user", license=NOT_APPLICABLE)
+        return [(name, p)]
+
+    def describe(self) -> str:
+        kind = "flat" if len(self.tariff.prices) == 1 else f"{len(self.tariff.prices)} time-of-use blocks"
+        name = f"{self.tariff.name}, " if self.tariff.name else ""
+        return f"{name}{kind}, {self.currency}"
+
+
+def as_pricing(pricing: Tariff | Pricing) -> Pricing:
+    """A bare `Tariff` becomes `Plan(tariff)` (net metering); a `Plan` or `brazil.Setup` passes through."""
+    if isinstance(pricing, Tariff):
+        return Plan(pricing)
+    if not isinstance(pricing, Pricing):
+        raise TypeError("Give an economics.Tariff, an economics.Plan or an economics.brazil.Setup")
+    return pricing
+
+
+def windows_by_cost(
+    pricing: Tariff | Pricing,
+    *,
+    generation: Outlook | None = None,
+    consumption: Outlook | None = None,
+    hours: int = 3,
+    kw: float = 1.0,
+    top: int | None = 3,
+    unique_id: str | None = None,
+) -> pd.DataFrame:
+    """The forecast and the money for the app: `cheapest_windows` of the outlook(s), month by month with the
+    tariff of each month (`Pricing.tariff_for`: the Brazilian one changes with the bandeira and the vigencia)
+    and the export rule of the pricing (`window_scheme`).
+
+    Same columns as `cheapest_windows` (rank 1 = cheapest window of the day, with the outlook's confidence
+    label of that day), plus `currency` and `tariff` (the name of the tariff used). What had to be assumed
+    (e.g. a month without a published bandeira) is in `attrs["notes"]`.
+    """
+    p = as_pricing(pricing)
+    base = generation if generation is not None else consumption
+    if base is None:
+        raise ValueError("Give a generation and/or a consumption outlook (they set the hours to rank)")
+    months = base.hourly["ds"].dt.tz_localize(None).dt.to_period("M")
+    parts, notes = [], []
+    for m in sorted(months.unique()):
+        g, c = _month(generation, m), _month(consumption, m)
+        if (generation is not None and g is None) or (consumption is not None and c is None):
+            continue  # the other outlook does not reach this month
+        tariff, more = p.tariff_for(m.to_timestamp(), generation=generation is not None)
+        notes += [n for n in more if n not in notes]
+        w = cheapest_windows(
+            tariff,
+            generation=g,
+            consumption=c,
+            hours=hours,
+            kw=kw,
+            scheme=p.window_scheme,
+            unique_id=unique_id,
+            top=top,
+        )
+        parts.append(w.assign(currency=p.currency, tariff=tariff.name))
+    cols = ["unique_id", "date", "start", "end", "cost", "grid_kwh", "pv_kwh", "rank", "confidence"]
+    nonempty = [x for x in parts if len(x)]
+    out = (
+        pd.concat(nonempty, ignore_index=True)
+        if nonempty
+        else pd.DataFrame(columns=[*cols, "currency", "tariff"])
+    )
+    out.attrs["notes"] = notes
+    return out
+
+
+def _month(o: Outlook | None, month: pd.Period) -> Outlook | None:
+    """The part of an outlook in one calendar month (None when it has no hour there)."""
+    if o is None:
+        return None
+    h = o.hourly[o.hourly["ds"].dt.tz_localize(None).dt.to_period("M") == month]
+    if h.empty:
+        return None
+    d = o.daily[pd.DatetimeIndex(o.daily["date"]).to_period("M") == month]
+    return Outlook(hourly=h, daily=d, quantity=o.quantity, unit=o.unit, method=o.method, notes=o.notes)
+
+
 def _pair_outlooks(gen: Outlook | None, cons: Outlook | None, unique_id: str | None) -> pd.DataFrame:
     def pick(o: Outlook | None, col: str) -> pd.DataFrame | None:
         if o is None:
@@ -555,9 +740,13 @@ __all__ = [
     "SCHEMES",
     "Bill",
     "Blocks",
+    "Plan",
+    "Pricing",
     "Scheme",
     "Tariff",
+    "as_pricing",
     "bill",
     "cheapest_windows",
     "flows",
+    "windows_by_cost",
 ]

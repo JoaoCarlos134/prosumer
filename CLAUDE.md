@@ -531,21 +531,33 @@ moeda; mesma convencao hora -> bloco do `metrics.by_blocks`), `flows` (importaca
 real compensa instante a instante, declarado), `bill` (mes calendario; `net_metering` com creditos em kWh FIFO e
 validade opcional, `net_billing`, `self_consumption`; hora invalida fica fora, com `coverage`) e `cheapest_windows`
 (ordena as janelas de cada dia de um `Outlook` para uma carga de `hours` h x `kw` kW pelo custo esperado: rede x
-preco + FV usada x o que ela valeria; no net metering 1:1 o sol nao importa, so o preco). Camada brasileira
+preco + FV usada x o que ela valeria; no net metering 1:1 com preco plano e consumidor importador liquido
+o sol nao importa, so o preco; janela com hora desconhecida ou nao consecutiva nao e candidata). Camada brasileira
 `economics.brazil`: tarifa cheia (TUSD+TE+bandeira)/(1-ICMS-PIS/COFINS), bandeira por mes (so na energia faturada,
 Lei 14.300 art. 19), custo de disponibilidade 30/30/50/100 kWh (REN 1.000 art. 291; branca pela convencional, art.
 290 par. 4), postos da branca e feriados (REN 1.000 art. 2 XXXVIII, 20/11 pela REN 1.101/2024), SCEE do grupo B
-pela REN 1.000 art. 655-I (compensa ate o piso), GD I ate 2045 (lei art. 26; REN 655-O: pedido ate 07/01/2023), GD
+pela REN 1.000 art. 655-I (compensa ate o piso; para GD II a lei art. 16 par. 1 diz outra coisa: so ha piso se o
+consumo medido for menor que o minimo -> parametro `gd2_minimum`, padrao "ren_655I", o que as distribuidoras
+aplicam; "law_16_par1" a outra leitura), GD I ate 2045 (lei art. 26; REN 655-O: pedido ate 07/01/2023), GD
 II com 15-90% do Fio B 2023-2028 (lei art. 27) e, de 2029, LEITURA parametrizada `after_2028` ("tusd" = TUSD
-inteira, padrao conservador; "fio_b" = 100% do Fio B), creditos de 60 meses (lei art. 13), PIS/COFINS zero e ICMS
-isento na energia compensada (Lei 13.169 art. 8; Convenio ICMS 16/2015), encargo do GD II tributado
-(`taxes_on_fio_b`, leitura). Fontes conferidas em 12/10 (planalto, REN 1.000 compilada via copia da Cemig: o
+inteira, padrao DECIDIDO pelo usuario em 12/10; "fio_b" = 100% do Fio B), creditos de 60 meses (lei art. 13;
+"usavel ate m+59" e leitura), impostos na energia compensada como LEITURAS parametrizadas:
+`pis_cofins_exempt_compensated` (Lei 13.169 art. 8), `icms_exempt_compensated` "all"/"te_only"/"none"
+(Convenio ICMS 16/2015 caput x cl. 1 par. 1 II; isencao do PR entre 7/2022 e 12/2023, teto de 48 meses do par. 3
+revogado em 29/12/2023, NAO conferida), `icms_on_charge` (padrao sim) e `pis_cofins_on_charge` (padrao nao).
+ICMS e PIS/COFINS sao entradas do usuario, sem tabela por estado (decisao de 12/10). Em aberto no docstring:
+"por dentro" x STF Tema 69 (~2,4%), LC 194/2022, rampa por ano civil x processo tarifario, TUSD_FioB = art. 27?,
+ponta da Copel. Fontes conferidas em 12/10 (planalto, REN 1.000 compilada via copia da Cemig: o
 site da ANEEL da 403 a script). `io.aneel` (porta do `baixa_tarifas_aneel.py`; API CKAN com getter injetavel;
-licenca **ODbL** declarada nos metadados: atribuicao e share-alike se redistribuir base derivada): ao vivo refaz
-as 160 linhas do `copel_tarifas_historico.csv`. **Conferencia do LEIA-ME:** Cascavel 2018, media dos 12 meses do
-preco diario = **0,80622 R$/kWh** (legado 0,8062), dos CSV do legado e tambem dos dados baixados agora. NAO feito:
+licenca **ODbL** declarada nos metadados: atribuicao e share-alike se redistribuir base derivada): ao vivo, com
+`subgroups=("B1", "B3")`, refaz as 160 linhas do `copel_tarifas_historico.csv` (o padrao, so B1, da 80).
+Distribuidoras testadas com um recorte ao vivo de 12/10 (`tests/fixtures/aneel_distributors.json`, ODbL): Copel,
+Cemig (`CEMIG-D`), Enel SP (`ELETROPAULO`) e Light (`LIGHT SESA`); sem fatura real delas para conferir. **Conferencia do LEIA-ME:** Cascavel 2018, media dos 12 meses do
+preco diario = **0,80622 R$/kWh** (legado 0,8062), dos CSV do legado e tambem dos dados baixados agora. E
+REGRESSAO DO PORTE, nao validacao independente (a fatura real de 2018 deu 0,8457). NAO feito:
 COSIP (vem da fatura), branca COM geracao (rateio por posto pela TE Energia), grupo A, tarifa social, reforma
-tributaria (LC 214/2025), secao no `analyze` (o `PENDING["economics"]` diz o que existe).
+tributaria (LC 214/2025), secao no `analyze` (NAO comecar ainda, decisao de 12/10; o `PENDING["economics"]` diz
+o que existe). Revisao independente de `b8bcea6` ("pronto com consertos"): 12 achados consertados em seguida.
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

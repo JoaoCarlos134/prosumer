@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -134,3 +135,38 @@ def test_bandeiras_and_components_feed_a_tariff_book() -> None:
         [(457.17 + 310.85 + 18.85) / 1000 / (1 - 0.2825), (457.17 + 310.85) / 1000 / (1 - 0.2825)]
     )
     assert book.fio_b_value("2026-10-01") == pytest.approx(214.5356)
+
+
+FIXTURE = Path(__file__).resolve().parent / "fixtures" / "aneel_distributors.json"
+# SigAgente in ANEEL's data: Enel SP is still "ELETROPAULO"
+DISTRIBUTORS = {"COPEL-DIS": 2026, "CEMIG-D": 2026, "ELETROPAULO": 2026, "LIGHT SESA": 2026}
+
+
+@pytest.mark.parametrize("agent", list(DISTRIBUTORS))
+def test_supported_distributors_from_a_live_fixture(agent: str) -> None:
+    """Copel, Cemig, Enel SP and Light: the latest B1 residential vigencia, its TUSD_FioB and the last
+    bandeiras, as ANEEL's API returned them on 2026-10-12 (`tests/fixtures/aneel_distributors.json`, an ODbL
+    extract). This checks the reader and the price arithmetic on each distributor's real rows; there is no
+    real bill of these distributors to check the result against. The tax rates are illustrative user
+    inputs (ICMS and PIS/COFINS are not built in)."""
+    data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    comps = [r for r in data["components"] if r["SigNomeAgente"] == agent]
+    api = FakeCKAN(
+        {aneel.TARIFFS: data["tariffs"], aneel.BANDEIRAS_MONTHLY: data["bandeiras"], "comp": comps},
+        package=[{"name": f"componentes-tarifarias-{DISTRIBUTORS[agent]}.csv", "id": "comp"}],
+    )
+    t = aneel.fetch_tariffs(agent, get=api)
+    assert len(t) == 4 and set(t["posto"]) == {"Não se aplica", "Ponta", "Intermediário", "Fora ponta"}
+    conv = t[t["modality"] == "Convencional"].iloc[0]
+    fio = aneel.fio_b(aneel.fetch_components(agent, DISTRIBUTORS[agent], get=api))
+    taxes = pd.DataFrame({"start": ["2020-01-01"], "icms": [0.19], "pis_cofins": [0.0925]})
+    book = brazil.TariffBook(t, aneel.fetch_bandeiras(get=api), taxes, fio, agent)
+    month = "2026-09"  # inside every vigencia of the fixture; yellow flag, 18.85 R$/MWh
+    p = (conv["tusd"] + conv["te"] + 18.85) / 1000 / (1 - 0.2825)
+    flat = brazil.tariff(book, month)
+    assert flat.prices["flat"] == pytest.approx(p)
+    gd2 = brazil.tariff(book, month, gd="GD II")  # 2026: 60% of Fio B, ICMS on the charge
+    assert gd2.export_price == pytest.approx(p - 0.6 * float(fio["value"].iloc[0]) / 1000 / 0.81)
+    branca = brazil.tariff(book, month, modality="Branca", peak_start="18:00")
+    assert branca.prices["ponta"] > branca.prices["intermediario"] > branca.prices["fora_ponta"]
+    assert branca.prices["fora_ponta"] < p < branca.prices["ponta"]

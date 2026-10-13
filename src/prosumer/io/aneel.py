@@ -16,6 +16,11 @@ CKAN metadata (`license_id = odc-odbl`, checked 2026-10-12): use is free, with a
 derived from them that is redistributed must stay under ODbL (share-alike). The functions attach that
 provenance to their result.
 
+**Distributors** (`SigAgente`): any of the ~116 in the dataset works; tested on a fixture of live records
+(2026-10-12, `tests/fixtures/aneel_distributors.json`): "COPEL-DIS", "CEMIG-D", "ELETROPAULO" (Enel SP keeps
+its old name in this dataset) and "LIGHT SESA". The fixture checks the reading and the arithmetic; there was
+no real bill of those distributors to check the result against.
+
 Numbers come as Brazilian text ("1.013,36", ",00") or scientific notation ("3,06E-3"); `number` reads both.
 """
 

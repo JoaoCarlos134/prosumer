@@ -134,7 +134,9 @@ class EconomicsSection:
             b = blocks.copy()
             b["month"] = pd.to_datetime(b["month"]).dt.strftime("%Y-%m")
             lines += ["", "### By tariff block", "", _table(b)]
-        lines += ["", "### Totals", "", _table(self.totals)]
+        totals = self.totals.astype(object)  # no complete month: "n/a", the note says why
+        totals["mean_month"] = [v if np.isfinite(v) else "n/a" for v in self.totals["mean_month"]]
+        lines += ["", "### Totals", "", _table(totals)]
         if self.notes:
             lines += ["", *[f"- {n}" for n in self.notes]]
         return "\n".join(lines)
@@ -382,34 +384,13 @@ def analyze(
     elif econ_note and economics is not None:
         base_pending["economics"] = f"{econ_note} {ECONOMICS_LEFT}"
 
-    first = frame["ds"].min().normalize()
-    if not (frame.loc[frame["valid"], "y"] != 0).any():
-        # nothing to forecast, and every reference has zero error (the skill would divide by zero)
-        notes.append(
-            "Forecast check skipped: every value is zero (a dead meter or inverter, or the wrong column)."
-        )
+    def skipped(reason: str) -> Report:
+        """The report without the forecast check: every other section is kept."""
         sources, source_notes = _provenance(s, None, (), econ_sources)
         return Report(
             summary=summary,
             quality=quality,
-            notes=notes + source_notes,
-            clock=clock,
-            clock_weather=clock_weather,
-            provenance=sources,
-            diagnostics=diag,
-            economics=econ,
-            pending=base_pending,
-        )
-    if test_start - first < pd.Timedelta(hours=CONTEXT):
-        notes.append(
-            f"Forecast check skipped: it needs {CONTEXT // 24} days of history "
-            f"before the {test_days} test days."
-        )
-        sources, source_notes = _provenance(s, None, (), econ_sources)
-        return Report(
-            summary=summary,
-            quality=quality,
-            notes=notes + source_notes,
+            notes=[*notes, f"Forecast check skipped: {reason}", *source_notes],
             clock=clock,
             clock_weather=clock_weather,
             provenance=sources,
@@ -418,24 +399,19 @@ def analyze(
             pending=base_pending,
         )
 
+    first = frame["ds"].min().normalize()
+    if not (frame.loc[frame["valid"], "y"] != 0).any():
+        # nothing to forecast, and every reference has zero error (the skill would divide by zero)
+        return skipped("every value is zero (a dead meter or inverter, or the wrong column).")
+    if test_start - first < pd.Timedelta(hours=CONTEXT):
+        return skipped(f"it needs {CONTEXT // 24} days of history before the {test_days} test days.")
+
     task = DayAhead(
         s, test_start=test_start, test_end=end, refit_days=test_days, context=CONTEXT, issue_hour=issue_hour
     )
     windows = task.windows()
     if not windows:
-        notes.append("Forecast check skipped: no test day has all its target hours measured.")
-        sources, source_notes = _provenance(s, None, (), econ_sources)
-        return Report(
-            summary=summary,
-            quality=quality,
-            notes=notes + source_notes,
-            clock=clock,
-            clock_weather=clock_weather,
-            provenance=sources,
-            diagnostics=diag,
-            economics=econ,
-            pending=base_pending,
-        )
+        return skipped("no test day has all its target hours measured.")
 
     is_gen = s.quantity == "generation"
     reference = "clear_sky_persistence" if is_gen and site is not None else "persistence_24h"
@@ -512,6 +488,13 @@ def analyze(
             f"{int(flagged.sum())} test hours without a forecast from every model left out of every row."
         )
     ref = fc[["unique_id", "ds", reference]].rename(columns={reference: "yhat"})
+    _, r_ref = metrics.align(ref, actual, ref)
+    if len(r_ref) and not (r_ref["yhat"].to_numpy() != r_ref["y"].to_numpy()).any():
+        # every skill would divide by zero (`metrics.skill`): constant or exactly repeating data
+        return skipped(
+            f"the series repeats exactly: the reference ({reference}) is perfect on every test hour, so "
+            "the skill is undefined. A stuck meter, a fixed estimate or synthetic data?"
+        )
     rows, aligned = [], {}
     for name, regime in regimes.items():
         m, r = metrics.align(fc[["unique_id", "ds", name]].rename(columns={name: "yhat"}), actual, ref)

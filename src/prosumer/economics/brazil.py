@@ -362,7 +362,10 @@ class TariffBook:
         """One distributor's book from ANEEL's open data (`io.aneel`, live; `get` replaces the HTTP getter):
         every homologated B1 residential vigencia, the monthly bandeiras and, for each of `fio_b_years`, the
         TUSD Fio B (needed only for GD II). `distributor` is ANEEL's `SigAgente` ("COPEL-DIS", "CEMIG-D",
-        "ELETROPAULO" for Enel SP, "LIGHT SESA", ...).
+        "ELETROPAULO" for Enel SP, "LIGHT SESA", ...). A year's components file starts at the distributor's
+        tariff adjustment (Copel: 24 June), so the days before it need the previous year's file: for dates in
+        year y pass y - 1 and y. The LAST year may be missing (early in a year ANEEL has not published it):
+        it is skipped with a note in `notes`; any other missing year raises.
 
         `icms` and `pis_cofins` (fractions, e.g. 0.19 and 0.0925) are the rates the person reads on a bill:
         no state table is built in (the author's decision of 2026-10-12), and they are applied to every
@@ -376,9 +379,18 @@ class TariffBook:
         b = aneel.fetch_bandeiras(get=get)
         frames: list[pd.DataFrame] = [t, b]
         fio = None
+        notes: list[str] = []
         years = sorted(set(fio_b_years))
-        if years:
-            comps = [aneel.fetch_components(distributor, y, get=get) for y in years]
+        comps = []
+        for y in years:
+            try:
+                comps.append(aneel.fetch_components(distributor, y, get=get))
+            except ValueError as e:
+                # early in a year ANEEL may not have published its components file yet
+                if y != years[-1] or "No components resource" not in str(e):
+                    raise
+                notes.append(f"ANEEL has no tariff components file for {y} yet: Fio B from earlier years.")
+        if comps:
             frames += comps
             fio = pd.concat([aneel.fio_b(c) for c in comps], ignore_index=True)
         taxes = pd.DataFrame({"start": ["1900-01-01"], "icms": [icms], "pis_cofins": [pis_cofins]})
@@ -395,7 +407,7 @@ class TariffBook:
                 "against a bill",
             )
         )
-        return cls(t, b, taxes, fio, distributor, prov, extend_last=extend_last)
+        return cls(t, b, taxes, fio, distributor, prov, extend_last=extend_last, notes=notes)
 
     # ------------------------------------------------------------------ lookups
     def base(
@@ -884,8 +896,34 @@ class Setup:
     def _klass(self) -> GD:
         return self.gd or gd_class(self.connected, self.requested)
 
+    def _assumed_bandeira(self, months: Iterable[pd.Timestamp]) -> tuple[float | None, str | None]:
+        """`assume_bandeira` when given; otherwise, when the months without a published bandeira all come
+        after the last published one (the current month, or a forecast), that last one, with a note. A hole
+        BEFORE the last published month is left to raise: it means the record is incomplete."""
+        if self.assume_bandeira is not None or not len(self.book.bandeiras):
+            return self.assume_bandeira, None
+        last = str(self.book.bandeiras.index.max())
+        missing = sorted({f"{pd.Timestamp(m):%Y-%m}" for m in months} - set(self.book.bandeiras.index))
+        if not missing or missing[0] <= last:
+            return None, None
+        got = self.book.bandeira(last)
+        assert got is not None
+        return got[1], (
+            f"No bandeira published for {', '.join(missing)} yet: assumed the last one ({got[0]}, "
+            f"{got[1]:.2f} R$/MWh, {last})."
+        )
+
     def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill:
-        """`brazil.bill` with this setup."""
+        """`brazil.bill` with this setup. Trailing months without a published bandeira take the last one,
+        with a note (as `tariff_for`)."""
+        ds = consumption.frame["ds"].dt.tz_localize(None)  # every hour `bill` looks a price up for
+        band, note = self._assumed_bandeira(pd.DatetimeIndex(ds.dt.to_period("M").unique().to_timestamp()))
+        out = self._bill(consumption, generation, band)
+        if note:
+            out.notes.append(note)
+        return out
+
+    def _bill(self, consumption: EnergySeries, generation: EnergySeries | None, band: float | None) -> Bill:
         return bill(
             consumption,
             generation,
@@ -907,26 +945,18 @@ class Setup:
             icms_on_charge=self.icms_on_charge,
             pis_cofins_on_charge=self.pis_cofins_on_charge,
             cosip=self.cosip,
-            assume_bandeira=self.assume_bandeira,
+            assume_bandeira=band,
         )
 
     def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]:
         """`brazil.tariff` of `month` (the credit value of an injected kWh when `generation`), and what it
-        had to assume. A month without a published bandeira (the forecast's next month, usually) takes
+        had to assume. A month after the last published bandeira (the forecast's next month, usually) takes
         `assume_bandeira` or, without it, the last published one, with a note."""
         notes: list[str] = []
         m = pd.Timestamp(month).to_period("M").to_timestamp()
-        band = self.assume_bandeira
-        if band is None and self.book.bandeira(m) is None and len(self.book.bandeiras):
-            last = str(self.book.bandeiras.index.max())
-            got = self.book.bandeira(last)
-            assert got is not None
-            band = got[1]
-            notes.append(
-                f"No bandeira published for {m:%Y-%m} yet: assumed the last one "
-                f"({got[0]}, {band:.2f} R$/MWh, "
-                f"{last})."
-            )
+        band, note = self._assumed_bandeira([m])
+        if note:
+            notes.append(note)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             t = tariff(

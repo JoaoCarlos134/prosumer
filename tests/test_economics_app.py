@@ -111,7 +111,7 @@ def test_months_with_gaps_and_partial_months_are_not_the_expected_bill() -> None
     days = 22 + 28 + 31
     y = np.ones(days * 24)
     y[(22 + 28 + 10) * 24 : (22 + 28 + 11) * 24] = np.nan  # 11 March
-    r = analyze(_series(y, "2025-01-10", "consumption"), test_days=80, economics=Tariff.flat(0.25, fixed=5.0))
+    r = analyze(_series(y, "2025-01-10", "consumption"), test_days=14, economics=Tariff.flat(0.25, fixed=5.0))
     assert r.economics is not None
     t = r.economics.totals.iloc[0]
     assert (t["months"], t["complete_months"]) == (3, 1)
@@ -125,6 +125,18 @@ def test_no_complete_month_says_so() -> None:
     r = analyze(_series(np.ones(20 * 24), "2025-01-05", "consumption"), economics=Tariff.flat(0.2))
     assert r.economics is not None and np.isnan(r.economics.totals["mean_month"].iloc[0])
     assert any("No month with every hour" in n for n in r.economics.notes)
+    totals = r.economics.to_markdown().split("### Totals")[1]
+    assert "| n/a |" in totals and "nan" not in totals  # review F5
+
+
+def test_a_series_that_repeats_exactly_skips_only_the_forecast_check() -> None:
+    """Review F2: a constant load makes persistence perfect, so every skill would divide by zero. The check
+    really runs here (30 days, 7 test days) and is skipped with a note; quality and economics stay."""
+    r = analyze(_series(np.ones(30 * 24), "2025-01-01", "consumption"), test_days=7, economics=TOU)
+    assert r.forecast is None and r.economics is not None and not r.quality.empty
+    assert any("repeats exactly" in n and "skill is undefined" in n for n in r.notes)
+    # 1-30 January 2025: 22 weekdays at 4.60, 8 weekend days at 2.40, 10 fixed
+    assert r.economics.monthly["total"].tolist() == pytest.approx([22 * 4.60 + 8 * 2.40 + 10.0])
 
 
 def test_house_report_with_economics_keeps_every_other_section() -> None:
@@ -176,7 +188,7 @@ def test_brazilian_gd_ii_in_analyze_is_brazil_bill() -> None:
     load, pv = _site(61, "2026-07-01", pv_kwh=4.0)
     setup = brazil.Setup(book=_copel(), gd="GD II", connection="monofasico")
     assert (setup.after_2028, setup.gd2_minimum, setup.icms_exempt_compensated) == ("tusd", "ren_655I", "all")
-    r = analyze(pv, economics=setup, consumption=load, test_days=90)
+    r = analyze(pv, economics=setup, consumption=load)
     assert r.economics is not None
     direct = brazil.bill(load, pv, book=_copel(), gd="GD II", connection="monofasico")
     pd.testing.assert_frame_equal(r.economics.monthly, direct.monthly)
@@ -195,11 +207,39 @@ def test_brazilian_cases_that_cannot_be_billed_leave_a_note() -> None:
     assert r2.economics is None and any("Economics left out" in n for n in r2.notes)
 
 
+def test_from_aneel_tolerates_only_a_missing_latest_year() -> None:
+    """Review F1: the fixture has the 2026 components file only. Asking for 2026 and 2027 (early 2027, not
+    published yet) keeps 2026's Fio B with a note; a missing earlier year still raises."""
+    book = brazil.TariffBook.from_aneel(
+        "COPEL-DIS", icms=0.19, pis_cofins=0.0925, fio_b_years=[2026, 2027], get=from_fixture()
+    )
+    assert any("no tariff components file for 2027" in n for n in book.notes)
+    assert book.fio_b_value("2027-03-10") == pytest.approx(214.5356, abs=1e-4)
+    with pytest.raises(ValueError, match="No components resource for 2025"):
+        brazil.TariffBook.from_aneel(
+            "COPEL-DIS", icms=0.19, pis_cofins=0.0925, fio_b_years=[2025, 2026], get=from_fixture()
+        )
+
+
+def test_bill_assumes_the_last_bandeira_only_for_trailing_months() -> None:
+    """Review F3: the fixture's bandeiras end in October 2026 (green). A bill through November takes the
+    last one with a note, as `tariff_for` does; a hole before the last published month still raises."""
+    load, _ = _site(61, "2026-10-01")  # October and November
+    b = brazil.Setup(book=_copel()).bill(load)
+    assert any("No bandeira published for 2026-11" in n for n in b.notes)
+    nov = b.monthly.set_index(b.monthly["month"].dt.month).loc[11]
+    assert nov["price"] == pytest.approx((457.17 + 310.85) / 1000 * GROSS)
+    book = _copel()
+    book.bandeiras = book.bandeiras.drop(index="2026-08")
+    with pytest.raises(ValueError, match="No bandeira for 2026-08"):
+        brazil.Setup(book=book).bill(_site(31, "2026-08-01")[0])
+
+
 @pytest.mark.skipif(not (LEGACY / "copel_tarifas_historico.csv").exists(), reason="legacy tariff CSVs absent")
 def test_legacy_book_in_analyze() -> None:
     load, _ = _site(59, "2018-01-01")
     book = brazil.TariffBook.from_legacy(LEGACY)
-    r = analyze(load, economics=brazil.Setup(book=book), test_days=90)
+    r = analyze(load, economics=brazil.Setup(book=book))
     assert r.economics is not None
     direct = brazil.bill(load, book=brazil.TariffBook.from_legacy(LEGACY))
     assert r.economics.monthly["total"].tolist() == pytest.approx(direct.monthly["total"].tolist())

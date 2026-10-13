@@ -582,9 +582,14 @@ exportacao do `Pricing` (Brasil: valor do credito, ranqueado como net billing), 
 Enel SP, Light ao vivo pela ANEEL, ICMS e PIS/COFINS obrigatorios so nesse caso, placeholder "e.g. 19"/"e.g. 9.25",
 erro claro sem internet, atribuicao ANEEL ODbL na pagina); passos 6 (`windows_by_cost`, ao lado das melhores horas)
 e 7 (`Pricing.bill(...).totals()`, so com arquivo de consumo). Testes sem rede: `tests/aneel_fake.py` (FakeCKAN e a
-fixture), `tests/test_economics_app.py`, `tests/test_example_site.py`. ACHADO (nao consertado, fora do escopo): o
-`analyze` quebra ("Reference with zero error") numa serie perfeitamente periodica (ex. carga constante), porque a
-persistencia acerta tudo; os testes usam `test_days` longo para pular a checagem nesses casos.
+fixture), `tests/test_economics_app.py`, `tests/test_example_site.py`. Revisao independente ("pronto com consertos"),
+consertada com teste para cada: (F1) PV GD II no site so buscava o Fio B dos anos da previsao, mas o arquivo de
+componentes de um ano comeca no reajuste (Copel 24/6): agora busca {ano-1, ano}, e `from_aneel` tolera so o
+ULTIMO ano ainda nao publicado (nota em `book.notes`); (F2, pre-existente) `analyze` quebrava ("Reference with
+zero error") numa serie que se repete exatamente (carga constante): agora pula so a checagem de previsao com nota
+("repeats exactly ... a stuck meter?") e mantem as outras secoes; (F3) `Setup.bill` usa a ultima bandeira nos
+meses FINAIS sem bandeira publicada (nota), buraco no meio continua erro; (F4) site: virgula decimal em todos os
+numeros, horario de ponta so em horas inteiras com erro claro; (F5) `mean_month` sem mes completo sai "n/a".
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

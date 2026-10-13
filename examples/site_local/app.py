@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import html
 import io
+import re
 import traceback
 from email.parser import BytesParser
 from email.policy import default
@@ -119,6 +120,8 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
 
     money = Money()
     pricing = _pricing(form, out, credits)  # the price typed in the form, or None
+    if isinstance(pricing, brazil.Setup):
+        money.notes += pricing.book.notes  # what the download had to assume (e.g. a year not published)
     if pricing is not None:
         money.tariff = pricing.describe()
         # 6. The same by cost: the cheapest block of each day for a load of `kw` kW, with its confidence.
@@ -159,19 +162,28 @@ def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> econ
     if kind == "none":
         return None
 
-    def number(key: str, what: str) -> float:
-        if not form.get(key):
-            raise ValueError(f"Give {what}.")
-        return float(form[key].replace(",", "."))
+    def number(key: str, what: str, default: float | None = None) -> float:
+        """A number typed in the form (decimal comma or point); `default` when empty, else required."""
+        text = (form.get(key) or "").strip()
+        if not text:
+            if default is None:
+                raise ValueError(f"Give {what}.")
+            return default
+        try:
+            return float(text.replace(",", "."))
+        except ValueError:
+            raise ValueError(f"{what[0].upper()}{what[1:]}: {text!r} is not a number.") from None
 
     if kind == "brazil":
         agent = form.get("distributor") or "COPEL-DIS"
         icms = number("icms", "the ICMS rate of your bill (%)") / 100  # user inputs: no table by state
         pis = number("pis_cofins", "the PIS/COFINS rate of your bill (%)") / 100
         gd = (form.get("gd") or None) if out.quantity == "generation" else None  # GD: only with PV
-        years = (
-            sorted(set(out.hourly["ds"].dt.year)) if out.quantity == "generation" and gd == "GD II" else []
-        )
+        years: list[int] = []
+        if out.quantity == "generation" and gd == "GD II":
+            # a year's Fio B starts at the distributor's adjustment (Copel: 24 June): the earlier days of
+            # each year need the year before; the latest year may not be published yet (a note, not an error)
+            years = sorted({y + k for y in set(out.hourly["ds"].dt.year) for k in (-1, 0)})
         try:
             book = brazil.TariffBook.from_aneel(
                 agent, icms=icms, pis_cofins=pis, fio_b_years=years, extend_last=True, get=ANEEL_GET
@@ -187,11 +199,11 @@ def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> econ
             book=book,
             connection=form.get("connection") or "bifasico_3",
             gd=gd,  # type: ignore[arg-type]
-            cosip=float(form.get("cosip") or 0),
+            cosip=number("cosip", "the COSIP", 0.0),
         )
     currency = form.get("currency") or "EUR"
-    export = float(form.get("export_price") or 0)
-    fixed = float(form.get("fixed") or 0)
+    export = number("export_price", "the export price", 0.0)
+    fixed = number("fixed", "the fixed charge", 0.0)
     scheme = form.get("scheme") or "net_metering"
     if kind == "flat":
         tariff = economics.Tariff.flat(
@@ -202,7 +214,7 @@ def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> econ
             name="your flat price",
         )
     elif kind == "tou":
-        a, b = (int(x) for x in (form.get("peak_hours") or "17-21").split("-"))
+        a, b = _peak_hours(form.get("peak_hours") or "17-21")
         peak = {h for h in range(24) if (a <= h < b if a < b else h >= a or h < b)}
         tariff = economics.Tariff(
             prices={
@@ -219,6 +231,19 @@ def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> econ
     else:
         raise ValueError(f"Unknown price kind {kind!r}")
     return economics.Plan(tariff, scheme=scheme)  # type: ignore[arg-type]
+
+
+def _peak_hours(text: str) -> tuple[int, int]:
+    """'17-21' -> (17, 21): whole hours, start-end, end may wrap past midnight ('22-6')."""
+    m = re.fullmatch(r"\s*(\d{1,2})\s*-\s*(\d{1,2})\s*", text)
+    a, b = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
+    if not m or not (0 <= a <= 23 and 0 <= b <= 24) or a == b % 24:
+        raise ValueError(
+            f"Peak hours {text!r}: give whole hours as start-end on a 24 h clock, e.g. 17-21 (17:00 to "
+            "21:00); the start and the end must differ. A peak that starts or ends inside an hour is not "
+            "supported in this form."
+        )
+    return a, b
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)

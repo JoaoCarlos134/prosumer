@@ -16,7 +16,7 @@ export are both larger than the hourly figures (they cancel inside the hour here
 better is possible; the error grows with the mismatch between load and PV inside the hour.
 
 The month is the calendar month in the series' time zone, not the meter's reading cycle (a distributor's
-cycle can start on any day: the legacy Cascavel bills read on the 9th).
+cycle can start on any day of the month).
 
 Hours where the consumption or the generation is not valid are left out of every sum (never filled with
 zero); `coverage` in the monthly table says how much of each month was counted.
@@ -153,17 +153,21 @@ class Tariff:
 # ---------------------------------------------------------------------- flows
 def flows(consumption: EnergySeries, generation: EnergySeries | None = None) -> pd.DataFrame:
     """Hourly energy flows of each site: `unique_id, ds, consumption, generation, self_consumption,
-    grid_import, export, valid` (kWh). Hourly netting (see the module docstring).
+    grid_import, export, valid, generation_missing` (kWh). Hourly netting (see the module docstring).
 
     `consumption` is what the household used (behind the meter), `generation` what its PV produced, both
     hourly. Pairing: by `unique_id`; when each has exactly one series they are paired whatever their names.
-    A site without a generation series has zero generation. An hour is valid only when both are.
+    A site without a generation series has zero generation. An hour is valid only when both are: a site
+    WITH a generation series but no generation row at an hour (e.g. the PV series starts after the
+    consumption) has unknown generation there, not zero; `generation_missing` flags those hours. If the PV
+    was simply not installed yet, pass a generation series with zeros for that period.
     """
     c = _hourly_kwh(consumption, "consumption")
     out = c.rename(columns={"y": "consumption"})
     if generation is None:
         out["generation"] = 0.0
         out["valid"] = out["valid_c"]
+        out["generation_missing"] = False
     else:
         g = _hourly_kwh(generation, "generation")
         if _single(c["unique_id"]) and _single(g["unique_id"]):
@@ -177,6 +181,7 @@ def flows(consumption: EnergySeries, generation: EnergySeries | None = None) -> 
         has_gen = out["unique_id"].isin(set(g["unique_id"]))
         # a site with a PV series but no row at this hour: unknown generation, not zero
         out["valid"] = out["valid_c"] & np.where(has_gen, out["valid_g"].fillna(False).astype(bool), True)
+        out["generation_missing"] = (has_gen & out["valid_g"].isna()).to_numpy()
         out["generation"] = np.where(has_gen, out["generation"], 0.0)
     v = out["valid"].to_numpy(dtype=bool)
     cons = np.where(v, out["consumption"].to_numpy(dtype=float), np.nan)
@@ -186,7 +191,11 @@ def flows(consumption: EnergySeries, generation: EnergySeries | None = None) -> 
     out["grid_import"] = np.clip(cons - gen, 0, None)
     out["export"] = np.clip(gen - cons, 0, None)
     cols = ["unique_id", "ds", "consumption", "generation", "self_consumption", "grid_import", "export"]
-    return out[[*cols, "valid"]].sort_values(["unique_id", "ds"], kind="stable").reset_index(drop=True)
+    return (
+        out[[*cols, "valid", "generation_missing"]]
+        .sort_values(["unique_id", "ds"], kind="stable")
+        .reset_index(drop=True)
+    )
 
 
 def _hourly_kwh(s: EnergySeries, what: str) -> pd.DataFrame:
@@ -260,8 +269,9 @@ def bill(
     grid_import, export, compensated, credit_used, credit_new, credit_expired, credit_balance, energy_cost,
     export_value, fixed, total` (energy in kWh, money in `tariff.currency`). `compensated` is the import
     offset by the month's own export, `credit_used` the import offset by older credits (net metering only).
-    `credit_months`: credits expire after that many months (None: never); `initial_credit`: kWh already
-    banked before the first month (one value, or one per site).
+    `credit_months`: credits expire after that many months (None: never): a credit earned in month m is
+    usable through month m + credit_months - 1; `initial_credit`: kWh already banked before the first month
+    (one value, or one per site, treated as earned the month before).
     """
     if scheme not in SCHEMES:
         raise ValueError(f"scheme must be one of {SCHEMES}")
@@ -375,6 +385,12 @@ def bill(
         )
     if monthly["credit_expired"].sum() > 0:
         notes.append(f"{monthly['credit_expired'].sum():.1f} kWh of credits expired unused.")
+    if h["generation_missing"].any():
+        n = int(h["generation_missing"].sum())
+        notes.append(
+            f"{n} hour(s) have consumption but no generation row (e.g. the PV series starts later): left "
+            "out as unknown. If the PV was not installed yet, pass zeros for that period."
+        )
     if scheme == "net_billing" and (monthly["total"] < 0).any():
         notes.append("Some months have a negative total: the exports are worth more than the imports.")
     by_block = _by_block(per_block, names)
@@ -419,8 +435,14 @@ def cheapest_windows(
     (generation minus consumption, or all the generation when no consumption outlook is given) and the rest
     from the grid. Its cost is grid kWh x import price plus PV kWh x what that PV energy would otherwise have
     been worth: the export price under `net_billing`, nothing under `self_consumption`, the import price of
-    the hour under `net_metering` (a kWh credit is worth a kWh bought). So under 1:1 net metering the sun
-    does not matter, only the price; under the other schemes cheap hours AND sunny hours win.
+    the hour under `net_metering` (a kWh credit is worth a kWh bought). So under 1:1 net metering with a
+    flat price the sun does not matter, only the price, for a household that imports more than it exports
+    and uses its credits before they expire; it does matter for a net exporter (the PV kWh used would have
+    become a credit that expires unused), and under time-of-use netting, where `bill` sends leftover export
+    to the dearest block. Under the other schemes cheap hours AND sunny hours win.
+
+    A window is a candidate only if its hours are consecutive (one hour apart) and every one of them has a
+    known forecast (the gap rule of `outlook.best_windows`): an unknown hour is not free PV.
 
     Generalises `outlook.best_windows` (which looks at energy only) to money. Returns `unique_id, date,
     start, end, cost, grid_kwh, pv_kwh, rank, confidence` (rank 1 = cheapest of the day), the `top` cheapest
@@ -448,6 +470,15 @@ def cheapest_windows(
         if len(g) < hours:
             continue
         ds = pd.DatetimeIndex(g["ds"])
+        ones = np.ones(hours)
+        unknown = ~np.isfinite(g["gen"].to_numpy(dtype=float)) | ~np.isfinite(g["cons"].to_numpy(dtype=float))
+        step = np.asarray((ds[1:] - ds[:-1]) == pd.Timedelta(hours=1))  # resolution-safe (ns or us)
+        broken = np.concatenate([[False], ~step])  # True at an hour that does not follow the previous one
+        bad = np.convolve(unknown, ones, mode="valid") > 0
+        if hours > 1:
+            bad |= np.convolve(broken[1:], np.ones(hours - 1), mode="valid") > 0
+        if bad.all():
+            continue
         p_imp = tariff.price(ds)
         if scheme == "net_billing":
             p_pv = tariff.export(ds)
@@ -459,11 +490,12 @@ def cheapest_windows(
         pv = np.minimum(kw, surplus)
         grid = kw - pv
         cost_h = grid * p_imp + pv * p_pv
-        ones = np.ones(hours)
         cost = np.convolve(cost_h, ones, mode="valid")
         gk, pk = np.convolve(grid, ones, mode="valid"), np.convolve(pv, ones, mode="valid")
-        rank = np.argsort(np.argsort(cost, kind="stable"), kind="stable") + 1
-        for i in range(len(cost)):
+        ok = np.flatnonzero(~bad)
+        rank = np.empty(len(cost), dtype=int)
+        rank[ok] = np.argsort(np.argsort(cost[ok], kind="stable"), kind="stable") + 1
+        for i in ok.tolist():
             rows.append(
                 {
                     "unique_id": uid,

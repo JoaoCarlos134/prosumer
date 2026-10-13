@@ -237,3 +237,37 @@ def test_cheapest_windows_with_time_of_use_and_household_load() -> None:
         economics.cheapest_windows(TOU)
     with pytest.raises(ValueError, match="quantity"):
         economics.cheapest_windows(TOU, generation=_outlook("consumption", load))
+
+
+def test_cheapest_windows_skip_unknown_hours_and_broken_runs() -> None:
+    sun = np.where(np.isin(np.arange(24), [10, 11, 12]), 3.0, 0.0)
+    unknown = sun.copy()
+    unknown[2] = np.nan  # an hour of unknown forecast is not free PV
+    flat = Tariff.flat(0.30)
+    w = economics.cheapest_windows(
+        flat, generation=_outlook("generation", unknown), hours=3, scheme="self_consumption", top=None
+    )
+    assert not set(w["start"].dt.hour) & {0, 1, 2}  # every block that contains hour 2 is out
+    assert w[w["rank"] == 1]["start"].dt.hour.iloc[0] == 10
+    assert sorted(w["rank"]) == list(range(1, len(w) + 1))
+    # a missing row (hour 6): no 3-h block may span the hole
+    o = _outlook("generation", sun)
+    o.hourly = o.hourly.drop(index=6).reset_index(drop=True)
+    w2 = economics.cheapest_windows(flat, generation=o, hours=3, scheme="self_consumption", top=None)
+    assert ((w2["end"] - w2["start"]) == pd.Timedelta(hours=3)).all()
+    assert not set(w2["start"].dt.hour) & {4, 5, 6}
+
+
+def test_generation_series_starting_later_is_unknown_and_noted() -> None:
+    load, pv = _site(31, 3.0)
+    late = EnergySeries.from_dataframe(
+        pv.frame[pv.frame["ds"] >= pd.Timestamp("2025-01-11", tz=TZ)],
+        unit="kWh",
+        quantity="generation",
+        tz=TZ,
+        freq="h",
+    )
+    b = economics.bill(load, late, tariff=Tariff.flat(0.2))
+    assert b.monthly.iloc[0]["coverage"] == pytest.approx(21 / 31)
+    assert b.hourly["generation_missing"].sum() == 240
+    assert any("no generation row" in n for n in b.notes)

@@ -94,6 +94,10 @@ Open, NOT verified (2026-10-12):
 - whether ANEEL's `TUSD_FioB` component is exactly the art. 27 components (asset return, depreciation, O&M);
 - each distributor's peak hours (Copel 17:30-20:30 comes from the project's legacy notes).
 
+For the app: `TariffBook.from_aneel` builds a distributor's book from ANEEL's open data in one call (the
+ICMS and PIS/COFINS typed by the person), and `Setup` holds the book and the arguments of `bill` (an
+`economics.Pricing` for `analyze(economics=...)` and `economics.windows_by_cost`).
+
 **Prices vary within a month** (a new vigencia starts on a fixed day, e.g. 24/6 at Copel): the netting uses
 the import-weighted mean of the month's hourly prices, so a month that straddles two vigencias is a blend.
 """
@@ -101,7 +105,7 @@ the import-weighted mean of the month's hourly prices, so a month that straddles
 from __future__ import annotations
 
 import warnings
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
@@ -112,7 +116,7 @@ import pandas as pd
 
 from ..contracts import EnergySeries
 from ..provenance import Provenance
-from .core import Bill, Tariff, flows
+from .core import Bill, Scheme, Tariff, flows
 
 CURRENCY = "BRL"
 # [R] art. 291: minimum billing in kWh by type of connection
@@ -343,6 +347,56 @@ class TariffBook:
         )
         return cls(t, b, taxes, fio_b, distributor, [prov])
 
+    @classmethod
+    def from_aneel(
+        cls,
+        distributor: str,
+        *,
+        icms: float,
+        pis_cofins: float,
+        subgroups: Iterable[str] = ("B1",),
+        fio_b_years: Iterable[int] = (),
+        extend_last: bool = False,
+        get: Callable[[str, dict[str, Any]], dict[str, Any]] | None = None,
+    ) -> TariffBook:
+        """One distributor's book from ANEEL's open data (`io.aneel`, live; `get` replaces the HTTP getter):
+        every homologated B1 residential vigencia, the monthly bandeiras and, for each of `fio_b_years`, the
+        TUSD Fio B (needed only for GD II). `distributor` is ANEEL's `SigAgente` ("COPEL-DIS", "CEMIG-D",
+        "ELETROPAULO" for Enel SP, "LIGHT SESA", ...).
+
+        `icms` and `pis_cofins` (fractions, e.g. 0.19 and 0.0925) are the rates the person reads on a bill:
+        no state table is built in (the author's decision of 2026-10-12), and they are applied to every
+        date. The book's provenance lists the ANEEL datasets (ODbL 1.0: attribute ANEEL; a redistributed
+        derived database stays under ODbL) and the typed rates."""
+        from ..io import aneel  # here: io is a reader layer, economics must import without it
+        from ..provenance import of
+
+        gross_up(icms, pis_cofins)  # validates the rates
+        t = aneel.fetch_tariffs(distributor, subgroups=subgroups, get=get)
+        b = aneel.fetch_bandeiras(get=get)
+        frames: list[pd.DataFrame] = [t, b]
+        fio = None
+        years = sorted(set(fio_b_years))
+        if years:
+            comps = [aneel.fetch_components(distributor, y, get=get) for y in years]
+            frames += comps
+            fio = pd.concat([aneel.fio_b(c) for c in comps], ignore_index=True)
+        taxes = pd.DataFrame({"start": ["1900-01-01"], "icms": [icms], "pis_cofins": [pis_cofins]})
+        prov: list[Provenance] = []
+        for f in frames:
+            p = of(f)
+            if p is not None and p.source not in {x.source for x in prov}:
+                prov.append(p)
+        prov.append(
+            Provenance(
+                source="ICMS and PIS/COFINS rates typed by the user",
+                license="n/a",
+                notes=f"ICMS {icms:.2%}, PIS/COFINS {pis_cofins:.2%}, applied to every date; not checked "
+                "against a bill",
+            )
+        )
+        return cls(t, b, taxes, fio, distributor, prov, extend_last=extend_last)
+
     # ------------------------------------------------------------------ lookups
     def base(
         self,
@@ -550,7 +604,7 @@ def bill(
     generation: EnergySeries | None = None,
     *,
     book: TariffBook,
-    connection: str = "bifasico_3",
+    connection: str | float = "bifasico_3",
     gd: GD | None = None,
     connected: str | date | None = None,
     requested: str | date | None = None,
@@ -787,6 +841,126 @@ def bill(
     )
 
 
+# ---------------------------------------------------------------------- what the app passes
+@dataclass(frozen=True)
+class Setup:
+    """How a Brazilian grupo B unit pays: its distributor's `book` and the arguments of `bill` (same names,
+    same defaults: GD II from 2029 `after_2028="tusd"`, minimum `gd2_minimum="ren_655I"`, ICMS on compensated
+    energy `icms_exempt_compensated="all"`). The Brazilian `economics.Pricing` for `analyze(economics=...)`
+    and `economics.windows_by_cost`.
+
+    With generation, the GD class is `gd` or `gd_class(connected, requested)`; one of them is required.
+    """
+
+    book: TariffBook
+    connection: str | float = "bifasico_3"
+    gd: GD | None = None
+    connected: str | date | None = None
+    requested: str | date | None = None
+    modality: str = CONVENTIONAL
+    peak_start: str | None = None
+    subgroup: str = "B1"
+    initial_credit: float | Mapping[str, float] = 0.0
+    credit_months: int = CREDIT_MONTHS
+    after_2028: After2028 = "tusd"
+    bandeira_on_minimum: bool = True
+    gd2_minimum: Gd2Minimum = "ren_655I"
+    icms_exempt_compensated: IcmsExempt = "all"
+    pis_cofins_exempt_compensated: bool = True
+    icms_on_charge: bool = True
+    pis_cofins_on_charge: bool = False
+    cosip: float = 0.0
+    assume_bandeira: float | None = None
+
+    @property
+    def currency(self) -> str:
+        return CURRENCY
+
+    @property
+    def window_scheme(self) -> Scheme:
+        """`tariff` gives an injected kWh its value as a credit in `export_price`: rank with net billing."""
+        return "net_billing"
+
+    def _klass(self) -> GD:
+        return self.gd or gd_class(self.connected, self.requested)
+
+    def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill:
+        """`brazil.bill` with this setup."""
+        return bill(
+            consumption,
+            generation,
+            book=self.book,
+            connection=self.connection,
+            gd=self.gd,
+            connected=self.connected,
+            requested=self.requested,
+            modality=self.modality,
+            peak_start=self.peak_start,
+            subgroup=self.subgroup,
+            initial_credit=self.initial_credit,
+            credit_months=self.credit_months,
+            after_2028=self.after_2028,
+            bandeira_on_minimum=self.bandeira_on_minimum,
+            gd2_minimum=self.gd2_minimum,
+            icms_exempt_compensated=self.icms_exempt_compensated,
+            pis_cofins_exempt_compensated=self.pis_cofins_exempt_compensated,
+            icms_on_charge=self.icms_on_charge,
+            pis_cofins_on_charge=self.pis_cofins_on_charge,
+            cosip=self.cosip,
+            assume_bandeira=self.assume_bandeira,
+        )
+
+    def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]:
+        """`brazil.tariff` of `month` (the credit value of an injected kWh when `generation`), and what it
+        had to assume. A month without a published bandeira (the forecast's next month, usually) takes
+        `assume_bandeira` or, without it, the last published one, with a note."""
+        notes: list[str] = []
+        m = pd.Timestamp(month).to_period("M").to_timestamp()
+        band = self.assume_bandeira
+        if band is None and self.book.bandeira(m) is None and len(self.book.bandeiras):
+            last = str(self.book.bandeiras.index.max())
+            got = self.book.bandeira(last)
+            assert got is not None
+            band = got[1]
+            notes.append(
+                f"No bandeira published for {m:%Y-%m} yet: assumed the last one "
+                f"({got[0]}, {band:.2f} R$/MWh, "
+                f"{last})."
+            )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            t = tariff(
+                self.book,
+                m,
+                modality=self.modality,
+                peak_start=self.peak_start,
+                gd=self._klass() if generation else None,
+                subgroup=self.subgroup,
+                assume_bandeira=band,
+                after_2028=self.after_2028,
+                requested=self.requested,
+                icms_exempt_compensated=self.icms_exempt_compensated,
+                pis_cofins_exempt_compensated=self.pis_cofins_exempt_compensated,
+                icms_on_charge=self.icms_on_charge,
+                pis_cofins_on_charge=self.pis_cofins_on_charge,
+            )
+        notes += [str(w.message) for w in caught]
+        return t, notes
+
+    def sources(self) -> list[tuple[str, Provenance]]:
+        name = self.book.distributor or "tariff book"
+        if not self.book.provenance:
+            return [(name, Provenance(source=f"tariff book {name}: not declared"))]
+        return [(name, p) for p in self.book.provenance]
+
+    def describe(self) -> str:
+        minimum = self.connection if isinstance(self.connection, str) else f"{self.connection:g} kWh"
+        gd = self.gd or ("GD by date" if self.connected or self.requested else "no GD class")
+        return (
+            f"{self.book.distributor or 'distributor'} {self.subgroup} {self.modality}, {minimum}, {gd}, BRL"
+        )
+
+
 def retail_price_by_month(book: TariffBook, start: str, end: str, **kwargs: Any) -> pd.Series:
     """Mean over the days of each calendar month of the full price (R$/kWh, `TariffBook.daily`). The project's
     legacy tariff study averaged these over a year; reproducing its number is a regression of the port, not
@@ -802,6 +976,7 @@ __all__ = [
     "GD",
     "MINIMUM_KWH",
     "POSTOS",
+    "Setup",
     "TariffBook",
     "bill",
     "branca_blocks",

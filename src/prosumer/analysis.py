@@ -13,14 +13,17 @@ already do without training anything:
 - **forecast check**: the day-ahead task of the benchmark (`DayAhead`) on the last `test_days` of the data,
   with the naive forecasts that need no training (same as yesterday, same day last week, mean of the last 7
   days) and their MEDIAN as the output (the library never picks "the best model": section 5c of the proposal),
-  scored against the benchmark's reference, with a day-bootstrap CI and the metrics at several resolutions.
+  scored against the benchmark's reference, with a day-bootstrap CI and the metrics at several resolutions;
+- **economics** (with `economics=` and a consumption): the monthly bill under the given tariff (core or
+  Brazilian), its totals, the expected monthly bill and, with generation, the savings against no PV.
 
 Every report also lists its inputs (`Report.provenance`: the series, the weather, each model) with source,
 licence and citation, and notes what has no known licence, is for non-commercial use only or sends the data
 out, so the app can say what an analysis used and under what terms.
 
 The sections that need what was not given or not written yet (weather, bands, economics) are listed in
-`Report.pending`, so the app can show what is missing instead of silently leaving it out.
+`Report.pending` (for economics, also what the bill does not model even when it is there), so the app can
+show what is missing instead of silently leaving it out.
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ import pandas as pd
 from . import metrics, physics
 from .contracts import EnergySeries
 from .diagnostics import Diagnosis, diagnose
+from .economics.core import Pricing, Tariff, as_pricing
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
 from .postprocessing import conformal_quantiles, correct_bias
 from .protocol import DayAhead, H, Regime, Window
@@ -47,16 +51,93 @@ OUTPUT = "median"
 CORRECTED = "median_corrected"  # consumption: the median with its recent bias removed (a row, not the output)
 BIAS_DAYS = 14  # days of past forecasts the bias factor of consumption looks at (`correct_bias`)
 CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (conformal)
+# what the economics section does not do even when it is there (kept in `Report.pending`)
+ECONOMICS_LEFT = (
+    "Not modelled: tarifa branca with generation (per-posto netting), COSIP read from a bill (type it as "
+    "`brazil.Setup(cosip=...)`), grupo A (demand charges), the tax reform of LC 214/2025."
+)
 
 PENDING = {
     "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
     "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
     "diagnostics": "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes",
-    "economics": "not a section of the report yet: call `economics.bill` (flat or time-of-use tariff; net "
-    "metering, net billing or self-consumption) or `economics.brazil.bill` (tarifa cheia, bandeira, custo de "
-    "disponibilidade, Lei 14.300 GD I/II; tariffs from `io.aneel`); not modelled: COSIP, tarifa branca with "
-    "generation, grupo A",
+    "economics": "pass `economics=` (an `economics.Tariff`, `economics.Plan` or `economics.brazil.Setup`) "
+    "with the consumption (the series, or `consumption=` next to a generation series): the monthly bill, "
+    f"and the savings with `generation=`. {ECONOMICS_LEFT}",
 }
+
+
+@dataclass
+class EconomicsSection:
+    """The bill section of a `Report` (`analyze(economics=...)`).
+
+    `monthly` and `by_block`: the bill's tables as `economics.bill` / `economics.brazil.bill` return them
+    (money in `currency`; `by_block` per tariff block, a single "all" block for the Brazilian bill);
+    `totals`: one row per site over all months (`months, complete_months, consumption, generation,
+    grid_import, export, total, without_pv, savings, mean_month`), `mean_month` being the mean bill of the
+    months with every hour measured (the expected monthly bill; NaN when no month is complete); `tariff`: a
+    one-line description; `notes`: the bill's notes; `provenance`: where the prices came from.
+    """
+
+    tariff: str
+    scheme: str
+    currency: str
+    monthly: pd.DataFrame
+    by_block: pd.DataFrame
+    totals: pd.DataFrame
+    notes: list[str] = field(default_factory=list)
+    provenance: pd.DataFrame | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "tariff": self.tariff,
+            "scheme": self.scheme,
+            "currency": self.currency,
+            "monthly": _records(self.monthly),
+            "by_block": _records(self.by_block),
+            "totals": _records(self.totals),
+            "notes": list(self.notes),
+            "provenance": _records(self.provenance),
+        }
+
+    def to_markdown(self) -> str:
+        m = self.monthly.copy()
+        m["month"] = pd.to_datetime(m["month"]).dt.strftime("%Y-%m")
+        cols = [
+            c
+            for c in (
+                "unique_id",
+                "month",
+                "coverage",
+                "consumption",
+                "generation",
+                "grid_import",
+                "export",
+                "compensated",
+                "credit_balance",
+                "total",
+                "without_pv",
+                "savings",
+            )
+            if c in m.columns
+        ]
+        lines = [
+            "## Economics",
+            "",
+            f"Tariff: {self.tariff}. Scheme: {self.scheme}. Money in {self.currency}, energy in kWh; "
+            "calendar months. `without_pv`: the same consumption all bought from the grid.",
+            "",
+            _table(m[cols]),
+        ]
+        blocks = self.by_block
+        if len(set(blocks["block"])) > 1:
+            b = blocks.copy()
+            b["month"] = pd.to_datetime(b["month"]).dt.strftime("%Y-%m")
+            lines += ["", "### By tariff block", "", _table(b)]
+        lines += ["", "### Totals", "", _table(self.totals)]
+        if self.notes:
+            lines += ["", *[f"- {n}" for n in self.notes]]
+        return "\n".join(lines)
 
 
 @dataclass
@@ -77,20 +158,13 @@ class Report:
     provenance: pd.DataFrame | None = None
     # generation with a site: roof orientation, clear-day performance index, its segments and steps
     diagnostics: Diagnosis | None = None
+    # with `economics=` and a consumption: the monthly bill, its totals and the savings of the PV
+    economics: EconomicsSection | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-friendly version (timestamps as ISO text, tables as lists of records)."""
-
-        def records(df: pd.DataFrame | None) -> list[dict[str, Any]] | None:
-            if df is None:
-                return None
-            out = df.copy()
-            for c in out.columns:
-                if pd.api.types.is_datetime64_any_dtype(out[c]):
-                    out[c] = out[c].map(lambda t: t.isoformat())
-            return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
-
+        records = _records
         return {
             "summary": {k: _plain(v) for k, v in self.summary.items()},
             "quality": records(self.quality),
@@ -103,6 +177,7 @@ class Report:
             "clock_weather": records(self.clock_weather),
             "provenance": records(self.provenance),
             "diagnostics": None if self.diagnostics is None else self.diagnostics.to_dict(),
+            "economics": None if self.economics is None else self.economics.to_dict(),
             "pending": dict(self.pending),
         }
 
@@ -184,6 +259,8 @@ class Report:
                 "",
                 _table(self.bands),
             ]
+        if self.economics is not None:
+            lines += ["", self.economics.to_markdown()]
         if self.weather is not None:
             lines += [
                 "",
@@ -216,6 +293,9 @@ def analyze(
     weather: pd.DataFrame | None = None,
     models: Sequence[Forecaster] = (),
     kwp: float | dict[str, float] | None = None,
+    economics: Tariff | Pricing | None = None,
+    consumption: EnergySeries | None = None,
+    generation: EnergySeries | None = None,
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -241,6 +321,17 @@ def analyze(
     Generation with a `site` also gets the diagnostics (`diagnostics.diagnose`: clear days, roof orientation,
     clear-day performance index and its change points, `Report.diagnostics`); `kwp` (one value, or per
     `unique_id`) turns the index into a performance ratio.
+
+    `economics`: how the household pays, as an `economics.Tariff` (net metering), an `economics.Plan` (a
+    tariff and the export scheme: net metering, net billing or self-consumption) or an
+    `economics.brazil.Setup` (an ANEEL tariff book, the connection, the GD class and the readings of Lei
+    14.300). It adds `Report.economics`: the monthly bill (by tariff block for time-of-use), its totals, the
+    expected monthly bill (mean of the complete months) and, with generation, the bill without the PV and the
+    savings; plus the tariff's sources in `Report.provenance`. The bill needs the consumption: the series
+    itself, or `consumption=` next to a generation series; `generation=` adds the PV to a consumption
+    series. The two series are paired by `unique_id` (or one each, whatever their names), netted hour by
+    hour, and billed by calendar month. A bill that cannot be made (a generation series alone, a tariff with
+    no vigencia for the data's dates, tarifa branca with generation) leaves the section out with a note.
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
@@ -283,6 +374,13 @@ def analyze(
         base_pending["diagnostics"] = (
             "soiling vs shading and string faults need DC or 5-minute data (not yet)"
         )
+    econ, econ_sources, econ_note = _economics(series, economics, consumption, generation)
+    if econ_note:
+        notes.append(econ_note)
+    if econ is not None:
+        base_pending["economics"] = ECONOMICS_LEFT
+    elif econ_note and economics is not None:
+        base_pending["economics"] = f"{econ_note} {ECONOMICS_LEFT}"
 
     first = frame["ds"].min().normalize()
     if not (frame.loc[frame["valid"], "y"] != 0).any():
@@ -290,7 +388,7 @@ def analyze(
         notes.append(
             "Forecast check skipped: every value is zero (a dead meter or inverter, or the wrong column)."
         )
-        sources, source_notes = _provenance(s, None, ())
+        sources, source_notes = _provenance(s, None, (), econ_sources)
         return Report(
             summary=summary,
             quality=quality,
@@ -299,6 +397,7 @@ def analyze(
             clock_weather=clock_weather,
             provenance=sources,
             diagnostics=diag,
+            economics=econ,
             pending=base_pending,
         )
     if test_start - first < pd.Timedelta(hours=CONTEXT):
@@ -306,7 +405,7 @@ def analyze(
             f"Forecast check skipped: it needs {CONTEXT // 24} days of history "
             f"before the {test_days} test days."
         )
-        sources, source_notes = _provenance(s, None, ())
+        sources, source_notes = _provenance(s, None, (), econ_sources)
         return Report(
             summary=summary,
             quality=quality,
@@ -315,6 +414,7 @@ def analyze(
             clock_weather=clock_weather,
             provenance=sources,
             diagnostics=diag,
+            economics=econ,
             pending=base_pending,
         )
 
@@ -324,7 +424,7 @@ def analyze(
     windows = task.windows()
     if not windows:
         notes.append("Forecast check skipped: no test day has all its target hours measured.")
-        sources, source_notes = _provenance(s, None, ())
+        sources, source_notes = _provenance(s, None, (), econ_sources)
         return Report(
             summary=summary,
             quality=quality,
@@ -333,14 +433,15 @@ def analyze(
             clock_weather=clock_weather,
             provenance=sources,
             diagnostics=diag,
+            economics=econ,
             pending=base_pending,
         )
 
-    generation = s.quantity == "generation"
-    reference = "clear_sky_persistence" if generation and site is not None else "persistence_24h"
+    is_gen = s.quantity == "generation"
+    reference = "clear_sky_persistence" if is_gen and site is not None else "persistence_24h"
     fc = _naive_forecasts(windows, site, reference)
     actual = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
-    keep = _evaluated(actual, fc, generation, site, test_start)
+    keep = _evaluated(actual, fc, is_gen, site, test_start)
     actual = actual.loc[keep]
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
@@ -348,8 +449,8 @@ def analyze(
     # consumption: every median forecast also over the BIAS_DAYS before the test, so the bias factor of the
     # first test day already has its days (the benchmark had only the test and left its first week as is)
     point_past: dict[str, pd.DataFrame] = {}
-    consumption = s.quantity == "consumption"
-    if consumption:
+    is_cons = s.quantity == "consumption"
+    if is_cons:
         point_past = _past_naive(task, test_start)
     bands_past: dict[str, pd.DataFrame] = {}  # the same model's bands over the calibration days
     for model in models:
@@ -376,11 +477,11 @@ def analyze(
             past_q = _calibration_bands(cast(Probabilistic, model), task_m, test_start)
             bands_past[name] = past_q.drop(columns="yhat")
             out = qf[["unique_id", "ds", "yhat"]]
-            if consumption and history_only:
+            if is_cons and history_only:
                 point_past[name] = past_q[["unique_id", "ds", "yhat"]]
         else:
             out = rolling_forecast(model, task_m)
-            if consumption and history_only:
+            if is_cons and history_only:
                 point_past[name] = rolling_forecast(model, _before(task_m, test_start, BIAS_DAYS))
         fc = fc.merge(out.rename(columns={"yhat": name}), on=["unique_id", "ds"], how="left")
         regimes[name] = "A" if history_only else "C"
@@ -391,12 +492,12 @@ def analyze(
     ]
     fc[OUTPUT] = fc[in_median].median(axis=1)
     output = OUTPUT
-    if consumption:
+    if is_cons:
         fc = _corrected_median(fc, point_past, in_median, frame, test_start)
         regimes[CORRECTED] = "A"
     if w is not None:
         weather_table = _weather_coverage(w, frame["ds"].min(), end + pd.Timedelta(hours=H - 1))
-        if generation:
+        if is_gen:
             fc, note = _weather_linear(fc, w, s, site, test_start)
             if note:
                 notes.append(note)
@@ -462,7 +563,7 @@ def analyze(
                 issue_hour=issue_hour,
             ),
         ).drop(columns="yhat")
-        hours_of = _production_hours(s, generation, site, test_start - pd.Timedelta(days=CALIBRATION_DAYS))
+        hours_of = _production_hours(s, is_gen, site, test_start - pd.Timedelta(days=CALIBRATION_DAYS))
         measured = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
         band_regimes = dict(regimes)
         for name in list(bands_raw):
@@ -489,7 +590,7 @@ def analyze(
         "reference": reference,
         "output": output,
     }
-    if generation and site is None:
+    if is_gen and site is None:
         notes.append(
             "Generation without a site: the reference is 'same as yesterday', weaker than the clear-sky "
             "persistence of the benchmark. Pass site=(lat, lon) for the benchmark's reference."
@@ -501,7 +602,7 @@ def analyze(
             + (
                 f" `{CORRECTED}` removes it, but in the benchmark that raised the skill only for a median of "
                 "~40 models; with few models it lowered it."
-                if consumption
+                if is_cons
                 else ""
             )
         )
@@ -511,7 +612,7 @@ def analyze(
     if bands is not None:
         pending.pop("bands (quantiles)")
     used = [m for m in models if m.card.name in regimes]
-    sources, source_notes = _provenance(s, weather, used)
+    sources, source_notes = _provenance(s, weather, used, econ_sources)
     notes.extend(source_notes)
     return Report(
         summary=summary,
@@ -526,6 +627,7 @@ def analyze(
         pending=pending,
         provenance=sources,
         diagnostics=diag,
+        economics=econ,
     )
 
 
@@ -534,36 +636,29 @@ _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
 _PROVENANCE_SHOWN = ("role", "name", "license", "sends_data", "source", "citation", "retrieved", "conditions")
 
 
+_Entry = tuple[str, str, Provenance, bool]  # role, name, provenance, sends the data out
+
+
 def _provenance(
-    s: EnergySeries, weather: pd.DataFrame | None, models: Sequence[Forecaster]
+    s: EnergySeries,
+    weather: pd.DataFrame | None,
+    models: Sequence[Forecaster],
+    extra: Sequence[_Entry] = (),
 ) -> tuple[pd.DataFrame, list[str]]:
-    """One row per input of the analysis (the series, the weather when given, each model that ran) with its
-    source and licence, and the notes the app must show: unknown licences, non-commercial terms and models
-    that send the data out. The built-in naive forecasts are rules of this library and need no row."""
+    """One row per input of the analysis (the series, the weather when given, each model that ran, and the
+    `extra` inputs: the second series and the tariff of the economics section) with its source and licence,
+    and the notes the app must show: unknown licences, non-commercial terms and models that send the data
+    out. The built-in naive forecasts are rules of this library and need no row."""
     undeclared = Provenance(source="not declared")
-    entries: list[tuple[str, str, Provenance, bool]] = [
-        ("series", s.quantity, s.provenance or undeclared, False)
-    ]
+    entries: list[_Entry] = [("series", s.quantity, s.provenance or undeclared, False)]
     if weather is not None:
         entries.append(("weather", "weather forecast", provenance_of(weather) or undeclared, False))
     for m in models:
         c = m.card
         card = Provenance(source=c.source or "not declared", license=c.license)
         entries.append(("model", c.name, card, c.sends_data))
-    rows = [
-        {
-            "role": role,
-            "name": name,
-            "license": p.license,
-            "sends_data": sends,
-            "source": p.source,
-            "citation": p.citation,
-            "url": p.url,
-            "retrieved": p.retrieved or "",
-            "conditions": p.notes,
-        }
-        for role, name, p, sends in entries
-    ]
+    entries += list(extra)
+    rows = _provenance_rows(entries)
     notes = []
     unknown = [f"{role} ({name})" for role, name, p, _ in entries if not p.license_known]
     if unknown:
@@ -579,6 +674,87 @@ def _provenance(
     if out:
         notes.append(f"These models send the series outside this machine: {', '.join(out)} (model card).")
     return pd.DataFrame(rows), notes
+
+
+def _provenance_rows(entries: Sequence[_Entry]) -> list[dict[str, Any]]:
+    return [
+        {
+            "role": role,
+            "name": name,
+            "license": p.license,
+            "sends_data": sends,
+            "source": p.source,
+            "citation": p.citation,
+            "url": p.url,
+            "retrieved": p.retrieved or "",
+            "conditions": p.notes,
+        }
+        for role, name, p, sends in entries
+    ]
+
+
+def _economics(
+    series: EnergySeries,
+    pricing: Tariff | Pricing | None,
+    consumption: EnergySeries | None,
+    generation: EnergySeries | None,
+) -> tuple[EconomicsSection | None, list[_Entry], str | None]:
+    """The bill section, the provenance entries it adds (the second series, the tariff) and a note when it
+    was asked for but could not be made."""
+    if pricing is None:
+        if consumption is not None or generation is not None:
+            return None, [], "`consumption=` and `generation=` are used only with `economics=`: ignored."
+        return None, [], None
+    p = as_pricing(pricing)
+    cons: EnergySeries | None
+    if series.quantity == "consumption":
+        if consumption is not None:
+            raise ValueError(
+                "The series is the consumption: pass the PV as `generation=`, not `consumption=`"
+            )
+        cons, gen, other = series, generation, generation
+    else:
+        if generation is not None:
+            raise ValueError("The series is the generation: pass the household's use as `consumption=`")
+        cons, gen, other = consumption, series, consumption
+    for x, want in ((cons, "consumption"), (gen, "generation")):
+        if x is not None and x.quantity != want:
+            raise ValueError(f"The {want} series has quantity {x.quantity!r}")
+    if cons is None:
+        return (
+            None,
+            [],
+            "Economics left out: the bill needs the household's consumption (`consumption=`); the "
+            "generation alone says what the PV made, not what the household paid.",
+        )
+    try:
+        b = p.bill(cons, gen)
+    except (ValueError, NotImplementedError) as e:
+        return None, [], f"Economics left out: {e}"
+    entries: list[_Entry] = []
+    if other is not None:
+        entries.append(
+            ("series", other.quantity, other.provenance or Provenance(source="not declared"), False)
+        )
+    entries += [("tariff", name, prov, False) for name, prov in p.sources()]
+    notes = list(b.notes)
+    totals = b.totals()
+    if (totals["complete_months"] == 0).any():
+        notes.append(
+            "No month with every hour measured for some site: its expected monthly bill "
+            "(`mean_month`) is not given."
+        )
+    section = EconomicsSection(
+        tariff=p.describe(),
+        scheme=b.scheme,
+        currency=b.currency,
+        monthly=b.monthly,
+        by_block=b.by_block,
+        totals=totals,
+        notes=notes,
+        provenance=pd.DataFrame(_provenance_rows([e for e in entries if e[0] == "tariff"])),
+    )
+    return section, entries, None
 
 
 def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, reference: str) -> pd.DataFrame:
@@ -871,6 +1047,17 @@ def _runs(flags: np.ndarray) -> list[int]:
     padded = np.concatenate([[False], flags, [False]]).astype(int)
     d = np.diff(padded)
     return (np.flatnonzero(d == -1) - np.flatnonzero(d == 1)).tolist()
+
+
+def _records(df: pd.DataFrame | None) -> list[dict[str, Any]] | None:
+    """A table as JSON-ready records (timestamps as ISO text)."""
+    if df is None:
+        return None
+    out = df.copy()
+    for c in out.columns:
+        if pd.api.types.is_datetime64_any_dtype(out[c]):
+            out[c] = out[c].map(lambda t: t.isoformat())
+    return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
 
 
 def _plain(v: Any) -> Any:

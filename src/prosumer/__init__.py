@@ -13,7 +13,9 @@ and `outlook` (`forecast_ahead`: the next days to weeks, hourly and per day, wit
 trusted less as the lead grows; `best_windows` places a heavy load) and `economics` (step E6: tariffs as
 data, the monthly bill under net metering, net billing or self-consumption, `cheapest_windows` for a flexible
 load by price and sun; `economics.brazil`: tarifa cheia with taxes, bandeiras, custo de disponibilidade,
-tarifa branca and Lei 14.300 GD I/GD II, with ANEEL data from `io.aneel`).
+tarifa branca and Lei 14.300 GD I/GD II, with ANEEL data from `io.aneel`; `economics.Plan` and
+`economics.brazil.Setup` say how a household pays, for `analyze(economics=...)`, whose report then has the
+monthly bill and the savings of the PV, and for `economics.windows_by_cost` over an `Outlook`).
 
 The protocol and metrics were ported from the frozen v2 benchmark
 (`experimentos/testes_previsao/scripts/comum.py` and `05_avalia.py`), which produced the reported

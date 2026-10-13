@@ -76,6 +76,30 @@ report = analyze(
 - Foundation models: `forecast.Chronos2()`, `forecast.TiRex2()`, `forecast.Toto2()` (zero-shot, Apache-2.0,
   CPU). Each `ModelCard` says its licence, device and whether it sends data anywhere.
 
+Add what the household pays, and the report gets a bill section (`Report.economics`: the monthly bill, by
+tariff block for time of use, the totals, the expected monthly bill over the complete months and, with PV, the
+savings against no PV):
+
+```python
+from prosumer import economics
+from prosumer.economics import brazil
+
+tou = economics.Tariff(
+    prices={"peak": 0.45, "off_peak": 0.20},
+    weekday={h: "peak" if 17 <= h < 21 else "off_peak" for h in range(24)},
+    weekend=dict.fromkeys(range(24), "off_peak"),
+    export_price=0.08,
+)
+report = analyze(pv, site=site, economics=economics.Plan(tou, scheme="net_billing"), consumption=load)
+
+# Brazil: a distributor's tariffs from ANEEL's open data (ODbL), the taxes as read on the bill
+book = brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.19, pis_cofins=0.0925, fio_b_years=[2026])
+report = analyze(load, economics=brazil.Setup(book=book, gd="GD II"), generation=pv)
+```
+
+For the coming days, `economics.windows_by_cost(pricing, generation=outlook)` ranks the hours of each forecast
+day for a flexible load by expected cost (the tariff of each month, the PV surplus, the day's confidence label).
+
 Or use the benchmark's protocol directly, to test a model of your own:
 
 ```python
@@ -90,7 +114,7 @@ for window in task.windows():
 
 | Module | What it does |
 |---|---|
-| `analysis` | `analyze(series) -> Report`, the app's single call |
+| `analysis` | `analyze(series) -> Report`, the app's single call (quality, clock, diagnostics, forecast check, bands, weather, bill with `economics=`) |
 | `contracts` | `EnergySeries`: validated long frame (`unique_id`, `ds`, `y`, `valid`), units, time zone, step |
 | `protocol` | `DayAhead`, `folds`, `standardize_by_training`: the benchmark's day-ahead task, without leakage |
 | `metrics` | skill and its CI, Diebold–Mariano, `ranking`, `ties_with_best`, metrics by resolution, band scores |
@@ -102,12 +126,12 @@ for window in task.windows():
 | `diagnostics` | from the energy alone: clear days, roof orientation, clear-day performance index and its steps (cleanings, faults) over time; `analyze(site=..., kwp=...)` |
 | `io` | Fronius Solar.web exports (`fronius.read_solarweb`), any meter or station table (`meter.read_table`: interval, cumulative counter or power), Open-Meteo forecasts (archive of day-ahead runs and the live forecast up to 16 days, several models), `geocode` (address to coordinates, time zone, rounding), NASA POWER hourly weather, ANEEL open data (homologated tariffs, bandeiras, tariff components; ODbL) |
 | `embedded` | a fitted Ridge, forest or LightGBM with its preprocessing and the day-ahead features, or the benchmark's SparseTSF / CycleNet (numpy arrays, `from_torch` without importing torch, causal gap fill), as one C header for an ESP32 (`to_c`, `footprint`, `block_totals`) |
-| `economics` | tariffs as data (flat, time-of-use blocks for weekdays and weekends/holidays, export price, fixed charge); the monthly `bill` under net metering, net billing or self-consumption (hourly netting); `cheapest_windows` ranks the hours of the forecast days for a flexible load by price and sun. `economics.brazil`: tarifa cheia with ICMS and PIS/COFINS "por dentro", bandeiras, custo de disponibilidade, tarifa branca postos and holidays, Lei 14.300/2022 (GD I until 2045, GD II Fio B ramp, 60-month credits), each rule cited to the law or ANEEL resolution |
+| `economics` | tariffs as data (flat, time-of-use blocks for weekdays and weekends/holidays, export price, fixed charge); the monthly `bill` under net metering, net billing or self-consumption (hourly netting); `cheapest_windows` ranks the hours of the forecast days for a flexible load by price and sun. For the app: a `Pricing` says how a household pays (`Plan` = tariff + export scheme; `brazil.Setup` = an ANEEL tariff book + connection + GD class), used by `analyze(economics=...)` and by `windows_by_cost` (the cheapest windows of an `Outlook`, month by month). `economics.brazil`: tarifa cheia with ICMS and PIS/COFINS "por dentro", bandeiras, custo de disponibilidade, tarifa branca postos and holidays, Lei 14.300/2022 (GD I until 2045, GD II Fio B ramp, 60-month credits), each rule cited to the law or ANEEL resolution |
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |
 
-Not written yet: TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data),
-economics with time-of-use tariffs and the Brazilian module (E6).
+Not written yet: TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data);
+in economics, tarifa branca with generation, COSIP read from a bill, grupo A and the tax reform (LC 214/2025).
 
 ## What the benchmark found (the defaults come from here)
 

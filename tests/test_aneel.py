@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from aneel_fake import FakeCKAN
 from prosumer import provenance
 from prosumer.economics import brazil
 from prosumer.io import aneel
@@ -31,24 +32,6 @@ def _tariff(start: str, sub: str, mod: str, posto: str, tusd: str, te: str, **kw
     }
     r.update(kw)
     return r
-
-
-class FakeCKAN:
-    """`datastore_search` with exact-match filters and limit/offset paging; `package_show` for components."""
-
-    def __init__(self, tables: dict[str, list[dict[str, Any]]], package: list[dict[str, str]] | None = None):
-        self.tables, self.package, self.calls = tables, package or [], []
-
-    def __call__(self, url: str, params: dict[str, Any]) -> dict[str, Any]:
-        self.calls.append((url, params))
-        if url.endswith("package_show"):
-            return {"success": True, "result": {"resources": self.package}}
-        assert url == aneel.API + "datastore_search"
-        rows = self.tables[params["resource_id"]]
-        f = json.loads(params.get("filters", "{}"))
-        rows = [r for r in rows if all(r.get(k) == v for k, v in f.items())]
-        a, n = int(params["offset"]), int(params["limit"])
-        return {"success": True, "result": {"records": rows[a : a + n], "total": len(rows)}}
 
 
 def test_number_reads_brazilian_text() -> None:

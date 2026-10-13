@@ -5,17 +5,23 @@ Run it (from the repository root, with the library installed in the environment)
     python examples/site_local/app.py          # then open http://127.0.0.1:8000
 
 Nothing but the Python standard library and `prosumer`: no web framework, no JavaScript. The whole backend is
-the function `forecast_page` below, in five numbered steps that map one to one to library calls:
+the function `forecast_page` below, in numbered steps that map one to one to library calls:
 
     1. read the CSV                 -> prosumer.io.meter.read_table
     2. where is it                  -> prosumer.io.geocode.geocode / round_site / timezone_at
     3. the weather of the next days -> prosumer.io.open_meteo.fetch_forecast
     4. the forecast                 -> prosumer.forecast_ahead
     5. when to run heavy loads      -> prosumer.best_windows
+    6. the same, by cost            -> prosumer.economics.windows_by_cost      (with a price)
+    7. the monthly bill of the data -> Plan.bill / brazil.Setup.bill, .totals() (with a price, consumption)
+
+The price comes from the form (`_pricing`): a flat price, a simple time-of-use price, or a Brazilian
+distributor's tarifa convencional downloaded from ANEEL's open data (`brazil.TariffBook.from_aneel`) with the
+ICMS and PIS/COFINS the person types.
 
 Privacy: the file never leaves this machine. Only the address (to Nominatim, if you type one instead of
-coordinates) and the coordinates rounded to 2 decimals (to Open-Meteo, for the weather) go out. The free
-Open-Meteo API is for non-commercial use.
+coordinates), the coordinates rounded to 2 decimals (to Open-Meteo, for the weather) and, for a Brazilian
+tariff, the distributor's name (to ANEEL) go out. The free Open-Meteo API is for non-commercial use.
 """
 
 from __future__ import annotations
@@ -31,14 +37,23 @@ from pathlib import Path
 import pandas as pd
 
 import prosumer
+from prosumer import economics
+from prosumer.economics import brazil
 from prosumer.io import geocode, meter, open_meteo
-from prosumer.provenance import of
+from prosumer.provenance import Provenance, of
 
 HERE = Path(__file__).resolve().parent
 HOST, PORT = "127.0.0.1", 8000
+ANEEL_GET = None  # the HTTP getter of io.aneel (None: the live API); the tests put a fake ANEEL here
+DISTRIBUTORS = {  # ANEEL's SigAgente -> what the person knows it as
+    "COPEL-DIS": "Copel (PR)",
+    "CEMIG-D": "Cemig (MG)",
+    "ELETROPAULO": "Enel SP",
+    "LIGHT SESA": "Light (RJ)",
+}
 
 
-# ---------------------------------------------------------------------- the backend: five steps
+# ---------------------------------------------------------------------- the backend: seven steps
 def forecast_page(form: dict[str, str], csv: bytes) -> str:
     """Form fields + CSV bytes -> the result page (HTML). Each step adds a line to `log`, shown below."""
     log: list[str] = []
@@ -102,11 +117,114 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     hours = int(form.get("load_hours") or 3)
     windows = prosumer.best_windows(out, hours)
 
-    return _render(out, windows, hours, log, [c for c in credits if c is not None])
+    money = Money()
+    pricing = _pricing(form, out, credits)  # the price typed in the form, or None
+    if pricing is not None:
+        money.tariff = pricing.describe()
+        # 6. The same by cost: the cheapest block of each day for a load of `kw` kW, with its confidence.
+        money.kw = float(form.get("load_kw") or 2.0)
+        outlooks = {"generation": out} if quantity == "generation" else {"consumption": out}
+        money.windows = economics.windows_by_cost(pricing, **outlooks, hours=hours, kw=money.kw, top=1)
+        money.notes += money.windows.attrs["notes"]
+
+        # 7. The bill of each month of your data (the bill needs what the household used: consumption only).
+        if quantity == "consumption":
+            try:
+                bill = pricing.bill(series)
+                money.monthly, money.totals = bill.monthly, bill.totals()
+                money.notes += bill.notes
+            except (ValueError, NotImplementedError) as e:  # e.g. no tariff in force on the data's dates
+                money.notes.append(f"No bill for your data: {e}")
+        else:
+            money.notes.append("The monthly bill needs your consumption: upload it to see what you pay.")
+
+    return _render(out, windows, hours, log, [c for c in credits if c is not None], money)
+
+
+class Money:
+    """What steps 6 and 7 found, for the page (empty when no price was given)."""
+
+    def __init__(self) -> None:
+        self.tariff = ""
+        self.kw = 0.0
+        self.windows: pd.DataFrame | None = None
+        self.monthly: pd.DataFrame | None = None
+        self.totals: pd.DataFrame | None = None
+        self.notes: list[str] = []
+
+
+def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> economics.Pricing | None:
+    """The form's price as a `Pricing`: `economics.Plan` (flat or time-of-use) or `brazil.Setup` (ANEEL)."""
+    kind = form.get("price") or "none"
+    if kind == "none":
+        return None
+
+    def number(key: str, what: str) -> float:
+        if not form.get(key):
+            raise ValueError(f"Give {what}.")
+        return float(form[key].replace(",", "."))
+
+    if kind == "brazil":
+        agent = form.get("distributor") or "COPEL-DIS"
+        icms = number("icms", "the ICMS rate of your bill (%)") / 100  # user inputs: no table by state
+        pis = number("pis_cofins", "the PIS/COFINS rate of your bill (%)") / 100
+        gd = (form.get("gd") or None) if out.quantity == "generation" else None  # GD: only with PV
+        years = (
+            sorted(set(out.hourly["ds"].dt.year)) if out.quantity == "generation" and gd == "GD II" else []
+        )
+        try:
+            book = brazil.TariffBook.from_aneel(
+                agent, icms=icms, pis_cofins=pis, fio_b_years=years, extend_last=True, get=ANEEL_GET
+            )
+        except (OSError, RuntimeError) as e:  # offline, or ANEEL's API down
+            raise ValueError(
+                f"Could not download {DISTRIBUTORS.get(agent, agent)}'s tariffs from ANEEL's open data "
+                f"({e}). "
+                "Check the internet connection, or choose a flat or time-of-use price instead."
+            ) from e
+        credits.extend(book.provenance)
+        return brazil.Setup(
+            book=book,
+            connection=form.get("connection") or "bifasico_3",
+            gd=gd,  # type: ignore[arg-type]
+            cosip=float(form.get("cosip") or 0),
+        )
+    currency = form.get("currency") or "EUR"
+    export = float(form.get("export_price") or 0)
+    fixed = float(form.get("fixed") or 0)
+    scheme = form.get("scheme") or "net_metering"
+    if kind == "flat":
+        tariff = economics.Tariff.flat(
+            number("flat_price", "the price per kWh"),
+            export_price=export,
+            fixed=fixed,
+            currency=currency,
+            name="your flat price",
+        )
+    elif kind == "tou":
+        a, b = (int(x) for x in (form.get("peak_hours") or "17-21").split("-"))
+        peak = {h for h in range(24) if (a <= h < b if a < b else h >= a or h < b)}
+        tariff = economics.Tariff(
+            prices={
+                "peak": number("peak_price", "the peak price"),
+                "off_peak": number("offpeak_price", "the off-peak price"),
+            },
+            weekday={h: "peak" if h in peak else "off_peak" for h in range(24)},
+            weekend=dict.fromkeys(range(24), "off_peak"),  # no peak on Saturdays and Sundays
+            export_price=export,
+            fixed=fixed,
+            currency=currency,
+            name=f"your time-of-use price (peak {a:02d}:00-{b:02d}:00 on weekdays)",
+        )
+    else:
+        raise ValueError(f"Unknown price kind {kind!r}")
+    return economics.Plan(tariff, scheme=scheme)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)
-def _render(out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[str], credits: list) -> str:
+def _render(
+    out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[str], credits: list, money: Money
+) -> str:
     daily = out.daily
     top = max(float(daily["high"].max()), 1e-9)
     rows = []
@@ -138,12 +256,63 @@ def _render(out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[
 <p class=small>{_range_note(out.quantity)}</p>
 <h2>Best {hours} hours of each day for a heavy load ({pick})</h2>
 <table><tr><th>Day</th><th>Hours</th><th>kWh in the block</th><th>Confidence</th></tr>{best}</table>
-<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + log)}</ul>
+{_money(money, hours)}
+<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + money.notes + log)}</ul>
 <h2>What the library learnt</h2><pre>{method}</pre>
-<h2>Data sources</h2><ul>{"".join(f"<li>{html.escape(c.citation or c.source)}</li>" for c in credits)}</ul>
+<h2>Data sources</h2><ul>{"".join(f"<li>{t}</li>" for t in dict.fromkeys(map(_credit, credits)))}</ul>
 <details><summary>Every hour</summary>{hourly.to_html(index=False)}</details>
 """
     )
+
+
+def _money(money: Money, hours: int) -> str:
+    """The cheapest block of each day by cost (next to the best one by energy) and the monthly bill."""
+    if money.windows is None:
+        return ""
+    cur = html.escape(str(money.windows["currency"].iloc[0])) if len(money.windows) else ""
+    cheap = "".join(
+        f"<tr><td>{w['date']:%a %d %b %Y}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
+        f"<td>{w['cost']:.2f}</td><td>{w['grid_kwh']:.1f}</td><td>{w['pv_kwh']:.1f}</td>"
+        f"<td>{html.escape(str(w['confidence']))}</td></tr>"
+        for _, w in money.windows.iterrows()
+    )
+    parts = [
+        f"<h2>Cheapest {hours} hours of each day for a {money.kw:g} kW load, by expected cost</h2>",
+        f"<p class=small>Price: {html.escape(money.tariff)}.</p>",
+        f"<table><tr><th>Day</th><th>Hours</th><th>Cost, {cur}</th><th>kWh from the grid</th>"
+        f"<th>kWh from your PV</th><th>Confidence</th></tr>{cheap}</table>",
+    ]
+    if money.monthly is not None and money.totals is not None:
+        m = money.monthly
+        rows = "".join(
+            f"<tr><td>{r['month']:%Y-%m}</td><td>{r['consumption']:.0f}</td><td>{r['total']:.2f}</td>"
+            f"<td>{r['coverage']:.0%}</td></tr>"
+            for _, r in m.iterrows()
+        )
+        t = money.totals.iloc[0]
+        expected = (
+            f"Expected monthly bill: <b>{t['mean_month']:.2f} {cur}</b> (mean of the "
+            f"{int(t['complete_months'])} complete month(s) of your data)."
+            if t["complete_months"] > 0
+            else "No month of your data is complete, so there is no expected monthly bill."
+        )
+        parts += [
+            "<h2>Your bill, month by month (from your data)</h2>",
+            f"<p>{expected}</p>",
+            f"<table><tr><th>Month</th><th>kWh</th><th>Bill, {cur}</th><th>Hours measured</th></tr>{rows}"
+            "</table>",
+        ]
+    return "\n".join(parts)
+
+
+def _credit(c: Provenance) -> str:
+    """A data source for the page: its citation (or source), its licence and conditions."""
+    text = c.citation or c.source
+    if c.license_known and c.license != "n/a":
+        text += f" Licence: {c.license}." + (f" {c.notes}." if c.notes else "")
+    elif c.notes:
+        text += f": {c.notes}."
+    return html.escape(text)
 
 
 def _range_note(quantity: str) -> str:

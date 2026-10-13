@@ -556,12 +556,35 @@ Cemig (`CEMIG-D`), Enel SP (`ELETROPAULO`) e Light (`LIGHT SESA`); sem fatura re
 preco diario = **0,80622 R$/kWh** (legado 0,8062), dos CSV do legado e tambem dos dados baixados agora. E
 REGRESSAO DO PORTE, nao validacao independente (a fatura real de 2018 deu 0,8457). NAO feito:
 COSIP (vem da fatura), branca COM geracao (rateio por posto pela TE Energia), grupo A, tarifa social, reforma
-tributaria (LC 214/2025), secao no `analyze` (NAO comecar ainda, decisao de 12/10; o `PENDING["economics"]` diz
-o que existe). Revisao independente de `b8bcea6` ("pronto com consertos"): os 13 achados consertados em seguida (os itens
+tributaria (LC 214/2025) (a secao no `analyze` entrou em 13/10, ver abaixo). Revisao independente de `b8bcea6` ("pronto com consertos"): os 13 achados consertados em seguida (os itens
 11-13 da revisao, so de texto, foram juntados num). Revisao de acompanhamento (13/10): notas do `TariffBook`
 vazavam para contas seguintes e o PIS/COFINS da cobranca da GD II contava duas vezes com o compensado nao
 isento; consertados com teste. **Decisao do usuario (13/10): ICMS padrao `icms_exempt_compensated="all"`**
 (isencao total do Convenio 16/2015; "te_only" e "none" ficam como opcoes).
+**Economia no `analyze` e no site (13/10, escolha do usuario: "economia no analyze, depois branca com FV"; so a
+1a parte feita).** `economics.Pricing` = como a casa paga: `economics.Plan(tariff, scheme, credit_months,
+initial_credit)` (nucleo; um `Tariff` solto vira `Plan` com net metering) ou `brazil.Setup(book, connection, gd,
+connected, requested, modality, peak_start, ..., cosip, assume_bandeira)` (mesmos nomes e padroes do
+`brazil.bill`: `after_2028="tusd"`, `gd2_minimum="ren_655I"`, `icms_exempt_compensated="all"`).
+`brazil.TariffBook.from_aneel(distribuidora, icms=, pis_cofins=, fio_b_years=, get=)`: livro numa chamada (tarifas
+B1, bandeiras, Fio B dos anos pedidos), proveniencia ANEEL ODbL + "ICMS e PIS/COFINS digitados pelo usuario" (sem
+padrao, decisao de 12/10). `analyze(..., economics=, consumption=, generation=)`: secao `Report.economics`
+(`EconomicsSection`: conta mensal, por bloco no horario, `totals` com `mean_month` = media dos meses COMPLETOS =
+conta mensal esperada; mes completo = toda hora do mes civil medida, entao serie que comeca no dia 20 nao conta;
+com FV, `without_pv` e `savings`), notas da conta, tarifa no `Report.provenance` (papel "tariff"); serie de geracao
+sozinha, tarifa sem vigencia nas datas ou branca com FV: secao fica de fora com nota. `PENDING["economics"]` diz o
+que falta mesmo com a secao (branca com FV, COSIP da fatura, grupo A, reforma tributaria). `economics.bill` (nucleo)
+ganhou `without_pv` e `savings`; `Bill.totals()`. `economics.windows_by_cost(pricing, generation=/consumption=
+outlook, hours, kw)`: `cheapest_windows` mes a mes com a tarifa de cada mes (bandeira e vigencia), regra de
+exportacao do `Pricing` (Brasil: valor do credito, ranqueado como net billing), rotulo de confianca do dia, notas em
+`attrs["notes"]` (mes sem bandeira publicada usa a ultima, com nota). Site de exemplo: campos opcionais de preco
+(plano, horario de ponta simples com fim de semana fora de ponta, exportacao e esquema, fixo; Brasil: Copel, Cemig,
+Enel SP, Light ao vivo pela ANEEL, ICMS e PIS/COFINS obrigatorios so nesse caso, placeholder "e.g. 19"/"e.g. 9.25",
+erro claro sem internet, atribuicao ANEEL ODbL na pagina); passos 6 (`windows_by_cost`, ao lado das melhores horas)
+e 7 (`Pricing.bill(...).totals()`, so com arquivo de consumo). Testes sem rede: `tests/aneel_fake.py` (FakeCKAN e a
+fixture), `tests/test_economics_app.py`, `tests/test_example_site.py`. ACHADO (nao consertado, fora do escopo): o
+`analyze` quebra ("Reference with zero error") numa serie perfeitamente periodica (ex. carga constante), porque a
+persistencia acerta tudo; os testes usam `test_days` longo para pular a checagem nesses casos.
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

@@ -15,7 +15,8 @@ input[type=text], input[type=number], select { width: 100%; box-sizing: border-b
 <body>
 <h1>Forecast the next days</h1>
 <p class="small">Local page: your file stays on this computer. Only the address (if you type one) and the
-coordinates rounded to ~1 km (for the weather forecast) are sent out.</p>
+coordinates rounded to ~1 km (for the weather forecast) are sent out, and, for a Brazilian tariff, the
+distributor's name (to ANEEL).</p>
 
 <form method="post" enctype="multipart/form-data">
   <fieldset>
@@ -42,6 +43,56 @@ coordinates rounded to ~1 km (for the weather forecast) are sent out.</p>
       <input type="number" step="any" name="azimuth"></label>
     <label>Peak power of the panels, kWp <input type="number" step="any" name="kwp"></label>
     <label>Hours your heavy load runs (washing machine, EV, pump) <input type="number" name="load_hours" value="3" min="1" max="24"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Optional: what you pay (adds the cheapest hours by cost and, for consumption, your monthly bill)</legend>
+    <label>Price
+      <select name="price">
+        <option value="none">none (energy only)</option>
+        <option value="flat">one price for every hour</option>
+        <option value="tou">time of use: a peak price on weekdays, another price the rest</option>
+        <option value="brazil">Brasil: tarifa convencional of a distributor (ANEEL open data)</option>
+      </select></label>
+    <label>Power of the heavy load, kW <input type="number" step="any" name="load_kw" value="2" min="0.1"></label>
+    <p class="small">One price or time of use:</p>
+    <label>Currency <input type="text" name="currency" placeholder="EUR"></label>
+    <label>Price per kWh (one price) <input type="number" step="any" name="flat_price" placeholder="e.g. 0.30"></label>
+    <label>Peak price per kWh <input type="number" step="any" name="peak_price" placeholder="e.g. 0.45"></label>
+    <label>Peak hours on weekdays, start-end (24 h clock) <input type="text" name="peak_hours" placeholder="17-21"></label>
+    <label>Price per kWh the rest of the time (and all weekend) <input type="number" step="any" name="offpeak_price" placeholder="e.g. 0.20"></label>
+    <label>Fixed charge per month <input type="number" step="any" name="fixed" placeholder="0"></label>
+    <label>What a kWh you send to the grid is worth <input type="number" step="any" name="export_price" placeholder="0"></label>
+    <label>How exported energy is paid
+      <select name="scheme">
+        <option value="net_metering">net metering: kWh credits that offset later kWh</option>
+        <option value="net_billing">net billing: paid at the export price</option>
+        <option value="self_consumption">nothing: only what you use yourself counts</option>
+      </select></label>
+    <p class="small">Brasil (the tariffs come from ANEEL's open data, ODbL; ICMS and PIS/COFINS are read from
+      your own bill: they change by state and by month, so there is no default):</p>
+    <label>Distribuidora
+      <select name="distributor">
+        <option value="COPEL-DIS">Copel (PR)</option>
+        <option value="CEMIG-D">Cemig (MG)</option>
+        <option value="ELETROPAULO">Enel SP</option>
+        <option value="LIGHT SESA">Light (RJ)</option>
+      </select></label>
+    <label>ICMS, % (from your bill) <input type="number" step="any" name="icms" placeholder="e.g. 19"></label>
+    <label>PIS/COFINS, % (from your bill) <input type="number" step="any" name="pis_cofins" placeholder="e.g. 9.25"></label>
+    <label>Connection (sets the custo de disponibilidade)
+      <select name="connection">
+        <option value="monofasico">monofasico (30 kWh)</option>
+        <option value="bifasico_2">bifasico, 2 fios (30 kWh)</option>
+        <option value="bifasico_3" selected>bifasico, 3 fios (50 kWh)</option>
+        <option value="trifasico">trifasico (100 kWh)</option>
+      </select></label>
+    <label>Your solar (Lei 14.300): connected or requested
+      <select name="gd">
+        <option value="GD II">from 8 January 2023 (GD II)</option>
+        <option value="GD I">up to 7 January 2023 (GD I)</option>
+      </select></label>
+    <label>COSIP / iluminacao publica, R$ per month (from your bill) <input type="number" step="any" name="cosip" placeholder="0"></label>
   </fieldset>
 
   <fieldset>

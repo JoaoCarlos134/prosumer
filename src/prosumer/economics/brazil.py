@@ -100,6 +100,7 @@ the import-weighted mean of the month's hourly prices, so a month that straddles
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -159,7 +160,9 @@ class _CompensationTaxes:
         r_tusd = (icms if self.icms_exempt in ("te_only", "none") else 0.0) + pis_c
         r_te = (icms if self.icms_exempt == "none" else 0.0) + pis_c
         icms_c = icms if self.icms_on_charge and self.icms_exempt == "all" else 0.0
-        r_charge = icms_c + (pis if self.pis_cofins_on_charge else 0.0)
+        # the charge is part of the TUSD: when the TUSD of the compensated kWh already pays PIS/COFINS
+        # (not exempt), the charge must not pay it again (review 2026-10-13)
+        r_charge = icms_c + (pis if self.pis_cofins_on_charge and self.pis_cofins_exempt else 0.0)
         return charge / (1 - r_charge) + tusd * (1 / (1 - r_tusd) - 1) + te * (1 / (1 - r_te) - 1)
 
 
@@ -279,7 +282,9 @@ class TariffBook:
     provenance: list[Provenance] = field(default_factory=list)
     extend_last: bool = False  # after the end of the last vigencia, keep using it (else raise)
     fio_b_backfill: bool = False  # before the first Fio B value, use it (else raise)
-    notes: list[str] = field(default_factory=list)  # what a lookup had to assume (`bill` repeats them)
+    notes: list[str] = field(default_factory=list)  # every assumption any lookup on this book made
+    # the assumptions of the current `bill`/`tariff` call only (review 2026-10-13: `notes` leaked old ones)
+    _call: list[str] | None = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         t = self.tariffs.copy()
@@ -368,6 +373,8 @@ class TariffBook:
     def _note(self, msg: str) -> None:
         if msg not in self.notes:
             self.notes.append(msg)
+        if self._call is not None and msg not in self._call:
+            self._call.append(msg)
 
     def bandeira(self, month: str | pd.Timestamp) -> tuple[str, float] | None:
         """(flag, surcharge R$/MWh) of a calendar month, or None when the record has no such month."""
@@ -484,6 +491,7 @@ def tariff(
     branca (`modality="Branca"`, `peak_start` required): the three postos on working days, fora de ponta on
     weekends and the holidays of `holidays`.
     """
+    book._call = []
     m = pd.Timestamp(month).to_period("M").to_timestamp()
     b = book.bandeira(m)
     if b is None:
@@ -506,6 +514,7 @@ def tariff(
         tusd, te = book.base(m, subgroup=subgroup)
         p = full_price(tusd + te, b[1], icms, pis)
         export = 0.0 if gd is None else p - charge(tusd, te)
+        _warn_assumed(book)
         return Tariff.flat(p, export_price=export, currency=CURRENCY, name=f"{book.distributor} {m:%Y-%m}")
     if modality != BRANCA:
         raise ValueError("modality must be 'Convencional' or 'Branca'")
@@ -516,6 +525,7 @@ def tariff(
         tusd, te = book.base(m, modality=BRANCA, posto=data_name, subgroup=subgroup)
         prices[name] = full_price(tusd + te, b[1], icms, pis)
         exports[name] = 0.0 if gd is None else prices[name] - charge(tusd, te)
+    _warn_assumed(book)
     return Tariff(
         prices={k: prices[k] for k in POSTOS},
         weekday=branca_blocks(peak_start),
@@ -525,6 +535,13 @@ def tariff(
         holidays=is_holiday,
         name=f"{book.distributor} branca {m:%Y-%m}",
     )
+
+
+def _warn_assumed(book: TariffBook) -> None:
+    """A `Tariff` has no notes: what this call had to assume is raised as a warning instead."""
+    for msg in book._call or []:
+        warnings.warn(msg, stacklevel=3)
+    book._call = None
 
 
 # ---------------------------------------------------------------------- the bill
@@ -570,6 +587,7 @@ def bill(
     `compensation_charge` is the GD II charge plus any tax on compensated energy; `minimum_applied` is True
     when the minimum sets the bill, directly or by stopping the compensation.
     """
+    book._call = []  # collect only what this bill has to assume
     if modality not in (CONVENTIONAL, BRANCA):
         raise ValueError("modality must be 'Convencional' or 'Branca'")
     if modality == BRANCA and generation is not None:
@@ -743,7 +761,8 @@ def bill(
             "PV series starts later): left out as unknown. If the PV was not installed yet, pass zeros for "
             "that period."
         )
-    notes.extend(book.notes)
+    notes.extend(book._call or [])  # only what THIS bill had to assume
+    book._call = None
     if cosip == 0:
         notes.append("COSIP/CIP (municipal street-lighting fee) not included: read it from a bill.")
     if klass == "GD II" and (monthly["month"].dt.year >= 2029).any():

@@ -557,7 +557,11 @@ preco diario = **0,80622 R$/kWh** (legado 0,8062), dos CSV do legado e tambem do
 REGRESSAO DO PORTE, nao validacao independente (a fatura real de 2018 deu 0,8457). NAO feito:
 COSIP (vem da fatura), branca COM geracao (rateio por posto pela TE Energia), grupo A, tarifa social, reforma
 tributaria (LC 214/2025), secao no `analyze` (NAO comecar ainda, decisao de 12/10; o `PENDING["economics"]` diz
-o que existe). Revisao independente de `b8bcea6` ("pronto com consertos"): 12 achados consertados em seguida.
+o que existe). Revisao independente de `b8bcea6` ("pronto com consertos"): os 13 achados consertados em seguida (os itens
+11-13 da revisao, so de texto, foram juntados num). Revisao de acompanhamento (13/10): notas do `TariffBook`
+vazavam para contas seguintes e o PIS/COFINS da cobranca da GD II contava duas vezes com o compensado nao
+isento; consertados com teste. **Decisao do usuario (13/10): ICMS padrao `icms_exempt_compensated="all"`**
+(isencao total do Convenio 16/2015; "te_only" e "none" ficam como opcoes).
 **Fila da noite de 11/10 (22:11-23:2x, tarefa agendada apagada depois): CONFERENCIA E3 COMPLETA.** LightGBM e LightGBM
 quantilico 11/11 testes (9 combinacoes); TiRex-2 (7), Toto-2.0-313m (3), Toto-2.0-22m (3) e Chronos-2 (7): previsoes
 iguais as gravadas ate <= 8e-6 e skill IDENTICO a 6 casas em todas (Chronos-2 C: 1e-3 de dif maxima, skill igual);

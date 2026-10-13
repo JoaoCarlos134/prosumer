@@ -225,7 +225,8 @@ def test_tariff_for_cheapest_windows_values_a_credit() -> None:
     with pytest.raises(ValueError, match="vigencia ended"):
         brazil.tariff(book, "2040-01", assume_bandeira=0.0)
     book.extend_last = True
-    assert brazil.tariff(book, "2040-01", assume_bandeira=0.0).prices["flat"] == pytest.approx(P)
+    with pytest.warns(UserWarning, match="extend_last"):  # a Tariff has no notes: the assumption is a warning
+        assert brazil.tariff(book, "2040-01", assume_bandeira=0.0).prices["flat"] == pytest.approx(P)
     assert any("extend_last" in n for n in book.notes)
     assert isinstance(gd2, economics.Tariff)
     # `requested` reaches the share: the deferred group keeps 90% of Fio B in 2030
@@ -307,3 +308,26 @@ def test_missing_fio_b_and_late_pv_are_not_silent() -> None:
     m = brazil.bill(load, late, book=_book(), gd="GD I")
     assert m.monthly.iloc[0]["coverage"] == pytest.approx(21 / 31)
     assert any("no generation row" in n for n in m.notes)
+
+
+def test_review_2026_10_13_notes_do_not_leak_and_pis_is_not_doubled() -> None:
+    """Follow-up review: a book's assumption notes leaked into later bills; with PIS/COFINS not exempt on the
+    compensated kWh AND on the charge, the GD II charge paid it twice."""
+    book = _book()
+    book.fio_b = pd.DataFrame({"start": [pd.Timestamp("2024-01-01")], "value": [200.0]})
+    book.fio_b_backfill = True
+    load, pv = _night_load_june_2023()
+    first = brazil.bill(load, pv, book=book, gd="GD II")
+    assert any("fio_b_backfill" in n for n in first.notes)
+    later_load, later_pv = _site(31, 10.0, start="2026-01-01")
+    second = brazil.bill(later_load, later_pv, book=book, gd="GD II")
+    assert not any("fio_b_backfill" in n for n in second.notes)  # 2026 needs no backfill
+    with pytest.warns(UserWarning, match="fio_b_backfill"):
+        brazil.tariff(book, "2023-06", gd="GD II")
+    # PIS once: TUSD 0.5 and TE 0.3 R$/kWh, charge 0.03, ICMS 19%, PIS/COFINS 9.25%
+    ct = brazil._CompensationTaxes("all", False, True, True)
+    want = 0.03 / (1 - 0.19) + 0.5 * (1 / (1 - 0.0925) - 1) + 0.3 * (1 / (1 - 0.0925) - 1)
+    assert ct.per_kwh(0.03, 0.5, 0.3, 0.19, 0.0925) == pytest.approx(want)
+    # "te_only" on a GD II charge: the TUSD already pays ICMS, the charge does not pay it again
+    te_only = brazil._CompensationTaxes("te_only", True, True, False)
+    assert te_only.per_kwh(0.03, 0.5, 0.3, 0.19, 0.0925) == pytest.approx(0.03 + 0.5 * 0.19 / 0.81)

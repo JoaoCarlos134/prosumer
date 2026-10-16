@@ -201,21 +201,33 @@ def icms_leitura(leitura, mes):
     return "none" if PR48[0] <= mes <= PR48[1] else "all"
 
 
+_SERIES, _PEDACO = {}, {}  # so velocidade (commit depois do portao): o resultado e o mesmo por construcao
+
+
 def conta(book, fat, ref, montagem, leitura, band_min):
-    """Conta da biblioteca (sem COSIP) da fatura `ref`, somando os pedacos."""
+    """Conta da biblioteca (sem COSIP) da fatura `ref`, somando os pedacos.
+
+    Memoizada por pedaco: as series nao dependem da leitura; a leitura do ICMS so entra pela energia
+    compensada, que e zero sem injecao (P0), entao ali todas as leituras dao a mesma conta; "PR48" e "all" ou
+    "none" em cada pedaco."""
     imp, inj = fat.loc[ref, "imp"], fat.loc[ref, "inj"]
     tot = 0.0
-    for dias, f in pedacos(ref, montagem):
-        cons = serie(dias, imp * f, HORAS_C, "consumption")
-        gen = serie(dias, inj * f, HORAS_G, "generation")
-        s = brazil.Setup(book, connection=MINIMO * f, connected=CONECTADA,
-                         icms_exempt_compensated=icms_leitura(leitura, dias[0]),
-                         bandeira_on_minimum=band_min)
-        b = s.bill(cons, gen)
-        assert len(b.monthly) == 1
-        r = b.monthly.iloc[0]
-        assert abs(r["grid_import"] - imp * f) < 1e-6 and abs(r["export"] - inj * f) < 1e-6
-        tot += float(r["energy_bill"])
+    for j, (dias, f) in enumerate(pedacos(ref, montagem)):
+        icms = icms_leitura(leitura, dias[0])
+        chave = (ref, montagem, j, icms if inj > 0 else "n/a", band_min)
+        if chave not in _PEDACO:
+            if (ref, montagem, j) not in _SERIES:
+                _SERIES[(ref, montagem, j)] = (serie(dias, imp * f, HORAS_C, "consumption"),
+                                               serie(dias, inj * f, HORAS_G, "generation"))
+            cons, gen = _SERIES[(ref, montagem, j)]
+            s = brazil.Setup(book, connection=MINIMO * f, connected=CONECTADA, icms_exempt_compensated=icms,
+                             bandeira_on_minimum=band_min)
+            b = s.bill(cons, gen)
+            assert len(b.monthly) == 1
+            r = b.monthly.iloc[0]
+            assert abs(r["grid_import"] - imp * f) < 1e-6 and abs(r["export"] - inj * f) < 1e-6
+            _PEDACO[chave] = float(r["energy_bill"])
+        tot += _PEDACO[chave]
     return tot
 
 

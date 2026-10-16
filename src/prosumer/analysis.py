@@ -28,7 +28,8 @@ show what is missing instead of silently leaving it out.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+import inspect
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -299,6 +300,8 @@ def analyze(
     consumption: EnergySeries | None = None,
     generation: EnergySeries | None = None,
     diagnostics_options: Mapping[str, Any] | None = None,
+    clock_options: Mapping[str, Any] | None = None,
+    clock_weather_options: Mapping[str, Any] | None = None,
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -326,7 +329,9 @@ def analyze(
     `unique_id`) turns the index into a performance ratio. `diagnostics_options`: the tuning keyword arguments
     of `diagnose` by name (e.g. `{"tilts": np.arange(0, 91, 5.0)}` for facade panels, `{"penalty": 2.0}`);
     with the defaults of the penalty and of the clear-day rule, chosen on the project's own sites, a note says
-    so.
+    so. `clock_options` and `clock_weather_options`: keyword arguments of `quality.clock_offset` and
+    `quality.clock_offset_weather` by name (e.g. `{"min_agreement": 0.6}`, `{"max_shift_h": 3}`); the
+    `column` of the weather check is chosen by `analyze`.
 
     `economics`: how the household pays, as an `economics.Tariff` (net metering), an `economics.Plan` (a
     tariff and the export scheme: net metering, net billing or self-consumption) or an
@@ -342,6 +347,13 @@ def analyze(
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
     knobs = diagnostics._knobs(diagnostics_options or {})  # checked before any work
+    clock_kw = _options(clock_options, clock_offset, "clock_options", skip=("series", "site"))
+    clock_w_kw = _options(
+        clock_weather_options,
+        clock_offset_weather,
+        "clock_weather_options",
+        skip=("series", "weather", "column"),
+    )
     s = series.to_kwh()
     if s.freq != "h":
         raise ValueError(f"The day-ahead check needs an hourly series, not freq={s.freq!r}; resample first")
@@ -360,7 +372,7 @@ def analyze(
     quality, notes = _quality(s)
     clock = None
     if s.quantity == "generation" and site is not None:
-        clock = clock_offset(s, site)
+        clock = clock_offset(s, site, **clock_kw)
         notes.extend(clock_notes(clock))
     w = None if weather is None else _weather_frame(weather, s.series)
     clock_weather = None
@@ -371,7 +383,7 @@ def analyze(
             else next((c for c in w.columns if c.startswith("ghi")), None)
         )
         if ghi is not None:
-            clock_weather = clock_offset_weather(s, w, column=ghi)
+            clock_weather = clock_offset_weather(s, w, column=ghi, **clock_w_kw)
             notes.extend(clock_weather_notes(clock_weather))
     diag = None
     base_pending = dict(PENDING)
@@ -623,6 +635,21 @@ def analyze(
 
 # ---------------------------------------------------------------------- pieces
 _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
+
+
+def _options(
+    options: Mapping[str, Any] | None, func: Callable[..., Any], what: str, skip: Sequence[str]
+) -> dict[str, Any]:
+    """The keyword arguments of `func` named in `options`; an unknown name is an error before any work."""
+    if not options:
+        return {}
+    allowed = [n for n in inspect.signature(func).parameters if n not in skip]
+    unknown = sorted(set(options) - set(allowed))
+    if unknown:
+        raise ValueError(f"Unknown {what} {unknown}; the options are {allowed}")
+    return dict(options)
+
+
 _PROVENANCE_SHOWN = ("role", "name", "license", "sends_data", "source", "citation", "retrieved", "conditions")
 
 

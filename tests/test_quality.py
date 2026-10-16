@@ -201,3 +201,45 @@ def test_analyze_reports_the_clock_against_the_weather() -> None:
     assert "### Clock against the weather" in r.to_markdown()
     assert r.to_dict()["clock_weather"]
     assert analyze(_series(h.index, h.to_numpy()), site=SITE, test_days=7).clock_weather is None
+
+
+# ------------------------------------------------------------ declared thresholds (nothing tuned in hiding)
+def test_clock_thresholds_are_arguments_with_the_old_defaults() -> None:
+    """`min_agreement`, `daylight_share` and `interval` were constants; as arguments their defaults give the
+    same table, and a different value changes it."""
+    from prosumer import quality
+
+    assert (quality.MIN_AGREEMENT, quality.DAYLIGHT_SHARE, quality.INTERVAL) == (0.5, 0.05, 0.90)
+    idx, y = _pv(days=60, seed=4)
+    noisy = y * np.random.default_rng(5).uniform(0.2, 1.8, len(y))  # some days disagree
+    s = _series(idx + pd.Timedelta(hours=1), noisy)
+    base = clock_offset(s, SITE)
+    pd.testing.assert_frame_equal(base, clock_offset(s, SITE, min_agreement=0.5))
+    assert base["agreement"].between(0.3, 0.95).any()
+    for m in (0.3, 0.7, 0.95):
+        t = clock_offset(s, SITE, min_agreement=m)
+        assert (t["confident"] == ((t["days"] >= 7) & (t["agreement"] >= m))).all()
+    with pytest.raises(ValueError, match="min_agreement"):
+        clock_offset(s, SITE, min_agreement=0)
+
+    ghi, pv = _cloudy(days=40)
+    h = _hourly(pv, 30)
+    sw, w = _series(h.index, h.to_numpy()), _weather(ghi)
+    t = clock_offset_weather(sw, w)
+    pd.testing.assert_frame_equal(t, clock_offset_weather(sw, w, daylight_share=0.05, interval=0.9))
+    narrow = _whole(clock_offset_weather(sw, w, interval=0.5))
+    assert narrow["high_h"] - narrow["low_h"] < _whole(t)["high_h"] - _whole(t)["low_h"]
+    assert _whole(clock_offset_weather(sw, w, daylight_share=0.5))["days"] <= _whole(t)["days"]
+    with pytest.raises(ValueError, match="interval"):
+        clock_offset_weather(sw, w, interval=1.0)
+
+
+def test_analyze_passes_the_clock_options_by_name() -> None:
+    idx, y = _pv(days=40)
+    s = _series(idx + pd.Timedelta(hours=2), y)
+    r = analyze(s, site=SITE, test_days=7, clock_options={"by": None})
+    assert list(r.clock["period"]) == ["all"]  # no month rows
+    with pytest.raises(ValueError, match="Unknown clock_options"):
+        analyze(s, site=SITE, test_days=7, clock_options={"site": SITE})
+    with pytest.raises(ValueError, match="Unknown clock_weather_options"):
+        analyze(s, site=SITE, test_days=7, clock_weather_options={"column": "ghi"})

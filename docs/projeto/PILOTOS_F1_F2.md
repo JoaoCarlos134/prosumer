@@ -455,3 +455,14 @@ Proximo piloto: com FATURAS DETALHADAS (PDF: linhas de energia, bandeira, ICMS, 
 compensada, datas de leitura) de alguns meses de cada periodo de ICMS, para separar COSIP, aliquotas e a regra do
 imposto na compensada antes de mexer na biblioteca. Nao testado: tarifa branca, GD II, outras distribuidoras.
 Tempos: rodada do portao 696 s, diagnostico 220 s (CPU; o download da ANEEL ~1 min cada).
+
+### Rodada depois do conserto da biblioteca (16/10/2026, `fatura_pos_conserto.json`): mesmo veredito
+
+Depois de `94559b7` (`io.aneel.search` guarda uma vez os registros repetidos com `_id` novo) e `814a6be`
+(`from_aneel` aceita ICMS e PIS/COFINS por data), a rodada foi refeita com o caminho NORMAL da biblioteca
+(`python piloto_fatura.py baixa pos-conserto` e `python piloto_fatura.py pos-conserto`: getter padrao, ICMS do PR
+por data no proprio `from_aneel`; mesmo portao e metodo). O livro baixado bate com o legado (21 vigencias B1
+convencional, dif 0,0) e as 16 configuracoes e os erros por fatura sao IGUAIS aos do diagnostico pos-hoc sem
+duplicatas (conferido por igualdade dos JSON). Logo o defeito (1) esta consertado na biblioteca e o veredito nao
+muda: **NAO PASSA** (G1 5/19, G2 9/19, G3 0/85 na primaria). O que falta e o defeito (2), o imposto sobre a energia
+compensada preso ao limite do minimo, que so se separa com faturas detalhadas (PDF). Tempo 209 s.

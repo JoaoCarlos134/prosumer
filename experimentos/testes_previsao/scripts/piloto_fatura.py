@@ -110,7 +110,11 @@ FATURA = os.environ.get(
 )
 # "sem-duplicatas" na linha de comando: diagnostico pos-hoc (ver `_get_sem_duplicatas`), arquivos proprios
 SEM_DUP = "sem-duplicatas" in sys.argv
-_SUF = "_sem_duplicatas" if SEM_DUP else ""
+# "pos-conserto": a mesma rodada depois do conserto da biblioteca (16/10/2026: `io.aneel.search` tira os registros
+# repetidos e `from_aneel` aceita aliquotas por data). Getter padrao da biblioteca, ICMS do PR por data no proprio
+# `from_aneel`; mesmo portao e metodo, arquivos proprios (a rodada do portao fica como foi gravada).
+POS = "pos-conserto" in sys.argv
+_SUF = "_sem_duplicatas" if SEM_DUP else "_pos_conserto" if POS else ""
 TAR = comum.DADOS / f"aneel_copel_b1{_SUF}.csv"
 BAND = comum.DADOS / f"aneel_bandeiras{_SUF}.csv"
 PROV = comum.DADOS / f"aneel_copel_proveniencia{_SUF}.json"
@@ -164,7 +168,8 @@ def conferencia_legado(book):
 def baixa():
     """O livro pelo `TariffBook.from_aneel` (aliquotas daqui sao trocadas em `livro`); guarda tarifas e
     bandeiras em CSV para rodar sem rede."""
-    bk = brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.29, pis_cofins=PIS_COFINS,
+    icms = {d: r for d, r in ICMS_PR} if POS else 0.29
+    bk = brazil.TariffBook.from_aneel("COPEL-DIS", icms=icms, pis_cofins=PIS_COFINS,
                                       get=_get_sem_duplicatas if SEM_DUP else None)
     t = bk.tariffs
     b = bk.bandeiras.reset_index()
@@ -415,6 +420,7 @@ def main():
         "tempo_s": round(time.time() - t0, 1),
         "livro_x_legado_B1_convencional": conferencia_legado(book),
         "diagnostico_pos_hoc_sem_duplicatas": SEM_DUP,
+        "rodada_pos_conserto_da_biblioteca": POS,
     }
     SAIDA.write_text(json.dumps(saida, indent=1, ensure_ascii=False, default=str))
     print(json.dumps({k: saida[k] for k in ("veredito", "n_faturas", "alinhamento_injecao_geracao")}, indent=1,

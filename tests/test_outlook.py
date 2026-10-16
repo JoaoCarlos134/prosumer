@@ -225,3 +225,66 @@ def test_silent_fallbacks_now_say_so() -> None:
     assert any("covers none" in n for n in o.notes)
     o = outlook.forecast_ahead(_series(_plant(0.8)), days=2, site=SITE, start="2023-12-30")
     assert any("not forecasts" in n for n in o.notes)
+
+
+# ---------------------------------------------------------------- declared tuning (nothing tuned in hiding)
+def test_tuning_arguments_default_to_the_old_constants_and_take_effect() -> None:
+    """The numbers measured or set by hand on the Parana plants are arguments now (2026-10-16): the defaults
+    give the same outlook as before, and each one changes what it should."""
+    hours, kc, _ = _future(10)
+    w = _weather(hours, kc, {"long": 10 * 24, "short": 3 * 24}, pd.Timestamp("2023-12-31 20:00", tz=TZ))
+    s = _series(_plant(0.8))
+    base = outlook.forecast_ahead(s, days=10, site=SITE, weather=w, tilt=15, azimuth=20)
+    same = outlook.forecast_ahead(
+        s,
+        days=10,
+        site=SITE,
+        weather=w,
+        tilt=15,
+        azimuth=20,
+        skill=outlook.SKILL,
+        confidence=(outlook.HIGH, outlook.MEDIUM),
+        implausible=outlook.IMPLAUSIBLE,
+        kw_eff_days=(outlook.KW_EFF_DAYS, outlook.KW_EFF_FALLBACK_DAYS),
+        min_month_days=outlook.MIN_MONTH_DAYS,
+        kwp_share=outlook.KWP_SHARE,
+    )
+    pd.testing.assert_frame_equal(base.hourly, same.hourly)
+    pd.testing.assert_frame_equal(base.daily, same.daily)
+    assert base.method["skill"] == list(outlook.SKILL)
+
+    # confidence thresholds: everything with skill >= 0.2 is "high"
+    loose = outlook.forecast_ahead(
+        s, days=10, site=SITE, weather=w, tilt=15, azimuth=20, confidence=(0.19, 0.1)
+    )
+    assert loose.daily["confidence"].tolist() == ["high"] * 7 + ["seasonal only"] * 3
+    # own skill per lead: the labels follow it, and the note on the Parana measurements goes away
+    mine = outlook.forecast_ahead(
+        s, days=10, site=SITE, weather=w, tilt=15, azimuth=20, trust=(1.0,) * 7, skill=(0.3,) * 7
+    )
+    assert set(mine.daily["confidence"].iloc[:7]) == {"medium"}
+    assert not any("measured on two plants" in n for n in mine.notes)
+    assert any("measured on two plants" in n for n in base.notes)
+
+    with pytest.raises(ValueError, match="confidence"):
+        outlook.forecast_ahead(s, site=SITE, confidence=(0.2, 0.3))
+    with pytest.raises(ValueError, match="kw_eff_days"):
+        outlook.forecast_ahead(s, site=SITE, kw_eff_days=(120, 60))
+    with pytest.raises(ValueError, match="kwp_share"):
+        outlook.forecast_ahead(s, site=SITE, kwp_share=0)
+
+
+def test_kwp_share_and_implausible_limit_are_arguments() -> None:
+    s = _series(_plant(0.8, days=3))
+    o = outlook.forecast_ahead(s, site=SITE, tilt=15, azimuth=20, kwp=4.0, kwp_share=0.75)
+    assert o.method["series"]["p1"]["kw_eff"] == pytest.approx(3.0)
+    assert any("used 75% of the given kWp" in n for n in o.notes)
+
+    hours, kc, _ = _future(3)
+    w = _weather(hours, kc, {"good": 3 * 24, "broken": 3 * 24}, pd.Timestamp("2023-12-31 20:00", tz=TZ))
+    broken = (w["model"] == "broken") & (w["ds"].dt.day == 2)
+    w.loc[broken, "ghi"] = 2.5 * physics.clear_sky_ghi(pd.DatetimeIndex(w.loc[broken, "ds"]), *SITE)
+    lax = outlook.forecast_ahead(
+        _series(_plant(0.8)), days=3, site=SITE, weather=w, tilt=15, azimuth=20, implausible=(3.0, 50.0)
+    )
+    assert lax.daily["n_models"].tolist() == [2, 2, 2]  # 2.5 x clear sky passes a limit of 3 x

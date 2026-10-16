@@ -30,6 +30,14 @@ computed for each shift; the peak, refined between steps by a parabola, is the o
 The orientation drops out (it scales the anomaly, it does not move it in time). Found on the benchmark's
 Curitiba plant (2026-10-12): about +0.5 h against a forecast whose clock is right, where the sun check gave
 -1 to +2 h depending on the month.
+
+Tuning (every threshold is an argument; `analyze(clock_options=..., clock_weather_options=...)` passes them).
+None was chosen on the project's data; they are generic statistical conventions, declared here so a user can
+see them: `min_agreement` (0.5: a period is confident when most of its complete days pick its offset),
+`min_days` (7 for the sun, 14 for the weather), the daylight mask of the weather check (`daylight_share`,
+steps whose mean of the month is above 5% of the month's peak: the night and the first minutes of the day
+carry no cloud signal), the interval of the weather offset (`interval`, 90% by resampling days) and the widest
+interval still called confident (`max_interval_h`, 1 h).
 """
 
 from __future__ import annotations
@@ -50,6 +58,8 @@ DEFAULT_ORIENTATIONS: tuple[tuple[float, float], ...] = (
     *[(t, float(a)) for t in (20.0, 40.0) for a in range(0, 360, 45)],
 )
 MIN_AGREEMENT = 0.5  # share of the days that must pick the period's offset for it to be `confident`
+DAYLIGHT_SHARE = 0.05  # weather check: steps whose monthly mean is above this share of the month's peak
+INTERVAL = 0.90  # weather check: coverage of the bootstrap interval of the offset
 
 
 def clock_offset(
@@ -60,6 +70,7 @@ def clock_offset(
     by: By = "month",
     min_days: int = 7,
     orientations: tuple[tuple[float, float], ...] = DEFAULT_ORIENTATIONS,
+    min_agreement: float = MIN_AGREEMENT,
 ) -> pd.DataFrame:
     """Clock offset of each generation series, against the sun at `site` = (latitude, longitude).
 
@@ -72,13 +83,16 @@ def clock_offset(
       the best-fitting clear-sky profile, in hours): also catches a half-step label offset.
     - `score`, `score_zero`: correlation with the clear-sky profile at the best shift and at shift 0.
     - `days`: days with data in the period; `agreement`: share of the complete days (every step valid, some
-      production) whose own best shift equals `offset_h`; `confident`: `days >= min_days` and `agreement >=`
-      0.5. A cloudy, short or very noisy period comes out not confident instead of with a wrong answer.
+      production) whose own best shift equals `offset_h`; `confident`: `days >= min_days` and `agreement >=
+      min_agreement` (0.5). A cloudy, short or very noisy period comes out not confident instead of with a
+      wrong answer.
 
     A DST problem shows up as confident months with different offsets (see `clock_notes`).
     """
     if series.quantity != "generation":
         raise ValueError(f"The clock check needs a generation series, not {series.quantity!r}")
+    if not 0 < min_agreement <= 1:
+        raise ValueError("min_agreement must be in (0, 1]")
     lat, lon = site
     st = step(series.freq)
     spd = pd.Timedelta(days=1) / st
@@ -116,7 +130,7 @@ def clock_offset(
             row = _fit(cells[sel], cs[sel], spd, shifts, hours_per_step)
             if row is None or (name != "all" and row["days"] < min_days):
                 continue
-            row["confident"] = bool(row["days"] >= min_days and row["agreement"] >= MIN_AGREEMENT)
+            row["confident"] = bool(row["days"] >= min_days and row["agreement"] >= min_agreement)
             rows.append({"unique_id": str(uid), "period": name, **row})
     return pd.DataFrame(rows) if rows else _empty()
 
@@ -165,6 +179,8 @@ def clock_offset_weather(
     max_interval_h: float = 1.0,
     n_boot: int = 200,
     seed: int = 0,
+    daylight_share: float = DAYLIGHT_SHARE,
+    interval: float = INTERVAL,
 ) -> pd.DataFrame:
     """Clock offset of each generation series against an irradiance series, to a fraction of a step.
 
@@ -175,10 +191,12 @@ def clock_offset_weather(
 
     - `offset_h`: hours the production labels are LATE relative to the weather (fix: `ds - offset_h`);
       continuous, from the correlation peak refined between steps;
-    - `low_h`, `high_h`: 90% interval of `offset_h` by resampling days;
+    - `low_h`, `high_h`: the `interval` (90%) interval of `offset_h` by resampling days;
     - `corr`, `corr_zero`: correlation of the anomalies at the best whole-step shift and at 0;
     - `days`: days with daylight hours in both; `confident`: `days >= min_days` and the interval no wider than
       `max_interval_h`.
+
+    Daylight steps: those whose mean of the month is above `daylight_share` (5%) of that month's peak.
     """
     if series.quantity != "generation":
         raise ValueError(f"The clock check needs a generation series, not {series.quantity!r}")
@@ -186,6 +204,10 @@ def clock_offset_weather(
         raise ValueError(f"weather needs `ds` and {column!r} columns")
     if getattr(weather["ds"].dt, "tz", None) is None:
         raise ValueError("weather.ds must carry a time zone")
+    if not 0 <= daylight_share < 1:
+        raise ValueError("daylight_share must be in [0, 1)")
+    if not 0 < interval < 1:
+        raise ValueError("interval must be in (0, 1)")
     st = step(series.freq)
     spd = pd.Timedelta(days=1) / st
     if spd != int(spd) or spd < 2:
@@ -204,8 +226,8 @@ def clock_offset_weather(
         if x.empty:
             continue
         y = pd.Series(g["y"].to_numpy(float), index=pd.DatetimeIndex(g["ds"]))
-        ya, day_y = _anomaly(y)
-        xa, _ = _anomaly(x)
+        ya, day_y = _anomaly(y, daylight_share)
+        xa, _ = _anomaly(x, daylight_share)
         times = pd.DatetimeIndex(y.index)
         wall = times.tz_localize(None)
         month = wall.strftime("%Y-%m").to_numpy()
@@ -216,7 +238,9 @@ def clock_offset_weather(
         if by == "month":
             periods += [(str(m), month == m) for m in np.unique(month)]
         for name, sel in periods:
-            row = _fit_weather(ya.to_numpy()[sel], xk[:, sel], date[sel], day_y[sel], shifts, rng, n_boot)
+            row = _fit_weather(
+                ya.to_numpy()[sel], xk[:, sel], date[sel], day_y[sel], shifts, rng, n_boot, interval
+            )
             if row is None or (name != "all" and row["days"] < min_days):
                 continue
             for c in ("offset_h", "low_h", "high_h"):
@@ -248,14 +272,14 @@ def clock_weather_notes(table: pd.DataFrame, min_offset_h: float = 0.25) -> list
 
 
 # ---------------------------------------------------------------------- pieces
-def _anomaly(s: pd.Series) -> tuple[pd.Series, np.ndarray]:
+def _anomaly(s: pd.Series, daylight_share: float = DAYLIGHT_SHARE) -> tuple[pd.Series, np.ndarray]:
     """The series minus its mean profile of the month (local wall clock), and the daylight mask: steps whose
-    mean of the month is above 5% of that month's peak."""
+    mean of the month is above `daylight_share` of that month's peak."""
     wall = pd.DatetimeIndex(s.index).tz_localize(None)
     key = [wall.strftime("%Y-%m"), wall.hour * 60 + wall.minute]
     mean = s.groupby(key).transform("mean")
     peak = mean.groupby(wall.strftime("%Y-%m")).transform("max")
-    return s - mean, (mean > 0.05 * peak).to_numpy()
+    return s - mean, (mean > daylight_share * peak).to_numpy()
 
 
 def _fit_weather(
@@ -266,6 +290,7 @@ def _fit_weather(
     shifts: np.ndarray,
     rng: np.random.Generator,
     n_boot: int,
+    interval: float = INTERVAL,
 ) -> dict[str, float | int] | None:
     """Offset (in steps) from the anomaly correlation, with a day bootstrap. Sums per day and shift are kept
     so each resample is a weighted sum, not a new pass over the hours."""
@@ -306,8 +331,9 @@ def _fit_weather(
     zero = int(np.flatnonzero(shifts == 0)[0])
     return {
         "offset_h": est,
-        "low_h": float(np.quantile(boot, 0.05)),
-        "high_h": float(np.quantile(boot, 0.95)),
+        # rounded so the default 0.9 gives exactly the 0.05 and 0.95 quantiles (1 - 0.9 is not 0.1 in floats)
+        "low_h": float(np.quantile(boot, round((1 - interval) / 2, 12))),
+        "high_h": float(np.quantile(boot, round((1 + interval) / 2, 12))),
         "corr": float(np.nanmax(r)),
         "corr_zero": float(r[zero]),
         "days": int(used.sum()),

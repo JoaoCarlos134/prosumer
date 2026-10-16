@@ -51,12 +51,20 @@ there): the average day of that month, not a forecast of that day's weather. It 
   day (lead 0) uses lead 1's factor.
 - Not measured: the thresholds of the confidence labels (they follow the measured skill, `SKILL`), a roof the
   person types in, other climates than Parana's.
+
+**Tuning.** Every number above is an argument of `forecast_ahead`, with these defaults and origins:
+`trust` and `skill` (MEASURED by the horizon pilot on the two Parana plants: elsewhere an assumption, and the
+notes say so), `confidence` (0.40 / 0.25: set by hand so leads 1-3 read "high" and 4-6 "medium" with the
+measured skill), `implausible` (1.2 x clear sky + 50 W/m2: physical, generic), `kw_eff_days` (60, else 120
+days: the pilot's rule, set by hand), `min_month_days` (5: set by hand), `kwp_share` (0.8: a generic
+performance ratio when no clear day is recent) and the clear-day rule `clear_window_days`, `clear_quantile`,
+`clear_ratio` (shared with `diagnostics`, set by hand on the same plants).
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
 import numpy as np
@@ -99,6 +107,41 @@ SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199)
 # is left out from that day to the end of the forecast.
 IMPLAUSIBLE = (1.2, 50.0)
 HIGH, MEDIUM = 0.40, 0.25  # skill from which a day is labelled high / medium confidence (leads 1-3 / 4-6)
+KWP_SHARE = 0.8  # effective power as a share of the given kWp when no recent clear day teaches it
+
+
+@dataclass(frozen=True)
+class _Tuning:
+    """The tuning arguments of `forecast_ahead` (module docstring, "Tuning"), passed to the pieces."""
+
+    skill: tuple[float, ...] = SKILL
+    confidence: tuple[float, float] = (HIGH, MEDIUM)
+    implausible: tuple[float, float] = IMPLAUSIBLE
+    kw_eff_days: tuple[int, int] = (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS)
+    min_month_days: int = MIN_MONTH_DAYS
+    kwp_share: float = KWP_SHARE
+    clear_window_days: int = CLEAR_WINDOW_DAYS
+    clear_quantile: float = CLEAR_QUANTILE
+    clear_ratio: float = CLEAR_RATIO
+
+    def check(self) -> _Tuning:
+        hi, mid = self.confidence
+        if not 0 < mid <= hi:
+            raise ValueError("confidence must be (high, medium) with 0 < medium <= high")
+        if len(self.kw_eff_days) != 2 or not 0 < self.kw_eff_days[0] <= self.kw_eff_days[1]:
+            raise ValueError("kw_eff_days must be (days, fallback days) with 0 < days <= fallback")
+        if not 0 < self.kwp_share <= 1.5:
+            raise ValueError("kwp_share must be in (0, 1.5]")
+        if self.min_month_days < 1 or self.clear_window_days < 10:
+            raise ValueError("min_month_days must be >= 1 and clear_window_days >= 10")
+        if not 0 < self.clear_quantile <= 1 or not 0 < self.clear_ratio <= 1:
+            raise ValueError("clear_quantile and clear_ratio must be in (0, 1]")
+        if self.implausible[0] <= 0:
+            raise ValueError("implausible must be (factor > 0, offset in W/m2)")
+        return replace(self, kw_eff_days=(int(self.kw_eff_days[0]), int(self.kw_eff_days[1])))
+
+
+_DEFAULT = _Tuning()
 
 Prefer = Literal["high", "low"]
 
@@ -159,6 +202,15 @@ def forecast_ahead(
     kwp: float | Mapping[str, float] | None = None,
     weeks: int = WEEKS,
     trust: tuple[float, ...] = TRUST,
+    skill: tuple[float, ...] = SKILL,
+    confidence: tuple[float, float] = (HIGH, MEDIUM),
+    implausible: tuple[float, float] = IMPLAUSIBLE,
+    kw_eff_days: tuple[int, int] = (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS),
+    min_month_days: int = MIN_MONTH_DAYS,
+    kwp_share: float = KWP_SHARE,
+    clear_window_days: int = CLEAR_WINDOW_DAYS,
+    clear_quantile: float = CLEAR_QUANTILE,
+    clear_ratio: float = CLEAR_RATIO,
 ) -> Outlook:
     """Hourly forecast of the `days` days after the data end (generation or consumption), with daily totals.
 
@@ -170,9 +222,28 @@ def forecast_ahead(
     or one per series. `kwp`: the peak power of the panels, used only when the data have too few clear days to
     learn the effective power. `trust`: weight of the weather forecast per lead day (see the module
     docstring).
+
+    The other tuning arguments (module docstring, "Tuning", says where each default comes from): `skill`, the
+    daily skill per lead day behind the confidence labels; `confidence` = (high, medium), the skill from which
+    a day is labelled high or medium; `implausible` = (factor, W/m2), the GHI above factor x clear sky +
+    W/m2 that drops a weather model; `kw_eff_days` = (days, fallback days) of clear days behind the effective
+    power; `min_month_days`, days of the same month in earlier years for the season; `kwp_share`, the share of
+    `kwp` used when no recent clear day teaches the power; `clear_window_days`, `clear_quantile`,
+    `clear_ratio`, the clear-day rule.
     """
     if not 1 <= days <= MAX_DAYS:
         raise ValueError(f"days must be in 1-{MAX_DAYS}")
+    tune = _Tuning(
+        skill=tuple(skill),
+        confidence=(float(confidence[0]), float(confidence[1])),
+        implausible=(float(implausible[0]), float(implausible[1])),
+        kw_eff_days=(kw_eff_days[0], kw_eff_days[1]),
+        min_month_days=min_month_days,
+        kwp_share=kwp_share,
+        clear_window_days=clear_window_days,
+        clear_quantile=clear_quantile,
+        clear_ratio=clear_ratio,
+    ).check()
     s = series.to_kwh()
     if s.freq != "h":
         raise ValueError(f"The outlook needs an hourly series, not freq={s.freq!r}; resample first")
@@ -208,7 +279,7 @@ def forecast_ahead(
     lead = (hours.tz_localize(None).normalize() - issue).days.to_numpy()
     if s.quantity == "generation":
         assert site is not None
-        hourly, method, more = _generation(s, site, hours, lead, w, tilt, azimuth, kwp, trust)
+        hourly, method, more = _generation(s, site, hours, lead, w, tilt, azimuth, kwp, trust, tune)
     else:
         hourly, method, more = _consumption(s, hours, lead, weeks)
         if w is not None:
@@ -221,11 +292,12 @@ def forecast_ahead(
     notes += more
     if s.quantity == "generation" and w is not None:
         if (hourly["source"] == "weather").any():
-            notes.append(
-                "How much the weather forecast is trusted at each lead day, and the confidence labels, were "
-                "measured on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an "
-                "assumption."
-            )
+            if tuple(trust) == TRUST or tune.skill == SKILL:
+                notes.append(
+                    "How much the weather forecast is trusted at each lead day, and the confidence labels, "
+                    "were measured on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they "
+                    "are an assumption (`trust=` and `skill=` change them)."
+                )
         else:
             notes.append(
                 "The weather forecast covers none of these hours: every day is the seasonal expectation."
@@ -235,7 +307,7 @@ def forecast_ahead(
             f"Days beyond day {len(trust)} are the seasonal expectation (an average day of the month), not a "
             "forecast of their weather: beyond a week the weather forecasts showed no skill in the pilot."
         )
-    daily = _daily(hourly)
+    daily = _daily(hourly, tune.confidence)
     gaps = daily[daily["missing_hours"] > 0]
     if len(gaps):
         notes.append(
@@ -294,29 +366,35 @@ def _generation(
     azimuth: float | Mapping[str, float] | None,
     kwp: float | Mapping[str, float] | None,
     trust: tuple[float, ...],
+    tune: _Tuning = _DEFAULT,
 ) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
     notes: list[str] = []
     f = _hourly(s, site)
     days = _complete_days(f)
-    clear = _clear(days, CLEAR_WINDOW_DAYS, CLEAR_QUANTILE, CLEAR_RATIO)
+    clear = _clear(days, tune.clear_window_days, tune.clear_quantile, tune.clear_ratio)
     fitted = _roof(f, clear, site) if tilt is None or azimuth is None else None
-    causal = _clear_trailing(days)  # the horizon pilot's clear days: window ending on the day
+    causal = _clear_trailing(days, tune)  # the horizon pilot's clear days: window ending on the day
     sun = physics.mean_sun(hours, *site)
     cs = physics.clear_sky_ghi(hours, *site)
     a = np.array([trust[max(k, 1) - 1] if k <= len(trust) else 0.0 for k in lead])
-    sk = np.array([SKILL[max(k, 1) - 1] if k <= len(SKILL) else 0.0 for k in lead])
-    ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs)
+    sk = np.array([tune.skill[max(k, 1) - 1] if k <= len(tune.skill) else 0.0 for k in lead])
+    ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs, tune.implausible)
     if dropped:
         notes.append(
             "Weather models left out from the first day their GHI exceeds what the sun can give "
-            f"(> {IMPLAUSIBLE[0]} x clear sky + {IMPLAUSIBLE[1]:.0f} W/m2 in some hour): "
+            f"(> {tune.implausible[0]:g} x clear sky + {tune.implausible[1]:.0f} W/m2 in some hour): "
             f"{', '.join(dropped)}."
         )
     a = np.where(np.isfinite(ghi), a, 0.0)  # no model reaches the hour: seasonal only
     sk = np.where(a > 0, sk, 0.0)
     out: list[pd.DataFrame] = []
     per_series: dict[str, Any] = {}
-    method: dict[str, Any] = {"site": list(site), "trust": list(trust), "series": per_series}
+    method: dict[str, Any] = {
+        "site": list(site),
+        "trust": list(trust),
+        "skill": list(tune.skill),
+        "series": per_series,
+    }
     for uid in s.series:
         t, az, how = _orientation(uid, tilt, azimuth, fitted, site)
         if how in ("fitted", "given + fitted") and fitted is not None:
@@ -338,18 +416,19 @@ def _generation(
         anchor = pd.Timestamp(g["date"].max()) + pd.Timedelta(days=1)  # issue = the day after the data
         k_dates = pd.DatetimeIndex(idx["date"]).to_numpy()
         k_vals = idx["index"].to_numpy(dtype=float)
-        kw_eff = float(_kw_at(k_dates, k_vals, np.array([anchor.to_datetime64()]))[0])
-        used, k_src = _window_count(k_dates, anchor)
+        kw_eff = float(_kw_at(k_dates, k_vals, np.array([anchor.to_datetime64()]), tune.kw_eff_days)[0])
+        used, k_src = _window_count(k_dates, anchor, tune.kw_eff_days)
         if not np.isfinite(kw_eff):
             if kwp is None:
                 raise ValueError(
-                    f"{uid}: no clear day in the {KW_EFF_FALLBACK_DAYS} days before the data end to learn "
+                    f"{uid}: no clear day in the {tune.kw_eff_days[1]} days before the data end to learn "
                     "the plant's power; give kwp"
                 )
-            kw_eff, k_src = 0.8 * _per(kwp, uid), "0.8 x kwp (no recent clear day)"
-            notes.append(f"{uid}: no recent clear day to learn the plant; used 80% of the given kWp.")
+            share = tune.kwp_share
+            kw_eff, k_src = share * _per(kwp, uid), f"{share:g} x kwp (no recent clear day)"
+            notes.append(f"{uid}: no recent clear day to learn the plant; used {share:.0%} of the given kWp.")
         clearness = _clearness(
-            days[days["unique_id"] == uid], site, (t, az), (k_dates, k_vals), anchor, s.tz, hours
+            days[days["unique_id"] == uid], site, (t, az), (k_dates, k_vals), anchor, s.tz, hours, tune
         )
         cs_poa = physics.poa_isotropic(cs, sun, t, az) / 1000.0
         med, p10, p90 = clearness["median"], clearness["p10"], clearness["p90"]
@@ -411,31 +490,37 @@ def _orientation(
     return min(abs(lat), 30.0), 0.0 if lat < 0 else 180.0, "default"  # facing the equator
 
 
-def _clear_trailing(days: pd.DataFrame) -> pd.DataFrame:
-    """Clear days judged with a window of `CLEAR_WINDOW_DAYS` that ENDS on the day (the horizon pilot's causal
-    rule; `diagnostics` centres the window): ratio >= 0.9 x the window's 90% quantile."""
+def _clear_trailing(days: pd.DataFrame, tune: _Tuning = _DEFAULT) -> pd.DataFrame:
+    """Clear days judged with a window of `clear_window_days` that ENDS on the day (the horizon pilot's causal
+    rule; `diagnostics` centres the window): ratio >= `clear_ratio` (0.9) x the window's `clear_quantile`
+    (90%) quantile."""
     out = []
     for uid, g in days.groupby("unique_id", sort=False):
         r = (g.set_index("date")["energy"] / g.set_index("date")["cs"]).sort_index()
         full = r.reindex(pd.date_range(r.index.min(), r.index.max(), freq="D"))
-        top = full.rolling(CLEAR_WINDOW_DAYS, min_periods=10).quantile(CLEAR_QUANTILE)
+        top = full.rolling(tune.clear_window_days, min_periods=10).quantile(tune.clear_quantile)
         t = pd.DataFrame({"unique_id": uid, "date": r.index, "ratio": r.to_numpy()})
         t["top"] = top.reindex(r.index).to_numpy()
-        t["clear"] = (t["ratio"] >= CLEAR_RATIO * t["top"]) & (t["ratio"] > 0)
+        t["clear"] = (t["ratio"] >= tune.clear_ratio * t["top"]) & (t["ratio"] > 0)
         out.append(t)
     if not out:
         return pd.DataFrame(columns=["unique_id", "date", "ratio", "top", "clear"])
     return pd.concat(out, ignore_index=True)
 
 
-def _kw_at(dates: np.ndarray, values: np.ndarray, at: np.ndarray) -> np.ndarray:
-    """Effective power for an issue on each day of `at`: the median clear-day index of the `KW_EFF_DAYS` days
-    before it, else of the `KW_EFF_FALLBACK_DAYS` days, else NaN (the pilot's `kw_eff_por_emissao`)."""
+def _kw_at(
+    dates: np.ndarray,
+    values: np.ndarray,
+    at: np.ndarray,
+    windows: tuple[int, int] = (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS),
+) -> np.ndarray:
+    """Effective power for an issue on each day of `at`: the median clear-day index of the `windows[0]` (60)
+    days before it, else of the `windows[1]` (120) days, else NaN (the pilot's `kw_eff_por_emissao`)."""
     order = np.argsort(dates)
     d, v = dates[order], values[order]
     out = np.full(len(at), np.nan)
     for i, t in enumerate(at):
-        for days in (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS):
+        for days in windows:
             a = np.searchsorted(d, t - np.timedelta64(days, "D"))
             b = np.searchsorted(d, t)
             if b > a:
@@ -444,9 +529,11 @@ def _kw_at(dates: np.ndarray, values: np.ndarray, at: np.ndarray) -> np.ndarray:
     return out
 
 
-def _window_count(dates: np.ndarray, anchor: pd.Timestamp) -> tuple[int, str]:
+def _window_count(
+    dates: np.ndarray, anchor: pd.Timestamp, windows: tuple[int, int] = (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS)
+) -> tuple[int, str]:
     """How many clear days gave the effective power, and from which window."""
-    for days in (KW_EFF_DAYS, KW_EFF_FALLBACK_DAYS):
+    for days in windows:
         lo = (anchor - pd.Timedelta(days=days)).to_datetime64()
         n = int(((dates >= lo) & (dates < anchor.to_datetime64())).sum())
         if n:
@@ -462,12 +549,13 @@ def _clearness(
     anchor: pd.Timestamp,
     tz: str,
     hours: pd.DatetimeIndex,
+    tune: _Tuning = _DEFAULT,
 ) -> dict[str, Any]:
     """Typical clearness at each forecast hour, as the horizon pilot's climatology: the clearness of a past
     day is its energy / (the effective power at that day, from the clear days before it, x its clear-sky
     irradiation on the panel plane); for each forecast month, the median (and 10-90%) over the same calendar
-    month of EARLIER years when there are at least `MIN_MONTH_DAYS` such days, else over the 30 days before
-    the data end."""
+    month of EARLIER years when there are at least `min_month_days` (5) such days, else over the 30 days
+    before the data end."""
     nan = np.full(len(hours), np.nan)
     if days.empty:
         note = "no complete day to learn the season"
@@ -480,7 +568,7 @@ def _clearness(
     poa = physics.poa_isotropic(physics.clear_sky_ghi(t, *site), sun, *orientation) / 1000.0
     expected = pd.Series(poa).groupby(t.tz_localize(None).normalize()).sum()
     when = pd.DatetimeIndex(d["date"])
-    kw_day = _kw_at(*kw, when.to_numpy())
+    kw_day = _kw_at(*kw, when.to_numpy(), tune.kw_eff_days)
     d["r"] = d["energy"].to_numpy() / (kw_day * expected.reindex(when).to_numpy())
     d = d[np.isfinite(d["r"])]
     when = pd.DatetimeIndex(d["date"])
@@ -498,7 +586,7 @@ def _clearness(
         year, month = int(code) // 100, int(code) % 100
         pos = np.flatnonzero(ym == code)
         same = d.loc[(when.month == month) & (when.year < year), "r"]
-        if len(same) >= MIN_MONTH_DAYS:
+        if len(same) >= tune.min_month_days:
             vals = (float(same.median()), float(same.quantile(0.1)), float(same.quantile(0.9)))
             src = f"{len(same)} days of the same month in earlier years"
         else:
@@ -512,7 +600,10 @@ def _clearness(
 
 
 def _weather_at(
-    w: pd.DataFrame | None, hours: pd.DatetimeIndex, cs: np.ndarray
+    w: pd.DataFrame | None,
+    hours: pd.DatetimeIndex,
+    cs: np.ndarray,
+    implausible: tuple[float, float] = IMPLAUSIBLE,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[str]]:
     """Mean, min and max GHI across the models at each hour, the number of models, and the model-days left
     out as physically implausible (see `IMPLAUSIBLE`)."""
@@ -527,7 +618,7 @@ def _weather_at(
             raise ValueError("The weather frame has no GHI column (`ghi`, `ghi_<model>` or `ghi_mean`)")
     m = x[models].to_numpy(dtype=float, copy=True)
     day = hours.tz_localize(None).normalize()
-    bad = m > IMPLAUSIBLE[0] * cs[:, None] + IMPLAUSIBLE[1]
+    bad = m > implausible[0] * cs[:, None] + implausible[1]
     dropped = []
     for j, name in enumerate(models):
         if bad[:, j].any():
@@ -600,7 +691,7 @@ def _consumption(
 
 
 # ---------------------------------------------------------------------- shared
-def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
+def _daily(hourly: pd.DataFrame, confidence: tuple[float, float] = (HIGH, MEDIUM)) -> pd.DataFrame:
     """Per series and day. Generation is labelled over its sun hours only (the night says nothing):
     `trust` and `skill` are their means (`skill`: the pilot's daily skill at that lead, 0 without weather),
     `n_models` the fewest models behind any of them, `source` "weather" when at least half of them have a
@@ -636,7 +727,7 @@ def _daily(hourly: pd.DataFrame) -> pd.DataFrame:
     d["source"] = np.where(is_profile, "profile", np.where(d["weather"] >= 0.5, "weather", "seasonal"))
     d["n_models"] = d["n_models"].fillna(0).astype(int)
     d["confidence"] = np.select(
-        [is_profile, d["skill"] >= HIGH, d["skill"] >= MEDIUM, d["skill"] > 0],
+        [is_profile, d["skill"] >= confidence[0], d["skill"] >= confidence[1], d["skill"] > 0],
         ["typical week", "high", "medium", "low"],
         default="seasonal only",
     )

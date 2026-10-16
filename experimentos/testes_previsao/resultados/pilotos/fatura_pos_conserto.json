@@ -1,0 +1,2318 @@
+{
+ "pergunta": "a conta da prosumer.economics.brazil reproduz as faturas reais (Copel, Cascavel)?",
+ "portao": {
+  "G1": "energia P0 +-2% em >= 80% e COSIP em [0, 30]",
+  "G2": "total P0 +-3% em >= 80%",
+  "G3": "total P1 +-3% em >= 80% (COSIP fixa de P0)",
+  "G4": "G1-G3 na montagem calendario"
+ },
+ "primaria": "ciclo|icms=all|band_min=True",
+ "veredito": {
+  "primaria_G1_G3": false,
+  "G4_calendario": false
+ },
+ "n_faturas": {
+  "P0": 19,
+  "P1": 85,
+  "excluidas": {}
+ },
+ "entradas": {
+  "icms_pr": [
+   [
+    "1900-01-01",
+    0.29
+   ],
+   [
+    "2022-06-23",
+    0.18
+   ],
+   [
+    "2024-03-18",
+    0.19
+   ]
+  ],
+  "pis_cofins": 0.0925,
+  "minimo_kWh": 50.0,
+  "gd": "GD I",
+  "conectada": "2019-07-26",
+  "fuso": "Etc/GMT+3",
+  "leitura_dia": 9,
+  "livro": "ANEEL COPEL-DIS B1 convencional + bandeiras mensais (ODbL-1.0)"
+ },
+ "alinhamento_injecao_geracao": {
+  "mes_M-1": {
+   "n": 75,
+   "media": 0.789,
+   "dp": 0.158
+  },
+  "ciclo_dia9": {
+   "n": 77,
+   "media": 0.777,
+   "dp": 0.068
+  },
+  "mes_M": {
+   "n": 74,
+   "media": 0.786,
+   "dp": 0.15
+  }
+ },
+ "configuracoes": {
+  "ciclo|icms=all|band_min=True": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 18,
+    "de": 85,
+    "frac": 0.212,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2695,
+    "2020": -0.2094,
+    "2021": -0.1569,
+    "2022": -0.1107,
+    "2023": -0.169,
+    "2024": -0.2999,
+    "2025": -0.2506,
+    "2026": -0.3001
+   },
+   "passa": false
+  },
+  "ciclo|icms=all|band_min=False": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 15,
+    "de": 85,
+    "frac": 0.176,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.3069,
+    "2020": -0.2176,
+    "2021": -0.2433,
+    "2022": -0.1301,
+    "2023": -0.169,
+    "2024": -0.3231,
+    "2025": -0.2684,
+    "2026": -0.3085
+   },
+   "passa": false
+  },
+  "ciclo|icms=te_only|band_min=True": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 18,
+    "de": 85,
+    "frac": 0.212,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2695,
+    "2020": -0.2094,
+    "2021": -0.1569,
+    "2022": -0.1107,
+    "2023": -0.169,
+    "2024": -0.2999,
+    "2025": -0.2506,
+    "2026": -0.3001
+   },
+   "passa": false
+  },
+  "ciclo|icms=te_only|band_min=False": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 15,
+    "de": 85,
+    "frac": 0.176,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.3069,
+    "2020": -0.2176,
+    "2021": -0.2433,
+    "2022": -0.1301,
+    "2023": -0.169,
+    "2024": -0.3231,
+    "2025": -0.2684,
+    "2026": -0.3085
+   },
+   "passa": false
+  },
+  "ciclo|icms=none|band_min=True": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 18,
+    "de": 85,
+    "frac": 0.212,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2248,
+    "2020": -0.1935,
+    "2021": -0.1569,
+    "2022": -0.1107,
+    "2023": -0.169,
+    "2024": -0.2999,
+    "2025": -0.2506,
+    "2026": -0.3001
+   },
+   "passa": false
+  },
+  "ciclo|icms=none|band_min=False": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 16,
+    "de": 85,
+    "frac": 0.188,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2248,
+    "2020": -0.1935,
+    "2021": -0.2228,
+    "2022": -0.1301,
+    "2023": -0.169,
+    "2024": -0.3231,
+    "2025": -0.2684,
+    "2026": -0.3085
+   },
+   "passa": false
+  },
+  "ciclo|icms=PR48|band_min=True": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 18,
+    "de": 85,
+    "frac": 0.212,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2695,
+    "2020": -0.2094,
+    "2021": -0.1569,
+    "2022": -0.1107,
+    "2023": -0.169,
+    "2024": -0.2999,
+    "2025": -0.2506,
+    "2026": -0.3001
+   },
+   "passa": false
+  },
+  "ciclo|icms=PR48|band_min=False": {
+   "G1": {
+    "dentro": 5,
+    "de": 19,
+    "cosip_R$": 9.38,
+    "cosip_ok": true,
+    "frac": 0.263,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 9,
+    "de": 19,
+    "frac": 0.474,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 15,
+    "de": 85,
+    "frac": 0.176,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1443,
+    "intercepto_R$": -16.63,
+    "pis_cofins_implicito": 0.1704
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.3069,
+    "2020": -0.2176,
+    "2021": -0.2433,
+    "2022": -0.1301,
+    "2023": -0.169,
+    "2024": -0.3231,
+    "2025": -0.2684,
+    "2026": -0.3085
+   },
+   "passa": false
+  },
+  "calendario|icms=all|band_min=True": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 19,
+    "de": 85,
+    "frac": 0.224,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2497,
+    "2020": -0.1963,
+    "2021": -0.1523,
+    "2022": -0.0908,
+    "2023": -0.1548,
+    "2024": -0.2962,
+    "2025": -0.2385,
+    "2026": -0.2891
+   },
+   "passa": false
+  },
+  "calendario|icms=all|band_min=False": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 16,
+    "de": 85,
+    "frac": 0.188,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2953,
+    "2020": -0.2045,
+    "2021": -0.231,
+    "2022": -0.1164,
+    "2023": -0.1548,
+    "2024": -0.3122,
+    "2025": -0.2567,
+    "2026": -0.2975
+   },
+   "passa": false
+  },
+  "calendario|icms=te_only|band_min=True": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 19,
+    "de": 85,
+    "frac": 0.224,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2497,
+    "2020": -0.1963,
+    "2021": -0.1523,
+    "2022": -0.0908,
+    "2023": -0.1548,
+    "2024": -0.2962,
+    "2025": -0.2385,
+    "2026": -0.2891
+   },
+   "passa": false
+  },
+  "calendario|icms=te_only|band_min=False": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 16,
+    "de": 85,
+    "frac": 0.188,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2953,
+    "2020": -0.2045,
+    "2021": -0.231,
+    "2022": -0.1164,
+    "2023": -0.1548,
+    "2024": -0.3122,
+    "2025": -0.2567,
+    "2026": -0.2975
+   },
+   "passa": false
+  },
+  "calendario|icms=none|band_min=True": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 19,
+    "de": 85,
+    "frac": 0.224,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2147,
+    "2020": -0.184,
+    "2021": -0.1523,
+    "2022": -0.0908,
+    "2023": -0.1548,
+    "2024": -0.2962,
+    "2025": -0.2385,
+    "2026": -0.2891
+   },
+   "passa": false
+  },
+  "calendario|icms=none|band_min=False": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 17,
+    "de": 85,
+    "frac": 0.2,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2147,
+    "2020": -0.184,
+    "2021": -0.2108,
+    "2022": -0.1164,
+    "2023": -0.1548,
+    "2024": -0.3122,
+    "2025": -0.2567,
+    "2026": -0.2975
+   },
+   "passa": false
+  },
+  "calendario|icms=PR48|band_min=True": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 19,
+    "de": 85,
+    "frac": 0.224,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2497,
+    "2020": -0.1963,
+    "2021": -0.1523,
+    "2022": -0.0908,
+    "2023": -0.1548,
+    "2024": -0.2962,
+    "2025": -0.2385,
+    "2026": -0.2891
+   },
+   "passa": false
+  },
+  "calendario|icms=PR48|band_min=False": {
+   "G1": {
+    "dentro": 7,
+    "de": 19,
+    "cosip_R$": 10.24,
+    "cosip_ok": true,
+    "frac": 0.368,
+    "passa": false
+   },
+   "G2": {
+    "dentro": 15,
+    "de": 19,
+    "frac": 0.789,
+    "passa": false
+   },
+   "G3": {
+    "dentro": 0,
+    "de": 85,
+    "frac": 0.0,
+    "passa": false
+   },
+   "D3_cosip_por_ano": {
+    "dentro": 16,
+    "de": 85,
+    "frac": 0.188,
+    "passa": false
+   },
+   "D1": {
+    "inclinacao": 1.1252,
+    "intercepto_R$": -12.78,
+    "pis_cofins_implicito": 0.1612
+   },
+   "D2_erro_mediano_por_ano": {
+    "2019": -0.2953,
+    "2020": -0.2045,
+    "2021": -0.231,
+    "2022": -0.1164,
+    "2023": -0.1548,
+    "2024": -0.3122,
+    "2025": -0.2567,
+    "2026": -0.2975
+   },
+   "passa": false
+  }
+ },
+ "fora_da_faixa_primaria": [
+  {
+   "ref": "2018-01",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.037,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0119
+  },
+  {
+   "ref": "2018-02",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0547,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0482
+  },
+  {
+   "ref": "2018-03",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0356,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0287
+  },
+  {
+   "ref": "2018-04",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0299,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0238
+  },
+  {
+   "ref": "2018-05",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0244,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": 0.0211
+  },
+  {
+   "ref": "2018-07",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0551,
+   "marcas": [
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": 0.0222
+  },
+  {
+   "ref": "2018-08",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.025,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.025
+  },
+  {
+   "ref": "2018-10",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0225,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.0225
+  },
+  {
+   "ref": "2018-11",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0431,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0166
+  },
+  {
+   "ref": "2018-12",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0408,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0278
+  },
+  {
+   "ref": "2019-02",
+   "erro": "e_energia_P0",
+   "erro_rel": -0.0438,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0362
+  },
+  {
+   "ref": "2019-05",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0349,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": 0.0327
+  },
+  {
+   "ref": "2019-06",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0363,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.0363
+  },
+  {
+   "ref": "2019-07",
+   "erro": "e_energia_P0",
+   "erro_rel": 0.0408,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": 0.0306
+  },
+  {
+   "ref": "2019-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0725,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0666
+  },
+  {
+   "ref": "2019-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1515,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1381
+  },
+  {
+   "ref": "2019-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2775,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2587
+  },
+  {
+   "ref": "2019-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3811,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.2147
+  },
+  {
+   "ref": "2019-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2695,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2497
+  },
+  {
+   "ref": "2020-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2117,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.1987
+  },
+  {
+   "ref": "2020-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4077,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.1818
+  },
+  {
+   "ref": "2020-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2072,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1939
+  },
+  {
+   "ref": "2020-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2994,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.248
+  },
+  {
+   "ref": "2020-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1113,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0964
+  },
+  {
+   "ref": "2020-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1018,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0867
+  },
+  {
+   "ref": "2020-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0951,
+   "marcas": [
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.078
+  },
+  {
+   "ref": "2020-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1411,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1266
+  },
+  {
+   "ref": "2020-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0815,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0659
+  },
+  {
+   "ref": "2020-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4551,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.1863
+  },
+  {
+   "ref": "2020-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3769,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.2259
+  },
+  {
+   "ref": "2020-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2842,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.26
+  },
+  {
+   "ref": "2021-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3054,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.219
+  },
+  {
+   "ref": "2021-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0716,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0562
+  },
+  {
+   "ref": "2021-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.199,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.1858
+  },
+  {
+   "ref": "2021-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2858,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.2666
+  },
+  {
+   "ref": "2021-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0875,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.0832
+  },
+  {
+   "ref": "2021-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0629,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0556
+  },
+  {
+   "ref": "2021-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0511,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "ciclo|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.0511
+  },
+  {
+   "ref": "2021-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0624,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.0495
+  },
+  {
+   "ref": "2021-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1552,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": -0.1552
+  },
+  {
+   "ref": "2021-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1586,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.1477
+  },
+  {
+   "ref": "2021-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1907,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.1801
+  },
+  {
+   "ref": "2021-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1684,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1576
+  },
+  {
+   "ref": "2022-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1565,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.1455
+  },
+  {
+   "ref": "2022-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2563,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2466
+  },
+  {
+   "ref": "2022-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3462,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.2714
+  },
+  {
+   "ref": "2022-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1555,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1249
+  },
+  {
+   "ref": "2022-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.068,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.03
+  },
+  {
+   "ref": "2022-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1255,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1117
+  },
+  {
+   "ref": "2022-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0959,
+   "marcas": [
+    "ICMS muda no ciclo",
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0521
+  },
+  {
+   "ref": "2022-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0862,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.07
+  },
+  {
+   "ref": "2022-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1473,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1322
+  },
+  {
+   "ref": "2022-10",
+   "erro": "e_total_P1",
+   "erro_rel": 0.0437,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.0437
+  },
+  {
+   "ref": "2022-11",
+   "erro": "e_total_P1",
+   "erro_rel": 0.0453,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.0453
+  },
+  {
+   "ref": "2022-12",
+   "erro": "e_total_P1",
+   "erro_rel": 0.6667,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.6667
+  },
+  {
+   "ref": "2023-01",
+   "erro": "e_total_P1",
+   "erro_rel": 0.0485,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.0485
+  },
+  {
+   "ref": "2023-02",
+   "erro": "e_total_P1",
+   "erro_rel": 0.1261,
+   "marcas": [],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": 0.1261
+  },
+  {
+   "ref": "2023-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1661,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1513
+  },
+  {
+   "ref": "2023-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1969,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.1826
+  },
+  {
+   "ref": "2023-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0839,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.0677
+  },
+  {
+   "ref": "2023-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.0724,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0559
+  },
+  {
+   "ref": "2023-07",
+   "erro": "e_total_P1",
+   "erro_rel": 0.0601,
+   "marcas": [
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": 0.0548
+  },
+  {
+   "ref": "2023-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1719,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1584
+  },
+  {
+   "ref": "2023-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.254,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2419
+  },
+  {
+   "ref": "2023-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4059,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.3962
+  },
+  {
+   "ref": "2023-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.261,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.249
+  },
+  {
+   "ref": "2023-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4546,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4457
+  },
+  {
+   "ref": "2024-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4881,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.4798
+  },
+  {
+   "ref": "2024-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2966,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2852
+  },
+  {
+   "ref": "2024-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4163,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4068
+  },
+  {
+   "ref": "2024-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4714,
+   "marcas": [
+    "ICMS muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4644
+  },
+  {
+   "ref": "2024-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2773,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2656
+  },
+  {
+   "ref": "2024-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2656,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2538
+  },
+  {
+   "ref": "2024-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3022,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2954
+  },
+  {
+   "ref": "2024-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2126,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.1952
+  },
+  {
+   "ref": "2024-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2976,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2969
+  },
+  {
+   "ref": "2024-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4025,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4001
+  },
+  {
+   "ref": "2024-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2973,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2737
+  },
+  {
+   "ref": "2024-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3263,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=none|band_min=True",
+   "erro_rel_nela": -0.3112
+  },
+  {
+   "ref": "2025-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.094,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.0794
+  },
+  {
+   "ref": "2025-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2779,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2662
+  },
+  {
+   "ref": "2025-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2389,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2266
+  },
+  {
+   "ref": "2025-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2624,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2505
+  },
+  {
+   "ref": "2025-05",
+   "erro": "e_total_P1",
+   "erro_rel": 0.0927,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=False",
+   "erro_rel_nela": 0.0856
+  },
+  {
+   "ref": "2025-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2669,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2616
+  },
+  {
+   "ref": "2025-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2103,
+   "marcas": [
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2015
+  },
+  {
+   "ref": "2025-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2105,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2072
+  },
+  {
+   "ref": "2025-09",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2851,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2747
+  },
+  {
+   "ref": "2025-10",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2875,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2695
+  },
+  {
+   "ref": "2025-11",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2328,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2213
+  },
+  {
+   "ref": "2025-12",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3251,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.3091
+  },
+  {
+   "ref": "2026-01",
+   "erro": "e_total_P1",
+   "erro_rel": -0.4154,
+   "marcas": [
+    "bandeira muda no ciclo",
+    "vigencia nova no ciclo",
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4026
+  },
+  {
+   "ref": "2026-02",
+   "erro": "e_total_P1",
+   "erro_rel": -0.496,
+   "marcas": [
+    "consumo alto (quartil de cima)"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.4879
+  },
+  {
+   "ref": "2026-03",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3091,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2981
+  },
+  {
+   "ref": "2026-04",
+   "erro": "e_total_P1",
+   "erro_rel": -0.3163,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.3054
+  },
+  {
+   "ref": "2026-05",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2279,
+   "marcas": [
+    "bandeira muda no ciclo"
+   ],
+   "leitura_mais_perto": "calendario|icms=all|band_min=True",
+   "erro_rel_nela": -0.2207
+  },
+  {
+   "ref": "2026-06",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2911,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2801
+  },
+  {
+   "ref": "2026-07",
+   "erro": "e_total_P1",
+   "erro_rel": -0.1331,
+   "marcas": [
+    "vigencia nova no ciclo"
+   ],
+   "leitura_mais_perto": "ciclo|icms=all|band_min=True",
+   "erro_rel_nela": -0.1331
+  },
+  {
+   "ref": "2026-08",
+   "erro": "e_total_P1",
+   "erro_rel": -0.2769,
+   "marcas": [],
+   "leitura_mais_perto": "calendario|icms=te_only|band_min=True",
+   "erro_rel_nela": -0.2672
+  }
+ ],
+ "erros_relativos_por_fatura": {
+  "2018-01": {
+   "ciclo:e_energia_P0": -0.037,
+   "calendario:e_energia_P0": -0.0119,
+   "ciclo:e_total_P0": -0.0355,
+   "calendario:e_total_P0": -0.0113
+  },
+  "2018-02": {
+   "ciclo:e_energia_P0": -0.0547,
+   "calendario:e_energia_P0": -0.0482,
+   "ciclo:e_total_P0": -0.053,
+   "calendario:e_total_P0": -0.0463
+  },
+  "2018-03": {
+   "ciclo:e_energia_P0": -0.0356,
+   "calendario:e_energia_P0": -0.0287,
+   "ciclo:e_total_P0": -0.0345,
+   "calendario:e_total_P0": -0.0276
+  },
+  "2018-04": {
+   "ciclo:e_energia_P0": -0.0299,
+   "calendario:e_energia_P0": -0.0238,
+   "ciclo:e_total_P0": -0.0291,
+   "calendario:e_total_P0": -0.023
+  },
+  "2018-05": {
+   "ciclo:e_energia_P0": 0.0244,
+   "calendario:e_energia_P0": 0.0211,
+   "ciclo:e_total_P0": 0.0231,
+   "calendario:e_total_P0": 0.0199
+  },
+  "2018-06": {
+   "ciclo:e_energia_P0": 0.0195,
+   "calendario:e_energia_P0": -0.0033,
+   "ciclo:e_total_P0": 0.0183,
+   "calendario:e_total_P0": -0.0031
+  },
+  "2018-07": {
+   "ciclo:e_energia_P0": 0.0551,
+   "calendario:e_energia_P0": 0.0222,
+   "ciclo:e_total_P0": 0.0519,
+   "calendario:e_total_P0": 0.0209
+  },
+  "2018-08": {
+   "ciclo:e_energia_P0": 0.025,
+   "calendario:e_energia_P0": 0.0277,
+   "ciclo:e_total_P0": 0.0237,
+   "calendario:e_total_P0": 0.0262
+  },
+  "2018-09": {
+   "ciclo:e_energia_P0": 0.0163,
+   "calendario:e_energia_P0": 0.0189,
+   "ciclo:e_total_P0": 0.0155,
+   "calendario:e_total_P0": 0.0179
+  },
+  "2018-10": {
+   "ciclo:e_energia_P0": 0.0225,
+   "calendario:e_energia_P0": 0.0254,
+   "ciclo:e_total_P0": 0.0213,
+   "calendario:e_total_P0": 0.0239
+  },
+  "2018-11": {
+   "ciclo:e_energia_P0": -0.0431,
+   "calendario:e_energia_P0": -0.0166,
+   "ciclo:e_total_P0": -0.0414,
+   "calendario:e_total_P0": -0.0158
+  },
+  "2018-12": {
+   "ciclo:e_energia_P0": -0.0408,
+   "calendario:e_energia_P0": -0.0278,
+   "ciclo:e_total_P0": -0.0393,
+   "calendario:e_total_P0": -0.0266
+  },
+  "2019-01": {
+   "ciclo:e_energia_P0": -0.0131,
+   "calendario:e_energia_P0": -0.0024,
+   "ciclo:e_total_P0": -0.0125,
+   "calendario:e_total_P0": -0.0022
+  },
+  "2019-02": {
+   "ciclo:e_energia_P0": -0.0438,
+   "calendario:e_energia_P0": -0.0362,
+   "ciclo:e_total_P0": -0.0423,
+   "calendario:e_total_P0": -0.0346
+  },
+  "2019-03": {
+   "ciclo:e_energia_P0": -0.0153,
+   "calendario:e_energia_P0": -0.0051,
+   "ciclo:e_total_P0": -0.0146,
+   "calendario:e_total_P0": -0.0048
+  },
+  "2019-04": {
+   "ciclo:e_energia_P0": -0.0049,
+   "calendario:e_energia_P0": 0.0052,
+   "ciclo:e_total_P0": -0.0047,
+   "calendario:e_total_P0": 0.0049
+  },
+  "2019-05": {
+   "ciclo:e_energia_P0": 0.0349,
+   "calendario:e_energia_P0": 0.0327,
+   "ciclo:e_total_P0": 0.0328,
+   "calendario:e_total_P0": 0.0307
+  },
+  "2019-06": {
+   "ciclo:e_energia_P0": 0.0363,
+   "calendario:e_energia_P0": 0.0447,
+   "ciclo:e_total_P0": 0.0341,
+   "calendario:e_total_P0": 0.0419
+  },
+  "2019-07": {
+   "ciclo:e_energia_P0": 0.0408,
+   "calendario:e_energia_P0": 0.0306,
+   "ciclo:e_total_P0": 0.0382,
+   "calendario:e_total_P0": 0.0286
+  },
+  "2019-08": {
+   "ciclo:e_total_P1": -0.0725,
+   "calendario:e_total_P1": -0.0666,
+   "ciclo:e_total_P1_cosip_ano": 0.2833,
+   "calendario:e_total_P1_cosip_ano": 0.2641
+  },
+  "2019-09": {
+   "ciclo:e_total_P1": -0.1515,
+   "calendario:e_total_P1": -0.1381,
+   "ciclo:e_total_P1_cosip_ano": 0.1651,
+   "calendario:e_total_P1_cosip_ano": 0.1561
+  },
+  "2019-10": {
+   "ciclo:e_total_P1": -0.2775,
+   "calendario:e_total_P1": -0.2587,
+   "ciclo:e_total_P1_cosip_ano": -0.0789,
+   "calendario:e_total_P1_cosip_ano": -0.0757
+  },
+  "2019-11": {
+   "ciclo:e_total_P1": -0.3811,
+   "calendario:e_total_P1": -0.3775,
+   "ciclo:e_total_P1_cosip_ano": -0.208,
+   "calendario:e_total_P1_cosip_ano": -0.218
+  },
+  "2019-12": {
+   "ciclo:e_total_P1": -0.2695,
+   "calendario:e_total_P1": -0.2497,
+   "ciclo:e_total_P1_cosip_ano": -0.0637,
+   "calendario:e_total_P1_cosip_ano": -0.0591
+  },
+  "2020-01": {
+   "ciclo:e_total_P1": -0.2117,
+   "calendario:e_total_P1": -0.1987,
+   "ciclo:e_total_P1_cosip_ano": -0.01,
+   "calendario:e_total_P1_cosip_ano": -0.01
+  },
+  "2020-02": {
+   "ciclo:e_total_P1": -0.4077,
+   "calendario:e_total_P1": -0.3948,
+   "ciclo:e_total_P1_cosip_ano": -0.2554,
+   "calendario:e_total_P1_cosip_ano": -0.2522
+  },
+  "2020-03": {
+   "ciclo:e_total_P1": -0.2072,
+   "calendario:e_total_P1": -0.1939,
+   "ciclo:e_total_P1_cosip_ano": 0.0102,
+   "calendario:e_total_P1_cosip_ano": 0.0102
+  },
+  "2020-04": {
+   "ciclo:e_total_P1": -0.2994,
+   "calendario:e_total_P1": -0.2877,
+   "ciclo:e_total_P1_cosip_ano": -0.1164,
+   "calendario:e_total_P1_cosip_ano": -0.1164
+  },
+  "2020-05": {
+   "ciclo:e_total_P1": -0.1113,
+   "calendario:e_total_P1": -0.0964,
+   "ciclo:e_total_P1_cosip_ano": 0.1324,
+   "calendario:e_total_P1_cosip_ano": 0.1324
+  },
+  "2020-06": {
+   "ciclo:e_total_P1": -0.1018,
+   "calendario:e_total_P1": -0.0867,
+   "ciclo:e_total_P1_cosip_ano": 0.1445,
+   "calendario:e_total_P1_cosip_ano": 0.1445
+  },
+  "2020-07": {
+   "ciclo:e_total_P1": -0.0951,
+   "calendario:e_total_P1": -0.078,
+   "ciclo:e_total_P1_cosip_ano": 0.154,
+   "calendario:e_total_P1_cosip_ano": 0.1559
+  },
+  "2020-08": {
+   "ciclo:e_total_P1": -0.1411,
+   "calendario:e_total_P1": -0.1266,
+   "ciclo:e_total_P1_cosip_ano": 0.0962,
+   "calendario:e_total_P1_cosip_ano": 0.0962
+  },
+  "2020-09": {
+   "ciclo:e_total_P1": -0.0815,
+   "calendario:e_total_P1": -0.0659,
+   "ciclo:e_total_P1_cosip_ano": 0.1724,
+   "calendario:e_total_P1_cosip_ano": 0.1724
+  },
+  "2020-10": {
+   "ciclo:e_total_P1": -0.4551,
+   "calendario:e_total_P1": -0.4459,
+   "ciclo:e_total_P1_cosip_ano": -0.3116,
+   "calendario:e_total_P1_cosip_ano": -0.3116
+  },
+  "2020-11": {
+   "ciclo:e_total_P1": -0.3769,
+   "calendario:e_total_P1": -0.3663,
+   "ciclo:e_total_P1_cosip_ano": -0.2128,
+   "calendario:e_total_P1_cosip_ano": -0.2128
+  },
+  "2020-12": {
+   "ciclo:e_total_P1": -0.2842,
+   "calendario:e_total_P1": -0.2909,
+   "ciclo:e_total_P1_cosip_ano": -0.1006,
+   "calendario:e_total_P1_cosip_ano": -0.1191
+  },
+  "2021-01": {
+   "ciclo:e_total_P1": -0.3054,
+   "calendario:e_total_P1": -0.2816,
+   "ciclo:e_total_P1_cosip_ano": -0.1584,
+   "calendario:e_total_P1_cosip_ano": -0.1348
+  },
+  "2021-02": {
+   "ciclo:e_total_P1": -0.0716,
+   "calendario:e_total_P1": -0.0562,
+   "ciclo:e_total_P1_cosip_ano": 0.1511,
+   "calendario:e_total_P1_cosip_ano": 0.1537
+  },
+  "2021-03": {
+   "ciclo:e_total_P1": -0.199,
+   "calendario:e_total_P1": -0.1858,
+   "ciclo:e_total_P1_cosip_ano": -0.0199,
+   "calendario:e_total_P1_cosip_ano": -0.0069
+  },
+  "2021-04": {
+   "ciclo:e_total_P1": -0.2858,
+   "calendario:e_total_P1": -0.274,
+   "ciclo:e_total_P1_cosip_ano": -0.1261,
+   "calendario:e_total_P1_cosip_ano": -0.1146
+  },
+  "2021-05": {
+   "ciclo:e_total_P1": -0.0875,
+   "calendario:e_total_P1": -0.0832,
+   "ciclo:e_total_P1_cosip_ano": 0.1288,
+   "calendario:e_total_P1_cosip_ano": 0.1206
+  },
+  "2021-06": {
+   "ciclo:e_total_P1": -0.0629,
+   "calendario:e_total_P1": -0.0556,
+   "ciclo:e_total_P1_cosip_ano": 0.1506,
+   "calendario:e_total_P1_cosip_ano": 0.1456
+  },
+  "2021-07": {
+   "ciclo:e_total_P1": -0.0511,
+   "calendario:e_total_P1": -0.0647,
+   "ciclo:e_total_P1_cosip_ano": 0.151,
+   "calendario:e_total_P1_cosip_ano": 0.1258
+  },
+  "2021-08": {
+   "ciclo:e_total_P1": -0.0624,
+   "calendario:e_total_P1": -0.0495,
+   "ciclo:e_total_P1_cosip_ano": 0.1252,
+   "calendario:e_total_P1_cosip_ano": 0.1273
+  },
+  "2021-09": {
+   "ciclo:e_total_P1": -0.1552,
+   "calendario:e_total_P1": -0.1568,
+   "ciclo:e_total_P1_cosip_ano": 0.0112,
+   "calendario:e_total_P1_cosip_ano": -0.0019
+  },
+  "2021-10": {
+   "ciclo:e_total_P1": -0.1586,
+   "calendario:e_total_P1": -0.1477,
+   "ciclo:e_total_P1_cosip_ano": -0.0107,
+   "calendario:e_total_P1_cosip_ano": 0.0018
+  },
+  "2021-11": {
+   "ciclo:e_total_P1": -0.1907,
+   "calendario:e_total_P1": -0.1801,
+   "ciclo:e_total_P1_cosip_ano": -0.0484,
+   "calendario:e_total_P1_cosip_ano": -0.0381
+  },
+  "2021-12": {
+   "ciclo:e_total_P1": -0.1684,
+   "calendario:e_total_P1": -0.1576,
+   "ciclo:e_total_P1_cosip_ano": -0.0222,
+   "calendario:e_total_P1_cosip_ano": -0.0116
+  },
+  "2022-01": {
+   "ciclo:e_total_P1": -0.1565,
+   "calendario:e_total_P1": -0.1455,
+   "ciclo:e_total_P1_cosip_ano": -0.087,
+   "calendario:e_total_P1_cosip_ano": -0.0981
+  },
+  "2022-02": {
+   "ciclo:e_total_P1": -0.2563,
+   "calendario:e_total_P1": -0.2466,
+   "ciclo:e_total_P1_cosip_ano": -0.195,
+   "calendario:e_total_P1_cosip_ano": -0.2048
+  },
+  "2022-03": {
+   "ciclo:e_total_P1": -0.3462,
+   "calendario:e_total_P1": -0.3377,
+   "ciclo:e_total_P1_cosip_ano": -0.2924,
+   "calendario:e_total_P1_cosip_ano": -0.301
+  },
+  "2022-04": {
+   "ciclo:e_total_P1": -0.1555,
+   "calendario:e_total_P1": -0.1249,
+   "ciclo:e_total_P1_cosip_ano": -0.0843,
+   "calendario:e_total_P1_cosip_ano": -0.0763
+  },
+  "2022-05": {
+   "ciclo:e_total_P1": -0.068,
+   "calendario:e_total_P1": -0.03,
+   "ciclo:e_total_P1_cosip_ano": 0.0562,
+   "calendario:e_total_P1_cosip_ano": 0.0805
+  },
+  "2022-06": {
+   "ciclo:e_total_P1": -0.1255,
+   "calendario:e_total_P1": -0.1117,
+   "ciclo:e_total_P1_cosip_ano": -0.0382,
+   "calendario:e_total_P1_cosip_ano": -0.0522
+  },
+  "2022-07": {
+   "ciclo:e_total_P1": -0.0959,
+   "calendario:e_total_P1": -0.0521,
+   "ciclo:e_total_P1_cosip_ano": 0.042,
+   "calendario:e_total_P1_cosip_ano": 0.0706
+  },
+  "2022-08": {
+   "ciclo:e_total_P1": -0.0862,
+   "calendario:e_total_P1": -0.07,
+   "ciclo:e_total_P1_cosip_ano": 0.0614,
+   "calendario:e_total_P1_cosip_ano": 0.0614
+  },
+  "2022-09": {
+   "ciclo:e_total_P1": -0.1473,
+   "calendario:e_total_P1": -0.1322,
+   "ciclo:e_total_P1_cosip_ano": -0.0516,
+   "calendario:e_total_P1_cosip_ano": -0.0669
+  },
+  "2022-10": {
+   "ciclo:e_total_P1": 0.0437,
+   "calendario:e_total_P1": 0.0622,
+   "ciclo:e_total_P1_cosip_ano": 0.2122,
+   "calendario:e_total_P1_cosip_ano": 0.2122
+  },
+  "2022-11": {
+   "ciclo:e_total_P1": 0.0453,
+   "calendario:e_total_P1": 0.0638,
+   "ciclo:e_total_P1_cosip_ano": 0.2141,
+   "calendario:e_total_P1_cosip_ano": 0.2141
+  },
+  "2022-12": {
+   "ciclo:e_total_P1": 0.6667,
+   "calendario:e_total_P1": 0.6962,
+   "ciclo:e_total_P1_cosip_ano": 0.9358,
+   "calendario:e_total_P1_cosip_ano": 0.9358
+  },
+  "2023-01": {
+   "ciclo:e_total_P1": 0.0485,
+   "calendario:e_total_P1": 0.0671,
+   "ciclo:e_total_P1_cosip_ano": 0.2848,
+   "calendario:e_total_P1_cosip_ano": 0.2848
+  },
+  "2023-02": {
+   "ciclo:e_total_P1": 0.1261,
+   "calendario:e_total_P1": 0.146,
+   "ciclo:e_total_P1_cosip_ano": 0.3799,
+   "calendario:e_total_P1_cosip_ano": 0.3799
+  },
+  "2023-03": {
+   "ciclo:e_total_P1": -0.1661,
+   "calendario:e_total_P1": -0.1513,
+   "ciclo:e_total_P1_cosip_ano": 0.0219,
+   "calendario:e_total_P1_cosip_ano": 0.0219
+  },
+  "2023-04": {
+   "ciclo:e_total_P1": -0.1969,
+   "calendario:e_total_P1": -0.1826,
+   "ciclo:e_total_P1_cosip_ano": -0.0369,
+   "calendario:e_total_P1_cosip_ano": -0.0369
+  },
+  "2023-05": {
+   "ciclo:e_total_P1": -0.0839,
+   "calendario:e_total_P1": -0.0677,
+   "ciclo:e_total_P1_cosip_ano": 0.1226,
+   "calendario:e_total_P1_cosip_ano": 0.1226
+  },
+  "2023-06": {
+   "ciclo:e_total_P1": -0.0724,
+   "calendario:e_total_P1": -0.0559,
+   "ciclo:e_total_P1_cosip_ano": 0.1367,
+   "calendario:e_total_P1_cosip_ano": 0.1367
+  },
+  "2023-07": {
+   "ciclo:e_total_P1": 0.0601,
+   "calendario:e_total_P1": 0.0548,
+   "ciclo:e_total_P1_cosip_ano": 0.2892,
+   "calendario:e_total_P1_cosip_ano": 0.2659
+  },
+  "2023-08": {
+   "ciclo:e_total_P1": -0.1719,
+   "calendario:e_total_P1": -0.1584,
+   "ciclo:e_total_P1_cosip_ano": -0.02,
+   "calendario:e_total_P1_cosip_ano": -0.02
+  },
+  "2023-09": {
+   "ciclo:e_total_P1": -0.254,
+   "calendario:e_total_P1": -0.2419,
+   "ciclo:e_total_P1_cosip_ano": -0.1172,
+   "calendario:e_total_P1_cosip_ano": -0.1172
+  },
+  "2023-10": {
+   "ciclo:e_total_P1": -0.4059,
+   "calendario:e_total_P1": -0.3962,
+   "ciclo:e_total_P1_cosip_ano": -0.297,
+   "calendario:e_total_P1_cosip_ano": -0.297
+  },
+  "2023-11": {
+   "ciclo:e_total_P1": -0.261,
+   "calendario:e_total_P1": -0.249,
+   "ciclo:e_total_P1_cosip_ano": -0.1255,
+   "calendario:e_total_P1_cosip_ano": -0.1255
+  },
+  "2023-12": {
+   "ciclo:e_total_P1": -0.4546,
+   "calendario:e_total_P1": -0.4457,
+   "ciclo:e_total_P1_cosip_ano": -0.3545,
+   "calendario:e_total_P1_cosip_ano": -0.3545
+  },
+  "2024-01": {
+   "ciclo:e_total_P1": -0.4881,
+   "calendario:e_total_P1": -0.4798,
+   "ciclo:e_total_P1_cosip_ano": -0.2625,
+   "calendario:e_total_P1_cosip_ano": -0.2592
+  },
+  "2024-02": {
+   "ciclo:e_total_P1": -0.2966,
+   "calendario:e_total_P1": -0.2852,
+   "ciclo:e_total_P1_cosip_ano": 0.0291,
+   "calendario:e_total_P1_cosip_ano": 0.0199
+  },
+  "2024-03": {
+   "ciclo:e_total_P1": -0.4163,
+   "calendario:e_total_P1": -0.4068,
+   "ciclo:e_total_P1_cosip_ano": -0.1591,
+   "calendario:e_total_P1_cosip_ano": -0.1553
+  },
+  "2024-04": {
+   "ciclo:e_total_P1": -0.4714,
+   "calendario:e_total_P1": -0.4644,
+   "ciclo:e_total_P1_cosip_ano": -0.2403,
+   "calendario:e_total_P1_cosip_ano": -0.2385
+  },
+  "2024-05": {
+   "ciclo:e_total_P1": -0.2773,
+   "calendario:e_total_P1": -0.2656,
+   "ciclo:e_total_P1_cosip_ano": 0.0536,
+   "calendario:e_total_P1_cosip_ano": 0.0443
+  },
+  "2024-06": {
+   "ciclo:e_total_P1": -0.2656,
+   "calendario:e_total_P1": -0.2538,
+   "ciclo:e_total_P1_cosip_ano": 0.0706,
+   "calendario:e_total_P1_cosip_ano": 0.0611
+  },
+  "2024-07": {
+   "ciclo:e_total_P1": -0.3022,
+   "calendario:e_total_P1": -0.2954,
+   "ciclo:e_total_P1_cosip_ano": 0.0153,
+   "calendario:e_total_P1_cosip_ano": 0.0019
+  },
+  "2024-08": {
+   "ciclo:e_total_P1": -0.2126,
+   "calendario:e_total_P1": -0.1952,
+   "ciclo:e_total_P1_cosip_ano": 0.1417,
+   "calendario:e_total_P1_cosip_ano": 0.1366
+  },
+  "2024-09": {
+   "ciclo:e_total_P1": -0.2976,
+   "calendario:e_total_P1": -0.2969,
+   "ciclo:e_total_P1_cosip_ano": 0.0194,
+   "calendario:e_total_P1_cosip_ano": -0.0019
+  },
+  "2024-10": {
+   "ciclo:e_total_P1": -0.4025,
+   "calendario:e_total_P1": -0.4001,
+   "ciclo:e_total_P1_cosip_ano": -0.159,
+   "calendario:e_total_P1_cosip_ano": -0.1621
+  },
+  "2024-11": {
+   "ciclo:e_total_P1": -0.2973,
+   "calendario:e_total_P1": -0.2737,
+   "ciclo:e_total_P1_cosip_ano": -0.0143,
+   "calendario:e_total_P1_cosip_ano": 0.0047
+  },
+  "2024-12": {
+   "ciclo:e_total_P1": -0.3263,
+   "calendario:e_total_P1": -0.3112,
+   "ciclo:e_total_P1_cosip_ano": -0.0377,
+   "calendario:e_total_P1_cosip_ano": -0.0291
+  },
+  "2025-01": {
+   "ciclo:e_total_P1": -0.094,
+   "calendario:e_total_P1": -0.0794,
+   "ciclo:e_total_P1_cosip_ano": 0.2282,
+   "calendario:e_total_P1_cosip_ano": 0.2282
+  },
+  "2025-02": {
+   "ciclo:e_total_P1": -0.2779,
+   "calendario:e_total_P1": -0.2662,
+   "ciclo:e_total_P1_cosip_ano": -0.0424,
+   "calendario:e_total_P1_cosip_ano": -0.0424
+  },
+  "2025-03": {
+   "ciclo:e_total_P1": -0.2389,
+   "calendario:e_total_P1": -0.2266,
+   "ciclo:e_total_P1_cosip_ano": 0.0319,
+   "calendario:e_total_P1_cosip_ano": 0.0319
+  },
+  "2025-04": {
+   "ciclo:e_total_P1": -0.2624,
+   "calendario:e_total_P1": -0.2505,
+   "ciclo:e_total_P1_cosip_ano": -0.0218,
+   "calendario:e_total_P1_cosip_ano": -0.0218
+  },
+  "2025-05": {
+   "ciclo:e_total_P1": 0.0927,
+   "calendario:e_total_P1": 0.1031,
+   "ciclo:e_total_P1_cosip_ano": 0.4788,
+   "calendario:e_total_P1_cosip_ano": 0.4717
+  },
+  "2025-06": {
+   "ciclo:e_total_P1": -0.2669,
+   "calendario:e_total_P1": -0.2616,
+   "ciclo:e_total_P1_cosip_ano": -0.0355,
+   "calendario:e_total_P1_cosip_ano": -0.0417
+  },
+  "2025-07": {
+   "ciclo:e_total_P1": -0.2103,
+   "calendario:e_total_P1": -0.2015,
+   "ciclo:e_total_P1_cosip_ano": 0.0531,
+   "calendario:e_total_P1_cosip_ano": 0.0499
+  },
+  "2025-08": {
+   "ciclo:e_total_P1": -0.2105,
+   "calendario:e_total_P1": -0.2072,
+   "ciclo:e_total_P1_cosip_ano": 0.048,
+   "calendario:e_total_P1_cosip_ano": 0.0396
+  },
+  "2025-09": {
+   "ciclo:e_total_P1": -0.2851,
+   "calendario:e_total_P1": -0.2747,
+   "ciclo:e_total_P1_cosip_ano": -0.0767,
+   "calendario:e_total_P1_cosip_ano": -0.0767
+  },
+  "2025-10": {
+   "ciclo:e_total_P1": -0.2875,
+   "calendario:e_total_P1": -0.2695,
+   "ciclo:e_total_P1_cosip_ano": -0.0777,
+   "calendario:e_total_P1_cosip_ano": -0.0701
+  },
+  "2025-11": {
+   "ciclo:e_total_P1": -0.2328,
+   "calendario:e_total_P1": -0.2213,
+   "ciclo:e_total_P1_cosip_ano": 0.0211,
+   "calendario:e_total_P1_cosip_ano": 0.0211
+  },
+  "2025-12": {
+   "ciclo:e_total_P1": -0.3251,
+   "calendario:e_total_P1": -0.3091,
+   "ciclo:e_total_P1_cosip_ano": -0.1185,
+   "calendario:e_total_P1_cosip_ano": -0.1128
+  },
+  "2026-01": {
+   "ciclo:e_total_P1": -0.4154,
+   "calendario:e_total_P1": -0.4026,
+   "ciclo:e_total_P1_cosip_ano": -0.1584,
+   "calendario:e_total_P1_cosip_ano": -0.1548
+  },
+  "2026-02": {
+   "ciclo:e_total_P1": -0.496,
+   "calendario:e_total_P1": -0.4879,
+   "ciclo:e_total_P1_cosip_ano": -0.2704,
+   "calendario:e_total_P1_cosip_ano": -0.2704
+  },
+  "2026-03": {
+   "ciclo:e_total_P1": -0.3091,
+   "calendario:e_total_P1": -0.2981,
+   "ciclo:e_total_P1_cosip_ano": 0.0046,
+   "calendario:e_total_P1_cosip_ano": 0.0046
+  },
+  "2026-04": {
+   "ciclo:e_total_P1": -0.3163,
+   "calendario:e_total_P1": -0.3054,
+   "ciclo:e_total_P1_cosip_ano": -0.0104,
+   "calendario:e_total_P1_cosip_ano": -0.0104
+  },
+  "2026-05": {
+   "ciclo:e_total_P1": -0.2279,
+   "calendario:e_total_P1": -0.2207,
+   "ciclo:e_total_P1_cosip_ano": 0.1205,
+   "calendario:e_total_P1_cosip_ano": 0.1155
+  },
+  "2026-06": {
+   "ciclo:e_total_P1": -0.2911,
+   "calendario:e_total_P1": -0.2801,
+   "ciclo:e_total_P1_cosip_ano": 0.0232,
+   "calendario:e_total_P1_cosip_ano": 0.0232
+  },
+  "2026-07": {
+   "ciclo:e_total_P1": -0.1331,
+   "calendario:e_total_P1": -0.1544,
+   "ciclo:e_total_P1_cosip_ano": 0.2232,
+   "calendario:e_total_P1_cosip_ano": 0.1894
+  },
+  "2026-08": {
+   "ciclo:e_total_P1": -0.2769,
+   "calendario:e_total_P1": -0.2672,
+   "ciclo:e_total_P1_cosip_ano": -0.0041,
+   "calendario:e_total_P1_cosip_ano": -0.0041
+  }
+ },
+ "tempo_s": 209.2,
+ "livro_x_legado_B1_convencional": {
+  "vigencias_comuns": 21,
+  "dif_max_tusd": 0.0,
+  "dif_max_te": 0.0
+ },
+ "diagnostico_pos_hoc_sem_duplicatas": false,
+ "rodada_pos_conserto_da_biblioteca": true
+}

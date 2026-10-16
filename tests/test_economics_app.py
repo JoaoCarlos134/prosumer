@@ -164,6 +164,28 @@ def test_from_aneel_builds_a_book_with_its_licence() -> None:
         brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.8, pis_cofins=0.3, get=from_fixture())
 
 
+def test_from_aneel_takes_tax_rates_that_change_by_date() -> None:
+    # Parana's ICMS changed twice (the real-bill pilot of 2026-10-16 had to replace the book's tax table)
+    icms = {"2018-01-01": 0.29, "2022-06-23": 0.18, "2024-03-18": 0.19}
+    book = brazil.TariffBook.from_aneel("COPEL-DIS", icms=icms, pis_cofins=0.0925, get=from_fixture())
+    assert book.tax("2021-05-10") == pytest.approx((0.29, 0.0925))
+    assert book.tax("2022-06-23") == pytest.approx((0.18, 0.0925))
+    assert book.tax("2026-08-01") == pytest.approx((0.19, 0.0925))
+    with pytest.raises(ValueError, match="No tax rate"):
+        book.tax("2017-12-31")  # before the first date given: no guess
+    both = brazil.TariffBook.from_aneel(
+        "COPEL-DIS", icms=icms, pis_cofins={"2018-01-01": 0.0925, "2023-01-01": 0.08}, get=from_fixture()
+    )
+    assert both.tax("2022-12-31") == pytest.approx((0.18, 0.0925))
+    assert both.tax("2023-01-01") == pytest.approx((0.18, 0.08))
+    notes = next(p.notes for p in both.provenance if "typed by the user" in p.source)
+    assert "29.00% from 2018-01-01" in notes and "8.00% from 2023-01-01" in notes
+    with pytest.raises(ValueError, match="ICMS"):  # every combination is checked
+        brazil.TariffBook.from_aneel(
+            "COPEL-DIS", icms={"2018-01-01": 0.95}, pis_cofins=0.1, get=from_fixture()
+        )
+
+
 def test_brazilian_conventional_bill_in_analyze_by_hand() -> None:
     """Copel B1 conventional from 24/6/2026 (TUSD 457.17 + TE 310.85 R$/MWh), August 2026 yellow flag (18.85),
     ICMS 19% and PIS/COFINS 9.25% typed: 744 kWh x 0.78687 / 0.7175 R$/kWh."""

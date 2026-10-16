@@ -725,8 +725,9 @@ commit uma vez, e so adicionar de novo.
 1. ~~Duplicatas da ANEEL~~ **consertado 16/10** em `io.aneel.search` (registros iguais a menos do `_id` ficam uma
    vez; vale para tarifas, bandeiras e componentes), teste `test_records_repeated_with_a_new_id_are_kept_once`
    (vermelho antes, verde depois). Falta: o 2o defeito (imposto na energia compensada x minimo), so com faturas
-   detalhadas (PDF); `from_aneel` aceita uma so aliquota de ICMS/PIS: aceitar tabela por data; refazer o piloto da
-   fatura sem o modo pos-hoc.
+   detalhadas (PDF; nao ha nenhuma nesta maquina: pedir ao dono); ~~aliquota unica no `from_aneel`~~ **feito 16/10**
+   (`icms`/`pis_cofins` aceitam `{primeiro dia: aliquota}`; teste `test_from_aneel_takes_tax_rates_that_change_by_date`);
+   refazer o piloto da fatura sem o modo pos-hoc (agora sem duplicatas e com o ICMS do PR por data).
    Depois: rodar o revisor (`work-reviewer`) sobre `9d3ade0..HEAD`.
 2. Decisao do usuario: tolerancia do `test_forecast_parity[usinas-C]` entre maquinas (ver acima).
 3. Decisao do usuario: dividir este CLAUDE.md (~32k tokens lidos a cada sessao) em regras + estado, historico datado

@@ -352,8 +352,8 @@ class TariffBook:
         cls,
         distributor: str,
         *,
-        icms: float,
-        pis_cofins: float,
+        icms: float | Mapping[str | pd.Timestamp, float],
+        pis_cofins: float | Mapping[str | pd.Timestamp, float],
         subgroups: Iterable[str] = ("B1",),
         fio_b_years: Iterable[int] = (),
         extend_last: bool = False,
@@ -368,13 +368,15 @@ class TariffBook:
         it is skipped with a note in `notes`; any other missing year raises.
 
         `icms` and `pis_cofins` (fractions, e.g. 0.19 and 0.0925) are the rates the person reads on a bill:
-        no state table is built in (the author's decision of 2026-10-12), and they are applied to every
-        date. The book's provenance lists the ANEEL datasets (ODbL 1.0: attribute ANEEL; a redistributed
-        derived database stays under ODbL) and the typed rates."""
+        no state table is built in (the author's decision of 2026-10-12). Each is one number, applied to
+        every date, or a schedule `{first day: rate}` (e.g. Parana's ICMS `{"2018-01-01": 0.29,
+        "2022-06-23": 0.18, "2024-03-18": 0.19}`), each rate in force until the next; a day before the first
+        date of a schedule has no rate and raises. The book's provenance lists the ANEEL datasets (ODbL 1.0:
+        attribute ANEEL; a redistributed derived database stays under ODbL) and the typed rates."""
         from ..io import aneel  # here: io is a reader layer, economics must import without it
         from ..provenance import of
 
-        gross_up(icms, pis_cofins)  # validates the rates
+        taxes = _tax_table(icms, pis_cofins)  # validates every combination of the rates
         t = aneel.fetch_tariffs(distributor, subgroups=subgroups, get=get)
         b = aneel.fetch_bandeiras(get=get)
         frames: list[pd.DataFrame] = [t, b]
@@ -393,7 +395,6 @@ class TariffBook:
         if comps:
             frames += comps
             fio = pd.concat([aneel.fio_b(c) for c in comps], ignore_index=True)
-        taxes = pd.DataFrame({"start": ["1900-01-01"], "icms": [icms], "pis_cofins": [pis_cofins]})
         prov: list[Provenance] = []
         for f in frames:
             p = of(f)
@@ -403,8 +404,8 @@ class TariffBook:
             Provenance(
                 source="ICMS and PIS/COFINS rates typed by the user",
                 license="n/a",
-                notes=f"ICMS {icms:.2%}, PIS/COFINS {pis_cofins:.2%}, applied to every date; not checked "
-                "against a bill",
+                notes=f"ICMS {_describe(icms)}, PIS/COFINS {_describe(pis_cofins)}; "
+                "not checked against a bill",
             )
         )
         return cls(t, b, taxes, fio, distributor, prov, extend_last=extend_last, notes=notes)
@@ -529,6 +530,38 @@ def gross_up(icms: float, pis_cofins: float) -> float:
     if not 0 <= icms + pis_cofins < 1:
         raise ValueError("ICMS + PIS/COFINS must be in [0, 1)")
     return 1.0 / (1.0 - icms - pis_cofins)
+
+
+Rate = float | Mapping[str | pd.Timestamp, float]
+
+
+def _schedule(rate: Rate) -> pd.Series:
+    """A rate as a series indexed by the first day it applies (one number: from 1900, i.e. always)."""
+    if isinstance(rate, Mapping):
+        if not rate:
+            raise ValueError("A tax schedule needs at least one {first day: rate}")
+        s = pd.Series({pd.Timestamp(k).normalize(): float(v) for k, v in rate.items()})
+        return s.sort_index()
+    return pd.Series({pd.Timestamp("1900-01-01"): float(rate)})
+
+
+def _tax_table(icms: Rate, pis_cofins: Rate) -> pd.DataFrame:
+    """`TariffBook.taxes` (`start, icms, pis_cofins`) from two rates or schedules: one row at every date
+    either changes, from the later of their first dates (before it one of them is unknown)."""
+    a, b = _schedule(icms), _schedule(pis_cofins)
+    first = max(a.index[0], b.index[0])
+    starts = sorted({first, *(d for d in [*a.index, *b.index] if d > first)})
+    rows = [(d, float(a[a.index <= d].iloc[-1]), float(b[b.index <= d].iloc[-1])) for d in starts]
+    for _, i, p in rows:
+        gross_up(i, p)
+    return pd.DataFrame(rows, columns=["start", "icms", "pis_cofins"])
+
+
+def _describe(rate: Rate) -> str:
+    """`19.00% on every date`, or `29.00% from 2018-01-01, 18.00% from 2022-06-23`."""
+    if not isinstance(rate, Mapping):
+        return f"{float(rate):.2%} on every date"
+    return ", ".join(f"{v:.2%} from {d:%Y-%m-%d}" for d, v in _schedule(rate).items())
 
 
 def tariff(

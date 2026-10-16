@@ -185,7 +185,9 @@ def _check(series: EnergySeries) -> EnergySeries:
         raise ValueError(f"Diagnostics are for generation series, not {series.quantity!r}")
     s = series.to_kwh()
     if s.freq != "h":
-        raise ValueError(f"Diagnostics need an hourly series, not freq={s.freq!r}; resample first")
+        raise ValueError(
+            f"Diagnostics need an hourly series, not freq={s.freq!r}; use `series.resample('h')`"
+        )
     return s
 
 

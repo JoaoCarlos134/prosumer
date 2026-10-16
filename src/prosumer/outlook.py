@@ -71,7 +71,7 @@ import numpy as np
 import pandas as pd
 
 from . import physics
-from .contracts import EnergySeries
+from .contracts import EnergySeries, step
 from .diagnostics import (
     CLEAR_QUANTILE,
     CLEAR_RATIO,
@@ -244,9 +244,10 @@ def forecast_ahead(
         clear_quantile=clear_quantile,
         clear_ratio=clear_ratio,
     ).check()
-    s = series.to_kwh()
+    resampled = series.freq != "h" and step(series.freq) < pd.Timedelta(hours=1)
+    s = series.resample("h") if resampled else series.to_kwh()
     if s.freq != "h":
-        raise ValueError(f"The outlook needs an hourly series, not freq={s.freq!r}; resample first")
+        raise ValueError(f"The outlook needs hourly data or finer, not freq={s.freq!r}")
     if s.quantity == "generation" and site is None:
         raise ValueError("A generation forecast needs the site (latitude, longitude)")
     valid = s.frame.loc[s.frame["valid"]]
@@ -255,6 +256,10 @@ def forecast_ahead(
     last = valid["ds"].max()
     w = None if weather is None else _wide(weather, s.tz)
     notes: list[str] = []
+    if resampled:
+        notes.append(
+            f"The series came in steps of {series.freq}: summed into hours (11/12 of an hour needed)."
+        )
     first = (last + pd.Timedelta(hours=1)).normalize() + (
         pd.Timedelta(days=1) if (last + pd.Timedelta(hours=1)).hour else pd.Timedelta(0)
     )

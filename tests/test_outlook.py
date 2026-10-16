@@ -288,3 +288,18 @@ def test_kwp_share_and_implausible_limit_are_arguments() -> None:
         _series(_plant(0.8)), days=3, site=SITE, weather=w, tilt=15, azimuth=20, implausible=(3.0, 50.0)
     )
     assert lax.daily["n_models"].tolist() == [2, 2, 2]  # 2.5 x clear sky passes a limit of 3 x
+
+
+def test_a_15_minute_logger_is_summed_into_hours() -> None:
+    """Most meters and loggers outside our samples are 15-minute or finer: the outlook takes them as is."""
+    f = _plant(0.8, days=200)
+    quarters = []
+    for k in range(4):  # each hour split into four equal quarters
+        q = f.assign(ds=f["ds"] + pd.Timedelta(minutes=15 * k), y=f["y"] / 4)
+        quarters.append(q)
+    q = pd.concat(quarters, ignore_index=True)
+    s15 = EnergySeries.from_dataframe(q, unit="kWh", quantity="generation", tz=TZ, freq="15min")
+    o15 = outlook.forecast_ahead(s15, days=3, site=SITE, tilt=15, azimuth=20)
+    o1 = outlook.forecast_ahead(_series(f), days=3, site=SITE, tilt=15, azimuth=20)
+    pd.testing.assert_frame_equal(o15.daily, o1.daily)
+    assert any("steps of 15min: summed into hours" in n for n in o15.notes)

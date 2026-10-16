@@ -206,3 +206,48 @@ def test_wh_to_kwh_is_always_one_thousandth(n: int, value: float) -> None:
     )
     s = EnergySeries.from_dataframe(q, unit="Wh", quantity="generation", tz="UTC", freq="h")
     assert np.allclose(s.to_kwh().frame["y"].to_numpy(), value / 1000.0)
+
+
+# ---------------------------------------------------------------- resample (sub-hourly meters and loggers)
+def _quarter_hours(values: list[float], unit: str = "Wh", valid: list[bool] | None = None) -> EnergySeries:
+    ds = pd.date_range("2024-05-01 10:00", periods=len(values), freq="15min")
+    f = pd.DataFrame({"unique_id": "m", "ds": ds, "y": values})
+    if valid is not None:
+        f["valid"] = valid
+    return EnergySeries.from_dataframe(f, unit=unit, quantity="consumption", tz="Europe/Lisbon", freq="15min")
+
+
+def test_resample_sums_the_energy_into_hours() -> None:
+    s = _quarter_hours([100.0, 200.0, 300.0, 400.0, 50.0, 50.0, 50.0, 50.0]).resample("h")
+    assert s.freq == "h" and s.unit == "kWh"
+    assert s.frame["y"].tolist() == pytest.approx([1.0, 0.2])
+    assert s.frame["valid"].all()
+
+
+def test_resample_power_is_energy_over_the_step() -> None:
+    # 2 kW for an hour, logged every 15 minutes
+    s = _quarter_hours([2.0] * 4, unit="kW").resample("h")
+    assert s.frame["y"].tolist() == pytest.approx([2.0])
+
+
+def test_resample_hour_with_a_missing_quarter_is_invalid() -> None:
+    s = _quarter_hours([100.0] * 8, valid=[True, True, False, True] + [True] * 4).resample("h")
+    assert s.frame["valid"].tolist() == [False, True]
+    assert np.isnan(s.frame["y"].iloc[0])  # never a partial sum
+    lax = _quarter_hours([100.0] * 8, valid=[True, True, False, True] + [True] * 4).resample(
+        "h", min_coverage=0.7
+    )
+    assert lax.frame["valid"].tolist() == [True, True]
+
+
+def test_resample_refuses_what_it_cannot_do() -> None:
+    with pytest.raises(ContractError, match="divide"):
+        _quarter_hours([1.0] * 8).resample("20min")
+    with pytest.raises(ContractError, match="divide"):
+        _quarter_hours([1.0] * 8).resample("5min")
+    f = pd.DataFrame(
+        {"unique_id": "t", "ds": pd.date_range("2024-01-01", periods=4, freq="15min"), "y": 20.0}
+    )
+    temp = EnergySeries.from_dataframe(f, unit="kWh", quantity="temperature", tz="UTC", freq="15min")
+    with pytest.raises(ContractError, match="not energy"):
+        temp.resample("h")

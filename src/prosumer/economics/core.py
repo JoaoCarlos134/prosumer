@@ -203,7 +203,7 @@ def flows(consumption: EnergySeries, generation: EnergySeries | None = None) -> 
 def _hourly_kwh(s: EnergySeries, what: str) -> pd.DataFrame:
     s = s.to_kwh()
     if s.freq != "h":
-        raise ValueError(f"The {what} must be hourly, not freq={s.freq!r}; resample first")
+        raise ValueError(f"The {what} must be hourly, not freq={s.freq!r}; use `series.resample('h')`")
     f = s.frame[["unique_id", "ds", "y", "valid"]].rename(columns={"valid": "valid_c"})
     f["valid_c"] = f["valid_c"].astype(bool) & f["y"].notna()
     return f

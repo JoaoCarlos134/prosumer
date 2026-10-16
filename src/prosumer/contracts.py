@@ -168,6 +168,30 @@ class EnergySeries:
         x["y"] = x["y"] * factor
         return replace(self, frame=x, unit="kWh")
 
+    def resample(self, freq: str = "h", *, min_coverage: float = 11 / 12) -> EnergySeries:
+        """The energy in longer steps (kWh), e.g. a 15-minute meter or a 1-minute logger to hourly.
+
+        Each output step is the sum of the steps inside it; it is valid when the valid steps cover at least
+        `min_coverage` of it (11/12 as the readers: one 5-minute gap per hour; with 15-minute data every
+        quarter must be there), otherwise NaN and invalid. The step must divide the new one. Only energy
+        (generation, consumption): an average irradiance or temperature is not a sum.
+        """
+        if self.quantity not in ("generation", "consumption"):
+            raise ContractError(f"resample sums energy; {self.quantity!r} is not energy")
+        native, target = step(self.freq), step(freq)
+        if target == native:
+            return self.to_kwh()
+        if target < native or target % native != pd.Timedelta(0):
+            raise ContractError(f"Cannot resample steps of {self.freq!r} into {freq!r}: it must divide it")
+        from .io._tables import aggregate  # here: io imports this module
+
+        s = self.to_kwh()
+        frame = s.frame.assign(y=s.frame["y"].where(s.frame["valid"]))[["unique_id", "ds", "y"]]
+        out = aggregate(frame, native=native, freq=freq, min_coverage=min_coverage)
+        return EnergySeries.from_dataframe(
+            out, unit="kWh", quantity=self.quantity, tz=self.tz, freq=freq, provenance=self.provenance
+        )
+
     def valid_only(self) -> pd.DataFrame:
         """Frame with only the rows the meter logged. Use it when NaN must not become zero."""
         return self.frame.loc[self.frame["valid"]].reset_index(drop=True)

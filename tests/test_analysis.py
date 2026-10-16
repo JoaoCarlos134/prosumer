@@ -90,10 +90,18 @@ def test_too_short_skips_the_forecast_check_but_keeps_quality() -> None:
     assert any("skipped" in n for n in r.notes)
 
 
-def test_hourly_only() -> None:
-    s = data.example_house(n_series=1, days=20, freq="30min")
-    with pytest.raises(ValueError, match="hourly"):
-        analyze(s)
+def test_sub_hourly_data_is_summed_into_hours_with_a_note() -> None:
+    """A 30-minute meter used to be refused ("resample first", with no way to do it in the library)."""
+    s = data.example_house(n_series=1, days=40, freq="30min")
+    r = analyze(s, test_days=14)
+    hourly = analyze(s.resample("h"), test_days=14)
+    assert r.forecast is not None and hourly.forecast is not None
+    pd.testing.assert_frame_equal(r.forecast, hourly.forecast)
+    assert any("came in steps of 30min: summed into hours" in n for n in r.notes)
+    assert r.summary["freq"] == "h"
+    daily = data.example_house(n_series=1, days=40).resample("D")
+    with pytest.raises(ValueError, match="hourly data or finer"):
+        analyze(daily)
 
 
 def test_runs() -> None:

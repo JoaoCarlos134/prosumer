@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 from . import diagnostics, metrics, physics
-from .contracts import EnergySeries
+from .contracts import EnergySeries, step
 from .diagnostics import Diagnosis, diagnose
 from .economics.core import Pricing, Tariff, as_pricing
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
@@ -358,9 +358,13 @@ def analyze(
         "clock_weather_options",
         skip=("series", "weather", "column"),
     )
+    early: list[str] = []  # notes from before the quality section
+    series = _to_hourly(series, "series", early)
+    consumption = _to_hourly(consumption, "consumption", early) if consumption is not None else None
+    generation = _to_hourly(generation, "generation", early) if generation is not None else None
     s = series.to_kwh()
     if s.freq != "h":
-        raise ValueError(f"The day-ahead check needs an hourly series, not freq={s.freq!r}; resample first")
+        raise ValueError(f"The day-ahead check needs hourly data or finer, not freq={s.freq!r}")
     frame = s.frame
     end = frame.loc[frame["valid"], "ds"].max().normalize()
     test_start = end - pd.Timedelta(days=test_days - 1)
@@ -374,6 +378,7 @@ def analyze(
         "end": frame["ds"].max(),
     }
     quality, notes = _quality(s)
+    notes = [*early, *notes]
     clock = None
     if s.quantity == "generation" and site is not None:
         clock = clock_offset(s, site, **clock_kw)
@@ -657,6 +662,18 @@ def analyze(
 
 # ---------------------------------------------------------------------- pieces
 _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
+
+
+def _to_hourly(x: EnergySeries, what: str, notes: list[str]) -> EnergySeries:
+    """A sub-hourly series (15-minute meter, 1-minute logger) summed into hours, with a note; anything else
+    as it is (an hourly one, or a coarser one that the hourly checks refuse with their own message)."""
+    if x.freq == "h" or step(x.freq) >= pd.Timedelta(hours=1):
+        return x
+    notes.append(
+        f"The {what} came in steps of {x.freq}: summed into hours (an hour counts when at least 11/12 of it "
+        "was measured); everything here is hourly."
+    )
+    return x.resample("h")
 
 
 def _options(

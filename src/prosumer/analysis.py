@@ -28,14 +28,14 @@ show what is missing instead of silently leaving it out.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
-from . import metrics, physics
+from . import diagnostics, metrics, physics
 from .contracts import EnergySeries
 from .diagnostics import Diagnosis, diagnose
 from .economics.core import Pricing, Tariff, as_pricing
@@ -298,6 +298,7 @@ def analyze(
     economics: Tariff | Pricing | None = None,
     consumption: EnergySeries | None = None,
     generation: EnergySeries | None = None,
+    diagnostics_options: Mapping[str, Any] | None = None,
 ) -> Report:
     """Quality and a day-ahead forecast check of `series`, as one report.
 
@@ -322,7 +323,10 @@ def analyze(
 
     Generation with a `site` also gets the diagnostics (`diagnostics.diagnose`: clear days, roof orientation,
     clear-day performance index and its change points, `Report.diagnostics`); `kwp` (one value, or per
-    `unique_id`) turns the index into a performance ratio.
+    `unique_id`) turns the index into a performance ratio. `diagnostics_options`: the tuning keyword arguments
+    of `diagnose` by name (e.g. `{"tilts": np.arange(0, 91, 5.0)}` for facade panels, `{"penalty": 2.0}`);
+    with the defaults of the penalty and of the clear-day rule, chosen on the project's own sites, a note says
+    so.
 
     `economics`: how the household pays, as an `economics.Tariff` (net metering), an `economics.Plan` (a
     tariff and the export scheme: net metering, net billing or self-consumption) or an
@@ -337,6 +341,7 @@ def analyze(
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")
+    knobs = diagnostics._knobs(diagnostics_options or {})  # checked before any work
     s = series.to_kwh()
     if s.freq != "h":
         raise ValueError(f"The day-ahead check needs an hourly series, not freq={s.freq!r}; resample first")
@@ -371,8 +376,9 @@ def analyze(
     diag = None
     base_pending = dict(PENDING)
     if s.quantity == "generation" and site is not None:
-        diag = diagnose(s, site, kwp=kwp)
+        diag = diagnose(s, site, kwp=kwp, **dict(diagnostics_options or {}))
         notes.extend(diag.notes)
+        notes.extend(_diagnostics_defaults_note(diag, knobs))
         base_pending["diagnostics"] = (
             "soiling vs shading and string faults need DC or 5-minute data (not yet)"
         )
@@ -618,6 +624,33 @@ def analyze(
 # ---------------------------------------------------------------------- pieces
 _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
 _PROVENANCE_SHOWN = ("role", "name", "license", "sends_data", "source", "citation", "retrieved", "conditions")
+
+
+def _diagnostics_defaults_note(diag: Diagnosis, knobs: diagnostics._Knobs) -> list[str]:
+    """One note when the diagnostics ran with the settings chosen on the project's own sites (the
+    change-point penalty, the clear-day rule): elsewhere they are an assumption, and the person should
+    know."""
+    if diag.index.empty:  # no clear-day index: neither setting shaped a result
+        return []
+    default = diagnostics._DEFAULT
+    plants = "two plants in Parana (Brazil)"
+    used = []
+    if knobs.penalty == default.penalty:
+        used.append(
+            f"the change-point penalty ({default.penalty:g} x the BIC's) was chosen on {plants} and ten PV "
+            "houses in Ireland"
+        )
+        plants = "the same plants"
+    clear = ("clear_window_days", "clear_quantile", "clear_ratio")
+    if all(getattr(knobs, c) == getattr(default, c) for c in clear):
+        used.append(f"the clear-day rule was set by hand on {plants}")
+    if not used:
+        return []
+    it = "they are assumptions" if len(used) > 1 else "it is an assumption"
+    return [
+        f"Diagnostics: {', and '.join(used)}; elsewhere {it} (`analyze(diagnostics_options=...)` changes "
+        f"{'them' if len(used) > 1 else 'it'})."
+    ]
 
 
 _Entry = tuple[str, str, Provenance, bool]  # role, name, provenance, sends the data out

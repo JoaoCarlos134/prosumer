@@ -31,12 +31,31 @@ plane poorly (Curitiba R2 0.81) and leaves a seasonal residual that the segmenta
 (Curitiba: +27% in February 2024, +19% in December 2024), and step sizes there are not reliable; the notes
 then call every step uncertain and report no trend or loss. Telling soiling from shading or a string fault
 needs sub-hourly or DC data (not here yet).
+
+**Tuning.** Every threshold below is a keyword argument of `diagnose` (and of `roof_orientation` and
+`performance_index`; `analyze(diagnostics_options={...})` passes them through), with the module constant as
+its default. Where each default comes from:
+
+- CHOSEN on the project's own sites: `penalty` (the factor sweep above, on the two plants in Parana, Brazil,
+  checked for false alarms on the ten PV houses of Dingle, Ireland). Elsewhere it is an assumption; no site
+  that did not serve to choose it has checked it yet.
+- SET BY HAND on those two plants for the pilot, never swept and not checked elsewhere: the clear-day rule
+  (`clear_window_days`, `clear_quantile`, `clear_ratio`), the segment size (`min_segment_days`,
+  `max_breaks`) and `good_fit_r2` (the two plants fall either side of it: Cascavel 0.93, Curitiba 0.81).
+- Generic, not fitted to any data: what is worth a note (`step_note_pct`, `trend_note_pct`), the search grid
+  (`tilts` 0-60 degrees, `azimuths` the whole compass), `dead_level` and `roof_passes`.
+
+The default tilt grid stops at 60 degrees: panels on a facade or a balcony rail (up to 90) need a wider one,
+e.g. `tilts=np.arange(0, 91, 5.0)`. Whatever the grid, a fit on its steepest tilt is reported as on the edge
+(not identified; `Diagnosis.orientation.edge`), except at 90 degrees, which, like 0 (flat), is a physical
+limit and so a possible answer. Widen the grid for panels that may be that steep, not to chase a better R2.
 """
 
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass, field
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field, fields
 from typing import Any
 
 import numpy as np
@@ -45,19 +64,85 @@ import pandas as pd
 from . import physics
 from .contracts import EnergySeries
 
-CLEAR_WINDOW_DAYS = 31
-CLEAR_QUANTILE = 0.9
-CLEAR_RATIO = 0.9
-MIN_SEGMENT_DAYS = 15  # clear days per segment (about one to two months)
-MAX_BREAKS = 11
-PENALTY = 3.0  # multiplies the BIC penalty: the daily index is not independent noise (see `changepoints`)
-GOOD_FIT_R2 = 0.85  # below it a single plane does not describe the roof well
-STEP_NOTE_PCT = 5.0  # steps smaller than this are not worth a note
-TREND_NOTE_PCT = 5.0  # %/year
-TILTS = np.arange(0, 61, 5.0)
-DEAD_LEVEL = 0.05  # relative level below which a stretch counts as dead in the refit
-ROOF_PASSES = 4  # refits of the orientation with the segment levels divided out
-AZIMUTHS = np.arange(0, 360, 10.0)  # compass: the whole circle (north-facing roofs in the south)
+# The defaults of the tuning arguments (see "Tuning" above for where each comes from).
+CLEAR_WINDOW_DAYS = 31  # set by hand on the two plants: days of the centred window of the clear-day rule
+CLEAR_QUANTILE = 0.9  # set by hand on the two plants: the window's quantile a clear day is compared with
+CLEAR_RATIO = 0.9  # set by hand on the two plants: a clear day reaches this share of that quantile
+MIN_SEGMENT_DAYS = 15  # set by hand: clear days per segment (about one to two months)
+MAX_BREAKS = 11  # set by hand: up to 12 segments
+# CHOSEN on the two plants and the ten Dingle PV houses (factors 1, 2, 3, 4, 6 swept, see above): multiplies
+# the BIC penalty, the daily index is not independent noise (see `changepoints`)
+PENALTY = 3.0
+# set by hand (Cascavel 0.93, Curitiba 0.81 fall either side): below it one plane does not describe the roof
+GOOD_FIT_R2 = 0.85
+STEP_NOTE_PCT = 5.0  # generic: steps smaller than this are not worth a note
+TREND_NOTE_PCT = 5.0  # generic: %/year
+TILTS = np.arange(0, 61, 5.0)  # generic grid; no facade or balcony panels (see "Tuning")
+DEAD_LEVEL = 0.05  # generic: relative level below which a stretch counts as dead in the refit
+ROOF_PASSES = 4  # generic: refits of the orientation with the segment levels divided out
+AZIMUTHS = np.arange(0, 360, 10.0)  # generic: the whole compass (north-facing roofs in the south)
+VERTICAL = 90.0  # a fit at this tilt is not "on the edge": nothing steeper exists
+
+
+@dataclass(frozen=True)
+class _Knobs:
+    """The tuning arguments of `diagnose`, carried together through the private steps."""
+
+    clear_window_days: int = CLEAR_WINDOW_DAYS
+    clear_quantile: float = CLEAR_QUANTILE
+    clear_ratio: float = CLEAR_RATIO
+    dead_level: float = DEAD_LEVEL
+    tilts: tuple[float, ...] = tuple(float(t) for t in TILTS)
+    azimuths: tuple[float, ...] = tuple(float(a) for a in AZIMUTHS)
+    roof_passes: int = ROOF_PASSES
+    min_segment_days: int = MIN_SEGMENT_DAYS
+    max_breaks: int = MAX_BREAKS
+    penalty: float = PENALTY
+    step_note_pct: float = STEP_NOTE_PCT
+    good_fit_r2: float = GOOD_FIT_R2
+    trend_note_pct: float = TREND_NOTE_PCT
+
+    def __post_init__(self) -> None:
+        for name in ("tilts", "azimuths"):
+            grid = tuple(float(v) for v in np.asarray(getattr(self, name), dtype=float).ravel())
+            if not grid or not np.isfinite(grid).all():
+                raise ValueError(f"{name} must be a non-empty grid of finite degrees")
+            object.__setattr__(self, name, grid)
+        if not all(0 <= t <= VERTICAL for t in self.tilts):
+            raise ValueError("tilts must be within 0-90 degrees")
+        checks = {
+            "clear_window_days >= 1": self.clear_window_days >= 1,
+            "0 < clear_quantile <= 1": 0 < self.clear_quantile <= 1,
+            "clear_ratio > 0": self.clear_ratio > 0,
+            "dead_level >= 0": self.dead_level >= 0,
+            "roof_passes >= 0": self.roof_passes >= 0,
+            "min_segment_days >= 2": self.min_segment_days >= 2,
+            "max_breaks >= 0": self.max_breaks >= 0,
+            "penalty > 0": self.penalty > 0,
+            "step_note_pct >= 0": self.step_note_pct >= 0,
+            "trend_note_pct >= 0": self.trend_note_pct >= 0,
+            "0 <= good_fit_r2 <= 1": 0 <= self.good_fit_r2 <= 1,
+        }
+        bad = [rule for rule, ok in checks.items() if not ok]
+        if bad:
+            raise ValueError(f"Diagnostics options out of range: {', '.join(bad)}")
+
+    def edge(self, tilt: float) -> bool:
+        """The fit is on the steepest tilt of the grid: not identified (unless 90, a physical limit)."""
+        steepest = max(self.tilts)
+        return bool(tilt == steepest and steepest < VERTICAL)
+
+
+_DEFAULT = _Knobs()
+OPTIONS = tuple(f.name for f in fields(_Knobs))  # the tuning keyword arguments, by name
+
+
+def _knobs(options: Mapping[str, Any]) -> _Knobs:
+    """The tuning arguments from a mapping of their names (`analyze(diagnostics_options=...)`)."""
+    unknown = sorted(set(options) - set(OPTIONS))
+    if unknown:
+        raise ValueError(f"Unknown diagnostics options {unknown}; the options are {list(OPTIONS)}")
+    return _Knobs(**options)
 
 
 @dataclass
@@ -66,7 +151,7 @@ class Diagnosis:
 
     `to_dict` leaves out the daily `index` table (hundreds of rows per series): the app plots it from
     `Diagnosis.index`. `edge` flags only the steepest tilt of the grid; a fit at 0 degrees is a flat roof,
-    which is a possible answer.
+    and one at 90 (with a grid that reaches it) a vertical panel, both possible answers.
     """
 
     orientation: pd.DataFrame  # unique_id, tilt, azimuth, r2, edge (orientation on the edge of the grid)
@@ -130,18 +215,30 @@ def clear_days(
     window_days: int = CLEAR_WINDOW_DAYS,
     quantile: float = CLEAR_QUANTILE,
     ratio: float = CLEAR_RATIO,
+    dead_level: float = DEAD_LEVEL,
 ) -> pd.DataFrame:
     """Days of each series that were (nearly) cloudless, judged from the production itself.
 
     Returns `unique_id, date, ratio, top, clear`: `ratio` is the day's energy over the clear-sky GHI of the
     day (only days with every sun hour measured), `top` the `quantile` of that ratio in a centred window of
-    `window_days` calendar days, and `clear` = `ratio >= ratio x top`.
+    `window_days` calendar days, and `clear` = `ratio >= ratio x top`. A stretch whose `top` is below
+    `dead_level` x the series' usual `top` (its 95% quantile) is dead (an inverter off) and has no clear day.
+    The defaults were set by hand on the two plants of the pilot (module docstring, "Tuning").
     """
     s = _check(series)
-    return _clear(_complete_days(_hourly(s, site)), window_days, quantile, ratio)
+    k = _Knobs(
+        clear_window_days=window_days, clear_quantile=quantile, clear_ratio=ratio, dead_level=dead_level
+    )
+    return _clear_k(_complete_days(_hourly(s, site)), k)
 
 
-def _clear(d: pd.DataFrame, window_days: int, quantile: float, ratio: float) -> pd.DataFrame:
+def _clear_k(d: pd.DataFrame, k: _Knobs) -> pd.DataFrame:
+    return _clear(d, k.clear_window_days, k.clear_quantile, k.clear_ratio, dead_level=k.dead_level)
+
+
+def _clear(
+    d: pd.DataFrame, window_days: int, quantile: float, ratio: float, *, dead_level: float = DEAD_LEVEL
+) -> pd.DataFrame:
     out = []
     for uid, g in d.groupby("unique_id", sort=False):
         r = (g.set_index("date")["energy"] / g.set_index("date")["cs"]).sort_index()
@@ -151,7 +248,7 @@ def _clear(d: pd.DataFrame, window_days: int, quantile: float, ratio: float) -> 
         t["top"] = top.reindex(r.index).to_numpy()
         # a stretch where even the best days produce ~nothing (dead inverter) has no clear days: 0 >= 0.9 x 0
         alive = (
-            t["top"] >= DEAD_LEVEL * float(np.nanquantile(t["top"], 0.95))
+            t["top"] >= dead_level * float(np.nanquantile(t["top"], 0.95))
             if t["top"].notna().any()
             else False
         )
@@ -163,25 +260,32 @@ def _clear(d: pd.DataFrame, window_days: int, quantile: float, ratio: float) -> 
 
 
 def roof_orientation(
-    series: EnergySeries, site: tuple[float, float], *, clear: pd.DataFrame | None = None
+    series: EnergySeries, site: tuple[float, float], *, clear: pd.DataFrame | None = None, **options: Any
 ) -> pd.DataFrame:
     """Tilt and azimuth (compass bearing) of each series' panels, fitted on its clear days.
 
-    Returns `unique_id, tilt, azimuth, r2, edge`; `edge` is True when the tilt is on the edge of the grid
-    (the data do not identify it). A low `r2` (< 0.85) usually means a roof of several planes.
+    Returns `unique_id, tilt, azimuth, r2, edge`; `edge` is True when the tilt is on the steepest tilt of the
+    grid below 90 degrees (the data do not identify it). A low `r2` (< 0.85) usually means a roof of several
+    planes. `options`: the tuning keyword arguments of `diagnose` (`tilts`, `azimuths`, `penalty`, ...); the
+    fit uses the clear days, and its passes the change points, that they give.
     """
+    k = _knobs(options)
     s = _check(series)
     f = _hourly(s, site)
     if clear is None:
-        clear = _clear(_complete_days(f), CLEAR_WINDOW_DAYS, CLEAR_QUANTILE, CLEAR_RATIO)
-    return _roof(f, clear, site)
+        clear = _clear_k(_complete_days(f), k)
+    return _roof(f, clear, site, k)
 
 
 def _orientation(
-    f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float], level: pd.DataFrame | None = None
+    f: pd.DataFrame,
+    clear: pd.DataFrame,
+    site: tuple[float, float],
+    level: pd.DataFrame | None = None,
+    k: _Knobs = _DEFAULT,
 ) -> pd.DataFrame:
-    """Pooled fit on the clear days (`physics.fit_orientation`, whole compass), the production divided by
-    `level` (unique_id, date, level) when given."""
+    """Pooled fit on the clear days (`physics.fit_orientation` over the grid of `k`), the production divided
+    by `level` (unique_id, date, level) when given."""
     rows = []
     for uid, g in f.groupby("unique_id", sort=False):
         days = clear.loc[(clear["unique_id"] == uid) & clear["clear"], "date"]
@@ -192,7 +296,7 @@ def _orientation(
         if level is not None:
             lv = level[level["unique_id"] == uid].set_index("date")["level"].reindex(g["date"])
             # a day whose stretch produced ~nothing (a dead inverter) says nothing about the plane
-            alive = (lv > DEAD_LEVEL).to_numpy()
+            alive = (lv > k.dead_level).to_numpy()
             g = g[alive]
             y = g["y"].to_numpy(dtype=float) / lv.to_numpy(dtype=float)[alive]
         else:
@@ -201,12 +305,16 @@ def _orientation(
             rows.append(dict(unique_id=uid, tilt=np.nan, azimuth=np.nan, r2=np.nan, edge=False))
             continue
         sun = physics.mean_sun(pd.DatetimeIndex(g["ds"]), *site)
-        r2, tilt, az = physics.fit_orientation(y, g["cs"].to_numpy(), sun, tilts=TILTS, azimuths=AZIMUTHS)
-        rows.append(dict(unique_id=uid, tilt=tilt, azimuth=az, r2=r2, edge=bool(tilt == TILTS[-1])))
+        r2, tilt, az = physics.fit_orientation(
+            y, g["cs"].to_numpy(), sun, tilts=np.asarray(k.tilts), azimuths=np.asarray(k.azimuths)
+        )
+        rows.append(dict(unique_id=uid, tilt=tilt, azimuth=az, r2=r2, edge=k.edge(tilt)))
     return pd.DataFrame(rows, columns=["unique_id", "tilt", "azimuth", "r2", "edge"])
 
 
-def _roof(f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float]) -> pd.DataFrame:
+def _roof(
+    f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float], k: _Knobs = _DEFAULT
+) -> pd.DataFrame:
     """Orientation in two passes: pooled, then again with the level of each segment divided out.
 
     One regression over all the clear days keeps the seasonal amplitude, which is what pins the tilt down; but
@@ -216,13 +324,13 @@ def _roof(f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float]) -> pd
     each day on its own removes the steps too, but also the seasonal amplitude: on Cascavel it gave 10 degrees
     facing 50 and a false step every April.)
     """
-    table = _orientation(f, clear, site)
-    for _ in range(ROOF_PASSES):
+    table = _orientation(f, clear, site, k=k)
+    for _ in range(k.roof_passes):
         index = _index(f, clear, site, {}, table)
-        segments, steps = changepoints(index)
+        segments, steps = _changepoints(index, k)
         if segments.empty:
             break
-        new = _orientation(f, clear, site, _level(index, segments, steps))
+        new = _orientation(f, clear, site, _level(index, segments, steps, k.step_note_pct), k)
         # a refit that failed (no finite R2) keeps the previous pass for that series
         failed = ~np.isfinite(new["r2"].to_numpy(dtype=float)) & np.isfinite(
             table["r2"].to_numpy(dtype=float)
@@ -239,16 +347,18 @@ def _roof(f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float]) -> pd
     return table
 
 
-def _level(index: pd.DataFrame, segments: pd.DataFrame, steps: pd.DataFrame) -> pd.DataFrame:
+def _level(
+    index: pd.DataFrame, segments: pd.DataFrame, steps: pd.DataFrame, step_pct: float = STEP_NOTE_PCT
+) -> pd.DataFrame:
     """A step level per clear day (unique_id, date, level), relative to the series' median: constant between
-    the steps of at least `STEP_NOTE_PCT`, the median index of each stretch.
+    the steps of at least `step_pct`, the median index of each stretch.
 
     Constant on purpose: the segment lines of a pass with the wrong plane also follow the seasonal residual,
     and dividing those out keeps the wrong plane (a synthetic fault stayed at 20 degrees instead of 15).
     """
     out = []
     for uid, g in index.groupby("unique_id", sort=False):
-        st = steps[(steps["unique_id"] == uid) & (steps["step_pct"].abs() >= STEP_NOTE_PCT)]
+        st = steps[(steps["unique_id"] == uid) & (steps["step_pct"].abs() >= step_pct)]
         dates = pd.DatetimeIndex(g["date"])
         stretch = np.searchsorted(pd.DatetimeIndex(st["date"]).sort_values(), dates, side="right")
         med = g.groupby(stretch)["index"].transform("median").to_numpy(dtype=float)
@@ -267,20 +377,23 @@ def performance_index(
     kwp: float | dict[str, float] | None = None,
     orientation: pd.DataFrame | tuple[float, float] | None = None,
     clear: pd.DataFrame | None = None,
+    **options: Any,
 ) -> pd.DataFrame:
     """Daily performance index on the clear days of each series (`kwp` per series must cover them all).
 
     `energy` is the day's measured energy (kWh), `expected` the clear-sky irradiation on the panel plane
     (kWh/m2) times `kwp` (kW) when given, and `index` their ratio: a performance ratio against clear sky with
     `kwp`, the effective peak power in kW without it. `orientation`: (tilt, azimuth) for every series, the
-    table of `roof_orientation`, or None to fit it.
+    table of `roof_orientation`, or None to fit it. `options`: the tuning keyword arguments of `diagnose`
+    (the clear-day rule, the tilt grid, ...).
     """
+    k = _knobs(options)
     s = _check(series)
     f = _hourly(s, site)
     if clear is None:
-        clear = _clear(_complete_days(f), CLEAR_WINDOW_DAYS, CLEAR_QUANTILE, CLEAR_RATIO)
+        clear = _clear_k(_complete_days(f), k)
     if orientation is None:
-        orientation = _roof(f, clear, site)
+        orientation = _roof(f, clear, site, k)
     return _index(f, clear, site, _kwp(kwp, s.series), orientation)
 
 
@@ -381,15 +494,24 @@ def changepoints(
     min_days: int = MIN_SEGMENT_DAYS,
     max_breaks: int = MAX_BREAKS,
     penalty: float = PENALTY,
+    step_note_pct: float = STEP_NOTE_PCT,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Segments and steps of the performance index of each series (the output of `performance_index`).
 
     Each segment is a straight line in time: `level_start`, `level_end`, `trend_pct_per_year` (slope over the
     segment's mean) and `lost_pct`, how far its mean is below the best segment start of the series (the
     cleanest state seen). `steps` are the jumps between consecutive segments, from the end of one line to the
-    start of the next; `event` marks the jumps of at least 5% (the others are changes of slope, the line
-    bending, not jumping). `min_days` counts clear days, not calendar days.
+    start of the next; `event` marks the jumps of at least `step_note_pct` (5%; the others are changes of
+    slope, the line bending, not jumping). `min_days` counts clear days, not calendar days; up to
+    `max_breaks` breaks. `penalty` multiplies the BIC's penalty: the default 3 was CHOSEN on the project's
+    two plants and ten Dingle houses (module docstring); a lower one finds at least as many breaks.
     """
+    k = _Knobs(min_segment_days=min_days, max_breaks=max_breaks, penalty=penalty, step_note_pct=step_note_pct)
+    return _changepoints(index, k)
+
+
+def _changepoints(index: pd.DataFrame, k: _Knobs) -> tuple[pd.DataFrame, pd.DataFrame]:
+    min_days, max_breaks, penalty = k.min_segment_days, k.max_breaks, k.penalty
     seg_rows: list[dict[str, Any]] = []
     step_rows: list[dict[str, Any]] = []
     for uid, g in index.groupby("unique_id", sort=False):
@@ -431,7 +553,7 @@ def changepoints(
                     before=before,
                     after=after,
                     step_pct=pct,
-                    event=bool(abs(pct) >= STEP_NOTE_PCT),
+                    event=bool(abs(pct) >= k.step_note_pct),
                 )
             )
     segments = pd.DataFrame(
@@ -457,17 +579,59 @@ def diagnose(
     *,
     kwp: float | dict[str, float] | None = None,
     orientation: tuple[float, float] | None = None,
+    clear_window_days: int = CLEAR_WINDOW_DAYS,
+    clear_quantile: float = CLEAR_QUANTILE,
+    clear_ratio: float = CLEAR_RATIO,
+    dead_level: float = DEAD_LEVEL,
+    tilts: Sequence[float] | np.ndarray = TILTS,
+    azimuths: Sequence[float] | np.ndarray = AZIMUTHS,
+    roof_passes: int = ROOF_PASSES,
+    min_segment_days: int = MIN_SEGMENT_DAYS,
+    max_breaks: int = MAX_BREAKS,
+    penalty: float = PENALTY,
+    step_note_pct: float = STEP_NOTE_PCT,
+    good_fit_r2: float = GOOD_FIT_R2,
+    trend_note_pct: float = TREND_NOTE_PCT,
 ) -> Diagnosis:
     """The whole chain: clear days, roof orientation, performance index, change points and notes.
 
     `kwp`: peak power of each series (one value for all, or per `unique_id`); without it the index is the
     effective peak power. `orientation`: (tilt, azimuth) when known; otherwise fitted per series.
+
+    The tuning arguments (module docstring, "Tuning", says where each default comes from):
+
+    - clear days (`clear_days`): `clear_window_days`, `clear_quantile`, `clear_ratio` (set by hand on the
+      pilot's two plants) and `dead_level` (generic);
+    - the roof (`roof_orientation`): the search grid `tilts` (0-60 degrees; widen it, up to 90, for facade
+      or balcony panels; a fit on its steepest tilt below 90 is reported as on the edge, not identified) and
+      `azimuths` (the whole compass), and `roof_passes`, the refits with the levels between steps divided out
+      (generic);
+    - change points (`changepoints`): `min_segment_days`, `max_breaks` (set by hand), `penalty` (CHOSEN on
+      the project's two plants and ten Dingle houses) and `step_note_pct`, the smallest step that is an event
+      (generic); they also steer the roof passes;
+    - the notes: `good_fit_r2` (set by hand; below it, or on the edge, steps are uncertain and no trend or
+      loss is reported) and `trend_note_pct` (%/year, generic).
     """
+    k = _Knobs(
+        clear_window_days=clear_window_days,
+        clear_quantile=clear_quantile,
+        clear_ratio=clear_ratio,
+        dead_level=dead_level,
+        tilts=tuple(tilts),
+        azimuths=tuple(azimuths),
+        roof_passes=roof_passes,
+        min_segment_days=min_segment_days,
+        max_breaks=max_breaks,
+        penalty=penalty,
+        step_note_pct=step_note_pct,
+        good_fit_r2=good_fit_r2,
+        trend_note_pct=trend_note_pct,
+    )
     s = _check(series)
     f = _hourly(s, site)
-    clear = _clear(_complete_days(f), CLEAR_WINDOW_DAYS, CLEAR_QUANTILE, CLEAR_RATIO)
+    clear = _clear_k(_complete_days(f), k)
     if orientation is None:
-        table = _roof(f, clear, site)
+        table = _roof(f, clear, site, k)
     else:
         table = pd.DataFrame(
             [
@@ -477,8 +641,8 @@ def diagnose(
         )
     kw = _kwp(kwp, s.series)
     index = _index(f, clear, site, kw, table)
-    segments, steps = changepoints(index)
-    notes = _notes(table, index, segments, steps, kw, orientation is not None)
+    segments, steps = _changepoints(index, k)
+    notes = _notes(table, index, segments, steps, kw, orientation is not None, k)
     return Diagnosis(orientation=table, index=index, segments=segments, steps=steps, kwp=kw, notes=notes)
 
 
@@ -489,6 +653,7 @@ def _notes(
     steps: pd.DataFrame,
     kwp: dict[str, float],
     given: bool,
+    k: _Knobs = _DEFAULT,
 ) -> list[str]:
     notes = []
     reliable: dict[str, bool] = {}
@@ -497,7 +662,7 @@ def _notes(
         if not np.isfinite(r["tilt"]):
             notes.append(f"Series {uid}: too few clear days to fit the roof; no diagnostics.")
             continue
-        reliable[uid] = given or (r["r2"] >= GOOD_FIT_R2 and not r["edge"])
+        reliable[uid] = given or (r["r2"] >= k.good_fit_r2 and not r["edge"])
         if not given:
             fit = (
                 f"Series {uid}: panels fitted at {r['tilt']:.0f} degrees tilt facing {r['azimuth']:.0f} "
@@ -513,11 +678,11 @@ def _notes(
                     "no trend or loss is reported. Pass the known orientation to diagnose it."
                 )
         n_index = int((index["unique_id"] == uid).sum())
-        if n_index and n_index < 2 * MIN_SEGMENT_DAYS:
+        if n_index and n_index < 2 * k.min_segment_days:
             notes.append(f"Series {uid}: {n_index} clear days, too few to look for changes over time.")
     for r in steps.to_dict(orient="records"):
         pct = float(r["step_pct"])
-        if not np.isfinite(pct) or abs(pct) < STEP_NOTE_PCT:
+        if not np.isfinite(pct) or abs(pct) < k.step_note_pct:
             continue
         uid = str(r["unique_id"])
         when = pd.Timestamp(r["date"]).strftime("%Y-%m-%d")
@@ -526,7 +691,7 @@ def _notes(
         else:
             what = "a fault, new shading or a change to the array"
         extra = ""
-        if _recurs(steps, r):
+        if _recurs(steps, r, step_pct=k.step_note_pct):
             extra += " A step of the same sign comes back at this time of year: it may be seasonal."
         if not reliable.get(uid, False):
             extra += " Uncertain (roof fit, see above)."
@@ -539,12 +704,12 @@ def _notes(
         since = pd.Timestamp(last["start"]).strftime("%Y-%m-%d")
         span = (pd.Timestamp(last["end"]) - pd.Timestamp(last["start"])).days
         # under a year the slope is mostly the season (a clear-sky model is never exact)
-        if trend <= -TREND_NOTE_PCT and span >= 365:
+        if trend <= -k.trend_note_pct and span >= 365:
             notes.append(
                 f"Series {sid}: since {since} the clear-day production falls {-trend:.0f}% a year; soiling "
                 "builds up like this (a cleaning shows as a step up)."
             )
-        if float(last["lost_pct"]) >= STEP_NOTE_PCT:
+        if float(last["lost_pct"]) >= k.step_note_pct:
             notes.append(
                 f"Series {sid}: the latest period is {last['lost_pct']:.0f}% below the best level seen on "
                 "clear days."
@@ -560,12 +725,10 @@ def _notes(
     return notes
 
 
-def _recurs(steps: pd.DataFrame, r: dict[Any, Any], days: int = 45) -> bool:
+def _recurs(steps: pd.DataFrame, r: dict[Any, Any], days: int = 45, step_pct: float = STEP_NOTE_PCT) -> bool:
     """Another step of the same sign in the same series within `days` of the same day of the year."""
     same = steps[(steps["unique_id"] == r["unique_id"]) & (steps["date"] != r["date"])]
-    same = same[
-        (np.sign(same["step_pct"]) == np.sign(r["step_pct"])) & (same["step_pct"].abs() >= STEP_NOTE_PCT)
-    ]
+    same = same[(np.sign(same["step_pct"]) == np.sign(r["step_pct"])) & (same["step_pct"].abs() >= step_pct)]
     if same.empty:
         return False
     doy = pd.DatetimeIndex(same["date"]).dayofyear.to_numpy()

@@ -1,0 +1,454 @@
+{
+ "sawtooth": {
+  "orientation": [
+   {
+    "unique_id": "p1",
+    "tilt": 15.0,
+    "azimuth": 20.0,
+    "r2": 0.9957487638897309,
+    "edge": false
+   }
+  ],
+  "segments": [
+   {
+    "unique_id": "p1",
+    "start": "2022-01-02",
+    "end": "2023-02-28",
+    "days": 124,
+    "level_start": 0.849440093123783,
+    "level_end": 0.7716890367001734,
+    "trend_pct_per_year": -8.306145067529489,
+    "lost_pct": 4.621210822450528
+   },
+   {
+    "unique_id": "p1",
+    "start": "2023-03-05",
+    "end": "2023-12-29",
+    "days": 99,
+    "level_start": 0.8493782858777535,
+    "level_end": 0.7939529462442341,
+    "trend_pct_per_year": -8.252743562729638,
+    "lost_pct": 3.4179780309478325
+   }
+  ],
+  "steps": [
+   {
+    "unique_id": "p1",
+    "date": "2023-03-05",
+    "before": 0.7716890367001734,
+    "after": 0.8493782858777535,
+    "step_pct": 10.067429428541308,
+    "event": true
+   }
+  ],
+  "kwp": {
+   "p1": 4.0
+  },
+  "notes": [
+   "Series p1: panels fitted at 15 degrees tilt facing 20 degrees (compass; R2 1.00 on clear days).",
+   "Series p1: clear-day production stepped +10% around 2023-03-05: a cleaning, a repair or a change to the array."
+  ],
+  "index_summary": {
+   "rows": 223,
+   "energy": 5061.857781101682,
+   "expected": 6222.696870444787,
+   "index": 181.68325909377418,
+   "first": "2022-01-02",
+   "last": "2023-12-29"
+  }
+ },
+ "fault": {
+  "orientation": [
+   {
+    "unique_id": "p1",
+    "tilt": 15.0,
+    "azimuth": 20.0,
+    "r2": 0.9994288036623433,
+    "edge": false
+   }
+  ],
+  "segments": [
+   {
+    "unique_id": "p1",
+    "start": "2022-01-02",
+    "end": "2022-11-14",
+    "days": 88,
+    "level_start": 0.7995863808699796,
+    "level_end": 0.800258485420444,
+    "trend_pct_per_year": 0.09711815739382973,
+    "lost_pct": -0.0401088201454014
+   },
+   {
+    "unique_id": "p1",
+    "start": "2022-11-15",
+    "end": "2023-12-29",
+    "days": 135,
+    "level_start": 0.5502409240860886,
+    "level_end": 0.5501451289159139,
+    "trend_pct_per_year": -0.0155487730319785,
+    "lost_pct": 31.190402504681515
+   }
+  ],
+  "steps": [
+   {
+    "unique_id": "p1",
+    "date": "2022-11-15",
+    "before": 0.800258485420444,
+    "after": 0.5502409240860886,
+    "step_pct": -31.24210063239753,
+    "event": true
+   }
+  ],
+  "kwp": {
+   "p1": 4.0
+  },
+  "notes": [
+   "Series p1: panels fitted at 15 degrees tilt facing 20 degrees (compass; R2 1.00 on clear days).",
+   "Series p1: clear-day production stepped -31% around 2022-11-15: a fault, new shading or a change to the array.",
+   "Series p1: the latest period is 31% below the best level seen on clear days."
+  ],
+  "index_summary": {
+   "rows": 223,
+   "energy": 4018.4983460944895,
+   "expected": 6222.696870444787,
+   "index": 144.66776651798062,
+   "first": "2022-01-02",
+   "last": "2023-12-29"
+  }
+ },
+ "east_west": {
+  "orientation": [
+   {
+    "unique_id": "p1",
+    "tilt": 0.0,
+    "azimuth": 180.0,
+    "r2": 0.9955826877620434,
+    "edge": false
+   }
+  ],
+  "segments": [
+   {
+    "unique_id": "p1",
+    "start": "2022-01-02",
+    "end": "2022-08-16",
+    "days": 68,
+    "level_start": 2.932644771892115,
+    "level_end": 2.9791515634677515,
+    "trend_pct_per_year": 2.542331788101981,
+    "lost_pct": 0.006616716400142941
+   },
+   {
+    "unique_id": "p1",
+    "start": "2022-08-18",
+    "end": "2023-01-31",
+    "days": 47,
+    "level_start": 2.9566143065421833,
+    "level_end": 2.925227056065115,
+    "trend_pct_per_year": -2.3492271500675868,
+    "lost_pct": 0.5703926585412078
+   },
+   {
+    "unique_id": "p1",
+    "start": "2023-02-02",
+    "end": "2023-04-20",
+    "days": 24,
+    "level_start": 2.1991281146404535,
+    "level_end": 2.2230560062636875,
+    "trend_pct_per_year": 5.131652670088704,
+    "lost_pct": 25.1913178127565
+   },
+   {
+    "unique_id": "p1",
+    "start": "2023-04-24",
+    "end": "2023-12-29",
+    "days": 84,
+    "level_start": 2.235454036039866,
+    "level_end": 2.197908988507595,
+    "trend_pct_per_year": -2.4852959930106118,
+    "lost_pct": 25.05015443302604
+   }
+  ],
+  "steps": [
+   {
+    "unique_id": "p1",
+    "date": "2022-08-18",
+    "before": 2.9791515634677515,
+    "after": 2.9566143065421833,
+    "step_pct": -0.7564991725138914,
+    "event": false
+   },
+   {
+    "unique_id": "p1",
+    "date": "2023-02-02",
+    "before": 2.925227056065115,
+    "after": 2.1991281146404535,
+    "step_pct": -24.821968603058707,
+    "event": true
+   },
+   {
+    "unique_id": "p1",
+    "date": "2023-04-24",
+    "before": 2.2230560062636875,
+    "after": 2.235454036039866,
+    "step_pct": 0.5577020885324524,
+    "event": false
+   }
+  ],
+  "kwp": {},
+  "notes": [
+   "Series p1: panels fitted at 0 degrees tilt facing 180 degrees (compass; R2 1.00 on clear days).",
+   "Series p1: clear-day production stepped -25% around 2023-02-02: a fault, new shading or a change to the array.",
+   "Series p1: the latest period is 25% below the best level seen on clear days."
+  ],
+  "index_summary": {
+   "rows": 223,
+   "energy": 3836.8855107470304,
+   "expected": 1475.4552054595479,
+   "index": 578.4301605148224,
+   "first": "2022-01-02",
+   "last": "2023-12-29"
+  }
+ },
+ "clear_days": {
+  "rows": 365,
+  "clear": 106,
+  "ratio": 0.765854893978876
+ },
+ "roof_orientation": [
+  {
+   "unique_id": "p1",
+   "tilt": 15.0,
+   "azimuth": 20.0,
+   "r2": 0.9994288036623433,
+   "edge": false
+  }
+ ],
+ "dingle": {
+  "orientation": [
+   {
+    "unique_id": "H1",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.7434206312129269,
+    "edge": true
+   },
+   {
+    "unique_id": "H10",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7327330758191319,
+    "edge": true
+   },
+   {
+    "unique_id": "H11",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7637302812820962,
+    "edge": true
+   },
+   {
+    "unique_id": "H13",
+    "tilt": 60.0,
+    "azimuth": 210.0,
+    "r2": 0.7814349566473527,
+    "edge": true
+   },
+   {
+    "unique_id": "H17",
+    "tilt": 60.0,
+    "azimuth": 170.0,
+    "r2": 0.7507092522060316,
+    "edge": true
+   },
+   {
+    "unique_id": "H2",
+    "tilt": 60.0,
+    "azimuth": 180.0,
+    "r2": 0.7336551825024764,
+    "edge": true
+   },
+   {
+    "unique_id": "H3",
+    "tilt": 60.0,
+    "azimuth": 160.0,
+    "r2": 0.692377128062224,
+    "edge": true
+   },
+   {
+    "unique_id": "H4",
+    "tilt": 55.0,
+    "azimuth": 230.0,
+    "r2": 0.7693155517478445,
+    "edge": false
+   },
+   {
+    "unique_id": "H5",
+    "tilt": 50.0,
+    "azimuth": 200.0,
+    "r2": 0.6887841901332512,
+    "edge": false
+   },
+   {
+    "unique_id": "H7",
+    "tilt": 60.0,
+    "azimuth": 150.0,
+    "r2": 0.7048806575923074,
+    "edge": true
+   }
+  ],
+  "segments": [
+   {
+    "unique_id": "H1",
+    "start": "2020-01-05",
+    "end": "2020-12-30",
+    "days": 69,
+    "level_start": 2.2513055791962167,
+    "level_end": 2.1712747689548286,
+    "trend_pct_per_year": -3.6707726284225553,
+    "lost_pct": 1.7453743541805067
+   },
+   {
+    "unique_id": "H10",
+    "start": "2020-01-03",
+    "end": "2020-08-29",
+    "days": 48,
+    "level_start": 2.696775387603503,
+    "level_end": 1.2661415526440805,
+    "trend_pct_per_year": -110.94822387845267,
+    "lost_pct": 26.927210656567357
+   },
+   {
+    "unique_id": "H10",
+    "start": "2020-09-05",
+    "end": "2020-12-30",
+    "days": 23,
+    "level_start": 1.5034683316195565,
+    "level_end": 3.915002496096478,
+    "trend_pct_per_year": 307.90455953518426,
+    "lost_pct": 8.553990542874136
+   },
+   {
+    "unique_id": "H11",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 70,
+    "level_start": 1.668112772896694,
+    "level_end": 1.9134193399221326,
+    "trend_pct_per_year": 13.82102448883756,
+    "lost_pct": -7.355718902134734
+   },
+   {
+    "unique_id": "H13",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 68,
+    "level_start": 2.0628706590348314,
+    "level_end": 2.2212416890188837,
+    "trend_pct_per_year": 7.469008957114387,
+    "lost_pct": -3.710425540806961
+   },
+   {
+    "unique_id": "H17",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 70,
+    "level_start": 2.0279137849961684,
+    "level_end": 2.2427515978093044,
+    "trend_pct_per_year": 10.158196583119514,
+    "lost_pct": -5.22677877631248
+   },
+   {
+    "unique_id": "H2",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 67,
+    "level_start": 1.9336543014700251,
+    "level_end": 1.8773274427672022,
+    "trend_pct_per_year": -2.9818626774580386,
+    "lost_pct": 1.433187347742959
+   },
+   {
+    "unique_id": "H3",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 65,
+    "level_start": 2.0834585498076366,
+    "level_end": 2.1716408024881275,
+    "trend_pct_per_year": 4.183590532609125,
+    "lost_pct": -2.077213671945022
+   },
+   {
+    "unique_id": "H4",
+    "start": "2020-01-05",
+    "end": "2020-12-30",
+    "days": 68,
+    "level_start": 2.1260216215891368,
+    "level_end": 2.4261297411979985,
+    "trend_pct_per_year": 13.3835284412371,
+    "lost_pct": -7.010690491796612
+   },
+   {
+    "unique_id": "H5",
+    "start": "2020-01-03",
+    "end": "2020-12-30",
+    "days": 64,
+    "level_start": 1.9565154638666948,
+    "level_end": 1.7585509888877935,
+    "trend_pct_per_year": -10.76321616552043,
+    "lost_pct": 5.148638511018822
+   },
+   {
+    "unique_id": "H7",
+    "start": "2020-01-04",
+    "end": "2020-12-30",
+    "days": 69,
+    "level_start": 2.0388196143138066,
+    "level_end": 2.0812717881072196,
+    "trend_pct_per_year": 2.084690620641712,
+    "lost_pct": -1.0561016238390009
+   }
+  ],
+  "steps": [
+   {
+    "unique_id": "H10",
+    "date": "2020-09-05",
+    "before": 1.2661415526440805,
+    "after": 1.5034683316195565,
+    "step_pct": 18.744095277488306,
+    "event": true
+   }
+  ],
+  "kwp": {},
+  "notes": [
+   "Series H1: panels fitted at 60 degrees tilt facing 160 degrees (compass; R2 0.74 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H1: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H10: panels fitted at 60 degrees tilt facing 150 degrees (compass; R2 0.73 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H10: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H11: panels fitted at 60 degrees tilt facing 170 degrees (compass; R2 0.76 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H11: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H13: panels fitted at 60 degrees tilt facing 210 degrees (compass; R2 0.78 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H13: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H17: panels fitted at 60 degrees tilt facing 170 degrees (compass; R2 0.75 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H17: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H2: panels fitted at 60 degrees tilt facing 180 degrees (compass; R2 0.73 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H2: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H3: panels fitted at 60 degrees tilt facing 160 degrees (compass; R2 0.69 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H3: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H4: panels fitted at 55 degrees tilt facing 230 degrees (compass; R2 0.77 on clear days).",
+   "Series H4: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H5: panels fitted at 50 degrees tilt facing 200 degrees (compass; R2 0.69 on clear days).",
+   "Series H5: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H7: panels fitted at 60 degrees tilt facing 150 degrees (compass; R2 0.70 on clear days). The tilt is on the edge of the grid: it is not identified.",
+   "Series H7: a single plane does not describe this roof well (several planes, or not enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and no trend or loss is reported. Pass the known orientation to diagnose it.",
+   "Series H10: clear-day production stepped +19% around 2020-09-05: a cleaning, a repair or a change to the array. Uncertain (roof fit, see above)."
+  ],
+  "index_summary": {
+   "rows": 681,
+   "energy": 7305.878359586777,
+   "expected": 3840.006726434802,
+   "index": 1405.7238222269734,
+   "first": "2020-01-03",
+   "last": "2020-12-30"
+  }
+ }
+}

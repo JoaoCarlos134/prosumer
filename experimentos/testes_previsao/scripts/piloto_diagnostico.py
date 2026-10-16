@@ -149,25 +149,22 @@ def biblioteca(serie):
 
 def varredura(fatores=(1, 2, 3, 4, 6)):
     """Fator da penalidade do BIC x eventos, nas duas usinas, na cadeia INTEIRA (o fator vale tambem nas
-    passadas do ajuste da orientacao, que usam a segmentacao). Registro da escolha do fator, feita NESTAS usinas."""
+    passadas do ajuste da orientacao, que usam a segmentacao). Registro da escolha do fator, feita NESTAS usinas.
+    O fator vai como `diagnose(penalty=...)` (antes de 16/10/2026 o piloto trocava o padrao de `changepoints`, que
+    o `diagnose` deixou de ler quando os limiares viraram parametros; mesmo resultado)."""
     from prosumer import diagnostics as D
 
-    padrao = D.changepoints.__kwdefaults__["penalty"]
     out = {}
-    try:
-        for f in fatores:
-            D.changepoints.__kwdefaults__["penalty"] = f
-            for serie in ("Cascavel", "Curitiba"):
-                s, kwp = _serie_biblioteca(serie)
-                dg = D.diagnose(s, comum.SITIOS[serie], kwp=kwp)
-                ev = dg.steps[dg.steps.event]
-                o = dg.orientation.iloc[0]
-                res = dict(serie=serie, degraus=[dict(data=str(r.date.date()), pct=float(r.step_pct))
-                                                 for r in ev.itertuples()])
-                out.setdefault(str(f), {})[serie] = dict(inclinacao=float(o.tilt), azimute=float(o.azimuth),
-                                                         degraus=res["degraus"], portao=confere(res))
-    finally:
-        D.changepoints.__kwdefaults__["penalty"] = padrao
+    for f in fatores:
+        for serie in ("Cascavel", "Curitiba"):
+            s, kwp = _serie_biblioteca(serie)
+            dg = D.diagnose(s, comum.SITIOS[serie], kwp=kwp, penalty=f)
+            ev = dg.steps[dg.steps.event]
+            o = dg.orientation.iloc[0]
+            res = dict(serie=serie, degraus=[dict(data=str(r.date.date()), pct=float(r.step_pct))
+                                             for r in ev.itertuples()])
+            out.setdefault(str(f), {})[serie] = dict(inclinacao=float(o.tilt), azimute=float(o.azimuth),
+                                                     degraus=res["degraus"], portao=confere(res))
     return out
 
 
@@ -178,12 +175,7 @@ def casas(fator=3):
     from prosumer import diagnostics as D
 
     s = data.dingle_houses("generation", path=comum.DADOS / "casas_horario.parquet", tz="Europe/Dublin")
-    padrao = D.changepoints.__kwdefaults__["penalty"]
-    try:
-        D.changepoints.__kwdefaults__["penalty"] = fator
-        dg = D.diagnose(s, (52.14, -10.27))  # peninsula de Dingle, aproximado
-    finally:
-        D.changepoints.__kwdefaults__["penalty"] = padrao
+    dg = D.diagnose(s, (52.14, -10.27), penalty=fator)  # peninsula de Dingle, aproximado
     ev = dg.steps[dg.steps.event]
     return dict(orientacao=dg.orientation.to_dict(orient="records"),
                 dias_claros=dg.index.groupby("unique_id").size().to_dict(),

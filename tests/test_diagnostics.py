@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from prosumer import EnergySeries, analyze, diagnostics, physics
+from prosumer import EnergySeries, analyze, data, diagnostics, physics
 from prosumer.data import example_house
 
 SITE = (-24.83, -53.65)
@@ -242,3 +246,133 @@ def test_analyze_of_an_all_zero_series_says_so() -> None:
     r = analyze(_series(_plant(0.8, days=60).assign(y=0.0)), site=SITE, test_days=14)
     assert r.forecast is None
     assert any("every value is zero" in n for n in r.notes)
+
+
+# ---------------------------------------------------------------------- tuning arguments
+# Fingerprint of `diagnose` with the defaults, saved at 9d3ade0 (before the thresholds became arguments) on
+# the synthetic plants above and the ten Dingle PV houses. Rewrite it only for a deliberate change of results.
+DEFAULTS = Path(__file__).resolve().parent / "fixtures" / "diagnostics_defaults.json"
+DINGLE = (
+    Path(__file__).resolve().parents[1]
+    / "experimentos"
+    / "testes_previsao"
+    / "dados"
+    / "casas_horario.parquet"
+)
+
+
+def _step(day: str, before: float, after: float) -> pd.Series:
+    dates = pd.date_range("2022-01-01", periods=730, freq="D")
+    return pd.Series(np.where(dates < pd.Timestamp(day), before, after), index=dates)
+
+
+def _fingerprint(d: diagnostics.Diagnosis) -> dict[str, Any]:
+    out = d.to_dict()
+    ix = d.index
+    out["index_summary"] = {
+        "rows": len(ix),
+        "energy": float(ix["energy"].sum()),
+        "expected": float(ix["expected"].sum()),
+        "index": float(ix["index"].sum()),
+        "first": str(pd.Timestamp(ix["date"].min()).date()) if len(ix) else None,
+        "last": str(pd.Timestamp(ix["date"].max()).date()) if len(ix) else None,
+    }
+    return json.loads(json.dumps(out, default=float))
+
+
+def _same(got: Any, want: Any, where: str = "") -> None:
+    """Equal, floats to 1e-9 relative (the last bits differ between machines; dates, tilts and notes not)."""
+    if isinstance(want, dict):
+        assert set(got) == set(want), where
+        for key in want:
+            _same(got[key], want[key], f"{where}.{key}")
+    elif isinstance(want, list):
+        assert len(got) == len(want), where
+        for i, (g, w) in enumerate(zip(got, want, strict=True)):
+            _same(g, w, f"{where}[{i}]")
+    elif isinstance(want, float) and not isinstance(got, bool):
+        assert got == pytest.approx(want, rel=1e-9, abs=1e-12, nan_ok=True), where
+    else:
+        assert got == want, where
+
+
+def test_the_defaults_reproduce_the_output_before_the_arguments() -> None:
+    want = json.loads(DEFAULTS.read_text(encoding="utf-8"))
+    fault, ew = _step("2022-11-15", 0.8, 0.55), _step("2023-02-01", 0.8, 0.6)
+    got = {
+        "sawtooth": diagnostics.diagnose(_series(_plant(_sawtooth("2023-03-01"))), SITE, kwp=4.0),
+        "fault": diagnostics.diagnose(_series(_plant(fault)), SITE, kwp=4.0),
+        "east_west": diagnostics.diagnose(
+            _series(_plant(ew, tilt=30, azimuth=90, second_plane=(30, 270))), SITE
+        ),
+    }
+    for name, d in got.items():
+        _same(_fingerprint(d), want[name], name)
+    c = diagnostics.clear_days(_series(_plant(0.8, days=365)), SITE)
+    clear = {"rows": len(c), "clear": int(c["clear"].sum()), "ratio": float(c["ratio"].sum())}
+    _same(clear, want["clear_days"], "clear_days")
+    roof = diagnostics.roof_orientation(_series(_plant(fault)), SITE).to_dict(orient="records")
+    _same(json.loads(json.dumps(roof, default=float)), want["roof_orientation"], "roof_orientation")
+
+
+@pytest.mark.skipif(not DINGLE.exists(), reason="benchmark data missing")
+@pytest.mark.filterwarnings("ignore:.*impossible local time")
+def test_the_defaults_reproduce_the_dingle_houses_before_the_arguments() -> None:
+    s = data.dingle_houses("generation", path=DINGLE, tz="Europe/Dublin")
+    want = json.loads(DEFAULTS.read_text(encoding="utf-8"))["dingle"]
+    _same(_fingerprint(diagnostics.diagnose(s, (52.14, -10.27))), want, "dingle")
+
+
+def test_a_lower_penalty_finds_at_least_as_many_breaks() -> None:
+    ew = _step("2023-02-01", 0.8, 0.6)
+    d = diagnostics.diagnose(_series(_plant(ew, tilt=30, azimuth=90, second_plane=(30, 270))), SITE)
+    counts = [len(diagnostics.changepoints(d.index, penalty=p)[1]) for p in (6.0, 3.0, 2.0, 1.0, 0.5)]
+    assert counts == sorted(counts) and counts[-1] > counts[0], counts
+    assert counts[1] == len(d.steps)  # the default is 3
+    # through the whole chain too (the penalty also steers the roof passes)
+    low = diagnostics.diagnose(
+        _series(_plant(ew, tilt=30, azimuth=90, second_plane=(30, 270))), SITE, penalty=1.0
+    )
+    assert len(low.steps) >= len(d.steps)
+
+
+def test_vertical_panels_are_fitted_only_on_a_grid_that_reaches_90() -> None:
+    s = _series(_plant(0.8, tilt=90, azimuth=0))  # a facade facing the equator (north, in the south)
+    narrow = diagnostics.diagnose(s, SITE, kwp=4.0)
+    o = narrow.orientation.iloc[0]
+    assert o["tilt"] == 60 and bool(o["edge"])
+    assert any("edge of the grid" in n for n in narrow.notes)
+    wide = diagnostics.diagnose(s, SITE, kwp=4.0, tilts=np.arange(0, 91, 5.0))
+    o = wide.orientation.iloc[0]
+    assert o["tilt"] == 90 and o["azimuth"] == 0 and o["r2"] > 0.99
+    assert not o["edge"]  # 90 is a physical limit, like 0: a possible answer
+    assert not any("edge of the grid" in n for n in wide.notes)
+    assert wide.index["index"].median() == pytest.approx(0.8, abs=0.03)
+    # a grid that stops short of the panel still flags its steepest tilt
+    short = diagnostics.roof_orientation(s, SITE, tilts=np.arange(0, 76, 5.0))
+    assert short["tilt"].iloc[0] == 75 and bool(short["edge"].iloc[0])
+
+
+def test_options_are_checked_and_analyze_passes_them_through() -> None:
+    s = _series(_plant(_sawtooth("2023-03-01"), days=500))
+    with pytest.raises(ValueError, match="Unknown diagnostics options"):
+        analyze(s, site=SITE, test_days=14, diagnostics_options={"penalt": 2.0})
+    with pytest.raises(ValueError, match="tilts must be within 0-90"):
+        diagnostics.diagnose(s, SITE, tilts=[0, 45, 120])
+    with pytest.raises(ValueError, match="penalty > 0"):
+        diagnostics.changepoints(pd.DataFrame(columns=["unique_id", "date", "index"]), penalty=0)
+    with pytest.raises(ValueError, match="Unknown diagnostics options"):
+        diagnostics.performance_index(s, SITE, tilt=30)
+    default = analyze(s, site=SITE, test_days=14, kwp=4.0)
+    said = [n for n in default.notes if n.startswith("Diagnostics:")]
+    assert len(said) == 1 and "penalty (3 x the BIC's) was chosen on two plants in Parana" in said[0]
+    assert "clear-day rule was set by hand on the same plants" in said[0]
+    r = analyze(s, site=SITE, test_days=14, kwp=4.0, diagnostics_options={"penalty": 1.0})
+    direct = diagnostics.diagnose(s, SITE, kwp=4.0, penalty=1.0)
+    assert r.diagnostics is not None
+    pd.testing.assert_frame_equal(r.diagnostics.steps, direct.steps)
+    said = [n for n in r.notes if n.startswith("Diagnostics:")]
+    assert len(said) == 1 and "penalty" not in said[0] and "clear-day rule" in said[0]
+    other = {"penalty": 1.0, "clear_ratio": 0.85}
+    r = analyze(s, site=SITE, test_days=14, kwp=4.0, diagnostics_options=other)
+    assert not [n for n in r.notes if n.startswith("Diagnostics:")]

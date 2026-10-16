@@ -28,7 +28,12 @@ merges; an independent `work-reviewer` checks everything you claim, so be exact.
   blocked: C is checked via `tests/wasm_c.py` (zig -> WebAssembly -> Node).
 - Every bug fix includes a regression test that reproduces it (fails before the fix, passes after), in
   the same commit; say in the report which test covers which fix. Test the bug hit plus its obvious
-  neighbour, not every edge case.
+  neighbour, not every edge case. PROVE the "fails before": run the new test with the fix reverted
+  (`git stash` the source file, or copy HEAD's version over it), see it fail for the right reason, restore,
+  see it pass; paste both outputs in the report (red-green, adopted 2026-10-16).
+- A reader or adapter for an outside format gets a test built from the REAL layout (headers, units, extra
+  columns copied from a real file, values synthetic), never only from what the format "should" look like
+  (2026-10-16: the Fronius reader, tested on a hand-written layout, rejected every real export).
 - Line length 110. Editing with Python on Windows can write CRLF: write with `newline="\n"`.
 
 ## Before every commit (all must pass; report the output, never claim a pass you did not see)

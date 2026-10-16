@@ -1670,5 +1670,461 @@
    "portao": true,
    "horas": 8760
   }
+ },
+ "FlowState|casas_cons|A": {
+  "aditivo_14d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.8,
+    "cob60": 0.605,
+    "larg80": 0.7441,
+    "CRPS": 0.2461
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0634,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  },
+  "aditivo_28d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.801,
+    "cob60": 0.606,
+    "larg80": 0.7457,
+    "CRPS": 0.246
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0635,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  },
+  "normalizado_14d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.804,
+    "cob60": 0.604,
+    "larg80": 0.913,
+    "CRPS": 0.2448
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0684,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  },
+  "normalizado_28d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.807,
+    "cob60": 0.607,
+    "larg80": 0.9205,
+    "CRPS": 0.2448
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0682,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  },
+  "nivel_14d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.802,
+    "cob60": 0.605,
+    "larg80": 1.0564,
+    "CRPS": 0.2442
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0704,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  },
+  "nivel_28d": {
+   "bruta": {
+    "cob80": 0.541,
+    "cob60": 0.393,
+    "larg80": 0.5421,
+    "CRPS": 0.2495
+   },
+   "calibrada": {
+    "cob80": 0.806,
+    "cob60": 0.608,
+    "larg80": 1.0686,
+    "CRPS": 0.2441
+   },
+   "referencia": {
+    "cob80": 0.685,
+    "cob60": 0.515,
+    "larg80": 0.8181,
+    "CRPS": 0.2627
+   },
+   "skill_bruta": 0.0505,
+   "skill_calibrada": 0.0711,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 40320
+  }
+ },
+ "FlowState|casas_prod|A": {
+  "aditivo_14d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.816,
+    "cob60": 0.636,
+    "larg80": 0.4303,
+    "CRPS": 0.1351
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.1273,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  },
+  "aditivo_28d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.825,
+    "cob60": 0.647,
+    "larg80": 0.4317,
+    "CRPS": 0.1348
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.1292,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  },
+  "normalizado_14d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.819,
+    "cob60": 0.641,
+    "larg80": 0.4721,
+    "CRPS": 0.1332
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.1399,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  },
+  "normalizado_28d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.824,
+    "cob60": 0.637,
+    "larg80": 0.4643,
+    "CRPS": 0.1327
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.143,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  },
+  "nivel_14d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.803,
+    "cob60": 0.631,
+    "larg80": 0.542,
+    "CRPS": 0.1375
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.1118,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  },
+  "nivel_28d": {
+   "bruta": {
+    "cob80": 0.609,
+    "cob60": 0.468,
+    "larg80": 0.328,
+    "CRPS": 0.137
+   },
+   "calibrada": {
+    "cob80": 0.818,
+    "cob60": 0.627,
+    "larg80": 0.5376,
+    "CRPS": 0.1355
+   },
+   "referencia": {
+    "cob80": 0.724,
+    "cob60": 0.578,
+    "larg80": 0.5436,
+    "CRPS": 0.1549
+   },
+   "skill_bruta": 0.1152,
+   "skill_calibrada": 0.125,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 11900
+  }
+ },
+ "FlowState|usinas|A": {
+  "aditivo_14d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.808,
+    "cob60": 0.621,
+    "larg80": 1.3542,
+    "CRPS": 0.4123
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.0791,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  },
+  "aditivo_28d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.805,
+    "cob60": 0.62,
+    "larg80": 1.338,
+    "CRPS": 0.4119
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.0799,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  },
+  "normalizado_14d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.807,
+    "cob60": 0.623,
+    "larg80": 1.5908,
+    "CRPS": 0.4066
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.0918,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  },
+  "normalizado_28d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.807,
+    "cob60": 0.621,
+    "larg80": 1.5855,
+    "CRPS": 0.4056
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.094,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  },
+  "nivel_14d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.798,
+    "cob60": 0.616,
+    "larg80": 1.5765,
+    "CRPS": 0.4102
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.0838,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  },
+  "nivel_28d": {
+   "bruta": {
+    "cob80": 0.611,
+    "cob60": 0.454,
+    "larg80": 0.9834,
+    "CRPS": 0.4179
+   },
+   "calibrada": {
+    "cob80": 0.806,
+    "cob60": 0.617,
+    "larg80": 1.5867,
+    "CRPS": 0.4069
+   },
+   "referencia": {
+    "cob80": 0.728,
+    "cob60": 0.58,
+    "larg80": 1.497,
+    "CRPS": 0.4477
+   },
+   "skill_bruta": 0.0664,
+   "skill_calibrada": 0.0912,
+   "bruta_calibrada": false,
+   "portao": true,
+   "horas": 8760
+  }
  }
 }

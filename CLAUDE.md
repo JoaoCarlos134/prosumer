@@ -32,6 +32,14 @@ comments stay in Portuguese (code comments without accents) — keep that conven
   same commit. Test the bug actually hit plus its obvious neighbour; no retroactive tests for old bugs
   unless that code is touched again. Pilots and one-off benchmark scripts are exempt (their record is the
   saved output and the write-up).
+- **Nada sob medida para os nossos dados (decidido 16/10/2026).** A biblioteca e o aplicativo tem de ler e fazer
+  tudo para QUALQUER sistema: outras marcas de inversor (nao so Fronius Solar.web), outros paineis e telhados,
+  medidores, resolucoes, hemisferios e climas. Fronius, as duas usinas do Parana e as casas de Dingle sao so as
+  amostras que temos. Codigo de marca = adaptador fino que devolve o `EnergySeries` generico; o nucleo nunca supoe
+  marca. Constante medida nos nossos sitios (`outlook.TRUST`/`SKILL`, `diagnostics.PENALTY`, limiares de dia claro,
+  do relogio) fica DECLARADA como "medida em X" e vira parametro, nao padrao escondido; validar, quando der, num
+  sitio/fonte que nao serviu para escolhe-la. Leitor novo ganha teste com amostra do formato REAL (o leitor do
+  Fronius, escrito de suposicoes, recusava todo arquivo real: unidades `[Wh]`).
 - **The 20 houses** (`casas`, H1-H20) are the public dataset of Khadem et al. (2024), "Comprehensive Dataset
   on Electrical Load Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2
   (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,
@@ -354,10 +362,8 @@ Feito em 09/10 (F1 b e c), com o codigo na BIBLIOTECA primeiro:
   que o da hora (FV casas 0,36 x 0,43; usinas A 0,48 x 0,74): por hora a forma do dia de sol e previsivel, o
   total do dia depende das nuvens. Aba "Por resolucao" da planilha do congresso; 5c da PROPOSTA.
 
-Pendente NO LACTEC (so la roda o FlowState): piloto F2c de faixas com os quantis do FlowState,
-`piloto_quantis.py gera usinas` (ambiente previsao) e depois `piloto_quantis.py avalia usinas` (ambiente da
-biblioteca). Forma da saida ja corrigida: (janelas, 9 quantis, 24 h). Portao: cobertura de 80% e 60% dentro de
-+-5 pontos e CRPS melhor que os quantis dos 14 dias anteriores.
+~~Pendente NO LACTEC: piloto F2c de faixas com os quantis do FlowState~~ **feito 16/10/2026**, ver "Estado em
+16/10/2026 (Lactec)" abaixo.
 
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
@@ -636,6 +642,70 @@ Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_rep
 arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.
 No Windows, editar arquivos com Python grava CRLF: o gancho `mixed-line-ending` conserta e derruba o
 commit uma vez, e so adicionar de novo.
+
+### Estado em 16/10/2026 (Lactec): o que so rodava aqui
+
+- **Clone em `1Projects/prosumer`** (renomeado); ambiente da biblioteca `~/.venvs/prosumer` (extras dev, plots,
+  lightgbm, fronius, net); `~/.venvs/classicos` criado do `classicos.txt`. O `origin` ainda aponta para a URL
+  antiga `prossumidor` (redireciona; trocar com `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git`).
+  O exportador ja aponta para `1Projects/prosumer`. Aqui roda tudo: hypothesis e mypy sem contorno.
+- **Suite:** tudo passa menos `test_forecast_parity[usinas-C]` (LightGBM): previsoes diferem ate 0,0046 kWh SO na
+  1a dobra (ago-set/2025), igual com 1 ou 12 threads e tambem no ambiente `previsao`; RMSE relativo 6e-6. E
+  diferenca de ponto flutuante ENTRE MAQUINAS (a CI nao instala o lightgbm, entao o teste so rodou em casa). Em
+  `usinas|A` (fora do teste rapido) chega a 0,105 kWh na 1a dobra. Decidir: tolerancia por maquina ou checar o skill.
+- **F2(c) FlowState (faixas): bruto NAO passa, conformal PASSA nos 3 casos.** Bruto (`piloto_quantis.py`): CRPS melhor
+  que a referencia de 14 dias (skill +0,069 usinas, +0,128 FV casas, +0,052 consumo) mas faixas estreitas (cobertura
+  80% = 0,61/0,61/0,54). Com `piloto_conformal.py` (FlowState acrescentado; as 11 fontes antigas sairam identicas), forma
+  da biblioteca (nivel, 28 dias): cobertura 0,806/0,617 usinas (skill +0,091), 0,818/0,627 FV casas (+0,125),
+  0,806/0,608 consumo (+0,071). ~4-12 min por caso em CPU. Candidato a adaptador `forecast.FlowState` (so com
+  granite-tsfm; Apache-2.0? conferir antes).
+- **Leitor Fronius conferido com os arquivos reais (primeira vez).** Consertado (com teste de regressao): as unidades
+  reais vem entre colchetes (`[Wh]`) e NENHUM arquivo real era lido; a coluna total do sitio (`Producao fotovoltaica`,
+  sem aparelho) gerava aviso em todo arquivo. Depois do conserto: 7 anos de Cascavel e 5 de Curitiba lidos; contra o
+  `usinas_horario.parquet` do benchmark diferem 0,23%/0,30% das horas (crepusculo 19-20 h e horas parciais: regra de
+  noite do 01_prepara_dados x `zero_at_night`), totais 39.489,6 x 39.489,1 kWh. Exportacao DIARIA do Solar.web
+  (`Energia por retificador alternado`, kWh por dia) NAO e lida (outro formato). **Rotulo inicio/fim do Fronius continua
+  NAO confirmado:** `clock_offset` em 5 min nao decide (poucos meses confiantes, centroides de 10-40 min dominados pela
+  forma do telhado); precisa de irradiancia medida em 1-5 min.
+- **`source_tz` em `io.meter.read_table` e `io.fronius.read_solarweb`** (bug: a mensagem de erro de horario de verao
+  mandava passar `source_tz='UTC'`, que esses leitores nao aceitavam); campo "os horarios do arquivo estao em UTC" no
+  site de exemplo.
+- **Telhado de Cascavel:** `diagnostics` acha 15 graus virado a 30 (bussola) contra a ficha 13 graus / 25 a leste do
+  norte: primeira conferencia contra a verdade.
+- **AutoARIMA (F1 d) nao cabe aqui:** o Lactec tem 15,7 GB de RAM (menos que casa, onde passou de 20 GB). So o piloto
+  de memoria com historico cortado (`piloto_autoarima_memoria.py historico=8760`, `LIMITE_GB` abaixo de 12) faz sentido,
+  na fila da noite.
+- **Fatura real** (`Projeto_IA/ia_solar/dados_brutos/cascavel/Fatura de energia.xlsx`, so no Lactec, privada): resumo
+  mensal 2018-2024 feito a mao. Serve para conferir `brazil.bill` contra uma conta real da Copel (piloto em curso, abaixo).
+- **Site de exemplo nao funcionava com um arquivo real do Solar.web** (relato do usuario, 16/10: CSV do Fronius de
+  Curitiba + "Curitiba, Paraná, Brazil", nada opcional): devolvia HTTP 200 com previsao ~30x grande demais (lia a 2a
+  coluna, `Corrente CA L1` em A, como kWh). Consertado na BIBLIOTECA: `prosumer.io.auto` (`sniff`, `read_energy`,
+  registro `FORMATS`): reconhece o export do Solar.web e manda ao `fronius`; noutra tabela escolhe a energia por
+  NOME e UNIDADE (linha de unidades sob o cabecalho reconhecida), nunca pela posicao; ambiguo = erro com a lista.
+  Exportacao diaria do Solar.web: erro claro pedindo a de 5 min. Site: usa `read_energy` (CSV ou xlsx), mostra o que
+  leu e o que aprendeu (telhado, potencia efetiva: um numero absurdo denuncia coluna errada), roda o `analyze` e mostra
+  o relatorio; `action` explicito no form (aberto como arquivo, o form so recarregava a pagina: o outro relato do
+  usuario) e aviso de ~30 s. Conferido no Chrome com 6 meses do arquivo real (o upload do navegador e limitado a 10
+  MB): previsao 18-55 kWh/dia, 6,99 kW efetivos; por HTTP com o ano inteiro: 31-53 kWh/dia, 6,69 kW. Testes:
+  `tests/test_auto.py`, `test_example_site.py::test_energy_column_is_chosen_by_name_and_unit_not_position`.
+
+#### Onde retomar (parado em 16/10/2026 ~12:30 pelo limite de uso; regra do usuario: 90% -> parar, resumir, commit, push)
+
+1. **Tres agentes pararam no limite de uso, trabalho em worktrees (nao juntado):** `.claude/worktrees/flowstate`
+   (ramo `flowstate-adapter`, adaptador `forecast.FlowState` + `tests/test_flowstate.py`, NADA commitado: conferir,
+   rodar testes, commitar), `.claude/worktrees/diagparams` (ramo `diagnostics-parameters`, limiares do `diagnose` como
+   parametros + `tests/fixtures/diagnostics_defaults.json`, nada commitado), `.claude/worktrees/pilotfatura` (ramo
+   `piloto-fatura`: portao commitado em `0e971b4` ANTES de rodar; `resultados/pilotos/fatura.json` e caches da ANEEL
+   em `dados/` nao commitados; falta o registro no fim do PILOTOS_F1_F2.md). Retomar cada um (o trabalho esta salvo)
+   ou terminar a mao; depois juntar em `main` e SO ENTAO rodar o revisor (`work-reviewer`) sobre o conjunto.
+2. Decisao do usuario: tolerancia do `test_forecast_parity[usinas-C]` entre maquinas (ver acima).
+3. Decisao do usuario: dividir este CLAUDE.md (~32k tokens lidos a cada sessao) em regras + estado, historico datado
+   num arquivo a parte.
+4. Site para mostrar a biblioteca, o que falta: geracao + consumo juntos (autoconsumo, economia), botao "dados de
+   exemplo" (Dingle, CC0), um grafico SVG, upload > 10 MB pelo navegador ok (o servidor aceita; so a ferramenta de teste
+   limita). AutoARIMA: piloto de memoria com historico cortado, na fila da noite (Lactec tem 15,7 GB).
+5. `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git` (bloqueado para o Claude; a URL antiga
+   redireciona).
 
 ## Next steps
 

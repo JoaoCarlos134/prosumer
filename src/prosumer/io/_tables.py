@@ -171,12 +171,15 @@ def parse_times(values: pd.Series, *, dayfirst: bool | None = None, formats: Seq
     return out
 
 
-def localize(times: pd.Series, ids: pd.Series, tz: str, dst: DstPolicy) -> pd.Series:
-    """Aware times in `tz`: aware ones are converted, naive ones are read as wall-clock time in `tz` (daylight
-    saving resolved as in `EnergySeries.from_dataframe`)."""
+def localize(
+    times: pd.Series, ids: pd.Series, tz: str, dst: DstPolicy, source_tz: str | None = None
+) -> pd.Series:
+    """Aware times in `tz`: aware ones are converted, naive ones are read as wall-clock time in `source_tz`
+    (default `tz`; e.g. "UTC" for a logger that writes UTC) and converted to `tz` (daylight saving resolved as
+    in `EnergySeries.from_dataframe`)."""
     if isinstance(times.dtype, pd.DatetimeTZDtype):
         return times.dt.tz_convert(tz)
-    return _localize(times, tz, tz, ids, dst)
+    return _localize(times, tz, source_tz or tz, ids, dst)
 
 
 def infer_step(frame: pd.DataFrame) -> pd.Timedelta:

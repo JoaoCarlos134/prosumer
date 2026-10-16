@@ -50,6 +50,26 @@ def _section(page: str, title: str) -> str:
     return page.split(title)[1].split("</table>")[0]
 
 
+def test_energy_column_is_chosen_by_name_and_unit_not_position() -> None:
+    # regression (2026-10-16): the page took "column 2 = energy"; on a real Solar.web export column 2 is
+    # the AC current, and the forecast came out ~30x too large without any error
+    idx = pd.date_range("2024-01-01", periods=42 * 24, freq="h")
+    y = 0.3 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.0)
+    text = pd.DataFrame(
+        {"data": idx.strftime("%d/%m/%Y %H:%M"), "Tensao (V)": 220.0, "Consumo (kWh)": y}
+    ).to_csv(index=False, sep=";", decimal=",")
+    page = _app().forecast_page(FORM, text.encode("utf-8"), "medidor.csv")
+    assert "Consumo (kWh)" in page and "the only one with an energy unit" in page
+    day = _section(page, "<h2>Per day</h2>")
+    totals = [float(r.split("</td><td>")[2]) for r in day.split("<tr><td>")[1:]]
+    assert totals and all(abs(t - (21 * 0.3 + 3 * 1.3)) < 0.01 for t in totals)
+
+
+def test_empty_upload_says_so() -> None:
+    with pytest.raises(ValueError, match="No file was received"):
+        _app().forecast_page(FORM, b"")
+
+
 def test_consumption_page_from_a_brazilian_csv() -> None:
     page = _app().forecast_page(FORM, _csv("2024-01-01", 6 * 7))
     assert "Forecast of your consumption" in page

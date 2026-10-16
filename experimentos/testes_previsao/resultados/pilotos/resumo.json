@@ -3177,5 +3177,56 @@
   "skill_melhor": 0.1497,
   "dm_p_vs_melhor": 0.0015,
   "grupo_da_frente": false
+ },
+ "FlowState-quantis|usinas|A": {
+  "FlowState": {
+   "cobertura_80": 0.612,
+   "cobertura_60": 0.456,
+   "largura_80_media": 0.9744,
+   "CRPS": 0.415
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.729,
+   "cobertura_60": 0.58,
+   "largura_80_media": 1.4867,
+   "CRPS": 0.4455
+  },
+  "skill_CRPS": 0.0685,
+  "portao": false,
+  "horas_avaliadas": 8970
+ },
+ "FlowState-quantis|casas_prod|A": {
+  "FlowState": {
+   "cobertura_80": 0.607,
+   "cobertura_60": 0.466,
+   "largura_80_media": 0.3369,
+   "CRPS": 0.1411
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.71,
+   "cobertura_60": 0.562,
+   "largura_80_media": 0.5527,
+   "CRPS": 0.1618
+  },
+  "skill_CRPS": 0.1279,
+  "portao": false,
+  "horas_avaliadas": 12880
+ },
+ "FlowState-quantis|casas_cons|A": {
+  "FlowState": {
+   "cobertura_80": 0.537,
+   "cobertura_60": 0.389,
+   "largura_80_media": 0.5411,
+   "CRPS": 0.2534
+  },
+  "referencia_14_dias": {
+   "cobertura_80": 0.677,
+   "cobertura_60": 0.507,
+   "largura_80_media": 0.8116,
+   "CRPS": 0.2672
+  },
+  "skill_CRPS": 0.0516,
+  "portao": false,
+  "horas_avaliadas": 43680
  }
 }

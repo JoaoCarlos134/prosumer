@@ -51,8 +51,13 @@ Open-Meteo com vários modelos) e, se for o caso, refazer o regime C dos outros 
 | Chronos-2 | usinas A | 0,844 | 0,567 | +0,086 | passa |
 | LightGBM quantílico | usinas C | 0,741 | 0,560 | **+0,340** | estreita por 0,009 |
 | Chronos-2 | usinas C | 0,838 | 0,656 | +0,294 | larga por 0,006 |
+| FlowState (Lactec, 16/10) | consumo A | 0,537 | 0,389 | +0,052 | estreita |
+| FlowState (Lactec, 16/10) | FV casas A | 0,607 | 0,466 | +0,128 | estreita |
+| FlowState (Lactec, 16/10) | usinas A | 0,612 | 0,456 | +0,069 | estreita |
 
-Referência: quantis do mesmo horário nos 14 dias anteriores. FlowState (Lactec) ainda não rodado. Os pesos do
+Referência: quantis do mesmo horário nos 14 dias anteriores. FlowState rodado no Lactec em 16/10 (CPU, 4-12 min por
+caso): CRPS melhor que a referência nos três, faixas estreitas demais; com a calibração conformal (F2(c') abaixo)
+passa nos três. Os pesos do
 TimesFM-3 têm licença própria (anotada no plano como não comercial): a biblioteca deve preferir Chronos-2
 (Apache-2.0) ou o LightGBM quantílico. No regime C as duas fontes erram a calibração por menos de 1 ponto além da
 tolerância, com CRPS muito melhor que a referência: o passo natural é uma calibração causal (conformal sobre as
@@ -84,6 +89,11 @@ Por nível, 28 dias: LightGBM FV das casas 0,651/0,457 → 0,814/0,622 (skill de
 0,741/0,560 → 0,810/0,634 (+0,337 → +0,345); Chronos-2 C, larga demais, 0,837/0,654 → 0,804/0,605 (+0,289 →
 +0,296; o CQR não consegue estreitá-la: os erros se amontoam em 0 nas horas de borda do dia); Chronos-2 consumo
 0,748/0,546 → 0,808/0,608. A única falha: TimesFM-3 FV das casas, que já passava e foi 3 pontos além (0,832/0,653).
+
+**FlowState (acrescentado em 16/10, Lactec; as 11 fontes acima saíram idênticas na nova rodada):** as seis formas
+passam nos três casos. Por nível, 28 dias: consumo 0,541/0,393 → 0,806/0,608 (skill de CRPS +0,051 → +0,071); FV das
+casas 0,609/0,468 → 0,818/0,627 (+0,115 → +0,125); usinas 0,611/0,454 → 0,806/0,617 (+0,066 → +0,091). (Os números
+brutos diferem um pouco da tabela F2(c): aqui só os dias com calibração ativa.)
 
 **Na biblioteca:** `prosumer.postprocessing.conformal_quantiles` (por nível, 28 dias, mínimo 7, `hours=` para as
 horas de produção); dá exatamente o resultado do piloto (diferença 0,0 nas 11). O `analyze` roda cada modelo com

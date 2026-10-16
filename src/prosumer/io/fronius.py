@@ -4,7 +4,8 @@ The layout, known from the project's two plants (parsers in `legado/ia_solar/ana
 - one workbook per year (`.xlsx`, sometimes several sheets), or the same table as CSV;
 - row 1: the column names in the language of the Solar.web account, each followed by `| <device> (<n>)`
   (e.g. `Energia | Primo 4.0-1 (1)`), except the time column (`Data e horário`);
-- row 2: the units (`dd.MM.yyyy HH:mm`, `Wh`, `A`, `V`, `kWh/kWp`, ...);
+- row 2: the units in brackets (`[dd.MM.yyyy HH:mm]`, `[Wh]`, `[A]`, `[V]`, `[kWh/kWp]`, ...; checked on the
+  real exports on 2026-10-16), read with or without the brackets;
 - from row 3: one row per 5 minutes, local wall-clock time, energy in Wh per interval, `n/a` or an empty cell
   where the inverter logged nothing (always at night: it sleeps);
 - consecutive yearly files overlap at the boundary: the same timestamp appears in both.
@@ -58,6 +59,11 @@ ALIASES: list[tuple[str, str]] = [
         r"|timestamp",
         "time",
     ),
+    # the daily export (seen 2026-10-16): `Energia por retificador alternado` (kWh per inverter and day), the
+    # same per kWp, and `Instalação total` (the site's total)
+    (r"energia por retificador alternado por kwp", "specific_yield"),
+    (r"energia por retificador alternado", "energy"),
+    (r"instalacao total", "pv_production"),
     (r"energia|energy|energie|energia produzida|produced energy", "energy"),
     (r"(?:energia|energy|energie) mpp ?(?P<n>\d+)", "energy_mpp{n}"),
     (
@@ -103,6 +109,14 @@ def canonical(name: str) -> str:
                 g["tag"] = g["tag"].replace(" ", "")
             return out.format(**g)
     return re.sub(r"[^0-9a-z]+", "_", n).strip("_") or "column"
+
+
+def _clean_unit(value: object) -> str:
+    """A cell of the units row as plain text: real exports write `[Wh]`, `[dd.MM.yyyy HH:mm]`."""
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return ""
+    u = str(value).strip()
+    return u[1:-1].strip() if u.startswith("[") and u.endswith("]") else u
 
 
 def _unit_suffix(unit: str) -> str:
@@ -166,10 +180,7 @@ def read_solarweb_raw(
             if len(cells) < 3:
                 continue
             header = [_split_header(v) for v in cells.iloc[0]]
-            units = [
-                "" if v is None or (isinstance(v, float) and np.isnan(v)) else str(v).strip()
-                for v in cells.iloc[1]
-            ]
+            units = [_clean_unit(v) for v in cells.iloc[1]]
             names = [canonical(b) if b else "" for b, _ in header]
             if "time" not in names:
                 raise ValueError(
@@ -255,13 +266,15 @@ def read_solarweb(
     sep: str | None = None,
     decimal: str | None = None,
     encoding: str | None = None,
+    source_tz: str | None = None,
 ) -> EnergySeries:
     """Generation series (kWh per `freq` step) from Solar.web exports of ONE site, one series per device.
 
     - `paths`: one file or several (the yearly exports, in any order); timestamps repeated across files are
       kept once (the first, in the order given) and counted in the provenance notes, with how many of them
       disagree on the energy;
-    - `tz`: the time zone of the wall-clock times in the file (the one set in the Solar.web account);
+    - `tz`: the time zone of the wall-clock times in the file (the one set in the Solar.web account), and of
+      the result; `source_tz`: the zone of the file's times when it differs (e.g. "UTC");
     - `freq`: the output step; the 5-minute energies are SUMMED, and a step is valid with at least
       `min_coverage` of its records (11 of 12 per hour by default);
     - `energy_column`: the column to read, by its original name (`Energia`), canonical name (`energy`) or raw
@@ -292,7 +305,9 @@ def read_solarweb(
     ]
     if not devices:
         raise ValueError("The energy column has no value in any row")
-    dropped = sorted(set(kept["unique_id"]) - set(devices))
+    # "" holds the columns without a device suffix: site totals (`Produção fotovoltaica`), not an inverter;
+    # when the energy is read per device they are simply not used
+    dropped = sorted(set(kept["unique_id"]) - set(devices) - {""})
     if dropped:
         warnings.warn(f"Devices without any energy value left out: {dropped}", UserWarning, stacklevel=2)
     n_dup = int(x["dup"].sum())
@@ -301,7 +316,7 @@ def read_solarweb(
     a, b = first.reindex(later.index).to_numpy(), later.to_numpy()
     conflicts = int((~(np.isclose(a, b) | (np.isnan(a) & np.isnan(b)))).sum())
     kept = kept[kept["unique_id"].isin(devices)].sort_values(["unique_id", "time"], kind="stable")
-    kept = kept.assign(ds=_tables.localize(kept["time"], kept["unique_id"], tz, dst))
+    kept = kept.assign(ds=_tables.localize(kept["time"], kept["unique_id"], tz, dst, source_tz))
     kept = kept[kept["ds"].notna()]
     native = pd.Timedelta(step) if step else _tables.infer_step(kept)
     kept = kept.assign(ds=_tables.shift_label(kept["ds"], label, native))

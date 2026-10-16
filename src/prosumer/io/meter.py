@@ -81,13 +81,16 @@ def read_table(
     skiprows: int = 0,
     encoding: str | None = None,
     dst: DstPolicy = "raise",
+    source_tz: str | None = None,
 ) -> EnergySeries:
     """An energy series (kWh) from a meter export or any table with a time column and value columns.
 
     - `source`: a CSV/Excel file or a DataFrame already in memory;
     - `time_column`, `value_columns`: the column names (one series per value column; `names` renames them,
       as a mapping or a list in the same order);
-    - `tz`: the time zone of naive times (wall-clock time); times written with an offset are converted;
+    - `tz`: the time zone of the result and, by default, of naive times (wall-clock time); times written with
+      an offset are converted; `source_tz`: the zone of naive times when it differs (e.g. "UTC" for a logger
+      that writes UTC: its file has no gap or repeat at the daylight saving changes);
     - `unit`: of the values: kWh or Wh for "interval" and "cumulative", kW or W for "power";
     - `kind`, `label`: see the module docstring;
     - `freq`: output step (sum); None keeps the native step, which is inferred unless `step` is given;
@@ -123,7 +126,7 @@ def read_table(
     long["time"] = (
         pd.to_datetime(long["time"]) if not isinstance(times.dtype, pd.DatetimeTZDtype) else long["time"]
     )
-    long["ds"] = _tables.localize(long["time"], long["unique_id"], tz, dst)
+    long["ds"] = _tables.localize(long["time"], long["unique_id"], tz, dst, source_tz)
     long = long[long["ds"].notna()]
     dup = long.duplicated(["unique_id", "ds"], keep="first")
     n_dup = int(dup.sum())

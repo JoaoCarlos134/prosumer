@@ -35,6 +35,7 @@ from prosumer.metrics import band_scores
 FONTES = [("LightGBM", c, r) for c, r in [("casas_cons", "A"), ("casas_prod", "A"), ("usinas", "A"), ("usinas", "C")]]
 FONTES += [("Chronos-2", c, r) for c, r in [("casas_cons", "A"), ("casas_prod", "A"), ("usinas", "A"), ("usinas", "C")]]
 FONTES += [("TimesFM-3", c, "A") for c in ("casas_cons", "casas_prod", "usinas")]
+FONTES += [("FlowState", c, "A") for c in ("casas_cons", "casas_prod", "usinas")]  # Lactec, 16/10/2026
 VARIANTES = [("aditivo", 14), ("aditivo", 28), ("normalizado", 14), ("normalizado", 28), ("nivel", 14), ("nivel", 28)]
 MIN_DIAS = 7
 EPS = 1e-6

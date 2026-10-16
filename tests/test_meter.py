@@ -133,6 +133,21 @@ def test_times_with_offset_are_converted() -> None:
     assert s.frame["ds"].iloc[0] == at("2025-08-01 00:00")
 
 
+def test_naive_utc_file_across_daylight_saving() -> None:
+    # regression (2026-10-16): a logger writing naive UTC across Dublin's October change raised an error
+    # that said "pass source_tz='UTC'", but read_table had no such argument
+    t = pd.date_range("2020-10-24 22:00", "2020-10-25 04:00", freq="h")  # naive UTC, no repeat
+    df = pd.DataFrame({"t": t, "e": np.arange(len(t), dtype=float)})
+    with pytest.raises(Exception, match="source_tz"):
+        read_table(df, time_column="t", value_columns="e", tz="Europe/Dublin", unit="kWh")
+    s = read_table(df, time_column="t", value_columns="e", tz="Europe/Dublin", unit="kWh", source_tz="UTC")
+    ds = s.frame["ds"]
+    assert len(ds) == len(t) and ds.is_monotonic_increasing
+    assert ds.iloc[0] == pd.Timestamp("2020-10-24 23:00", tz="Europe/Dublin")  # IST = UTC+1
+    assert (ds.dt.strftime("%H:%M") == "01:00").sum() == 2  # the repeated hour, once per offset
+    assert s.frame["y"].tolist() == list(range(len(t)))
+
+
 def test_duplicates_dropped_and_counted() -> None:
     t = list(pd.date_range("2025-08-01", periods=3, freq="h"))
     df = pd.DataFrame({"t": [*t, t[1]], "e": [1.0, 2.0, 3.0, 9.0]})

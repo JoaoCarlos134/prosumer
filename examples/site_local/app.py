@@ -7,8 +7,9 @@ Run it (from the repository root, with the library installed in the environment)
 Nothing but the Python standard library and `prosumer`: no web framework, no JavaScript. The whole backend is
 the function `forecast_page` below, in numbered steps that map one to one to library calls:
 
-    1. read the CSV                 -> prosumer.io.meter.read_table
-    2. where is it                  -> prosumer.io.geocode.geocode / round_site / timezone_at
+    1. where is it                  -> prosumer.io.geocode.geocode / round_site / timezone_at
+    2. read the file                -> prosumer.io.read_energy (recognises the layout; energy column by
+                                       name and unit, never by position)
     3. the weather of the next days -> prosumer.io.open_meteo.fetch_forecast
     4. the forecast                 -> prosumer.forecast_ahead
     5. when to run heavy loads      -> prosumer.best_windows
@@ -27,8 +28,8 @@ tariff, the distributor's name (to ANEEL) go out. The free Open-Meteo API is for
 from __future__ import annotations
 
 import html
-import io
 import re
+import tempfile
 import traceback
 from email.parser import BytesParser
 from email.policy import default
@@ -40,7 +41,7 @@ import pandas as pd
 import prosumer
 from prosumer import economics
 from prosumer.economics import brazil
-from prosumer.io import geocode, meter, open_meteo
+from prosumer.io import geocode, open_meteo, read_energy
 from prosumer.provenance import Provenance, of
 
 HERE = Path(__file__).resolve().parent
@@ -55,18 +56,15 @@ DISTRIBUTORS = {  # ANEEL's SigAgente -> what the person knows it as
 
 
 # ---------------------------------------------------------------------- the backend: seven steps
-def forecast_page(form: dict[str, str], csv: bytes) -> str:
-    """Form fields + CSV bytes -> the result page (HTML). Each step adds a line to `log`, shown below."""
+def forecast_page(form: dict[str, str], csv: bytes, filename: str = "data.csv") -> str:
+    """Form fields + file bytes -> the result page (HTML). Each step adds a line to `log`, shown below."""
     log: list[str] = []
     credits: list = []  # where each piece of outside data came from, shown at the end (licences require it)
     quantity = form.get("quantity") or "generation"
+    if not csv:
+        raise ValueError("No file was received: choose your data file and send the form again.")
 
-    # 1. Read the CSV. Without column names: the first column is the time, the second the energy.
-    table = pd.read_csv(io.BytesIO(csv), sep=None, engine="python")
-    time_col = form.get("time_column") or table.columns[0]
-    value_col = form.get("value_column") or table.columns[1]
-
-    # 2. Where. Typed coordinates win; otherwise the address is geocoded and the first match is used.
+    # 1. Where. Typed coordinates win; otherwise the address is geocoded and the first match is used.
     if form.get("latitude") and form.get("longitude"):
         lat, lon = float(form["latitude"]), float(form["longitude"])
         log.append(f"Site typed: {lat}, {lon}.")
@@ -83,19 +81,35 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     tz = form.get("timezone") or geocode.timezone_at(*site)
     log.append(f"Site used (rounded): {site[0]}, {site[1]}; time zone {tz}.")
 
-    series = meter.read_table(
-        table,
-        time_column=time_col,
-        value_columns=value_col,
-        names=["mine"],
-        tz=tz,
-        unit=form.get("unit") or "kWh",  # type: ignore[arg-type]
-        quantity=quantity,  # type: ignore[arg-type]
-        kind=form.get("kind") or "interval",  # type: ignore[arg-type]
-        freq="h",
+    # 2. Read the file. Its layout is recognised (an inverter portal's export, a meter table) and the energy
+    #    column is chosen by its name and unit, never by its position; what was read is shown on the page.
+    suffix = (
+        Path(filename).suffix.lower()
+        if Path(filename).suffix.lower() in (".csv", ".txt", ".xlsx")
+        else ".csv"
     )
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / f"upload{suffix}"
+        path.write_bytes(csv)
+        series = read_energy(
+            path,
+            tz=tz,
+            quantity=quantity,  # type: ignore[arg-type]
+            time_column=form.get("time_column") or None,
+            value_column=form.get("value_column") or None,
+            unit=form.get("unit") or None,  # type: ignore[arg-type]
+            kind=form.get("kind") or None,  # type: ignore[arg-type]
+            freq="h",
+            site=site if quantity == "generation" else None,  # the inverter sleeps at night: zeros
+            source_tz="UTC" if form.get("file_times") == "UTC" else None,  # UTC loggers: no DST gap or repeat
+        )
     span = series.frame["ds"]
-    log.append(f"Read {len(series.frame)} hours, {span.min():%Y-%m-%d} to {span.max():%Y-%m-%d}.")
+    how = series.provenance.notes.split("; ")[0] if series.provenance else ""
+    log.append(f"Read {how.replace('upload' + suffix, filename)}.")
+    log.append(
+        f"{len(series.frame)} hours, {span.min():%Y-%m-%d} to {span.max():%Y-%m-%d}, "
+        f"{series.frame['valid'].mean():.0%} measured; {len(series.series)} series."
+    )
 
     # 3. The weather of the next days (only generation uses it). Up to 16 days: the API's limit.
     days = int(form.get("days") or 7)
@@ -117,6 +131,10 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     # 5. When to run a heavy load: the best block of hours of each day.
     hours = int(form.get("load_hours") or 3)
     windows = prosumer.best_windows(out, hours)
+
+    # The analysis of the data you sent: quality, clock, how well simple forecasts did on your last weeks,
+    # and (production) the panels' orientation and performance over time.
+    report = prosumer.analyze(series, site=site, kwp=kwp)
 
     money = Money()
     pricing = _pricing(form, out, credits)  # the price typed in the form, or None
@@ -141,7 +159,7 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
         else:
             money.notes.append("The monthly bill needs your consumption: upload it to see what you pay.")
 
-    return _render(out, windows, hours, log, [c for c in credits if c is not None], money)
+    return _render(out, windows, hours, log, [c for c in credits if c is not None], money, report)
 
 
 class Money:
@@ -247,8 +265,59 @@ def _peak_hours(text: str) -> tuple[int, int]:
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)
+def _learnt(out: prosumer.Outlook) -> str:
+    """One readable line per series: the plant the forecast is built on (a wrong file shows up here)."""
+    lines = []
+    for uid, m in out.method.get("series", {}).items():
+        if "kw_eff" in m:
+            lines.append(
+                f"{html.escape(str(uid))}: panels {m['tilt']:.0f} degrees facing {m['azimuth']:.0f} "
+                "(compass, "
+                f"{html.escape(str(m['orientation']))}); effective peak power <b>{m['kw_eff']:.2f} kW</b> "
+                f"({html.escape(str(m['kw_eff_from']))}). A home system is a few kW: a much larger number "
+                "means the file's column was not energy."
+            )
+    return "".join(f"<p>{t}</p>" for t in lines)
+
+
+def _markdown(md: str) -> str:
+    """The report's Markdown as plain HTML: headings, lists, tables, paragraphs (no library needed)."""
+    out: list[str] = []
+    table: list[list[str]] = []
+
+    def flush() -> None:
+        if table:
+            head, *body = [r for r in table if not all(set(c) <= set("-: ") for c in r)]
+            out.append("<table><tr>" + "".join(f"<th>{c}</th>" for c in head) + "</tr>")
+            out.extend("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in body)
+            out.append("</table>")
+            table.clear()
+
+    for line in md.splitlines():
+        s = line.strip()
+        if s.startswith("|"):
+            table.append([html.escape(c.strip()) for c in s.strip("|").split("|")])
+            continue
+        flush()
+        if s.startswith("#"):
+            level = min(len(s) - len(s.lstrip("#")) + 2, 5)
+            out.append(f"<h{level}>{html.escape(s.lstrip('#').strip())}</h{level}>")
+        elif s.startswith(("- ", "* ")):
+            out.append(f"<li>{html.escape(s[2:])}</li>")
+        elif s:
+            out.append(f"<p>{html.escape(s)}</p>")
+    flush()
+    return "\n".join(out)
+
+
 def _render(
-    out: prosumer.Outlook, windows: pd.DataFrame, hours: int, log: list[str], credits: list, money: Money
+    out: prosumer.Outlook,
+    windows: pd.DataFrame,
+    hours: int,
+    log: list[str],
+    credits: list,
+    money: Money,
+    report: prosumer.Report | None = None,
 ) -> str:
     daily = out.daily
     top = max(float(daily["high"].max()), 1e-9)
@@ -275,6 +344,9 @@ def _render(
         f"""
 <h1>Forecast of your {what}, kWh</h1>
 <p><a href="/">New forecast</a></p>
+<h2>What was read and learnt</h2>
+<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in log)}</ul>
+{_learnt(out)}
 <h2>Per day</h2>
 <table><tr><th>Day</th><th>Lead</th><th>Total</th><th>Range</th><th>Confidence</th><th></th></tr>
 {"".join(rows)}</table>
@@ -282,8 +354,10 @@ def _render(
 <h2>Best {hours} hours of each day for a heavy load ({pick})</h2>
 <table><tr><th>Day</th><th>Hours</th><th>kWh in the block</th><th>Confidence</th></tr>{best}</table>
 {_money(money, hours)}
-<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + money.notes + log)}</ul>
-<h2>What the library learnt</h2><pre>{method}</pre>
+<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + money.notes)}</ul>
+<h2>Analysis of your data</h2>
+{_markdown(report.to_markdown()) if report is not None else "<p>Not run.</p>"}
+<details><summary>Every number the forecast used</summary><pre>{method}</pre></details>
 <h2>Data sources</h2><ul>{"".join(f"<li>{t}</li>" for t in dict.fromkeys(map(_credit, credits)))}</ul>
 <details><summary>Every hour</summary>{hourly.to_html(index=False)}</details>
 """
@@ -373,17 +447,17 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         head = f"Content-Type: {self.headers['Content-Type']}\r\n\r\n".encode()
         message = BytesParser(policy=default).parsebytes(head + raw)
-        form, csv = {}, b""
+        form, csv, filename = {}, b"", "data.csv"
         for part in message.iter_parts():
             name = part.get_param("name", header="content-disposition")
             payload = part.get_payload(decode=True)
             data = payload if isinstance(payload, bytes) else b""
             if name == "csv":
-                csv = data
+                csv, filename = data, part.get_filename() or filename
             elif name:
                 form[str(name)] = data.decode("utf-8").strip()
         try:
-            self._send(200, forecast_page(form, csv))
+            self._send(200, forecast_page(form, csv, filename))
         except Exception as e:  # show the error on the page: this is a local tool, not a public site
             msg = html.escape(f"{type(e).__name__}: {e}")
             detail = html.escape(traceback.format_exc())

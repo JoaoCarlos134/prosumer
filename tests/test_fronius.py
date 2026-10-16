@@ -4,6 +4,7 @@ yearly files that overlap). No plant data."""
 from __future__ import annotations
 
 import csv
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -261,6 +262,45 @@ def test_daily_step_and_night_zeros(tmp_path: Path) -> None:
     assert filled.provenance is not None and "set to zero" in filled.provenance.notes
     day = fronius.read_solarweb(f, tz=TZ, freq="D", min_coverage=0.5)
     assert day.frame["y"].iloc[0] == pytest.approx((288 - len(night)) * 0.01)
+
+
+def as_exported(data: list[list[Any]]) -> list[list[Any]]:
+    """The layout of the real exports (checked at Lactec on 2026-10-16): units in brackets and a site-total
+    `Produção fotovoltaica` column without a device suffix, at the end."""
+    head, units, *body = data
+    return [
+        [*head, "Produção fotovoltaica"],
+        [f"[{u}]" for u in units] + ["[Wh]"],
+        *[[*r, r[1]] for r in body],
+    ]
+
+
+@pytest.mark.parametrize("fmt", ["xlsx", "csv"])
+def test_real_export_layout_bracketed_units_and_site_total(tmp_path: Path, fmt: str) -> None:
+    # regression: real units read `[Wh]`, so no energy column was recognised; the site-total column then
+    # came out as a device named "" and warned on every real file
+    data = as_exported(rows("2025-08-01 10:00", 12, wh=2.5))
+    f = (
+        write_xlsx(tmp_path / "r.xlsx", {"minuto": data})
+        if fmt == "xlsx"
+        else write_csv(tmp_path / "r.csv", data)
+    )
+    raw = fronius.read_solarweb_raw(f)
+    cols = raw.attrs["columns"].set_index("column")
+    assert cols.loc["energy_Wh", "unit"] == "Wh" and "pv_production_Wh" in cols.index
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        s = fronius.read_solarweb(f, tz=TZ)
+    assert s.frame["unique_id"].unique().tolist() == [DEV]
+    assert s.frame["y"].iloc[0] == pytest.approx(12 * 2.5e-3)
+
+
+def test_site_total_alone_is_one_series(tmp_path: Path) -> None:
+    # neighbour: an export with only the site-total column still reads, as one series
+    data = [[r[0], r[-1]] for r in as_exported(rows("2025-08-01 10:00", 12, wh=2.5))]
+    s = fronius.read_solarweb(write_xlsx(tmp_path / "t.xlsx", {"s": data}), tz=TZ, names=["site"])
+    assert s.frame["unique_id"].unique().tolist() == ["site"]
+    assert s.frame["y"].iloc[0] == pytest.approx(0.03)
 
 
 def test_not_a_solarweb_file(tmp_path: Path) -> None:

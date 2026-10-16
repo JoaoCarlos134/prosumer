@@ -8,18 +8,22 @@ the START of the interval, one column (weather) or one series (`EnergySeries`, k
 
 from __future__ import annotations
 
-from . import aneel, fronius, geocode, meter, nasa_power, open_meteo
+from . import aneel, auto, fronius, geocode, meter, nasa_power, open_meteo
+from .auto import read_energy, sniff
 from .fronius import read_solarweb, read_solarweb_raw
 from .meter import read_table
 
 __all__ = [
     "aneel",
+    "auto",
     "fronius",
     "geocode",
     "meter",
     "nasa_power",
     "open_meteo",
+    "read_energy",
     "read_solarweb",
     "read_solarweb_raw",
     "read_table",
+    "sniff",
 ]

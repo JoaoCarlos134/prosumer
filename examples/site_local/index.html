@@ -18,11 +18,14 @@ input[type=text], input[type=number], select { width: 100%; box-sizing: border-b
 coordinates rounded to ~1 km (for the weather forecast) are sent out, and, for a Brazilian tariff, the
 distributor's name (to ANEEL).</p>
 
-<form method="post" enctype="multipart/form-data">
+<!-- the explicit action makes the form reach the server even when this file is opened from disk (a plain
+     relative post would just reload the file) -->
+<form method="post" action="http://127.0.0.1:8000/" enctype="multipart/form-data">
   <fieldset>
     <legend>Required</legend>
-    <label>Your data (CSV: a time column and an energy column, hourly or finer)
-      <input type="file" name="csv" accept=".csv,.txt" required></label>
+    <label>Your data (CSV or Excel, hourly or finer: an inverter portal's export such as Fronius Solar.web, a
+      meter's load profile, or any table with a time column and an energy or power column)
+      <input type="file" name="csv" accept=".csv,.txt,.xlsx" required></label>
     <label>What it is
       <select name="quantity">
         <option value="generation">Solar production</option>
@@ -100,18 +103,28 @@ distributor's name (to ANEEL).</p>
     <label>Time column name <input type="text" name="time_column"></label>
     <label>Energy column name <input type="text" name="value_column"></label>
     <label>Unit
-      <select name="unit"><option>kWh</option><option>Wh</option><option>kW</option><option>W</option></select></label>
+      <select name="unit"><option value="">guess from the file</option><option>kWh</option><option>Wh</option>
+        <option>kW</option><option>W</option></select></label>
     <label>Each row is
       <select name="kind">
+        <option value="">guess from the unit</option>
         <option value="interval">the energy of its interval</option>
         <option value="cumulative">a meter counter reading</option>
         <option value="power">the average power of its interval (use kW or W)</option>
       </select></label>
-    <label>Time zone of the times in the file (e.g. America/Sao_Paulo; empty = the site's)
+    <label>Time zone of the site (e.g. America/Sao_Paulo; empty = found from the location)
       <input type="text" name="timezone"></label>
+    <label>The times in the file are
+      <select name="file_times">
+        <option value="local">local clock time of the site</option>
+        <option value="UTC">UTC (many loggers and online portals)</option>
+      </select></label>
   </fieldset>
 
   <button type="submit">Forecast</button>
+  <p class="small">The results page takes about half a minute (the weather forecast is downloaded and a year
+    of data is analysed); the browser shows it loading meanwhile. If the page only reloads, the server is not
+    running: start it with <code>python examples/site_local/app.py</code> and open http://127.0.0.1:8000.</p>
 </form>
 </body>
 </html>

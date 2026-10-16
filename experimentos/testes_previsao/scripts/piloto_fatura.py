@@ -108,10 +108,13 @@ FATURA = os.environ.get(
     r"C:\Users\L08741\OneDrive - Lactec\Documentos\2026\Projeto_IA\ia_solar\dados_brutos\cascavel"
     r"\Fatura de energia.xlsx",
 )
-TAR = comum.DADOS / "aneel_copel_b1.csv"
-BAND = comum.DADOS / "aneel_bandeiras.csv"
-PROV = comum.DADOS / "aneel_copel_proveniencia.json"
-SAIDA = comum.RES / "pilotos" / "fatura.json"
+# "sem-duplicatas" na linha de comando: diagnostico pos-hoc (ver `_get_sem_duplicatas`), arquivos proprios
+SEM_DUP = "sem-duplicatas" in sys.argv
+_SUF = "_sem_duplicatas" if SEM_DUP else ""
+TAR = comum.DADOS / f"aneel_copel_b1{_SUF}.csv"
+BAND = comum.DADOS / f"aneel_bandeiras{_SUF}.csv"
+PROV = comum.DADOS / f"aneel_copel_proveniencia{_SUF}.json"
+SAIDA = comum.RES / "pilotos" / f"fatura{_SUF}.json"
 FUSO = "Etc/GMT+3"
 LEITURA = 9  # dia da leitura (cabecalho da planilha)
 MINIMO = 50.0  # kWh, bifasico a tres fios (conferido pelo saldo de 2019)
@@ -126,10 +129,43 @@ HORAS_G = [10, 11, 12, 13]
 
 
 # ---------------------------------------------------------------------- ANEEL (cache)
+def _get_sem_duplicatas(url, params):
+    """DIAGNOSTICO POS-HOC (depois da rodada do portao, commit e6274db): a base de tarifas da ANEEL gerada em
+    16/10/2026 repete cada registro (mesmo conteudo, `_id` diferente) e o `TariffBook` soma linhas de mesma
+    chave, dobrando TUSD e TE. Este getter pede tudo numa pagina e tira os registros iguais fora o `_id`."""
+    from prosumer.io import _http
+
+    if int(params.get("offset", 0)) > 0:
+        return {"success": True, "result": {"records": [], "total": 0}}
+    r = _http.get_json(url, {**params, "limit": 100000})
+    recs = r["result"]["records"]
+    assert len(recs) == int(r["result"]["total"]), "a API cortou a pagina"
+    vistos, unicos = set(), []
+    for x in recs:
+        k = tuple(sorted((a, str(b)) for a, b in x.items() if a != "_id"))
+        if k not in vistos:
+            vistos.add(k)
+            unicos.append(x)
+    print(f"{str(params.get('resource_id', ''))[:8]}: {len(recs)} registros, {len(unicos)} unicos")
+    r["result"]["records"], r["result"]["total"] = unicos, len(unicos)
+    return r
+
+
+def conferencia_legado(book):
+    """B1 convencional do livro x CSV do legado (`legado/.../tarifas/dados`), vigencias em comum."""
+    leg = brazil.TariffBook.from_legacy(comum.RAIZ.parents[1] / "legado/ia_solar/analise/tarifas/dados")
+    k = ["start", "subgroup", "modality", "posto"]
+    a = book.tariffs[(book.tariffs["subgroup"] == "B1") & (book.tariffs["modality"] == "Convencional")]
+    m = a.merge(leg.tariffs, on=k, suffixes=("", "_leg"))
+    return {"vigencias_comuns": len(m), "dif_max_tusd": float((m["tusd"] - m["tusd_leg"]).abs().max()),
+            "dif_max_te": float((m["te"] - m["te_leg"]).abs().max())}
+
+
 def baixa():
     """O livro pelo `TariffBook.from_aneel` (aliquotas daqui sao trocadas em `livro`); guarda tarifas e
     bandeiras em CSV para rodar sem rede."""
-    bk = brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.29, pis_cofins=PIS_COFINS)
+    bk = brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.29, pis_cofins=PIS_COFINS,
+                                      get=_get_sem_duplicatas if SEM_DUP else None)
     t = bk.tariffs
     b = bk.bandeiras.reset_index()
     t.to_csv(TAR, index=False)
@@ -377,6 +413,8 @@ def main():
         "fora_da_faixa_primaria": fora,
         "erros_relativos_por_fatura": por_fatura,
         "tempo_s": round(time.time() - t0, 1),
+        "livro_x_legado_B1_convencional": conferencia_legado(book),
+        "diagnostico_pos_hoc_sem_duplicatas": SEM_DUP,
     }
     SAIDA.write_text(json.dumps(saida, indent=1, ensure_ascii=False, default=str))
     print(json.dumps({k: saida[k] for k in ("veredito", "n_faturas", "alinhamento_injecao_geracao")}, indent=1,
@@ -389,7 +427,7 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "baixa":
+    if "baixa" in sys.argv[1:]:
         baixa()
     else:
         main()

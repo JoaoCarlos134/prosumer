@@ -357,3 +357,91 @@ climatologia a partir do lead 8. Consumo: `perfil_dia_util` nos leads 1-14. Limi
 o lead 7 do IFS depende do filtro (interpolacao de passo de 6 h); a composicao dos modelos muda entre calibracao
 e teste nos leads 5-7; o Meteo-France puxa a media para cima nos leads 2-3; os leads 8-15 tem so ~2 meses; as
 casas sao um outono irlandes.
+
+## E6: a conta da `economics.brazil` contra as faturas reais da Copel (16/10/2026, Lactec, CPU) — NAO PASSA
+
+Pergunta: com a tarifa convencional da Copel (`COPEL-DIS`, ANEEL), bandeiras, custo de disponibilidade, SCEE / GD I
+(usina de Cascavel, 07/2019) e ICMS + PIS/COFINS, o `brazil.Setup(...).bill` reproduz o total pago mes a mes? Script
+`experimentos/testes_previsao/scripts/piloto_fatura.py`; saidas `resultados/pilotos/fatura.json` (rodada do portao) e
+`fatura_sem_duplicatas.json` (diagnostico pos-hoc); livro da ANEEL em `dados/aneel_*.csv` (ODbL 1.0, atribuicao
+ANEEL; base derivada redistribuida fica sob ODbL). Dados: planilha feita a mao pelo dono com o resumo das faturas
+(so no Lactec, nunca copiada): por mes de referencia, kWh importado, kWh injetado, total pago e saldo; NAO tem
+COSIP, aliquotas, bandeira nem a energia separada. 104 faturas (01/2018-08/2026): P0 sem geracao 19 (01/2018-07/2019),
+P1 com geracao 85; nenhuma excluida (em todas as P1 a injecao do mes cobre o importado acima de 50 kWh, entao o
+saldo nao entra). Gravados so erros relativos por fatura e agregados.
+
+**Ordem dos commits:** `0e971b4` = script com a pergunta, o metodo e o PORTAO, antes de qualquer conta contra as
+faturas (vistos antes: a estrutura e os numeros brutos da planilha, a razao injecao/geracao por janela e o minimo de
+50 kWh pela conta do saldo de 2019; declarado no docstring). `daa47d0` = so velocidade (memoizacao; a 1a rodada foi
+parada antes de terminar qualquer configuracao). `e6274db` = resultados da rodada do portao. `793fa25` = modo
+`sem-duplicatas` (pos-hoc), `b3e2c60` = seus resultados.
+
+Metodo: serie horaria cujo total bate com a fatura (importado I nas horas 0-5 e 18-23, injetado X nas 10-13, sem
+sobreposicao): na convencional o preco so depende do dia e o SCEE compensa em kWh no mes, entao a conta depende so de
+I, X e dos dias. Periodo: a fatura M cobre ~9/(M-1)..8/M (conferido: injecao/geracao do inversor por fatura tem
+desvio-padrao 0,068 no ciclo do dia 9, contra 0,158 no mes M-1 e 0,150 no mes M). Primaria `ciclo` = o ciclo em dois
+pedacos de mes-calendario, cada um faturado pela biblioteca com sua fracao de dias dos kWh e do minimo (pro-rata da
+Copel); `calendario` = a fatura inteira no mes M-1 (o jeito do aplicativo). SUPOSICOES (a planilha nao tem as
+aliquotas): ICMS do PR 29% / 18% de 23/06/2022 / 19% de 18/03/2024 (tabela do legado; o `from_aneel` so aceita uma
+aliquota para todas as datas, entao a tabela do livro foi trocada), PIS/COFINS 9,25% nominal; minimo 50 kWh; GD I.
+COSIP (desconhecida): em P0 mediana de (pago - conta) nas OUTRAS 18 faturas; em P1 a mediana das 19 de P0.
+Leituras da lei: `icms_exempt_compensated` "all" (padrao), `bandeira_on_minimum=True` (padrao), bandeira por mes
+(pro-rata no `ciclo`), `pis_cofins_exempt_compensated=True`; `gd2_minimum` e `after_2028` nao se aplicam (GD I ate
+2045), ficaram no padrao. Grade de 16 configuracoes ({ciclo, calendario} x ICMS {all, te_only, none, PR48} x
+`bandeira_on_minimum`) = BUSCA nas mesmas faturas, relatada. Sem teste estatistico (contagem de faturas na faixa).
+
+PORTAO (commit `0e971b4`, primaria): G1 energia P0 dentro de +-2% em >= 80% e COSIP estimada em [0, 30] R$; G2 total
+P0 +-3% em >= 80%; G3 total P1 +-3% em >= 80%; G4 = G1-G3 na montagem `calendario`.
+
+### Rodada do portao (`fatura.json`): NAO PASSA, por um defeito da biblioteca
+
+| Montagem (padroes) | G1 energia P0 | COSIP | G2 total P0 | G3 total P1 |
+|---|---|---|---|---|
+| ciclo (primaria) | 4/19 | -160,82 R$ (fora) | 3/19 | 0/85 |
+| calendario (G4) | 6/19 | -164,04 R$ (fora) | 5/19 | 0/85 |
+
+G1, G2, G3 e G4 **nao passam** (as 16 configuracoes tambem nao). Causa achada depois: a base de tarifas da ANEEL
+gerada em 16/10/2026 traz **cada registro duas vezes** (8.844 registros, 4.422 unicos; mesmo conteudo, `_id`
+diferente), o `io.aneel.fetch_tariffs` mantem os dois e o `TariffBook` SOMA linhas de mesma chave (feito para as
+linhas so-TUSD e so-TE): TUSD e TE dobram (B1 convencional 2017/18: 382,48 + 498,64 contra 191,24 + 249,32 do legado).
+Hoje, qualquer `TariffBook.from_aneel` da contas ~2x. Defeito relatado, com reproducao, para o `library-builder`.
+
+### Diagnostico pos-hoc sem as duplicatas (`fatura_sem_duplicatas.json`): continua NAO PASSANDO
+
+Registros iguais fora o `_id` retirados no download; o livro fica IGUAL aos CSV do legado (21 vigencias B1
+convencional, diferenca 0,0). Mesmo portao, mesmo metodo (nao muda o veredito acima: e diagnostico).
+
+| Montagem (padroes) | G1 energia P0 | COSIP | G2 total P0 | G3 total P1 | P1 mediana do erro | D3: P1 com COSIP por ano |
+|---|---|---|---|---|---|---|
+| ciclo (primaria) | 5/19 | 9,38 R$ | 9/19 | 0/85 | -21% | 18/85 |
+| calendario | 7/19 | 10,24 R$ | 15/19 | 0/85 | -21% | 19/85 |
+
+- **P0 (sem geracao): perto, mas fora do +-2%.** Erro da energia: mediana -0,5% (ciclo) / -0,2% (calendario), todas
+  as 19 dentro de +-10%, 17/19 (ciclo) e 19/19 (calendario) dentro de +-5%. Padrao sazonal: a biblioteca fica 2-5%
+  abaixo nos meses de consumo alto e 2-5% acima nos de consumo baixo; reta pago = a x conta + b: a = 1,144 e b =
+  -16,6 R$ (ciclo). Algo cresce com o consumo alem do modelo (COSIP por faixa de consumo? aliquota efetiva?); a
+  planilha nao separa. O PIS/COFINS "implicito" de 17% nao e plausivel: nao e so a aliquota. O `calendario` sai
+  melhor que o `ciclo` em P0, sem explicacao testada.
+- **P1 (com geracao): a biblioteca fica ~21% abaixo do pago** (mediana; 3/85 dentro de +-5%). Na leitura padrao a
+  conta e o minimo (50 kWh) + COSIP, constante; o pago cresce com o kWh compensavel (importado - 50). Conta POS-HOC
+  feita a parte (nao esta no script): o residuo (pago - conta - COSIP) contra (importado - 50) tem inclinacao
+  **0,21 R$/kWh** (08/2019-05/2022, r 0,99), **0,39** (08/2022-02/2024, r 0,90) e **0,27** (04/2024-08/2026, r 0,83).
+  Uma cobranca POR kWh compensado, por cima do minimo, que nenhuma leitura da biblioteca produz: com o minimo
+  limitando, "all" e "te_only" dao a mesma conta (o `te_only` compensa MAIS kWh, 284 contra 250 num mes de 300
+  importados, e o imposto some em creditos) e o "none" so muda os meses em que a compensacao nao chega ao minimo.
+  Isto e o segundo achado para a biblioteca: o imposto sobre a energia compensada entra no custo por kWh
+  compensado `c`, que fica DENTRO do limite do custo de disponibilidade; numa fatura real o imposto e cobrado por cima.
+  Hipotese, nao testada: ICMS (e talvez PIS/COFINS) sobre a TUSD (2019-2022) e sobre TUSD + TE (07/2022-12/2023, fim
+  do teto de 48 meses do Convenio 16/2015 no PR) da energia compensada.
+- D3 (COSIP por ano civil, deixa um fora) leva a mediana a ~0% mas so 18-19/85 ficam em +-3%: o erro e a variacao
+  com o consumo, nao so o nivel. Fora da faixa (99 casos na primaria): 33 com bandeira mudando no ciclo, 25 de
+  consumo alto, 10 com vigencia nova, 2 com ICMS mudando. 12/2022 sai +67% (a biblioteca acima do pago): o pago
+  desse mes e o menor da serie (devolucao de credito na fatura? nao conferido).
+
+**Decisao:** a biblioteca NAO reproduz as faturas da Copel. Dois defeitos para o `library-builder`: (1) duplicatas da
+ANEEL dobram a tarifa (urgente: afeta todo `from_aneel` hoje); (2) imposto sobre energia compensada preso ao limite
+do minimo. Sem eles, a energia sem geracao fica a ~+-5% (COSIP e aliquota efetiva desconhecidas impedem o +-2%).
+Proximo piloto: com FATURAS DETALHADAS (PDF: linhas de energia, bandeira, ICMS, PIS/COFINS, COSIP, energia
+compensada, datas de leitura) de alguns meses de cada periodo de ICMS, para separar COSIP, aliquotas e a regra do
+imposto na compensada antes de mexer na biblioteca. Nao testado: tarifa branca, GD II, outras distribuidoras.
+Tempos: rodada do portao 696 s, diagnostico 220 s (CPU; o download da ANEEL ~1 min cada).

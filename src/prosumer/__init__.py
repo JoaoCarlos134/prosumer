@@ -6,7 +6,8 @@ Status: version 0.1 done (step E2) and step E4 started, of the proposal
 and bands), `postprocessing` (consumption bias correction), `physics` (sun position, clear sky,
 plane-of-array), `provenance` (source and licence of every input), `quality` (the clock of a generation series
 checked against the sun), `diagnostics` (clear-day performance of a PV series from its energy alone, and its
-change points), `forecast`, `io` (Open-Meteo forecasts, NASA POWER weather, Fronius Solar.web exports,
+change points), `forecast` (naive, LightGBM and the zero-shot Chronos-2, TiRex-2, Toto-2.0 and FlowState,
+each with a card), `io` (Open-Meteo forecasts, NASA POWER weather, Fronius Solar.web exports,
 generic meter tables) and `data` (synthetic series and the real Dingle houses); `embedded` (a fitted linear
 or tree model with its preprocessing, or the benchmark's SparseTSF/CycleNet, as one C header for an ESP32)
 and `outlook` (`forecast_ahead`: the next days to weeks, hourly and per day, with the weather forecast

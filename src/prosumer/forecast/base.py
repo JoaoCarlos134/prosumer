@@ -69,7 +69,9 @@ def rolling_forecast(model: Forecaster, task: DayAhead) -> pd.DataFrame:
 
 class Probabilistic(Forecaster, Protocol):
     """A model that also gives quantiles: `predict_quantiles` -> (windows, levels, target hours), `levels`
-    increasing and including 0.5, whose row is the point forecast."""
+    increasing and including 0.5, whose row is the point forecast unless the model also has
+    `point_from_quantiles(q) -> (windows, target hours)` (FlowState: its point is a weighted mean of the
+    quantiles, not the median)."""
 
     levels: tuple[float, ...]
 
@@ -78,9 +80,11 @@ class Probabilistic(Forecaster, Protocol):
 
 def rolling_quantiles(model: Probabilistic, task: DayAhead) -> pd.DataFrame:
     """`rolling_forecast` for the quantiles: one column per level (`q0.1`, ..., `q0.9`), plus `yhat` = the 0.5
-    level. One fit per fold serves both the point forecast and the band."""
+    level, or the model's `point_from_quantiles` when it has one. One fit per fold serves both the point
+    forecast and the band."""
     windows = task.windows()
     levels = tuple(model.levels)
+    point = getattr(model, "point_from_quantiles", None)
     out = []
     for fold in task.folds():
         inside = [w for w in windows if fold.start <= w.day <= fold.end]
@@ -90,14 +94,14 @@ def rolling_quantiles(model: Probabilistic, task: DayAhead) -> pd.DataFrame:
         q = np.asarray(model.predict_quantiles(inside), dtype=float)
         if q.shape[:2] != (len(inside), len(levels)):
             raise ValueError(f"{model.card.name}: quantiles of shape {q.shape} for {len(inside)} windows")
-        for w, qq in zip(inside, q, strict=True):
+        p = q[:, levels.index(0.5)] if point is None else np.asarray(point(q), dtype=float)
+        for w, qq, pp in zip(inside, q, p, strict=True):
             n = len(w.timestamps)
             cols = {f"q{a:g}": qq[k, :n] for k, a in enumerate(levels)}
-            out.append(pd.DataFrame({"unique_id": w.unique_id, "ds": w.timestamps, **cols}))
+            out.append(pd.DataFrame({"unique_id": w.unique_id, "ds": w.timestamps, **cols, "yhat": pp[:n]}))
     if not out:
         return pd.DataFrame(columns=["unique_id", "ds", "yhat", *[f"q{a:g}" for a in levels]])
-    f = pd.concat(out, ignore_index=True)
-    return f.assign(yhat=f["q0.5"])
+    return pd.concat(out, ignore_index=True)
 
 
 def _before(series: EnergySeries, cutoff: pd.Timestamp) -> EnergySeries:

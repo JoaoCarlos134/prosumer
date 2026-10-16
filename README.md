@@ -29,7 +29,7 @@ Python 3.11+. The core needs numpy, pandas, pyarrow, scipy and pandera only.
 ```python
 from prosumer import analyze, data
 
-houses = data.dingle_houses("consumption", houses=[1, 2, 3])   # real, public (CC0), downloaded once
+houses = data.dingle_houses("consumption", houses=[1, 2, 3])  # real, public (CC0), downloaded once
 report = analyze(houses, test_days=28)
 print(report.to_markdown())
 ```
@@ -61,20 +61,22 @@ ghi = [c for c in weather.columns if c.startswith("ghi_") and c != "ghi_spread"]
 
 report = analyze(
     pv,
-    site=site,                       # clear-sky reference, sun hours, clock checked against the sun
-    weather=weather,                 # regime C (the real day-ahead forecast) and the clock against the clouds
+    site=site,  # clear-sky reference, sun hours, clock checked against the sun
+    weather=weather,  # regime C (the real day-ahead forecast) and the clock against the clouds
     models=[
-        LightGBM(),                  # history only: regime A, enters the median
+        LightGBM(),  # history only: regime A, enters the median
         LightGBM(ghi, name="LightGBM-weather"),  # several weather models at once (pilot F2(a): best in C)
-        LightGBMQuantile(),          # bands: coverage, CRPS, and a conformal recalibration
+        LightGBMQuantile(),  # bands: coverage, CRPS, and a conformal recalibration
     ],
 )
 ```
 
 - `issue_hour=12` checks a forecast issued at noon for the rest of the day (pilot F2(d): the evening peak of
   consumption issued at noon beats the one issued at midnight).
-- Foundation models: `forecast.Chronos2()`, `forecast.TiRex2()`, `forecast.Toto2()` (zero-shot, Apache-2.0,
-  CPU). Each `ModelCard` says its licence, device and whether it sends data anywhere.
+- Foundation models: `forecast.Chronos2()`, `forecast.TiRex2()`, `forecast.Toto2()`, `forecast.FlowState()`
+  (zero-shot, Apache-2.0, CPU; Chronos-2, TiRex-2 and FlowState also give bands). Each `ModelCard` says its
+  licence, device and whether it sends data anywhere. FlowState (9 M parameters, extra `ttm`) needs
+  granite-tsfm, which pins scikit-learn < 1.8.
 
 Add what the household pays, and the report gets a bill section (`Report.economics`: the monthly bill, by
 tariff block for time of use, the totals, the expected monthly bill over the complete months and, with PV, the
@@ -118,7 +120,7 @@ for window in task.windows():
 | `contracts` | `EnergySeries`: validated long frame (`unique_id`, `ds`, `y`, `valid`), units, time zone, step |
 | `protocol` | `DayAhead`, `folds`, `standardize_by_training`: the benchmark's day-ahead task, without leakage |
 | `metrics` | skill and its CI, Diebold–Mariano, `ranking`, `ties_with_best`, metrics by resolution, band scores |
-| `forecast` | `Naive`, `LightGBM`, `LightGBMQuantile`, `EmpiricalQuantiles`, `Chronos2`, `TiRex2`, `Toto2`; `rolling_forecast` |
+| `forecast` | `Naive`, `LightGBM`, `LightGBMQuantile`, `EmpiricalQuantiles`, `Chronos2`, `TiRex2`, `Toto2`, `FlowState`; `rolling_forecast` |
 | `postprocessing` | `conformal_quantiles` (causal band recalibration), `correct_bias` (consumption) |
 | `physics` | sun position, clear sky, plane-of-array irradiance, orientation fit (numpy only) |
 | `quality` | the clock of a PV series checked against the sun (`clock_offset`) and the clouds (`clock_offset_weather`) |

@@ -561,7 +561,8 @@ def cheapest_windows(
 @runtime_checkable
 class Pricing(Protocol):
     """What `analyze(economics=...)` and `windows_by_cost` need from a tariff setup: `Plan` (the core) and
-    `economics.brazil.Setup` (the Brazilian bill) both are one."""
+    `economics.brazil.Setup` (the Brazilian bill) both are one. `tariff_for` receives the local forecast
+    date so it can follow price changes within a month."""
 
     @property
     def currency(self) -> str: ...
@@ -648,8 +649,8 @@ def windows_by_cost(
     top: int | None = 3,
     unique_id: str | None = None,
 ) -> pd.DataFrame:
-    """The forecast and the money for the app: `cheapest_windows` of the outlook(s), month by month with the
-    tariff of each month (`Pricing.tariff_for`: the Brazilian one changes with the bandeira and the vigencia)
+    """The forecast and the money for the app: `cheapest_windows` of the outlook(s), day by day with the
+    tariff in force (`Pricing.tariff_for`: the Brazilian one changes with the bandeira and the vigencia)
     and the export rule of the pricing (`window_scheme`).
 
     Same columns as `cheapest_windows` (rank 1 = cheapest window of the day, with the outlook's confidence
@@ -660,13 +661,13 @@ def windows_by_cost(
     base = generation if generation is not None else consumption
     if base is None:
         raise ValueError("Give a generation and/or a consumption outlook (they set the hours to rank)")
-    months = base.hourly["ds"].dt.tz_localize(None).dt.to_period("M")
+    days = base.hourly["ds"].dt.tz_localize(None).dt.normalize()
     parts, notes = [], []
-    for m in sorted(months.unique()):
-        g, c = _month(generation, m), _month(consumption, m)
+    for day in sorted(days.unique()):
+        g, c = _day(generation, day), _day(consumption, day)
         if (generation is not None and g is None) or (consumption is not None and c is None):
-            continue  # the other outlook does not reach this month
-        tariff, more = p.tariff_for(m.to_timestamp(), generation=generation is not None)
+            continue  # the other outlook does not reach this day
+        tariff, more = p.tariff_for(pd.Timestamp(day), generation=generation is not None)
         notes += [n for n in more if n not in notes]
         w = cheapest_windows(
             tariff,
@@ -690,14 +691,14 @@ def windows_by_cost(
     return out
 
 
-def _month(o: Outlook | None, month: pd.Period) -> Outlook | None:
-    """The part of an outlook in one calendar month (None when it has no hour there)."""
+def _day(o: Outlook | None, day: pd.Timestamp) -> Outlook | None:
+    """The part of an outlook in one local calendar day (None when it has no hour there)."""
     if o is None:
         return None
-    h = o.hourly[o.hourly["ds"].dt.tz_localize(None).dt.to_period("M") == month]
+    h = o.hourly[o.hourly["ds"].dt.tz_localize(None).dt.normalize() == day]
     if h.empty:
         return None
-    d = o.daily[pd.DatetimeIndex(o.daily["date"]).to_period("M") == month]
+    d = o.daily[pd.DatetimeIndex(o.daily["date"]).tz_localize(None).normalize() == day]
     return Outlook(hourly=h, daily=d, quantity=o.quantity, unit=o.unit, method=o.method, notes=o.notes)
 
 

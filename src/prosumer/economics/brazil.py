@@ -542,6 +542,7 @@ def tariff(
     assume_bandeira: float | None = None,
     after_2028: After2028 = "tusd",
     requested: str | date | None = None,
+    on: str | pd.Timestamp | None = None,
     icms_exempt_compensated: IcmsExempt = "all",
     pis_cofins_exempt_compensated: bool = True,
     icms_on_charge: bool = True,
@@ -549,6 +550,9 @@ def tariff(
 ) -> Tariff:
     """The full prices of `month` (first day's vigencia, the month's bandeira, taxes) as a core `Tariff` in
     BRL, to rank flexible loads with `economics.cheapest_windows(..., scheme="net_billing")`.
+
+    `on`: use the vigencia, taxes and Fio B in force on this day instead of the first of `month` (must
+    belong to that month). Forecast windows use it for adjustments within a month.
 
     `export_price` is what an injected kWh is worth as a credit: the full price for GD I, the full price minus
     what a compensated kWh still costs (the GD II charge and any tax on compensated energy: the switches
@@ -559,12 +563,15 @@ def tariff(
     """
     book._call = []
     m = pd.Timestamp(month).to_period("M").to_timestamp()
+    day = m if on is None else pd.Timestamp(on).tz_localize(None).normalize()
+    if day.to_period("M") != m.to_period("M"):
+        raise ValueError("on must belong to the tariff month")
     b = book.bandeira(m)
     if b is None:
         if assume_bandeira is None:
             raise ValueError(f"No bandeira for {m:%Y-%m}; pass assume_bandeira (R$/MWh)")
         b = ("assumed", float(assume_bandeira))
-    icms, pis = book.tax(m)
+    icms, pis = book.tax(day)
     taxes = _CompensationTaxes(
         icms_exempt_compensated, pis_cofins_exempt_compensated, icms_on_charge, pis_cofins_on_charge
     )
@@ -573,11 +580,11 @@ def tariff(
         if gd is None:
             return 0.0
         share, base = compensation_charge_share(m.year, gd, requested=requested, after_2028=after_2028)
-        v = tusd if base == "tusd" else book.fio_b_value(m) if share > 0 else 0.0
+        v = tusd if base == "tusd" else book.fio_b_value(day) if share > 0 else 0.0
         return taxes.per_kwh(share * v / 1000.0, tusd / 1000.0, te / 1000.0, icms, pis)
 
     if modality == CONVENTIONAL:
-        tusd, te = book.base(m, subgroup=subgroup)
+        tusd, te = book.base(day, subgroup=subgroup)
         p = full_price(tusd + te, b[1], icms, pis)
         export = 0.0 if gd is None else p - charge(tusd, te)
         _warn_assumed(book)
@@ -588,7 +595,7 @@ def tariff(
         raise ValueError("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')")
     prices, exports = {}, {}
     for data_name, name in _POSTO_DATA.items():
-        tusd, te = book.base(m, modality=BRANCA, posto=data_name, subgroup=subgroup)
+        tusd, te = book.base(day, modality=BRANCA, posto=data_name, subgroup=subgroup)
         prices[name] = full_price(tusd + te, b[1], icms, pis)
         exports[name] = 0.0 if gd is None else prices[name] - charge(tusd, te)
     _warn_assumed(book)
@@ -949,9 +956,9 @@ class Setup:
         )
 
     def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]:
-        """`brazil.tariff` of `month` (the credit value of an injected kWh when `generation`), and what it
-        had to assume. A month after the last published bandeira (the forecast's next month, usually) takes
-        `assume_bandeira` or, without it, the last published one, with a note."""
+        """`brazil.tariff` in force on the date `month` (the credit value of an injected kWh when
+        `generation`), and what it had to assume. A month after the last published bandeira (the forecast's
+        next month, usually) takes `assume_bandeira` or, without it, the last published one, with a note."""
         notes: list[str] = []
         m = pd.Timestamp(month).to_period("M").to_timestamp()
         band, note = self._assumed_bandeira([m])
@@ -962,6 +969,7 @@ class Setup:
             t = tariff(
                 self.book,
                 m,
+                on=month,
                 modality=self.modality,
                 peak_start=self.peak_start,
                 gd=self._klass() if generation else None,

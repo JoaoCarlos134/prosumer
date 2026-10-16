@@ -125,7 +125,7 @@ def forecast_page(form: dict[str, str], csv: bytes) -> str:
     if pricing is not None:
         money.tariff = pricing.describe()
         # 6. The same by cost: the cheapest block of each day for a load of `kw` kW, with its confidence.
-        money.kw = float(form.get("load_kw") or 2.0)
+        money.kw = float((form.get("load_kw") or "2.0").replace(",", "."))
         outlooks = {"generation": out} if quantity == "generation" else {"consumption": out}
         money.windows = economics.windows_by_cost(pricing, **outlooks, hours=hours, kw=money.kw, top=1)
         money.notes += money.windows.attrs["notes"]

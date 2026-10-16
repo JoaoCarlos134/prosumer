@@ -84,6 +84,13 @@ def test_time_of_use_price_keeps_the_load_out_of_the_peak() -> None:
     assert "peak 17:00-21:00 on weekdays" in page
 
 
+def test_load_power_accepts_a_decimal_comma() -> None:
+    form = FORM | {"price": "flat", "flat_price": "0,30", "load_kw": "1,5"}
+    page = _app().forecast_page(form, _csv("2024-01-01", 42))
+    cheap = _section(page, "Cheapest 2 hours of each day for a 1.5 kW load")
+    assert cheap.count("<td>0.90</td>") == 7
+
+
 def test_brazilian_tariff_from_aneel_with_typed_taxes(monkeypatch: pytest.MonkeyPatch) -> None:
     """Copel conventional (TUSD 457.17 + TE 310.85 R$/MWh from 24/6/2026), ICMS 19% and PIS/COFINS 9.25%
     typed: in October 2026 (green flag) a 2 h x 2 kW load costs 4 x 0.76802 / 0.7175 R$."""

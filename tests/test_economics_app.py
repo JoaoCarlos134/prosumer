@@ -295,5 +295,20 @@ def test_windows_by_cost_with_a_brazilian_setup() -> None:
         economics.windows_by_cost(brazil.Setup(book=_copel()), generation=gen)
 
 
+def test_windows_use_the_tariff_in_force_on_each_forecast_day() -> None:
+    """A mid-month tariff adjustment must change the forecast cost from its effective date."""
+    book = _copel()
+    adjusted = book.tariffs.copy()
+    adjusted["start"] = pd.Timestamp("2026-07-15")
+    adjusted["tusd"] += 100.0
+    book.tariffs.loc[:, "end"] = pd.Timestamp("2026-07-14")
+    book.tariffs = pd.concat([book.tariffs, adjusted], ignore_index=True)
+    load = _outlook("consumption", np.ones(48), "2026-07-14")
+    w = economics.windows_by_cost(brazil.Setup(book=book), consumption=load, hours=1, top=1)
+    assert w["cost"].tolist() == pytest.approx(
+        [(457.17 + 310.85 + 18.85) / 1000 * GROSS, (557.17 + 310.85 + 18.85) / 1000 * GROSS]
+    )
+
+
 def gen_to_load(o: Outlook) -> Outlook:
     return Outlook(hourly=o.hourly.assign(y_hat=1.0), daily=o.daily, quantity="consumption")

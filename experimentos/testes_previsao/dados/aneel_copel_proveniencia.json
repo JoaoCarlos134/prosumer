@@ -1,0 +1,30 @@
+{
+ "baixado_em": "2026-10-16 08:52",
+ "licenca": "ODbL-1.0 (ANEEL, Dados Abertos; base derivada redistribuida fica sob ODbL)",
+ "fontes": [
+  {
+   "source": "ANEEL open data, dataset tarifas-distribuidoras-energia-eletrica",
+   "license": "ODbL-1.0",
+   "citation": "Agência Nacional de Energia Elétrica (ANEEL), Dados Abertos, https://dadosabertos.aneel.gov.br/",
+   "url": "https://dadosabertos.aneel.gov.br/dataset/tarifas-distribuidoras-energia-eletrica",
+   "retrieved": "2026-10-16",
+   "notes": "ODbL: attribute ANEEL; a redistributed derived database must stay under ODbL (share-alike)"
+  },
+  {
+   "source": "ANEEL open data, dataset bandeiras-tarifarias",
+   "license": "ODbL-1.0",
+   "citation": "Agência Nacional de Energia Elétrica (ANEEL), Dados Abertos, https://dadosabertos.aneel.gov.br/",
+   "url": "https://dadosabertos.aneel.gov.br/dataset/bandeiras-tarifarias",
+   "retrieved": "2026-10-16",
+   "notes": "ODbL: attribute ANEEL; a redistributed derived database must stay under ODbL (share-alike)"
+  },
+  {
+   "source": "ICMS and PIS/COFINS rates typed by the user",
+   "license": "n/a",
+   "citation": "",
+   "url": "",
+   "retrieved": "None",
+   "notes": "ICMS 29.00%, PIS/COFINS 9.25%, applied to every date; not checked against a bill"
+  }
+ ]
+}

@@ -738,6 +738,47 @@ commit uma vez, e so adicionar de novo.
 5. `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git` (bloqueado para o Claude; a URL antiga
    redireciona).
 
+#### Onde retomar (16/10/2026, fim da tarde no Lactec; sessao interrompida pelo usuario)
+
+Diretriz nova do usuario (16/10): **a previsao de GERACAO e o principal** (mais util ao usuario); consumo vale mas
+interessa mais as distribuidoras; **nao sacrificar velocidade por um ganho pequeno** (fundacionais ficam opcionais:
+no C das usinas LightGBM + linear dao +0,346, com TiRex-2 +0,368, os quatro +0,372). Faturas: nenhuma acessivel
+agora (o 2o defeito da fatura fica parado).
+
+Feito nesta sessao (commits `da54a53`..`13ee8a9`): limiares de `quality` e `outlook` viraram argumentos declarados
+(`analyze(clock_options=, clock_weather_options=)`); piloto da fatura refeito apos o conserto da ANEEL (mesmo
+veredito, NAO PASSA, so falta o defeito 2); piloto `piloto_composicao_biblioteca.py` (G-A NAO passa: com os 5
+adaptadores a mediana fica a 0,01 da de 47 modelos mas nao empata com o melhor em 2 de 3; G-C PASSA: linha
+`median_weather` no `analyze`; nota quando a saida e so a mediana das ingenuas); `EnergySeries.resample` e
+`analyze`/`forecast_ahead` aceitam 15 min / 1 min (somam em horas, com nota); `io.pvdaq` (NREL PVDAQ, CC BY 4.0).
+
+1. **DEFEITO ABERTO (achado com arquivo REAL, nao consertado):** `io.auto.read_energy` le o contador diario
+   `E-Today (kWh)` de um export do **Growatt** como energia por intervalo: ~1.000 kWh/dia num sistema de 3 kW
+   (real ~15), sem erro. Duas causas: (a) contador cumulativo nao reconhecido (detectar pelos VALORES: monotono dentro
+   do dia, e pelo nome: today/daily/total/lifetime; reset da meia-noite = recomeca do zero, nao invalido); (b) o
+   caminho `kind="cumulative"` do `meter.read_table` reindexa numa grade exata do relogio, e o Growatt grava com
+   segundos que andam (13:32:17, 13:37:18): diferenciar as leituras consecutivas como vieram (lacuna > 1,5 passo =
+   invalido). Amostra real: Kaggle `anishth/solar-power-output` (CC BY 4.0, Tamil Nadu, 3 kW, `Inverter
+   Telemetry.xlsx`: Timestamp, PV Power (W), PV1 Voltage/Current, AC Power (W), Grid Voltage/Frequency, E-Today
+   (kWh), temperaturas; 5 min desde 03/2026); download anonimo funciona (`curl -L
+   https://www.kaggle.com/api/v1/datasets/download/anishth/solar-power-output`). Fazer: trecho real como fixture
+   (atribuicao CC BY) + teste de regressao vermelho antes, verde depois.
+2. **Piloto de generalidade no PVDAQ (desenhado, portao ainda NAO escrito):** sistemas com orientacao conhecida e
+   qa "pass": 50 (Golden CO, 158/45, 1 min, Fronius; 2019 tem buracos, usar 2022), 1200 (MD 205/10,
+   `ac_power_metered_kw`), 1201 (NJ 230/10, `ac_power_hw`), 1239 (ME 155/10, neve), 34 (Las Vegas 180/11,2,
+   `ac_power_hw`), 4902 (NIST MD 180/20, 2016, 1 min), 1433 (CO 180/10, 2017). Os nomes de coluna variam por
+   sistema: o `io.pvdaq` deve tirar a unidade do `Metrics` do metadata (hoje supoe W). O arquivo publico para em 2023
+   (nao ha como testar o regime C: arquivo da Open-Meteo so de 2024). Perguntas: G1 orientacao ajustada x metadata
+   (tilt +-10, azimute +-25 quando tilt >= 15) em >= 4 de 6; G2 `clock_offset` 0 confiante em >= 5 de 6; G3 cadeia
+   fisica do `outlook` com GHI da NASA como previsao perfeita (skill diario contra a expectativa sazonal) >= o mesmo
+   numero em Cascavel - 0,10. Commitar o portao antes de baixar/rodar.
+3. Kaggle (pedido do usuario, ultimos 90 dias): uteis so dois reais, o Growatt acima e `christiancanillas/solar-
+   energy-generation-and-weather-data` (MIT; casa com FV, consumo, injecao, compra e BATERIA, horario, UTC+8,
+   02-09/2026, sem localizacao). O resto e sintetico, imagem ou nivel de rede.
+4. `test_forecast_parity[usinas-C]`: NAO precisa da maquina de casa; recomendado: tolerancia entre maquinas no
+   skill/RMSE (~1e-3) e igualdade exata so na maquina que gravou (decisao do usuario pendente).
+5. Rodar o `work-reviewer` sobre `9d3ade0..HEAD`; dividir o CLAUDE.md (regras + estado curto; historico a parte).
+
 ## Next steps
 
 1. TCC passo **E2** (versao 0.1). O E1 (esqueleto, contratos, dados sinteticos, CI) esta feito e o teste de

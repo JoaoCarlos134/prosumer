@@ -58,9 +58,15 @@ def number(s: Any) -> float:
 def search(
     resource_id: str, filters: dict[str, Any] | None = None, *, get: Getter | None = None, page: int = PAGE
 ) -> list[dict[str, Any]]:
-    """All records of a datastore resource matching `filters` (exact match per field), page by page."""
+    """All records of a datastore resource matching `filters` (exact match per field), page by page.
+
+    Records identical in everything but the datastore's `_id` are kept once: on 2026-10-16 the tariff
+    dataset returned every record twice (8,844 records, 4,422 distinct), and the book, which adds rows of the
+    same key, billed TUSD and TE at double (found by the real-bill pilot).
+    """
     get = get or _http.get_json
     out: list[dict[str, Any]] = []
+    seen: set[str] = set()
     offset = 0
     while True:
         params: dict[str, Any] = {"resource_id": resource_id, "limit": page, "offset": offset}
@@ -70,7 +76,11 @@ def search(
         if not r.get("success", True):
             raise RuntimeError(f"ANEEL API error: {r.get('error')}")
         res = r["result"]
-        out += res["records"]
+        for rec in res["records"]:
+            key = json.dumps({k: v for k, v in rec.items() if k != "_id"}, sort_keys=True, default=str)
+            if key not in seen:
+                seen.add(key)
+                out.append(rec)
         offset += page
         if offset >= int(res["total"]) or not res["records"]:
             return out

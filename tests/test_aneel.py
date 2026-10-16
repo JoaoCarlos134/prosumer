@@ -67,6 +67,30 @@ def test_tariffs_are_filtered_paged_and_carry_odbl() -> None:
         aneel.fetch_tariffs("NOBODY", get=api)
 
 
+def test_records_repeated_with_a_new_id_are_kept_once() -> None:
+    # regression (2026-10-16): ANEEL's datastore started returning every record twice, each with its own
+    # `_id`; the book summed the two rows of each key and billed TUSD and TE at double
+    row = _tariff("2017-06-24", "B1", "Convencional", "Não se aplica", "191,24", "249,32")
+    api = FakeCKAN({aneel.TARIFFS: [{**row, "_id": 1}, {**row, "_id": 2}]})
+    t = aneel.fetch_tariffs("COPEL-DIS", get=api)
+    assert t[["tusd", "te"]].to_numpy().tolist() == [[191.24, 249.32]]
+    bands = pd.DataFrame({"month": ["2018-03"], "flag": ["Verde"], "add": [0.0]})
+    taxes = pd.DataFrame({"start": ["1900-01-01"], "icms": [0.29], "pis_cofins": [0.0925]})
+    assert brazil.TariffBook(t, bands, taxes).base("2018-03-15") == pytest.approx((191.24, 249.32))
+    # neighbour: the same in the monthly bandeiras (a doubled month would double the surcharge)
+    month = {
+        "DatCompetencia": "2026-09-01",
+        "NomBandeiraAcionada": "Amarela",
+        "VlrAdicionalBandeira": "18,85",
+    }
+    api = FakeCKAN({aneel.BANDEIRAS_MONTHLY: [{**month, "_id": 7}, {**month, "_id": 8}]})
+    assert aneel.fetch_bandeiras(get=api).to_numpy().tolist() == [["2026-09", "Amarela", 18.85]]
+    # records that differ in anything but `_id` are all kept
+    other = {**row, "VlrTE": "250,00", "_id": 3}
+    api = FakeCKAN({aneel.TARIFFS: [{**row, "_id": 1}, other]})
+    assert len(aneel.search(aneel.TARIFFS, get=api)) == 2
+
+
 def test_bandeiras_and_components_feed_a_tariff_book() -> None:
     monthly = [
         {"DatCompetencia": "2026-09-01", "NomBandeiraAcionada": "Amarela", "VlrAdicionalBandeira": "18,85"},

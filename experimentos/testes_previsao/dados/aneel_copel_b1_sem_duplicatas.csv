@@ -1,0 +1,80 @@
+start,end,subgroup,modality,posto,tusd,te
+2010-06-24,2011-06-23,B1,Convencional,Não se aplica,188.98,111.02
+2011-06-24,2012-06-23,B1,Convencional,Não se aplica,193.62,115.64
+2012-06-24,2013-01-23,B1,Branca,Fora ponta,108.31,129.06
+2012-06-24,2013-01-23,B1,Branca,Intermediário,234.9,129.06
+2012-06-24,2013-01-23,B1,Branca,Ponta,361.48,214.15
+2012-06-24,2013-01-23,B1,Convencional,Não se aplica,160.1,136.16
+2013-01-24,2013-06-23,B1,Branca,Fora ponta,70.86,118.83
+2013-01-24,2013-06-23,B1,Branca,Intermediário,163.46,118.83
+2013-01-24,2013-06-23,B1,Branca,Ponta,256.05,197.85
+2013-01-24,2013-06-23,B1,Convencional,Não se aplica,117.16,125.42
+2013-06-24,2014-06-23,B1,Branca,Fora ponta,75.56,132.76
+2013-06-24,2014-06-23,B1,Branca,Intermediário,171.8,0.0
+2013-06-24,2014-06-23,B1,Branca,Ponta,268.05,218.0
+2013-06-24,2014-06-23,B1,Convencional,Não se aplica,123.68,139.87
+2014-06-24,2015-03-01,B1,Branca,Fora ponta,86.77,177.83
+2014-06-24,2015-03-01,B1,Branca,Intermediário,190.28,0.0
+2014-06-24,2015-03-01,B1,Branca,Ponta,293.8,298.06
+2014-06-24,2015-03-01,B1,Convencional,Não se aplica,138.52,187.85
+2015-03-02,2015-06-23,B1,Branca,Fora ponta,141.29,224.76
+2015-03-02,2015-06-23,B1,Branca,Intermediário,245.42,0.0
+2015-03-02,2015-06-23,B1,Branca,Ponta,349.55,371.67
+2015-03-02,2015-06-23,B1,Convencional,Não se aplica,193.36,237.01
+2015-06-24,2016-06-23,B1,Branca,Fora ponta,151.79,268.97
+2015-06-24,2016-06-23,B1,Branca,Intermediário,266.61,0.0
+2015-06-24,2016-06-23,B1,Branca,Ponta,381.43,438.69
+2015-06-24,2016-06-23,B1,Convencional,Não se aplica,209.2,283.11
+2016-06-24,2017-03-31,B1,Branca,Fora ponta,139.84,221.59
+2016-06-24,2017-03-31,B1,Branca,Intermediário,278.63,0.0
+2016-06-24,2017-03-31,B1,Branca,Ponta,417.42,339.12
+2016-06-24,2017-03-31,B1,Convencional,Não se aplica,190.09,231.38
+2017-04-01,2017-06-23,B1,Branca,Fora ponta,139.84,216.25
+2017-04-01,2017-06-23,B1,Branca,Intermediário,278.63,0.0
+2017-04-01,2017-06-23,B1,Branca,Ponta,417.42,333.78
+2017-04-01,2017-06-23,B1,Convencional,Não se aplica,190.09,226.04
+2017-06-24,2018-06-23,B1,Branca,Fora ponta,133.64,238.81
+2017-06-24,2018-06-23,B1,Branca,Intermediário,292.73,238.81
+2017-06-24,2018-06-23,B1,Branca,Ponta,451.83,364.91
+2017-06-24,2018-06-23,B1,Convencional,Não se aplica,191.24,249.32
+2018-06-24,2019-06-23,B1,Branca,Fora ponta,160.96,274.72
+2018-06-24,2019-06-23,B1,Branca,Intermediário,322.18,274.72
+2018-06-24,2019-06-23,B1,Branca,Não se aplica,9.01,0.0
+2018-06-24,2019-06-23,B1,Branca,Ponta,483.4,436.34
+2018-06-24,2019-06-23,B1,Convencional,Não se aplica,219.33,288.19
+2019-06-24,2020-06-23,B1,Branca,Fora ponta,184.76,259.5
+2019-06-24,2020-06-23,B1,Branca,Intermediário,347.54,259.5
+2019-06-24,2020-06-23,B1,Branca,Ponta,510.31,432.45
+2019-06-24,2020-06-23,B1,Convencional,Não se aplica,243.7,273.91
+2020-06-24,2021-06-23,B1,Branca,Fora ponta,188.22,248.79
+2020-06-24,2021-06-23,B1,Branca,Intermediário,361.22,248.79
+2020-06-24,2021-06-23,B1,Branca,Ponta,534.22,406.26
+2020-06-24,2021-06-23,B1,Convencional,Não se aplica,250.86,261.91
+2021-06-24,2022-06-23,B1,Branca,Fora ponta,198.56,275.36
+2021-06-24,2022-06-23,B1,Branca,Intermediário,380.18,275.36
+2021-06-24,2022-06-23,B1,Branca,Ponta,561.8,437.87
+2021-06-24,2022-06-23,B1,Convencional,Não se aplica,269.91,288.9
+2022-06-24,2023-06-23,B1,Branca,Fora ponta,236.05,247.2
+2022-06-24,2023-06-23,B1,Branca,Intermediário,426.33,247.2
+2022-06-24,2023-06-23,B1,Branca,Ponta,616.61,388.08
+2022-06-24,2023-06-23,B1,Convencional,Não se aplica,310.8,258.94
+2023-06-24,2024-06-23,B1,Branca,Fora ponta,241.7,288.51
+2023-06-24,2024-06-23,B1,Branca,Intermediário,462.31,288.51
+2023-06-24,2024-06-23,B1,Branca,Ponta,682.93,452.12
+2023-06-24,2024-06-23,B1,Convencional,Não se aplica,328.37,302.14
+2024-06-24,2025-06-23,B1,Branca,Fora ponta,245.9,276.91
+2024-06-24,2025-06-23,B1,Branca,Intermediário,484.95,276.91
+2024-06-24,2025-06-23,B1,Branca,Ponta,724.0,436.26
+2024-06-24,2025-06-23,B1,Convencional,Não se aplica,339.82,290.19
+2025-06-24,2025-12-31,B1,Branca,Fora ponta,277.7,262.74
+2025-06-24,2025-12-31,B1,Branca,Intermediário,504.17,262.74
+2025-06-24,2025-12-31,B1,Branca,Ponta,730.64,418.92
+2025-06-24,2025-12-31,B1,Convencional,Não se aplica,366.67,275.75
+2026-01-01,2026-06-23,B1,Branca,Fora ponta,277.7,262.74
+2026-01-01,2026-06-23,B1,Branca,Intermediário,504.17,262.74
+2026-01-01,2026-06-23,B1,Branca,Ponta,730.64,418.92
+2026-01-01,2026-06-23,B1,Convencional,Não se aplica,366.67,275.75
+2026-06-24,2027-06-23,B1,Branca,Fora ponta,338.17,295.87
+2026-06-24,2027-06-23,B1,Branca,Intermediário,617.56,295.87
+2026-06-24,2027-06-23,B1,Branca,Ponta,896.95,475.67
+2026-06-24,2027-06-23,B1,Convencional,Não se aplica,457.17,310.85

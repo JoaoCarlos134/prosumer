@@ -466,3 +466,41 @@ convencional, dif 0,0) e as 16 configuracoes e os erros por fatura sao IGUAIS ao
 duplicatas (conferido por igualdade dos JSON). Logo o defeito (1) esta consertado na biblioteca e o veredito nao
 muda: **NAO PASSA** (G1 5/19, G2 9/19, G3 0/85 na primaria). O que falta e o defeito (2), o imposto sobre a energia
 compensada preso ao limite do minimo, que so se separa com faturas detalhadas (PDF). Tempo 209 s.
+
+## Composicao da mediana: os adaptadores da biblioteca chegam a mediana do benchmark? (16/10/2026, Lactec, CPU) — G-A NAO PASSA, G-C PASSA
+
+Pergunta (do usuario, 16/10): o `Ensemble-mediana` do benchmark e a mediana de TODOS os modelos de cada teste (47-48
+no regime A, 21-22 em B e C); a biblioteca usa a mesma regra, mas por padrao so com as tres ingenuas, e o usuario
+acrescenta os adaptadores que existem (LightGBM, Chronos-2, TiRex-2, Toto-2.0-313m, FlowState). Quanto vale a
+mediana desses membros? Script `experimentos/testes_previsao/scripts/piloto_composicao_biblioteca.py` (portao no
+commit `7c18680`, antes de qualquer conta); saida `resultados/pilotos/composicao_biblioteca.json`. Nada roda
+modelo: medianas hora a hora das previsoes gravadas, avaliadas como o benchmark (teste de regressao). DM contra o
+melhor de cada teste, sem Holm (pilotos). ~5 s.
+
+Portao: G-A (K1 e K2 em separado): nos 3 testes A, skill >= Ensemble-mediana - 0,010 E DM vs o melhor p >= 0,05.
+G-C (usinas C): a mediana das linhas de regime C que a biblioteca faz, idem.
+
+| Composicao (regime A) | usinas | FV casas | consumo (corrigida) |
+|---|---|---|---|
+| K0 ingenuas (padrao de hoje) | +0,013 (29o) p 0,000 | +0,055 (36o) p 0,005 | +0,145 (33o) p 0,000 (+0,113) |
+| K1 ingenuas + LightGBM | +0,076 (17o) p 0,000 | +0,114 (19o) p 0,045 | +0,192 (10o) p 0,000 (+0,175) |
+| **K2 ingenuas + LightGBM + 4 fundacionais** | +0,124 (4o) **p 0,046** | +0,160 (4o) p 0,288 | +0,201 (5o) **p 0,025** (+0,199) |
+| K3 LightGBM + 4 fundacionais | +0,131 (3o) p 0,135 | +0,170 (2o) p 0,529 | +0,199 (6o) p 0,004 (+0,201) |
+| K4 4 fundacionais | +0,136 (3o) p 0,263 | +0,166 (3o) p 0,312 | +0,193 (10o) p 0,000 (+0,195) |
+| Ensemble-mediana (47-48 modelos) | +0,128 | +0,164 | +0,194 |
+| melhor do teste | Crossformer +0,150 | Toto-2.0-313m +0,178 | Ensemble-mediana-corrigida +0,209 |
+
+Regime C (usinas): KC = mediana de {LightGBM, Chronos-2, TiRex-2, linear_fisico} = **+0,372, 1o de 24**, p 0,25 contra
+o Ensemble-mediana C (+0,367, o melhor), a frente dele. **G-C PASSA.**
+
+**Decisao.** G-A NAO PASSA para K1 nem para K2: com todos os adaptadores a mediana fica a 0,01 do Ensemble-mediana
+nos tres testes A (K2 -0,004, -0,004, +0,007), mas nao empata com o melhor em dois (usinas p 0,046; consumo p 0,025
+contra a mediana CORRIGIDA de 47 modelos). Conforme o portao: o `analyze` diz, numa nota, quando a saida e a mediana
+so das ingenuas e o que o benchmark mediu ao acrescentar os cinco modelos. G-C PASSA: o `analyze` ganhou a linha
+`median_weather` (mediana das linhas de regime C quando ha duas ou mais), com a nota de que e a linha a ler quando
+ha previsao do tempo (teste em `tests/test_analysis.py`).
+
+Observacao POS-HOC (hipotese, nao muda nada): nas duas series de geracao, tirar as ingenuas da mediana melhora (K3
+passa nas usinas e na FV das casas; as ingenuas da geracao sao fracas, +0,013 e +0,055); no consumo nao (K3 p
+0,004). Testar "mediana sem as ingenuas quando ha modelos" pede dado que nao serviu para escolhe-la (nao ha outro
+caso no benchmark): fica registrada para quando houver um sitio novo.

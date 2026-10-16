@@ -50,6 +50,9 @@ from .quality import clock_notes, clock_offset, clock_offset_weather, clock_weat
 CONTEXT = 168  # one week of history: the longest naive forecast looks 7 days back
 OUTPUT = "median"
 CORRECTED = "median_corrected"  # consumption: the median with its recent bias removed (a row, not the output)
+# with two or more weather rows (regime C), their median: on the benchmark's plants the median of the
+# library's four weather rows was 1st of 24 (+0.372, ahead of the 22-model ensemble's +0.367; 2026-10-16)
+WEATHER_OUTPUT = "median_weather"
 BIAS_DAYS = 14  # days of past forecasts the bias factor of consumption looks at (`correct_bias`)
 CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (conformal)
 # what the economics section does not do even when it is there (kept in `Report.pending`)
@@ -245,7 +248,8 @@ class Report:
                 f"Test: {s['test_start']} to {s['test_end']}, issued at {s['issue_hour']:02d}:00, "
                 f"{s['test_windows']} series-days. Skill against `{s['reference']}` (0 = same as it). "
                 f"Output: the {OUTPUT} of the regime A forecasts (history only); regime C uses the weather "
-                "forecast issued the day before.",
+                f"forecast issued the day before, and `{WEATHER_OUTPUT}` is the median of the regime C rows "
+                "when there are two or more.",
                 "",
                 _table(self.forecast),
             ]
@@ -487,6 +491,14 @@ def analyze(
     ]
     fc[OUTPUT] = fc[in_median].median(axis=1)
     output = OUTPUT
+    if len(in_median) == len(_NAIVE):
+        notes.append(
+            f"The output (`{OUTPUT}`) is the median of the {len(_NAIVE)} naive forecasts only. In the "
+            "benchmark that median ranked 29th to 36th of ~53; with the library's five models added "
+            "(`models=[LightGBM(), Chronos2(), TiRex2(), Toto2(), FlowState()]`) it came within 0.01 of the "
+            "median of all 47 benchmark models in the three history-only tests, still short of the best "
+            "model in two of them (pilot of 2026-10-16)."
+        )
     if is_cons:
         fc = _corrected_median(fc, point_past, in_median, frame, test_start)
         regimes[CORRECTED] = "A"
@@ -498,6 +510,15 @@ def analyze(
                 notes.append(note)
             else:
                 regimes["weather_linear"] = "C"
+    weather_rows = [n for n, r in regimes.items() if r == "C"]
+    if len(weather_rows) >= 2:
+        fc[WEATHER_OUTPUT] = fc[weather_rows].median(axis=1)
+        regimes[WEATHER_OUTPUT] = "C"
+        notes.append(
+            f"`{WEATHER_OUTPUT}` is the median of the {len(weather_rows)} forecasts that use the weather "
+            f"({', '.join(weather_rows)}). With a weather forecast it is the row to read: on the benchmark's "
+            "two plants the median of the library's four weather rows ranked 1st of 24 (pilot of 2026-10-16)."
+        )
     # common support: every row on the hours where every forecast exists (a gap in one drops the hour for all)
     missing = fc.loc[fc[list(regimes)].isna().any(axis=1), ["unique_id", "ds"]].assign(_drop=True)
     flagged = actual.merge(missing, on=["unique_id", "ds"], how="left")["_drop"].fillna(False).to_numpy(bool)
@@ -535,6 +556,7 @@ def analyze(
                 CORRECTED,
                 *_NAIVE,
                 *[n for n, r in regimes.items() if r == "A" and n != reference],
+                WEATHER_OUTPUT,
                 "weather_linear",
             ]
             + [n for n, r in regimes.items() if r == "C"]

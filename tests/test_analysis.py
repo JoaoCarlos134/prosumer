@@ -230,7 +230,19 @@ def test_weather_models_are_regime_c_and_need_the_weather() -> None:
     f = r.forecast.set_index("forecast")
     assert f.loc["LightGBM-C", "regime"] == "C" and f.loc["LightGBM-C", "skill"] > f.loc["median", "skill"]
     assert list(r.forecast["forecast"])[-1] == "clear_sky_persistence"
-    assert set(r.resolution["forecast"]) == {"median", "weather_linear", "LightGBM-C"}
+    assert set(r.resolution["forecast"]) == {"median", "median_weather", "weather_linear", "LightGBM-C"}
+    # two weather rows: their median is a regime C row of its own, first among them (pilot of 2026-10-16)
+    c_rows = list(r.forecast.loc[r.forecast["regime"] == "C", "forecast"])
+    assert c_rows[0] == "median_weather" and set(c_rows) == {"median_weather", "weather_linear", "LightGBM-C"}
+    assert any("`median_weather` is the median of the 2 forecasts" in n for n in r.notes)
+    assert "`median_weather` is the median of the regime C rows" in r.to_markdown()
+    # the regime A median is still the naive forecasts' alone: the note says so; a history model silences it
+    assert any("median of the 3 naive forecasts only" in n for n in r.notes)
+    with_a = analyze(series, test_days=14, models=[LightGBM(params={"n_estimators": 20})])
+    assert not any("naive forecasts only" in n for n in with_a.notes)
+    # one weather row alone: no median of it
+    one = analyze(series, site=(-25.43, -49.27), test_days=14, weather=weather)
+    assert one.forecast is not None and "median_weather" not in set(one.forecast["forecast"])
 
 
 def test_bands_section_scores_each_band_against_the_14_day_reference() -> None:

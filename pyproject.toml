@@ -45,7 +45,10 @@ chronos = ["chronos-forecasting>=2.0"]
 # experimentos/testes_previsao/ambientes/lote2.txt.
 toto2 = ["toto-2==2.0.0"]
 timesfm = ["timesfm>=3.0"]
-ttm = ["granite-tsfm"]
+# TTM and FlowState (`tsfm_public`). granite-tsfm 0.3.9 (the benchmark's) pins scikit-learn < 1.8, so it may
+# not share an environment with a newer scikit-learn (the Lactec library env has 1.9: FlowState runs in the
+# benchmark's `previsao` env with the library on PYTHONPATH).
+ttm = ["granite-tsfm>=0.3.9"]
 networks = ["neuralforecast>=3.1", "torch>=2.2"]
 # `prosumer.embedded` (C headers for the ESP32) needs only numpy plus the library that fitted the model
 # (scikit-learn or LightGBM). This extra is for the other routes of the study (docs/projeto/ESTUDO_EMBARCADO.md):

@@ -1,20 +1,21 @@
 """Zero-shot foundation models that run on CPU: the benchmark's leaders, behind the library interface.
 
 Nothing is fitted (`fit` only stores the covariate names); each window's history goes to the model as it is
-(1024 hours in the benchmark, `DayAhead(context=1024)`), and the point forecast is the model's median. The
-calls copy the benchmark's (`03_fundacionais.py`, `03c_fundacionais_lote2.py`): batch sizes, float32 inputs,
-the median quantile. Each vendor's package is imported only when its model is used, and each one is an
-optional extra, because their dependencies conflict (Toto-2.0 and TiRex-2 need a newer torch than Chronos-2's
-environment).
+(1024 hours in the benchmark, `DayAhead(context=1024)`), and the point forecast is the model's median
+(FlowState: the weighted mean of its quantiles, as the benchmark saved it). The calls copy the benchmark's
+(`03_fundacionais.py`, `03c_fundacionais_lote2.py`): batch sizes, float32 inputs, the point output. Each
+vendor's package is imported only when its model is used, and each one is an optional extra, because their
+dependencies conflict (Toto-2.0 and TiRex-2 need a newer torch than Chronos-2's environment).
 
 Benchmark rank (v2, rolling origin): TiRex-2 is the best single model on the plants in all three regimes;
-Toto-2.0-313m is first on the houses' PV; Chronos-2 is among the leaders with covariates. All three run on
-CPU, which is why the library and the app are CPU only.
+Toto-2.0-313m is first on the houses' PV; Chronos-2 is among the leaders with covariates. FlowState (9 M
+parameters, history only) ties with the best on the houses' consumption and is a small-device candidate. All
+run on CPU, which is why the library and the app are CPU only.
 
-Licences (checked 2026-10-11 on the Hugging Face model cards and the GitHub repos of the code): weights and
-code of all three are Apache-2.0, commercial use allowed. Redistributing the weights must keep the licence and
-any NOTICE file (TiRex-2 ships one). NX-AI's INTENDED_USE.md (TiRex-2) excludes high-risk uses under the EU AI
-Act and use as a safety component; it says it does not change the licence.
+Licences (checked 2026-10-11 on the Hugging Face model cards and the GitHub repos of the code; FlowState on
+2026-10-16): weights and code of all four are Apache-2.0, commercial use allowed. Redistributing the weights
+must keep the licence and any NOTICE file (TiRex-2 ships one). NX-AI's INTENDED_USE.md (TiRex-2) excludes
+high-risk uses under the EU AI Act and use as a safety component; it says it does not change the licence.
 """
 
 from __future__ import annotations
@@ -217,6 +218,95 @@ class Toto2(_ZeroShot):
         return list(np.asarray(q[4, :, 0, :H], dtype=float))
 
 
+class FlowState(_ZeroShot):
+    """FlowState (IBM, 2025, ~9.1 M parameters): an S5 state-space encoder and a functional-basis decoder,
+    history only, 9 quantiles 0.1-0.9. Extra `ttm` (`granite-tsfm`, module `tsfm_public`).
+
+    The call is the benchmark's (`03_fundacionais.py` and `piloto_quantis.py gera FlowState`): batches of 128,
+    float32, `scale_factor=1.0` (hourly data: 24 h base seasonality / 24 steps per day, the model card's
+    table), `batch_first=True`. The point forecast is the model's `prediction_outputs` with
+    `prediction_type="mean"`: a weighted mean of the 9 quantiles (weights 0.5 - |0.5 - level|), which is what
+    the benchmark saved as `yhat` (the weights' config says `"quantile"`, which granite-tsfm 0.3.9 maps to
+    `"mean"`; passing it explicitly gives the same numbers without the deprecation warning). It is NOT the
+    0.5 level: on the benchmark's quantiles the median scores ~0.01 lower in all three cases (plants +0.105
+    vs +0.114, houses' PV +0.125 vs +0.134, consumption +0.181 vs +0.192). `point_from_quantiles` gives
+    `rolling_quantiles` and `analyze` the same weighted mean, so their FlowState row is the benchmarked one.
+
+    Benchmark (regime A, rolling origin): houses' consumption +0.192 (ties with the best), houses' PV +0.134,
+    plants +0.114; better than TTM-r2 on PV. Raw bands too narrow (80% coverage 0.54-0.61); after
+    `postprocessing.conformal_quantiles` calibrated in the three cases (pilot F2(c), 16/10/2026).
+
+    `revision`: None = the repository's default, version 1.0 (`ibm-granite/granite-timeseries-flowstate-r1`
+    at commit 05effc6, the benchmark's); `"r1.1"` = the card's newer version (18.5 M parameters), not
+    benchmarked. Licence (model card and the granite-tsfm repo, checked 2026-10-16): Apache-2.0, weights and
+    code; the card calls this Granite version "suitable for commercial and enterprise use" (the separate
+    research version, `ibm-research/flowstate`, is "for research use only" and is not the one loaded here).
+    """
+
+    batch = 128
+    levels = LEVELS
+    hf = "ibm-granite/granite-timeseries-flowstate-r1"
+
+    def __init__(self, revision: str | None = None) -> None:
+        super().__init__(None)
+        self.revision = revision
+        self.card = ModelCard(
+            name="FlowState" if revision is None else f"FlowState-{revision}",
+            family="foundation",
+            license="Apache-2.0",
+            device="cpu or gpu",
+            sends_data=False,
+            regimes=(Regime.HISTORY,),
+            trains=False,
+            source=f"Graf et al. (2025), IBM, {self.hf}",
+        )
+
+    def _load(self) -> Any:  # pragma: no cover - needs granite-tsfm
+        from tsfm_public import FlowStateForPrediction
+
+        m = FlowStateForPrediction.from_pretrained(self.hf, revision=self.revision).eval()
+        if [round(float(a), 4) for a in m.config.quantiles] != list(LEVELS):
+            raise RuntimeError(f"FlowState quantiles {m.config.quantiles}, expected {LEVELS}")
+        return m
+
+    @staticmethod
+    def point_from_quantiles(q: np.ndarray) -> np.ndarray:
+        """The model's point from its quantiles (windows, 9, hours): weights 0.5 - |0.5 - level|, normalized
+        (granite-tsfm's `prediction_type="mean"`), in float64 (the model sums in float32: ~1e-7 apart)."""
+        w = 0.5 - np.abs(0.5 - np.asarray(LEVELS))
+        return np.einsum("wlh,l->wh", np.asarray(q, dtype=float), w / w.sum())
+
+    def _forecast(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        return [p for x in _same_length(windows) for p in self._raw(x)[0]]
+
+    def _quantiles(self, windows: list[Window]) -> list[np.ndarray]:  # pragma: no cover
+        return [q for x in _same_length(windows) for q in self._raw(x)[1]]
+
+    def _raw(self, windows: list[Window]) -> tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+        """Point (windows, H) and quantiles (windows, 9, H) of windows with histories of one length."""
+        import torch
+
+        x = torch.tensor(np.stack([w.history.astype(np.float32) for w in windows]))[:, :, None]
+        with torch.no_grad():
+            r = self._model(
+                past_values=x, scale_factor=1.0, prediction_length=H, batch_first=True, prediction_type="mean"
+            )
+        # shapes measured 09/10/2026: prediction (batch, H, 1), quantiles (batch, 9, H, 1)
+        return r.prediction_outputs[:, :H, 0].numpy(), r.quantile_outputs[..., :H, 0].numpy()
+
+
 def _batches(xs: list[Window], n: int) -> Iterator[list[Window]]:
     for i in range(0, len(xs), n):
         yield xs[i : i + n]
+
+
+def _same_length(xs: list[Window]) -> Iterator[list[Window]]:
+    """Consecutive runs of windows with histories of the same length (a batch tensor needs one length; the
+    first test days of a short series have less than the full context). Order is kept."""
+    i = 0
+    while i < len(xs):
+        j = i + 1
+        while j < len(xs) and len(xs[j].history) == len(xs[i].history):
+            j += 1
+        yield xs[i:j]
+        i = j

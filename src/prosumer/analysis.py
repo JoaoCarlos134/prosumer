@@ -448,7 +448,8 @@ def analyze(
             covariates=None if history_only else w,
         )
         if hasattr(model, "predict_quantiles") and hasattr(model, "levels"):
-            qf = rolling_quantiles(cast(Probabilistic, model), task_m)  # one fit: point = the 0.5 level
+            # one fit: the point is the 0.5 level, or the model's own (`point_from_quantiles`, FlowState)
+            qf = rolling_quantiles(cast(Probabilistic, model), task_m)
             bands_raw[name] = qf.drop(columns="yhat")
             past_q = _calibration_bands(cast(Probabilistic, model), task_m, test_start)
             bands_past[name] = past_q.drop(columns="yhat")

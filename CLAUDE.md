@@ -27,6 +27,11 @@ comments stay in Portuguese (code comments without accents) — keep that conven
   rename to English was DONE on 2026-10-09 (package `prosumer`, free on PyPI that day; recheck before
   publishing). Name map old -> new: top of `docs/proposta/PROPOSTA_BIBLIOTECA.md`. New library code is
   written in English; the benchmark keeps its Portuguese files and CSV columns (`metricas.csv` unchanged).
+- **Every bug fix ships with a regression test (decided 2026-10-15).** In the library (`src/prosumer`,
+  `examples`), a fix includes a test that reproduces the bug (fails before the fix, passes after), in the
+  same commit. Test the bug actually hit plus its obvious neighbour; no retroactive tests for old bugs
+  unless that code is touched again. Pilots and one-off benchmark scripts are exempt (their record is the
+  saved output and the write-up).
 - **The 20 houses** (`casas`, H1-H20) are the public dataset of Khadem et al. (2024), "Comprehensive Dataset
   on Electrical Load Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2
   (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,

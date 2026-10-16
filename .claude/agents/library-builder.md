@@ -26,6 +26,9 @@ merges; an independent `work-reviewer` checks everything you claim, so be exact.
 - Windows home machine: never disable Smart App Control. Use the repo `.venv`
   (`.venv/Scripts/python.exe`). Import `lightgbm` before `sklearn.ensemble`. Locally built .exe files are
   blocked: C is checked via `tests/wasm_c.py` (zig -> WebAssembly -> Node).
+- Every bug fix includes a regression test that reproduces it (fails before the fix, passes after), in
+  the same commit; say in the report which test covers which fix. Test the bug hit plus its obvious
+  neighbour, not every edge case.
 - Line length 110. Editing with Python on Windows can write CRLF: write with `newline="\n"`.
 
 ## Before every commit (all must pass; report the output, never claim a pass you did not see)

@@ -689,15 +689,44 @@ commit uma vez, e so adicionar de novo.
   MB): previsao 18-55 kWh/dia, 6,99 kW efetivos; por HTTP com o ano inteiro: 31-53 kWh/dia, 6,69 kW. Testes:
   `tests/test_auto.py`, `test_example_site.py::test_energy_column_is_chosen_by_name_and_unit_not_position`.
 
-#### Onde retomar (parado em 16/10/2026 ~12:30 pelo limite de uso; regra do usuario: 90% -> parar, resumir, commit, push)
+- **Adaptador FlowState (ramo `flowstate-adapter`, `0355d8c`, juntado):** `forecast.FlowState(revision=None)` (pesos
+  `ibm-granite/granite-timeseries-flowstate-r1` v1.0, commit 05effc6, o do benchmark; `revision="r1.1"` = versao nova
+  de 18,5 M, nao testada), ponto e 9 quantis, extra `ttm` (`granite-tsfm>=0.3.9`). O ponto NAO e a mediana: o benchmark
+  gravou o `prediction_outputs`, media ponderada dos quantis; a mediana daria ~0,01 a menos nos 3 casos. Por isso o
+  `rolling_quantiles` usa o `point_from_quantiles` do modelo quando existe (senao o nivel 0,5). **E3: igual ao gravado
+  em TODAS as janelas** (1820/920/598; dif max 0,0; `PROSUMER_FULL=1`, ~44 min). Licenca Apache-2.0 nos pesos e no
+  codigo, "suitable for commercial and enterprise use" (a versao `ibm-research/flowstate` e so pesquisa, nao a usada).
+  **Ambiente `~/.venvs/prosumer_tsfm`** (manter, decisao do usuario): o granite-tsfm 0.3.9 exige scikit-learn < 1.8 e o
+  `prosumer` tem 1.9.1; os testes do FlowState rodam la com `PYTHONPATH=src` (no `prosumer` pulam; offline com
+  `HF_HUB_OFFLINE=1`).
+- **Diagnostico sem limiar escondido (ramo `diagnostics-parameters`, `7791f6a`, juntado).** Todo limiar de
+  `prosumer.diagnostics` virou argumento de `diagnose` (padrao = a constante antiga); `analyze(diagnostics_options={...})`
+  repassa (nome desconhecido ou fora da faixa = erro). Docstrings declaram a origem: `penalty` ESCOLHIDO nas duas usinas
+  e nas 10 casas de Dingle; regra de dia claro, tamanho de trecho e `good_fit_r2` postos a mao nas usinas; o resto
+  generico. Grade de inclinacao pode ir a 90 (fachada); **ajuste em 90 nao conta como "no limite"** (limite fisico, como
+  0; regra mantida pelo usuario). Nota no `analyze` quando os padroes escolhidos nos nossos sitios estao em uso. Padroes
+  sem mudanca (impressao digital em `tests/fixtures/diagnostics_defaults.json`; piloto identico byte a byte; o piloto
+  passa a usar `diagnose(penalty=...)`). Ainda escondidos (lista do construtor): em `quality` o `MIN_AGREEMENT`, a
+  mascara de 5% do pico e o IC 5-95%, e o `analyze` nao repassa os argumentos do `clock_offset`; em `outlook` o `SKILL`
+  e os limiares HIGH/MEDIUM 0,40/0,25, `IMPLAUSIBLE`, `KW_EFF_DAYS`/`FALLBACK`, `MIN_MONTH_DAYS`, 0,8 x kWp, e o
+  `_clear_trailing` com as constantes do diagnostico.
+- **Faturas reais (`piloto_fatura.py`, ramo `piloto-fatura`, juntado; PILOTOS_F1_F2.md E6): a `economics.brazil` NAO
+  reproduz as faturas da Copel de Cascavel.** 104 faturas 2018-2026 (19 sem FV, 85 GD I), so kWh e total pago (sem COSIP
+  nem aliquotas). Portao (`0e971b4`): energia sem FV +-2% e total +-3% em >= 80%. Rodada do portao: tudo falha porque a
+  base da ANEEL (gerada em 16/10/2026) repete cada registro e o `TariffBook` soma linhas de mesma chave: **`from_aneel`
+  da hoje TUSD e TE em DOBRO** (DEFEITO ABERTO, afeta o site). Sem as duplicatas (pos-hoc): sem FV mediana -0,5%,
+  17-19/19 em +-5%, so 5-7/19 em +-2%; com FV a biblioteca fica ~21% abaixo (0/85): o pago cresce ~0,21-0,39 R$ por kWh
+  compensado acima do minimo, e a biblioteca poe o imposto da energia compensada DENTRO do limite do custo de
+  disponibilidade ("all" e "te_only" dao a mesma conta quando o minimo limita; 2o defeito provavel). Proximo: faturas
+  detalhadas (PDF) para separar COSIP, aliquotas efetivas e a regra do imposto.
 
-1. **Tres agentes pararam no limite de uso, trabalho em worktrees (nao juntado):** `.claude/worktrees/flowstate`
-   (ramo `flowstate-adapter`, adaptador `forecast.FlowState` + `tests/test_flowstate.py`, NADA commitado: conferir,
-   rodar testes, commitar), `.claude/worktrees/diagparams` (ramo `diagnostics-parameters`, limiares do `diagnose` como
-   parametros + `tests/fixtures/diagnostics_defaults.json`, nada commitado), `.claude/worktrees/pilotfatura` (ramo
-   `piloto-fatura`: portao commitado em `0e971b4` ANTES de rodar; `resultados/pilotos/fatura.json` e caches da ANEEL
-   em `dados/` nao commitados; falta o registro no fim do PILOTOS_F1_F2.md). Retomar cada um (o trabalho esta salvo)
-   ou terminar a mao; depois juntar em `main` e SO ENTAO rodar o revisor (`work-reviewer`) sobre o conjunto.
+#### Onde retomar (atualizado 16/10/2026 depois de juntar os tres ramos)
+
+1. **CONSERTAR (urgente): duplicatas da ANEEL** em `io.aneel.fetch_tariffs` (descartar registros iguais a menos do
+   `_id`), com teste de regressao (reproducao offline no registro do piloto da fatura). Depois o 2o defeito (imposto na
+   energia compensada x minimo), so com faturas detalhadas. `from_aneel` aceita uma so aliquota de ICMS/PIS: aceitar
+   tabela por data.
+   Depois: rodar o revisor (`work-reviewer`) sobre `9d3ade0..HEAD`.
 2. Decisao do usuario: tolerancia do `test_forecast_parity[usinas-C]` entre maquinas (ver acima).
 3. Decisao do usuario: dividir este CLAUDE.md (~32k tokens lidos a cada sessao) em regras + estado, historico datado
    num arquivo a parte.

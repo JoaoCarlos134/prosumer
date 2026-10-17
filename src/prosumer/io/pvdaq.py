@@ -13,7 +13,11 @@ Shape of the files (checked on 2026-10-16 in the public bucket, `oedi-data-lake`
   per system and day, `measured_on` (local time of the logger, without a zone) and one column per sensor
   named `<sensor_name>__<metric_id>`, WITHOUT units (on system 50: `ac_power__752` in W, `dc_power__751`,
   `poa_irradiance__750` in W/m2, module and inverter temperatures, DC and AC voltages and currents). Systems
-  differ in sensors and step (1 minute on NREL's arrays, 5 or 15 minutes elsewhere).
+  differ in sensors and step (1 minute on NREL's arrays, 5 or 15 minutes elsewhere) and the names do NOT say
+  the unit reliably (checked 2026-10-17): `ac_power_metered_kw` holds W on systems 1200 and 1239, `ac_power`
+  holds kW on 1433, and none of these systems has the `Metrics` block of the metadata. `read_days` therefore
+  infers kW or W from the nameplate (`kw`) when the unit is not given; some systems split the plant into one
+  column per inverter (`inv1_ac_power`, ...): pass the one wanted, or read each.
 - the systems taken from PVOutput (ids >= 10000) have only daily totals per year
   (`<id>_ac_<start>_<end>.csv`): not enough for an hourly analysis, and refused with that message.
 - `pvdaq/csv/system_metadata/<id>_system_metadata.json`: system, site (latitude, longitude, climate), mounts
@@ -42,7 +46,7 @@ from typing import Any
 
 import pandas as pd
 
-from ..contracts import EnergySeries, Unit
+from ..contracts import DstPolicy, EnergySeries, Unit
 from ..provenance import Provenance
 from . import _http, meter
 from ._tables import Label
@@ -78,26 +82,52 @@ def label_of(time_interval: str | None) -> Label | None:
     return _LABEL.get((time_interval or "").strip().upper())
 
 
+def unit_from_nameplate(values: pd.Series, kw: float) -> Unit:
+    """kW or W for a PVDAQ AC power column, from its high values against the nameplate `kw` (the names do not
+    say it, module docstring): the 99.9% quantile is 0.2-1.5 x kW in kW, or 200-1,500 x kW in W."""
+    v = pd.to_numeric(values, errors="coerce")
+    v = v[(v > -1e6) & (v < 1e9)]  # sentinel values such as -2147484000
+    if v.dropna().empty or not kw > 0:
+        raise ValueError(
+            "Cannot infer the unit of the PVDAQ column: no values or no nameplate kW; pass unit="
+        )
+    ratio = float(v.quantile(0.999)) / kw
+    if 0.2 <= ratio <= 1.5:
+        return "kW"
+    if 200 <= ratio <= 1500:
+        return "W"
+    raise ValueError(
+        f"The PVDAQ column peaks at {ratio:.3g} x the nameplate {kw:g} kW: neither kW nor W; pass unit="
+    )
+
+
 def read_days(
     sources: Iterable[str | Path | pd.DataFrame],
     *,
     tz: str,
     column: str = "ac_power",
-    unit: Unit = "W",
+    unit: Unit | None = None,
+    kw: float | None = None,
     kind: meter.Kind = "power",
     label: Label = "start",
     freq: str | None = "h",
     name: str = "pvdaq",
     min_coverage: float = 11 / 12,
+    dst: DstPolicy = "raise",
+    clip_night_draw: bool = True,
     provenance: Provenance | None = None,
 ) -> EnergySeries:
     """A generation series (kWh) from PVDAQ day files (paths or frames already read).
 
     `column`: the sensor, by its name before `__<metric_id>` (default the AC power, `ac_power`, read as
-    average power in `unit` per step); a name that matches no column or several is an error that lists the
-    columns. `tz`: the zone of `measured_on` (`zone(...)` of the systems list). `label`: "start" or "end" of
+    average power per step); a name that matches no column or several is an error that lists the columns.
+    `unit`: of the column; None infers kW or W from the nameplate `kw` (`unit_from_nameplate`; the names are
+    not reliable). `tz`: the zone of `measured_on` (`zone(...)` of the systems list); `dst` as in
+    `EnergySeries.from_dataframe`, for loggers in a zone with daylight saving. `label`: "start" or "end" of
     the interval (`label_of` the inverter's `time_interval`). `freq`: output step (default hourly; None keeps
-    the native step). Steps without a value count as missing, never as zero.
+    the native step). `clip_night_draw`: negative power (the inverter's own consumption at night, -0.7 kW on a
+    140 kW plant) becomes 0, as a generation series holds what the PV produced. Steps without a value count as
+    missing, never as zero.
     """
     frames = [s if isinstance(s, pd.DataFrame) else pd.read_csv(s) for s in sources]
     if not frames:
@@ -115,11 +145,25 @@ def read_days(
             f"{'No' if not wanted else 'Several'} PVDAQ column(s) for {column!r} ({wanted or ''}); "
             f"the file has {found}"
         )
+    col = wanted[0]
+    how = "given"
+    if unit is None:
+        if kw is None:
+            raise ValueError(
+                "PVDAQ column names do not say the unit reliably: pass unit= or the nameplate kw="
+            )
+        unit, how = unit_from_nameplate(data[col], kw), f"inferred from the nameplate {kw:g} kW"
+    values = pd.to_numeric(data[col], errors="coerce")
+    values = values.where((values > -1e6) & (values < 1e9))  # sentinels (-2147484000) are missing values
+    drawn = int((values < 0).sum())
+    if clip_night_draw:
+        values = values.clip(lower=0)
+    data = data.assign(**{col: values})
     prov = provenance or Provenance(source="NREL PVDAQ", license=LICENSE, citation=CITATION, url=URL)
     s = meter.read_table(
         data,
         time_column="measured_on",
-        value_columns=wanted[0],
+        value_columns=col,
         tz=tz,
         unit=unit,
         quantity="generation",
@@ -128,8 +172,12 @@ def read_days(
         label=label,
         names=[name],
         min_coverage=min_coverage,
+        dst=dst,
     )
-    notes = f"PVDAQ column {wanted[0]} ({kind}, {unit}), stamps read as the {label.upper()} of each interval"
+    notes = (
+        f"PVDAQ column {col} ({kind}, {unit} {how}), stamps read as the {label.upper()} of each interval; "
+        f"{drawn} negative reading(s) (night draw) {'set to 0' if clip_night_draw else 'kept'}"
+    )
     p = s.provenance
     prov = replace(prov, notes="; ".join(x for x in (prov.notes, notes, p.notes if p else "") if x))
     return EnergySeries.from_dataframe(
@@ -182,10 +230,11 @@ def fetch(
     *,
     tz: str | None = None,
     column: str = "ac_power",
-    unit: Unit = "W",
+    unit: Unit | None = None,
     kind: meter.Kind = "power",
     label: Label | None = None,
     freq: str | None = "h",
+    dst: DstPolicy = "raise",
     cache_dir: str | os.PathLike[str] | None = None,
     get: Getter | None = None,
 ) -> EnergySeries:
@@ -194,7 +243,8 @@ def fetch(
     Day files are kept in the cache (`cache_dir`, default `$PROSUMER_DATA` or `~/.cache/prosumer`, subfolder
     `pvdaq/<id>`) and never downloaded twice. `tz`: default from the metadata (`timezone_code`) or the
     systems list. `label`: default from the first inverter's `time_interval` ("L" start, "R" end; else start,
-    noted in the provenance). The series is named `pvdaq_<id>`.
+    noted in the provenance). `unit`: default inferred from the metadata's nameplate (`System.power`, kW).
+    The series is named `pvdaq_<id>`.
     """
     sid = int(system_id)
     meta = metadata(sid, get=get)
@@ -249,11 +299,14 @@ def fetch(
         url=URL,
         notes=note,
     )
+    kw = site_of(meta)["kw"]
     return read_days(
         files,
         tz=tz,
         column=column,
         unit=unit,
+        kw=kw,
+        dst=dst,
         kind=kind,
         label=label,
         freq=freq,

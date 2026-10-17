@@ -31,7 +31,7 @@ def test_label_of_time_interval() -> None:
 
 
 def test_real_day_file_becomes_hourly_kwh() -> None:
-    s = pvdaq.read_days([DAY], tz="Etc/GMT+7", name="pvdaq_50")
+    s = pvdaq.read_days([DAY], tz="Etc/GMT+7", name="pvdaq_50", kw=6.0)
     assert s.freq == "h" and s.unit == "kWh" and s.series == ["pvdaq_50"]
     f = s.frame.set_index("ds")
     raw = pd.read_csv(DAY, parse_dates=["measured_on"]).set_index("measured_on")["ac_power__752"]
@@ -43,12 +43,34 @@ def test_real_day_file_becomes_hourly_kwh() -> None:
     assert not night["valid"]  # 10 of 60 minutes in the excerpt: not an hour
     assert s.provenance is not None and s.provenance.license == "CC-BY-4.0"
     assert "doi:10.25984/1846021" in s.provenance.citation
-    assert "ac_power__752" in s.provenance.notes
+    assert "ac_power__752 (power, W inferred from the nameplate 6 kW)" in s.provenance.notes
+    assert "negative reading(s) (night draw) set to 0" in s.provenance.notes
+    given = pvdaq.read_days([DAY], tz="Etc/GMT+7", unit="W")
+    pd.testing.assert_frame_equal(given.frame, s.frame.assign(unique_id="pvdaq"))
+
+
+def test_unit_comes_from_the_nameplate_because_the_names_lie() -> None:
+    """2026-10-17: `ac_power_metered_kw` holds W on PVDAQ systems 1200 and 1239, `ac_power` kW on 1433."""
+    w = pd.Series([0.0, 20_000.0, 41_920.0])  # system 1200, 51.84 kW
+    assert pvdaq.unit_from_nameplate(w, 51.84) == "W"
+    assert pvdaq.unit_from_nameplate(pd.Series([0.0, 150.0, 332.0]), 449.28) == "kW"  # system 1433
+    with pytest.raises(ValueError, match="neither kW nor W"):
+        pvdaq.unit_from_nameplate(pd.Series([0.0, 30.0]), 449.28)
+    with pytest.raises(ValueError, match="unit= or the nameplate kw="):
+        pvdaq.read_days([DAY], tz="Etc/GMT+7")
+    sentinel = pd.Series([-2147484000.0, 0.0, 4000.0])  # a PVDAQ sentinel is not a value
+    assert pvdaq.unit_from_nameplate(sentinel, 6.0) == "W"
+
+
+def test_night_draw_can_be_kept() -> None:
+    kept = pvdaq.read_days([DAY], tz="Etc/GMT+7", kw=6.0, freq=None, clip_night_draw=False)
+    clipped = pvdaq.read_days([DAY], tz="Etc/GMT+7", kw=6.0, freq=None)
+    assert kept.frame["y"].min() < 0 and clipped.frame["y"].min() == 0
 
 
 def test_column_must_be_named_once() -> None:
     with pytest.raises(ValueError, match=r"No PVDAQ column.*'ac_energy'"):
-        pvdaq.read_days([DAY], tz="Etc/GMT+7", column="ac_energy")
+        pvdaq.read_days([DAY], tz="Etc/GMT+7", column="ac_energy", unit="W")
     with pytest.raises(ValueError, match="no `measured_on`"):
         pvdaq.read_days(
             [pd.DataFrame({"Unnamed: 0": ["2024-01-01"], "ac_energy_inv_1_daily_sum": [1.5]})], tz="UTC"

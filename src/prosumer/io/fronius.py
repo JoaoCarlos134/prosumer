@@ -168,7 +168,8 @@ def read_solarweb_raw(
     already seen in an earlier row, in the order the files are given: the overlap between yearly files).
     Missing values (`n/a`, empty) are NaN. Nothing else is cleaned.
 
-    `frame.attrs` holds `columns` (a table: column, canonical name, original header, unit) and
+    `frame.attrs` holds `columns` (records: column, canonical name, original header, unit; JSON-friendly, so
+    the frame can be saved to parquet) and
     `unparsed_rows` (rows with values but a time that did not parse; they are left out). CSV files: the
     separator and the decimal mark are guessed unless given.
     """
@@ -220,9 +221,11 @@ def read_solarweb_raw(
     out = out[lead + [c for c in out.columns if c not in lead + tail] + tail]
     out["time"] = pd.to_datetime(out["time"])
     out["duplicate"] = out.duplicated(["device", "time"], keep="first")
-    out.attrs["columns"] = pd.DataFrame(
-        [{"column": k, **v} for k, v in columns.items()], columns=["column", "name", "header", "unit"]
-    )
+    # records, not a DataFrame: pandas writes attrs into parquet files as JSON
+    out.attrs["columns"] = [
+        {"column": k, "name": v.get("name"), "header": v.get("header"), "unit": v.get("unit")}
+        for k, v in columns.items()
+    ]
     out.attrs["unparsed_rows"] = unparsed
     return out
 
@@ -290,7 +293,7 @@ def read_solarweb(
       `EnergySeries.from_dataframe`.
     """
     raw = read_solarweb_raw(paths, sep=sep, decimal=decimal, encoding=encoding)
-    table = raw.attrs["columns"]
+    table = pd.DataFrame(raw.attrs["columns"], columns=["column", "name", "header", "unit"])
     keys = _energy_columns(table, energy_column)
     energy = pd.Series(np.nan, index=raw.index)
     for key in keys:

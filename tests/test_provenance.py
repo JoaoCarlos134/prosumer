@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -34,7 +35,7 @@ def test_licence_flags() -> None:
 def test_of_reads_series_frames_and_json_dicts() -> None:
     p = Provenance("somewhere", license="CC0-1.0", retrieved="2026-10-11")
     frame = prov.attach(pd.DataFrame({"a": [1.0]}), p)
-    assert prov.of(frame) is p
+    assert prov.of(frame) == p  # stored as a dict since 2026-10-17 (parquet), rebuilt on read
     assert prov.of(frame.copy()) == p  # pandas keeps attrs through a copy
     assert prov.of(pd.DataFrame({"a": [1.0]})) is None
     from_json = pd.DataFrame({"a": [1.0]})
@@ -200,3 +201,17 @@ def test_numbers_do_not_depend_on_provenance() -> None:
 def test_short_series_still_reports_its_provenance() -> None:
     r = analyze(data.example_house(n_series=1, days=5), test_days=3)
     assert r.forecast is None and r.provenance is not None and len(r.provenance) == 1
+
+
+def test_frames_with_provenance_can_be_saved_to_parquet(tmp_path: Path) -> None:
+    """Regression (2026-10-17): `attach` put the Provenance object in `attrs`, and pandas writes `attrs` into
+    a parquet file as JSON: `fetch_hourly(...).to_parquet(...)` raised TypeError. Now a dict, read back by
+    `of`."""
+    p = Provenance(source="NASA POWER", license="CC0-1.0", citation="cite me", retrieved="2026-10-17")
+    frame = pd.DataFrame({"ds": pd.date_range("2024-01-01", periods=3, freq="h", tz="UTC"), "ghi": 1.0})
+    f = prov.attach(frame, p)
+    path = tmp_path / "w.parquet"
+    f.to_parquet(path)
+    back = pd.read_parquet(path)
+    assert prov.of(back) == p and prov.of(f) == p
+    assert prov.of(f.copy()) == p  # pandas keeps attrs through copies

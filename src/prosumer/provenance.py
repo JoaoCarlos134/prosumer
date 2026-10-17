@@ -1,12 +1,14 @@
 """Where a piece of data came from and under what licence.
 
-The app tells its user "this analysis used X (licence Y, cite Z)", and that only works if every input
-carries the answer from the moment it enters the library. Series carry it in `EnergySeries.provenance`;
-frames that are not series (weather forecasts, NASA POWER weather) carry it in
-`DataFrame.attrs["provenance"]`, which pandas keeps through copies and most column operations (`attach` and
-`of` write and read it). Models carry theirs in `forecast.ModelCard`. `analyze` collects all of them in
-`Report.provenance` and writes a note for anything with an unknown licence, a non-commercial licence or a
-model that sends data out: nothing is refused silently, and nothing is used without saying so.
+The app tells its user "this analysis used X (licence Y, cite Z)", and that only works if every input carries
+the answer from the moment it enters the library. Series carry it in `EnergySeries.provenance`; frames that
+are not series (weather forecasts, NASA POWER weather) carry it in `DataFrame.attrs["provenance"]`, which
+pandas keeps through copies and most column operations (`attach` and `of` write and read it). It is kept there
+as a plain dict (`Provenance.to_dict`), never the object: pandas writes `attrs` into parquet files as JSON,
+and an object there made `frame.to_parquet` fail (2026-10-17). Models carry theirs in `forecast.ModelCard`.
+`analyze` collects all of them in `Report.provenance` and writes a note for anything with an unknown licence,
+a non-commercial licence or a model that sends data out: nothing is refused silently, and nothing is used
+without saying so.
 
 Licences of the readers, checked on 2026-10-11:
 - Open-Meteo: data under CC BY 4.0, credit "Weather data by Open-Meteo.com" with a link
@@ -59,8 +61,9 @@ class Provenance:
 
 
 def attach(frame: pd.DataFrame, provenance: Provenance) -> pd.DataFrame:
-    """Store `provenance` in `frame.attrs` (in place) and return the frame."""
-    frame.attrs[ATTR] = provenance
+    """Store `provenance` in `frame.attrs` (in place, as a JSON-friendly dict: read it back with `of`) and
+    return the frame."""
+    frame.attrs[ATTR] = provenance.to_dict()
     return frame
 
 

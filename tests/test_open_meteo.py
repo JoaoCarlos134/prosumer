@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from prosumer.io import open_meteo as om
+from prosumer.provenance import of as provenance_of
 
 SAVED = (
     Path(__file__).resolve().parents[1]
@@ -212,7 +213,7 @@ def test_live_forecast_from_today_with_each_models_horizon() -> None:
     late = w["ds"] > today + pd.Timedelta(days=6)
     assert w.loc[late, "ghi_short"].isna().all()
     np.testing.assert_array_equal(w.loc[late, "ghi_mean"], w.loc[late, "ghi_long"])  # mean of the models left
-    assert "issued" in f.attrs and f.attrs["provenance"].license == "CC-BY-4.0"
+    assert "issued" in f.attrs and provenance_of(f).license == "CC-BY-4.0"
     assert all(c["timezone"] == "GMT" for c in api.calls)
     with pytest.raises(ValueError):
         om.fetch_forecast(0, 0, days=17, get=api)

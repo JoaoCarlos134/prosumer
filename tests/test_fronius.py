@@ -134,8 +134,9 @@ def test_raw_keeps_every_column_with_units(tmp_path: Path) -> None:
     assert raw["row"].tolist() == [3, 4, 5]
     assert np.isnan(raw.loc[1, "energy_Wh"]) and raw.loc[2, "energy_Wh"] == 10.0
     assert raw["time"].iloc[0] == pd.Timestamp("2025-08-01 10:00")
-    cols = raw.attrs["columns"].set_index("column")
+    cols = pd.DataFrame(raw.attrs["columns"]).set_index("column")
     assert cols.loc["energy_Wh", "header"] == "Energia" and cols.loc["dc_voltage_mpp1_V", "unit"] == "V"
+    raw.to_parquet(tmp_path / "raw.parquet")  # regression 2026-10-17: a DataFrame in attrs broke this
 
 
 def test_english_header_gives_the_same_columns(tmp_path: Path) -> None:
@@ -286,7 +287,7 @@ def test_real_export_layout_bracketed_units_and_site_total(tmp_path: Path, fmt: 
         else write_csv(tmp_path / "r.csv", data)
     )
     raw = fronius.read_solarweb_raw(f)
-    cols = raw.attrs["columns"].set_index("column")
+    cols = pd.DataFrame(raw.attrs["columns"]).set_index("column")
     assert cols.loc["energy_Wh", "unit"] == "Wh" and "pv_production_Wh" in cols.index
     with warnings.catch_warnings():
         warnings.simplefilter("error")

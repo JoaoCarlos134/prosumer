@@ -222,8 +222,9 @@ def test_brazilian_gd_ii_in_analyze_is_brazil_bill() -> None:
 def test_brazilian_cases_that_cannot_be_billed_leave_a_note() -> None:
     load, pv = _site(31, "2026-08-01")
     branca = brazil.Setup(book=_copel(), modality="Branca", peak_start="18:00", gd="GD II")
-    r = analyze(pv, economics=branca, consumption=load)
-    assert r.economics is None and any("Tarifa branca with micro-generation" in n for n in r.notes)
+    r = analyze(pv, economics=branca, consumption=load)  # billed since 2026-10-17 (REN 1.000 art. 655-G)
+    assert r.economics is not None and set(r.economics.by_block["block"]) == set(brazil.POSTOS)
+    assert any("Tarifa branca with generation: per-posto netting" in n for n in r.economics.notes)
     early, _ = _site(31, "2025-01-01")  # before the fixture's vigencia
     r2 = analyze(early, economics=brazil.Setup(book=_copel()))
     assert r2.economics is None and any("Economics left out" in n for n in r2.notes)

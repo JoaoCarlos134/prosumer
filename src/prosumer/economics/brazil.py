@@ -38,6 +38,23 @@ What is modelled, and where each rule comes from (all sources accessed on 2026-1
   faturamento": a credit of month m is usable through month m+59 (the month m+60 bill finds it expired). The
   month's own injection is used before older credits ([L] art. 26 §1 I: consumption minus the month's
   injection plus accumulated credits).
+- **Tarifa branca with micro-generation** ([R] art. 2 XVII-A; art. 655-G §§2-5, §9; checked 2026-10-17 in the
+  text of REN 1.059/2023, https://www.legisweb.com.br/legislacao/?id=442297): consumption, injection and the
+  excess are computed PER POSTO each cycle; injection first offsets the consumption of its own posto; "o
+  excedente de energia de um posto tarifario deve ser primeiramente alocado em outros postos tarifarios" (§3)
+  and only then becomes credit (§4); energy used in a posto other than the one where it was injected is
+  converted by "a relacao entre o componente tarifario TE Energia do posto em que a energia foi injetada" and
+  that of the posto where it is used (§5, following PRORET submodule 7.1): kWh in q = kWh from p x TE_E(p) /
+  TE_E(q); credits keep the posto they were injected in, oldest first (§9). Two READINGS, both parameters:
+  `te_energy` (default None: the homologated TE of each posto stands in for its TE Energia component, which
+  the book does not carry; the TE also holds charges, and at Copel 2025 fora ponta and intermediario have the
+  same TE, so the true ratio may differ by ~10%: pass `te_energy={posto: R$/MWh}` from the distributor's
+  components) and `posto_order` (the order the other postos receive an excess or a credit; the text names
+  none; default the dearest first: ponta, intermediario, fora ponta). The compensation, in that order (own
+  posto, the month's excess to the other postos, then credits), stops where the bill reaches the custo de
+  disponibilidade, as in the conventional modality; the GD II charge uses each posto's TUSD and TE and the
+  book's (conventional) Fio B, another reading. A credit banked before the first month (`initial_credit`)
+  counts as fora ponta.
 - **Minimum billing of GD II: the law and the regulation differ.** [L] art. 16 §1: for units NOT covered by
   art. 26 (GD II) the minimum billable value applies only if the consumption measured, disregarding the
   compensation, is below the minimum billable consumption. [R] art. 655-I §§1-2 applies one rule to every
@@ -81,8 +98,7 @@ What is modelled, and where each rule comes from (all sources accessed on 2026-1
 Not modelled (left for the user to add or to a later version): COSIP/CIP (municipal street-lighting fee, not
 published by ANEEL: `cosip` is a fixed amount per month), the social tariff and other subsidies, the
 reduction of the minimum billing for CadUnico families ([L] art. 16 §2; [R] art. 291 sole paragraph),
-tarifa branca WITH micro-generation (per-posto netting weighted by the TE Energia ratio, [L] art. 12; [R] art.
-655-G §5), shared/remote generation, grupo A, demand charges and the GD II "Faturamento Uso Injecao".
+shared/remote generation, grupo A, demand charges and the GD II "Faturamento Uso Injecao".
 
 Open, NOT verified (2026-10-12):
 - "por dentro" as T / (1 - ICMS - PIS/COFINS) against T / ((1 - ICMS)(1 - PIS/COFINS)), as distributors may
@@ -674,6 +690,8 @@ def bill(
     pis_cofins_on_charge: bool = False,
     cosip: float = 0.0,
     assume_bandeira: float | None = None,
+    posto_order: tuple[str, ...] = POSTOS,
+    te_energy: Mapping[str, float] | None = None,
 ) -> Bill:
     """Monthly bill (R$) of grupo B consumers, with or without micro-generation (see the module docstring for
     every rule and its source).
@@ -683,7 +701,8 @@ def bill(
     as earned the month before it). `cosip`: the municipal lighting fee, R$ per month (not published by
     ANEEL; read it from a bill). `assume_bandeira`: R$/MWh for months without a bandeira record.
     `gd2_minimum`, `icms_exempt_compensated`, `pis_cofins_exempt_compensated`, `icms_on_charge`,
-    `pis_cofins_on_charge`: readings, see the module docstring.
+    `pis_cofins_on_charge`, and for tarifa branca with generation `posto_order` and `te_energy` ({posto:
+    R$/MWh} of the TE Energia component): readings, see the module docstring.
 
     Monthly columns: `unique_id, month, coverage, consumption, generation, self_consumption, grid_import,
     export, gd_class, charge_share, charge_base, flag, price, minimum_value, compensated, credit_used,
@@ -696,11 +715,10 @@ def bill(
     book._call = []  # collect only what this bill has to assume
     if modality not in (CONVENTIONAL, BRANCA):
         raise ValueError("modality must be 'Convencional' or 'Branca'")
-    if modality == BRANCA and generation is not None:
-        raise NotImplementedError(
-            "Tarifa branca with micro-generation (per-posto netting weighted by the TE Energia ratio, "
-            "REN 1.000 art. 655-G §5) is not implemented yet"
-        )
+    if sorted(posto_order) != sorted(POSTOS):
+        raise ValueError(f"posto_order must order the three postos {POSTOS}")
+    if te_energy is not None and (set(te_energy) != set(POSTOS) or min(te_energy.values()) <= 0):
+        raise ValueError(f"te_energy needs a positive R$/MWh for each posto {POSTOS}")
     if modality == BRANCA and peak_start is None:
         raise ValueError("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')")
     if gd2_minimum not in ("ren_655I", "law_16_par1"):
@@ -741,13 +759,12 @@ def bill(
         base_b = np.zeros(len(h))
         for j, name in enumerate(POSTOS):
             data_name = next(k for k, v in _POSTO_DATA.items() if v == name)
-            per_day = pd.Series(
-                {
-                    d: sum(book.base(d, modality=BRANCA, posto=data_name, subgroup=subgroup)) / 1000.0
-                    for d in days.index
-                }
-            )
+            parts = {d: book.base(d, modality=BRANCA, posto=data_name, subgroup=subgroup) for d in days.index}
+            per_day = pd.Series({d: (tu + te) / 1000.0 for d, (tu, te) in parts.items()})
             base_b += sh[:, j] * h["date"].map(per_day).to_numpy()
+            h[f"share_{name}"] = sh[:, j]
+            h[f"tusd_{name}"] = h["date"].map(pd.Series({d: tu / 1000.0 for d, (tu, _) in parts.items()}))
+            h[f"te_{name}"] = h["date"].map(pd.Series({d: te / 1000.0 for d, (_, te) in parts.items()}))
         h["base_energy"] = base_b
     else:
         h["base_energy"] = h["base"]
@@ -760,13 +777,17 @@ def bill(
         "Months are calendar months; the bill follows the meter's reading cycle.",
     ]
     rows = []
+    blocks: list[dict[str, Any]] = []  # tarifa branca: per posto and month
+    branca_scee = modality == BRANCA and klass is not None
     for uid_key, g in h.groupby("unique_id", sort=True):
         uid = str(uid_key)
         lots: list[tuple[pd.Timestamp, float]] = []
+        plots: list[tuple[pd.Timestamp, str, float]] = []  # tarifa branca: credits keep their posto
         start = float(initial_credit.get(uid, 0.0) if isinstance(initial_credit, Mapping) else initial_credit)
         first = pd.Timestamp(g["month"].min())
         if start > 0:
             lots.append((first - pd.offsets.MonthBegin(1), start))
+            plots.append((first - pd.offsets.MonthBegin(1), "fora_ponta", start))
         for month_key, m in g.groupby("month", sort=True):
             month = pd.Timestamp(month_key)  # type: ignore[arg-type]
             w = np.nan_to_num(m["grid_import"].to_numpy())
@@ -783,8 +804,12 @@ def bill(
             )
             minimum_value = minimum_kwh * (base_conv + (band if bandeira_on_minimum else 0.0)) * gross
             limit = month - pd.DateOffset(months=credit_months)
-            expired = sum(k for t, k in lots if t <= limit)
-            lots = [(t, k) for t, k in lots if t > limit]
+            if branca_scee:
+                expired = sum(k for t, _, k in plots if t <= limit)
+                plots = [(t, q, k) for t, q, k in plots if t > limit]
+            else:
+                expired = sum(k for t, k in lots if t <= limit)
+                lots = [(t, k) for t, k in lots if t > limit]
             share, base_name, c = 0.0, "", 0.0
             if klass is not None:
                 share, base_name = compensation_charge_share(
@@ -794,9 +819,74 @@ def bill(
                 if share > 0:
                     v = mean("tusd", w) if base_name == "tusd" else book.fio_b_value(month) / 1000.0
                 c = taxes.per_kwh(share * v, mean("tusd", w), mean("te", w), mean("icms", w), mean("pis", w))
+            no_minimum = klass == "GD II" and gd2_minimum == "law_16_par1" and imported >= minimum_kwh
+            if branca_scee:
+                v_fio = book.fio_b_value(month) / 1000.0 if share > 0 and base_name != "tusd" else 0.0
+                r = _branca_scee(
+                    m,
+                    plots,
+                    month,
+                    share,
+                    base_name,
+                    v_fio,
+                    taxes,
+                    minimum_value,
+                    no_minimum,
+                    tuple(posto_order),
+                    te_energy,
+                )
+                plots = r["lots"]
+                energy_bill = r["bill"] if no_minimum else max(r["bill"], minimum_value)
+                p_nopv = float(m["pay_nopv"].sum())
+                without = max(p_nopv, minimum_value) + cosip
+                total = energy_bill + cosip
+                for q in POSTOS:
+                    blocks.append(
+                        {
+                            "unique_id": uid,
+                            "month": month,
+                            "block": q,
+                            "grid_import": r["import"][q],
+                            "export": r["export"][q],
+                            "compensated": r["compensated"][q],
+                        }
+                    )
+                rows.append(
+                    {
+                        "unique_id": uid,
+                        "month": month,
+                        "coverage": float(m["valid"].mean()),
+                        "consumption": float(np.nansum(m["consumption"])),
+                        "generation": float(np.nansum(m["generation"])),
+                        "self_consumption": float(np.nansum(m["self_consumption"])),
+                        "grid_import": imported,
+                        "export": inj,
+                        "gd_class": klass,
+                        "charge_share": share,
+                        "charge_base": base_name or None,
+                        "flag": str(m["date"].map(days["flag"]).iloc[0]),
+                        "price": r["price"],
+                        "minimum_value": minimum_value,
+                        "compensated": sum(r["compensated"].values()),
+                        "credit_used": r["credit_used"],
+                        "credit_new": r["credit_new"],
+                        "credit_expired": expired,
+                        "credit_balance": float(sum(k for _, _, k in plots)),
+                        "energy_charge": r["energy_charge"],
+                        "compensation_charge": r["compensation_charge"],
+                        "minimum_applied": bool(
+                            not no_minimum and (r["binds"] or r["bill"] < minimum_value - 1e-9)
+                        ),
+                        "energy_bill": energy_bill,
+                        "cosip": float(cosip),
+                        "total": total,
+                        "without_pv": without,
+                        "savings": without - total,
+                    }
+                )
+                continue
             available = inj + sum(k for _, k in lots)
             comp, binds = 0.0, False
-            no_minimum = klass == "GD II" and gd2_minimum == "law_16_par1" and imported >= minimum_kwh
             if klass is not None and no_minimum:
                 comp = min(available, imported)  # [L] art. 16 §1: no minimum, so no limit on the compensation
             elif klass is not None:
@@ -876,11 +966,33 @@ def bill(
             f"From 2029 the GD II charge is a reading of Lei 14.300 art. 17 ({after_2028!r}): "
             "ANEEL's valuation of DG benefits is not modelled."
         )
-    by_block = (
-        h.assign(block="all")
-        .groupby(["unique_id", "month", "block"], as_index=False)[["grid_import", "export"]]
-        .sum()
-    )
+    if branca_scee:
+        notes.append(
+            "Tarifa branca with generation: per-posto netting (REN 1.000 art. 655-G), the TE ratio between "
+            f"postos from {'the given TE Energia' if te_energy else 'the homologated TE (a reading)'}, the "
+            f"other postos served in the order {', '.join(posto_order)} (a reading)."
+        )
+        by_block = pd.DataFrame(blocks)
+    elif modality == BRANCA:
+        parts_b = [
+            h.assign(
+                block=q,
+                grid_import=h["grid_import"] * h[f"share_{q}"],
+                export=h["export"] * h[f"share_{q}"],
+            )
+            for q in POSTOS
+        ]
+        by_block = (
+            pd.concat(parts_b, ignore_index=True)
+            .groupby(["unique_id", "month", "block"], as_index=False, sort=False)[["grid_import", "export"]]
+            .sum()
+        )
+    else:
+        by_block = (
+            h.assign(block="all")
+            .groupby(["unique_id", "month", "block"], as_index=False)[["grid_import", "export"]]
+            .sum()
+        )
     return Bill(
         monthly=monthly,
         by_block=by_block,
@@ -891,6 +1003,106 @@ def bill(
         currency=CURRENCY,
         notes=notes,
     )
+
+
+def _branca_scee(
+    m: pd.DataFrame,
+    lots: list[tuple[pd.Timestamp, str, float]],
+    month: pd.Timestamp,
+    share: float,
+    base_name: str,
+    v_fio: float,
+    taxes: _CompensationTaxes,
+    minimum_value: float,
+    no_minimum: bool,
+    order: tuple[str, ...],
+    te_energy: Mapping[str, float] | None,
+) -> dict[str, Any]:
+    """One month of the SCEE under tarifa branca (module docstring): per-posto netting, the month's excess to
+    the other postos by the TE ratio, then credits oldest first, the whole compensation stopped where the bill
+    reaches `minimum_value`. Returns the bill's pieces and the updated credit lots (month, posto, kWh)."""
+    imp = np.nan_to_num(m["grid_import"].to_numpy(dtype=float))
+    exp = np.nan_to_num(m["export"].to_numpy(dtype=float))
+
+    def mean(col: str, w: np.ndarray) -> float:
+        v = m[col].to_numpy(dtype=float)
+        return float(np.average(v, weights=w)) if w.sum() > 0 else float(v.mean())
+
+    # per posto: import, export, full price, cost of a compensated kWh, TE (for the ratio), all R$/kWh
+    imports: dict[str, float] = {}
+    exports: dict[str, float] = {}
+    price: dict[str, float] = {}
+    cost: dict[str, float] = {}
+    te_e: dict[str, float] = {}
+    for q in POSTOS:
+        w = imp * m[f"share_{q}"].to_numpy(dtype=float)
+        imports[q] = float(w.sum())
+        exports[q] = float((exp * m[f"share_{q}"].to_numpy(dtype=float)).sum())
+        tusd, te = mean(f"tusd_{q}", w), mean(f"te_{q}", w)
+        price[q] = (tusd + te + mean("band", w)) * mean("gross", w)
+        v = tusd if base_name == "tusd" else v_fio
+        cost[q] = taxes.per_kwh(share * v, tusd, te, mean("icms", w), mean("pis", w))
+        te_e[q] = te_energy[q] / 1000.0 if te_energy is not None else te
+    remaining = dict(imports)
+    comp = dict.fromkeys(POSTOS, 0.0)
+    budget = np.inf if no_minimum else sum(imports[q] * price[q] for q in POSTOS) - minimum_value
+    binds = False
+
+    def move(source: float, ratio: float, q: str) -> float:
+        """Compensate posto q from `source` kWh converted by `ratio`; returns the source kWh used."""
+        nonlocal budget, binds
+        gain = price[q] - cost[q]
+        if source <= 1e-12 or remaining[q] <= 1e-12 or gain <= 0:
+            return 0.0
+        target = min(remaining[q], source * ratio)
+        if target * gain > budget:
+            target, binds = max(budget, 0.0) / gain, True
+        remaining[q] -= target
+        comp[q] += target
+        budget -= target * gain
+        return target / ratio
+
+    left = dict(exports)
+    for q in POSTOS:  # 1. each posto's own injection
+        left[q] -= move(left[q], 1.0, q)
+    for p in POSTOS:  # 2. the month's excess to the other postos, converted by the TE ratio
+        for q in order:
+            if q != p:
+                left[p] -= move(left[p], te_e[p] / te_e[q], q)
+    used = 0.0
+    kept: list[tuple[pd.Timestamp, str, float]] = []
+    for t, p, k in sorted(lots, key=lambda x: x[0]):  # 3. credits, oldest first
+        for q in order:
+            u = move(k, te_e[p] / te_e[q], q)
+            k -= u
+            used += u
+        if k > 1e-12:
+            kept.append((t, p, k))
+    new = 0.0
+    for p in POSTOS:
+        if left[p] > 1e-12:
+            kept.append((month, p, left[p]))
+            new += left[p]
+    energy_charge = sum(remaining[q] * price[q] for q in POSTOS)
+    comp_charge = sum(comp[q] * cost[q] for q in POSTOS)
+    imported = sum(imports.values())
+    return {
+        "import": imports,
+        "export": exports,
+        "compensated": comp,
+        "price": (
+            sum(imports[q] * price[q] for q in POSTOS) / imported
+            if imported > 0
+            else float(np.mean(list(price.values())))
+        ),
+        "energy_charge": energy_charge,
+        "compensation_charge": comp_charge,
+        "bill": energy_charge + comp_charge,
+        "binds": binds,
+        "credit_used": used,
+        "credit_new": new,
+        "lots": kept,
+    }
 
 
 # ---------------------------------------------------------------------- what the app passes
@@ -923,6 +1135,8 @@ class Setup:
     pis_cofins_on_charge: bool = False
     cosip: float = 0.0
     assume_bandeira: float | None = None
+    posto_order: tuple[str, ...] = POSTOS
+    te_energy: Mapping[str, float] | None = None
 
     @property
     def currency(self) -> str:
@@ -986,6 +1200,8 @@ class Setup:
             pis_cofins_on_charge=self.pis_cofins_on_charge,
             cosip=self.cosip,
             assume_bandeira=band,
+            posto_order=self.posto_order,
+            te_energy=self.te_energy,
         )
 
     def tariff_for(self, month: pd.Timestamp, *, generation: bool = False) -> tuple[Tariff, list[str]]:

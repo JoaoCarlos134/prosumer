@@ -206,9 +206,97 @@ def test_tarifa_branca_without_generation() -> None:
     small = _series(np.full(24, 1.0), "2026-03-02", "consumption")
     s = brazil.bill(small, book=_book(), modality="Branca", peak_start="18:00").monthly.iloc[0]
     assert s["minimum_applied"] and s["energy_bill"] == pytest.approx(50 * P)  # conventional (art. 290 §4)
-    _, pv = _site(1, 3.0, start="2026-03-02")
-    with pytest.raises(NotImplementedError):
-        brazil.bill(load, pv, book=_book(), modality="Branca", peak_start="18:00", gd="GD I")
+
+
+# ---------------------------------------------------------------------- tarifa branca with generation
+def _branca_day(ponta: float = 0.0, intermediario: float = 0.0, night: float = 0.0, pv: float = 0.0):
+    """One Monday (2026-03-02, peak 18-21 h): load per hour in ponta (18-20), intermediario (17, 21) and the
+    night (0-5, fora ponta); PV per hour at 10-13 (fora ponta)."""
+    h = np.arange(24)
+    load = np.select(
+        [np.isin(h, [18, 19, 20]), np.isin(h, [17, 21]), h < 6], [ponta, intermediario, night], 0.0
+    )
+    gen = np.where(np.isin(h, [10, 11, 12, 13]), pv, 0.0)
+    return _series(load, "2026-03-02", "consumption"), _series(gen, "2026-03-02", "generation")
+
+
+def _branca(load: EnergySeries, pv: EnergySeries, **kw: object) -> pd.Series:
+    b = brazil.bill(load, pv, book=_book(), modality="Branca", peak_start="18:00", gd="GD I", **kw)
+    return b.monthly.iloc[0]
+
+
+def test_branca_excess_moves_to_the_peak_by_the_te_ratio() -> None:
+    """REN 1.000 art. 655-G §§3 and 5: 100 kWh injected in fora ponta (TE 250) used in ponta (TE 500) are
+    50 kWh there. GD I with the default readings: a compensated kWh costs nothing."""
+    m = _branca(*_branca_day(ponta=100.0, pv=25.0))
+    assert m["compensated"] == pytest.approx(50.0)
+    assert m["energy_bill"] == pytest.approx(250 * 1.5 * GROSS)
+    assert m["credit_new"] == pytest.approx(0.0) and m["credit_balance"] == pytest.approx(0.0)
+    # the exact TE Energia component, when the person has it, sets the ratio instead (100 / 400 = 0.25)
+    exact = _branca(
+        *_branca_day(ponta=100.0, pv=25.0), te_energy={"ponta": 400, "intermediario": 250, "fora_ponta": 100}
+    )
+    assert exact["compensated"] == pytest.approx(25.0)
+
+
+def test_branca_own_posto_first_then_the_others() -> None:
+    """60 kWh of night load (fora ponta) take 60 of the 100 kWh injected in fora ponta, one for one; the 40
+    left are 20 kWh in ponta."""
+    m = _branca(*_branca_day(ponta=100.0, night=10.0, pv=25.0))
+    assert m["compensated"] == pytest.approx(60.0 + 20.0)
+    assert m["energy_bill"] == pytest.approx(280 * 1.5 * GROSS)
+    blocks = brazil.bill(
+        *_branca_day(ponta=100.0, night=10.0, pv=25.0),
+        book=_book(),
+        modality="Branca",
+        peak_start="18:00",
+        gd="GD I",
+    ).by_block.set_index("block")
+    assert blocks.loc["fora_ponta", "compensated"] == pytest.approx(60.0)
+    assert blocks.loc["ponta", "compensated"] == pytest.approx(20.0)
+    assert blocks.loc["ponta", "grid_import"] == pytest.approx(300.0)
+
+
+def test_branca_order_of_the_other_postos_is_a_reading() -> None:
+    """The text names no order; the default serves the dearest posto first. With intermediario first the
+    100 kWh of fora ponta are 100 x 250 / 300 = 83.3 kWh there."""
+    day = _branca_day(ponta=100.0, intermediario=100.0, pv=25.0)
+    dearest = _branca(*day)
+    assert dearest["compensated"] == pytest.approx(50.0)  # all into ponta
+    other = _branca(*day, posto_order=("intermediario", "ponta", "fora_ponta"))
+    assert other["compensated"] == pytest.approx(100 * 250 / 300)
+    with pytest.raises(ValueError, match="posto_order"):
+        _branca(*day, posto_order=("ponta", "ponta", "fora_ponta"))
+    with pytest.raises(ValueError, match="te_energy"):
+        _branca(*day, te_energy={"ponta": 1.0})
+
+
+def test_branca_minimum_stops_the_compensation_and_banks_credits_with_their_posto() -> None:
+    """30 kWh of ponta load: the compensation stops where the bill reaches the minimum (50 kWh at the
+    conventional 0.8): (45 - 40) / 1.5 = 3.33 kWh of ponta, from 6.67 kWh of fora ponta; the other 93.3 kWh
+    are a fora ponta credit, used next month in ponta at the same ratio."""
+    load, pv = _branca_day(ponta=10.0, pv=25.0)
+    m = _branca(load, pv)
+    assert m["minimum_applied"] and m["energy_bill"] == pytest.approx(50 * P)
+    assert m["compensated"] == pytest.approx(5 / 1.5)
+    assert m["credit_new"] == pytest.approx(100 - 2 * 5 / 1.5)
+    # next month: 300 kWh in ponta, no PV; the credit (fora ponta) is worth half as much in ponta
+    april = np.where(np.isin(np.arange(24), [18, 19, 20]), 100.0, 0.0)
+    loads = pd.concat([load.frame, _series(april, "2026-04-06", "consumption").frame])  # a Monday
+    gens = pd.concat([pv.frame, _series(np.zeros(24), "2026-04-06", "generation").frame])
+    two = brazil.bill(
+        EnergySeries.from_dataframe(loads, unit="kWh", quantity="consumption", tz=TZ, freq="h"),
+        EnergySeries.from_dataframe(gens, unit="kWh", quantity="generation", tz=TZ, freq="h"),
+        book=_book(),
+        modality="Branca",
+        peak_start="18:00",
+        gd="GD I",
+    ).monthly.sort_values("month")
+    apr = two.iloc[1]
+    banked = 100 - 2 * 5 / 1.5
+    assert apr["credit_used"] == pytest.approx(banked)
+    assert apr["compensated"] == pytest.approx(banked / 2)
+    assert apr["energy_bill"] == pytest.approx((300 - banked / 2) * 1.5 * GROSS)
 
 
 def test_tariff_for_cheapest_windows_values_a_credit() -> None:

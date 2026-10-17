@@ -57,7 +57,7 @@ BIAS_DAYS = 14  # days of past forecasts the bias factor of consumption looks at
 CALIBRATION_DAYS = 28  # forecasts before the test that recalibrate each band (conformal)
 # what the economics section does not do even when it is there (kept in `Report.pending`)
 ECONOMICS_LEFT = (
-    "Not modelled: tarifa branca with generation (per-posto netting), COSIP read from a bill (type it as "
+    "Not modelled: COSIP read from a bill (type it as "
     "`brazil.Setup(cosip=...)`), grupo A (demand charges), the tax reform of LC 214/2025."
 )
 
@@ -346,7 +346,7 @@ def analyze(
     itself, or `consumption=` next to a generation series; `generation=` adds the PV to a consumption
     series. The two series are paired by `unique_id` (or one each, whatever their names), netted hour by
     hour, and billed by calendar month. A bill that cannot be made (a generation series alone, a tariff with
-    no vigencia for the data's dates, tarifa branca with generation) leaves the section out with a note.
+    no vigencia for the data's dates) leaves the section out with a note.
     """
     if test_days < 2:
         raise ValueError("test_days must be >= 2: the confidence interval resamples days")

@@ -86,8 +86,8 @@ def geocode(
 
 
 def round_site(lat: float, lon: float, decimals: int = 2) -> tuple[float, float]:
-    """(lat, lon) rounded to `decimals` places (2 = ~1 km): enough for the weather and the sun, not a "
-    "house."""
+    """(lat, lon) rounded to `decimals` places (2 = ~1 km): enough for the weather and the sun, not a
+    house."""
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise ValueError(f"Not a site: latitude {lat}, longitude {lon}")
     return round(float(lat), decimals), round(float(lon), decimals)

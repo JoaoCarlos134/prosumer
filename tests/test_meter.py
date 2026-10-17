@@ -88,7 +88,7 @@ def test_cumulative_register_with_reset_and_gap() -> None:
     assert np.isnan(h[at("2025-08-01 04:00")]) and np.isnan(h[at("2025-08-01 05:00")])  # around the gap
     assert h[at("2025-08-01 06:00")] == 0.5
     assert len(h) == 7  # the last reading closes the last interval
-    assert s.provenance is not None and "1 negative register difference" in s.provenance.notes
+    assert s.provenance is not None and "1 counter reset(s) made invalid" in s.provenance.notes
     # Wh register summed to 2-hour steps
     wh = read_table(
         df.assign(kwh=df["kwh"] * 1000),
@@ -101,6 +101,87 @@ def test_cumulative_register_with_reset_and_gap() -> None:
         min_coverage=0.5,
     )
     assert by_ds(wh).loc[at("2025-08-01 00:00"), "y"] == pytest.approx(3.0)
+
+
+def test_counter_read_as_logged_drift_dips_and_daily_restart() -> None:
+    """Regression (2026-10-17, a real Growatt export): readings drift a second per step, so the counter path
+    must not snap them to a clock grid; small dips are kept (the steps add up to the counter's difference);
+    each day adds up to its last reading, a bright one (12 kWh) and a dull one (0.5 kWh)."""
+    t0 = pd.Timestamp("2026-03-13 05:00:00")
+    times, values = [], []
+    for day, total in ((0, 12.0), (1, 0.5)):
+        e = 0.0
+        for k in range(12 * 14):  # 05:00-19:00, every 5 min + 1 s
+            times.append(t0 + pd.Timedelta(days=day) + pd.Timedelta(seconds=301 * k))
+            values.append(round(e, 1))
+            e += total / (12 * 14)
+    values[50] = values[49] - 0.1  # a dip read back
+    df = pd.DataFrame({"t": [x.strftime("%Y-%m-%d %H:%M:%S") for x in times], "e": values})
+    s = read_table(
+        df,
+        time_column="t",
+        value_columns="e",
+        tz=TZ,
+        unit="kWh",
+        kind="cumulative",
+        freq="h",
+        resets="restart",
+    )
+    f = by_ds(s)
+    daily = f["y"].groupby(f.index.normalize()).sum()
+    assert daily.iloc[0] == pytest.approx(values[12 * 14 - 1], abs=1e-9)  # the day's last reading
+    assert daily.iloc[1] == pytest.approx(values[-1], abs=1e-9)
+    assert f.loc[at("2026-03-13 10:00"), "valid"]  # drifting readings fill their hours
+    assert s.provenance is not None and "1 small decrease(s) kept" in s.provenance.notes
+    # the night gap (19:00 -> 05:00) is not energy: its interval is invalid, whatever the reset rule
+    assert not f.loc[at("2026-03-13 22:00"), "valid"]
+    with pytest.raises(ValueError, match="resets"):
+        read_table(df, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="x")
+
+
+def test_counter_restart_without_a_gap_takes_the_new_reading() -> None:
+    t = pd.date_range("2025-08-01 22:00", periods=5, freq="h")  # a logger awake all night
+    df = pd.DataFrame({"t": t, "e": [9.0, 9.5, 0.2, 0.4, 0.6]})  # midnight reset between 23:00 and 00:00
+    restart = read_table(
+        df, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="restart"
+    )
+    assert by_ds(restart).loc[at("2025-08-01 23:00"), "y"] == pytest.approx(0.2)
+    invalid = read_table(df, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative")
+    assert np.isnan(by_ds(invalid).loc[at("2025-08-01 23:00"), "y"])
+    # a dull day: the drop at midnight (0.5) is smaller than ten typical steps, but it is still a restart
+    dull = df.assign(e=[0.4, 0.5, 0.0, 0.1, 0.2])
+    r = read_table(
+        dull, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="restart"
+    )
+    assert by_ds(r).loc[at("2025-08-01 23:00"), "y"] == pytest.approx(0.0)  # never -0.5
+
+
+def test_counter_spike_is_dropped_and_a_midday_restart_counts_from_zero() -> None:
+    """Both patterns of the real Growatt export (2026-10-17): an extra off-cycle row with a wrong high value
+    between two regular readings (07:55:25 13.4 between 0.2 and 0.2), and an inverter restart at midday whose
+    `E-Today` starts again from zero (4.9 -> 0.2 -> 0.4 ...)."""
+    t = list(pd.date_range("2026-03-30 07:40", periods=6, freq="5min"))
+    t.insert(3, pd.Timestamp("2026-03-30 07:53:00"))  # the extra row
+    e = [0.1, 0.2, 0.2, 13.4, 0.3, 0.4, 0.5]
+    t += list(pd.date_range("2026-03-30 08:10", periods=6, freq="5min"))
+    e += [0.6, 0.7, 0.1, 0.2, 0.3, 0.4]  # restart between 08:15 and 08:20
+    df = pd.DataFrame({"t": t, "e": e})
+    s = read_table(
+        df, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="restart"
+    )
+    y = s.frame["y"]
+    assert y.max() < 1.0  # no 13 kWh step
+    assert y.sum() == pytest.approx((0.7 - 0.1) + 0.1 + (0.4 - 0.1))  # before, the restart, after
+    assert s.provenance is not None and "1 outlier reading(s) dropped" in s.provenance.notes
+    assert "1 counter reset(s) taken as a restart" in s.provenance.notes
+    # a wobble at the counter's resolution near dawn is not a restart
+    dawn = pd.DataFrame(
+        {"t": pd.date_range("2026-03-30 06:00", periods=5, freq="5min"), "e": [0.2, 0.3, 0.2, 0.3, 0.4]}
+    )
+    w = read_table(
+        dawn, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="restart"
+    )
+    assert w.frame["y"].sum() == pytest.approx(0.2) and "0 counter reset(s)" in w.provenance.notes
 
 
 def test_average_power_to_energy() -> None:

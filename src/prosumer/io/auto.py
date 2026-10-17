@@ -20,6 +20,12 @@ candidates, never a guess:
    (production, consumption, energy, in English, Portuguese, Spanish or German) and carries no channel tag
    (MPP1, L2, string 3); still several: `ValueError` with the list. A table of exactly a time and one value
    column takes that column, with the unit given or, when nothing says it, kWh with a note.
+3. an energy column is read as a COUNTER when its values say so, never its name (a "total" column can be
+   either): they never fall within a day (small dips aside) and grow in at least a fifth of the steps. If they
+   also fall back at every change of day it is a daily counter, restarting at midnight (an inverter's
+   "energy today": Growatt's `E-Today`), otherwise a register; each step is then the difference of two
+   readings (`meter.read_table(kind="cumulative")`). Found on a real Growatt export (2026-10-17): read as the
+   energy of each row, its `E-Today (kWh)` gave ~1,000 kWh a day from a 3 kW system.
 
 Whatever was chosen goes in the provenance notes (`series.provenance.notes`) and is returned by `sniff`, so
 an app can show it ("read `Energia` in Wh from a Fronius Solar.web export").
@@ -34,6 +40,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import cast
 
+import numpy as np
 import pandas as pd
 
 from ..contracts import DstPolicy, EnergySeries, Quantity, Unit
@@ -262,10 +269,12 @@ def read_energy(
     decimal: str | None = None,
     encoding: str | None = None,
     sheet: str | int = 0,
+    resets: meter.Resets | None = None,
 ) -> EnergySeries:
     """An `EnergySeries` (kWh) from a file of unknown layout: `sniff`, then the format's reader.
 
-    Anything given (`time_column`, `value_column`, `unit`, `kind`) wins over the guess. `site` (generation,
+    Anything given (`time_column`, `value_column`, `unit`, `kind`, and for a counter `resets`) wins over the
+    guess. `site` (generation,
     Solar.web): steps without sun become valid zeros. Several devices in one export come out as several
     series. Raises `ValueError` when the energy column is ambiguous or absent, with the columns found.
     """
@@ -290,6 +299,7 @@ def read_energy(
             decimal=decimal,
             encoding=encoding,
             sheet=sheet,
+            resets=resets,
         )
     except ValueError as e:
         if "shorter than the data's step" in str(e):
@@ -320,6 +330,7 @@ def _read(
     decimal: str | None,
     encoding: str | None,
     sheet: str | int,
+    resets: meter.Resets | None = None,
 ) -> EnergySeries:
     if found.format == "solarweb":
         if quantity != "generation":
@@ -347,12 +358,24 @@ def _read(
             f"Unit {sniffed!r} is not read yet (kWh, Wh, kW or W); convert the column or give unit="
         )
     u = cast(Unit, sniffed)
-    k = kind or ("power" if u in _POWER_UNITS.values() else "interval")
     frame, _ = meter._load(path, sep=sep, encoding=encoding, sheet=sheet, skiprows=0)
     frame.columns = [str(c).strip() for c in frame.columns]
     if found.units_row:
         frame = frame.iloc[1:].reset_index(drop=True)
     assert found.time_column is not None and found.value_column is not None
+    k, counter_note = kind, ""
+    if u in _ENERGY_UNITS.values() and kind in (None, "cumulative"):
+        counter = _counter_kind(frame[found.time_column], frame[found.value_column], decimal)
+        if kind is None and counter is not None:
+            k = "cumulative"
+            counter_note = (
+                "; its values only grow within each day and restart at midnight: read as a daily counter"
+                if counter == "daily"
+                else "; its values only grow: read as a register (counter)"
+            )
+        if resets is None:
+            resets = "restart" if counter == "daily" else "invalid"
+    k = k or ("power" if u in _POWER_UNITS.values() else "interval")
     s = meter.read_table(
         frame,
         time_column=found.time_column,
@@ -366,6 +389,7 @@ def _read(
         decimal=decimal,
         dst=dst,
         source_tz=source_tz,
+        resets=resets or "invalid",
     )
     if site is not None and quantity == "generation":
         out, _n = _tables.zero_at_night(s.frame, s.freq, site)
@@ -373,7 +397,35 @@ def _read(
             out, unit="kWh", quantity=quantity, tz=s.tz, freq=s.freq, provenance=s.provenance
         )
     dropped = "; a units row under the header was dropped" if found.units_row else ""
-    return _noted(s, f"file {path.name}: {found.why}, unit {u}, kind {k}{dropped}{note}")
+    return _noted(s, f"file {path.name}: {found.why}, unit {u}, kind {k}{counter_note}{dropped}{note}")
+
+
+def _counter_kind(times: pd.Series, values: pd.Series, decimal: str | None) -> str | None:
+    """'daily' (a counter that restarts every day), 'register' (one that only grows) or None (the rows are the
+    energy of each interval), from the values alone (module docstring, rule 3)."""
+    t = _tables.parse_times(times)
+    v = _tables.to_number(values, decimal or _tables.guess_decimal([values]))
+    ok = (t.notna() & v.notna()).to_numpy()
+    if ok.sum() < 20:
+        return None
+    r = pd.DataFrame({"t": pd.DatetimeIndex(t[ok]), "v": v[ok].to_numpy(dtype=float)}).sort_values("t")
+    when = pd.DatetimeIndex(r["t"])
+    x = r["v"].to_numpy(dtype=float)
+    d = np.diff(x)
+    days = when.normalize()
+    same = np.asarray(days[1:] == days[:-1])
+    up = d[d > 0]
+    if len(up) < 5:
+        return None
+    inside = same & (d >= -10 * float(np.median(up)))  # within a day, a reset aside
+    if inside.sum() < 10:
+        return None
+    if np.mean(d[inside] >= 0) < 0.97 or np.mean(d[inside] > 0) < 0.2:
+        return None
+    changes = ~same
+    if changes.sum() >= 2 and np.mean(d[changes] < 0) >= 0.8:
+        return "daily"
+    return "register"
 
 
 def _noted(s: EnergySeries, text: str) -> EnergySeries:

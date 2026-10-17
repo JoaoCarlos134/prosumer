@@ -4,11 +4,18 @@ Meter exports have no standard format, so nothing is assumed that the caller can
 holds the time, which hold values, the unit, and what kind of value each row is:
 
 - `kind="interval"`: energy of each interval (kWh or Wh per row), the usual load-profile export;
-- `kind="cumulative"`: a register (the kWh counter) read at each timestamp. The energy of [t, t + step) is the
-  next reading minus this one; readings are placed on a regular grid at their own step, so a missing reading
-  leaves the steps around it invalid (the energy of the gap is known only in total, and spreading it would
-  invent a profile). A NEGATIVE difference (the counter was reset, rolled over or replaced) is made invalid,
-  not corrected, and counted in the provenance notes;
+- `kind="cumulative"`: a counter (a kWh register, or an inverter's "energy today") read at each timestamp. The
+  energy from one reading to the next is their difference, placed at the earlier reading; readings are taken
+  as they come (loggers drift: 13:32:17, 13:37:18, ...), and two readings more than 1.5 steps apart leave the
+  interval between them invalid (the energy of a gap is known only in total, and spreading it would invent a
+  profile). A RESET is a drop larger than ten typical steps or to half the reading before or less (from at
+  least five typical steps: the counter was reset, rolled over or replaced) or, with `resets="restart"`, any
+  drop across midnight (a daily counter, such as Growatt's `E-Today`):
+  `resets="invalid"` (default) makes that interval invalid, `"restart"` takes the new reading as the energy
+  since the restart. A single reading that jumps more than ten typical steps away and comes straight back is
+  an outlier and is dropped (seen on a real Growatt export: an extra row with yesterday's total between two
+  regular readings). Smaller drops (rounding, a glitch read back) are kept as they are, so the steps still add
+  up to the counter's own difference; all of them are counted in the provenance notes;
 - `kind="power"`: the AVERAGE power (W or kW) over each interval, turned into energy by the step's duration.
   Instantaneous power samples are not averages; read them only if the step is short against the variation.
 
@@ -37,6 +44,7 @@ from . import _tables
 from ._tables import Label
 
 Kind = Literal["interval", "cumulative", "power"]
+Resets = Literal["invalid", "restart"]
 _ENERGY: dict[str, float] = {"kWh": 1.0, "Wh": 1e-3}
 _POWER: dict[str, float] = {"kW": 1.0, "W": 1e-3}
 
@@ -82,6 +90,7 @@ def read_table(
     encoding: str | None = None,
     dst: DstPolicy = "raise",
     source_tz: str | None = None,
+    resets: Resets = "invalid",
 ) -> EnergySeries:
     """An energy series (kWh) from a meter export or any table with a time column and value columns.
 
@@ -92,7 +101,7 @@ def read_table(
       an offset are converted; `source_tz`: the zone of naive times when it differs (e.g. "UTC" for a logger
       that writes UTC: its file has no gap or repeat at the daylight saving changes);
     - `unit`: of the values: kWh or Wh for "interval" and "cumulative", kW or W for "power";
-    - `kind`, `label`: see the module docstring;
+    - `kind`, `label`, `resets` (counters only): see the module docstring;
     - `freq`: output step (sum); None keeps the native step, which is inferred unless `step` is given;
     - `decimal`, `sep`, `dayfirst`: None guesses them; `sheet`, `skiprows`, `encoding`: where the table is.
     """
@@ -103,6 +112,8 @@ def read_table(
         raise ValueError(f"kind='power' needs a power unit (kW, W), not {unit!r}")
     if kind not in ("interval", "cumulative", "power"):
         raise ValueError("kind must be 'interval', 'cumulative' or 'power'")
+    if resets not in ("invalid", "restart"):
+        raise ValueError("resets must be 'invalid' or 'restart'")
     cols = [value_columns] if isinstance(value_columns, str) else list(value_columns)
     frame, origin = _load(source, sep=sep, encoding=encoding, sheet=sheet, skiprows=skiprows)
     frame.columns = [str(c).strip() for c in frame.columns]
@@ -132,20 +143,13 @@ def read_table(
     n_dup = int(dup.sum())
     long = long[~dup].sort_values(["unique_id", "ds"], kind="stable")
     native = pd.Timedelta(step) if step else _tables.infer_step(long)
-    resets = 0
+    n_resets = n_dips = n_spikes = 0
     if kind == "cumulative":
         parts = []
         for uid, g in long.groupby("unique_id", sort=False):
-            s = g.set_index("ds")["y"]
-            grid = pd.date_range(s.index[0], s.index[-1], freq=native)
-            r = s.reindex(grid)
-            d = r.shift(-1) - r
-            neg = d < 0
-            resets += int(neg.sum())
-            d[neg] = np.nan
-            parts.append(
-                pd.DataFrame({"unique_id": uid, "ds": grid[:-1], "y": d.to_numpy()[:-1] * _ENERGY[unit]})
-            )
+            part, r, k, o = _counter_steps(g.set_index("ds")["y"], native, resets)
+            n_resets, n_dips, n_spikes = n_resets + r, n_dips + k, n_spikes + o
+            parts.append(part.assign(unique_id=uid, y=part["y"] * _ENERGY[unit]))
         long = pd.concat(parts, ignore_index=True)
     else:
         factor = _ENERGY[unit] if kind == "interval" else _POWER[unit] * native.total_seconds() / 3600.0
@@ -163,7 +167,11 @@ def read_table(
         f"{n_dup} duplicate timestamp(s) dropped, first kept",
     ]
     if kind == "cumulative":
-        notes.append(f"{resets} negative register difference(s) (reset/rollover) made invalid")
+        done = "made invalid" if resets == "invalid" else "taken as a restart from zero"
+        notes.append(
+            f"{n_resets} counter reset(s) {done}; {n_spikes} outlier reading(s) dropped; "
+            f"{n_dips} small decrease(s) kept"
+        )
     if unparsed:
         notes.append(f"{unparsed} row(s) with an unreadable time left out")
     if out_freq != _freq_alias(native):
@@ -172,6 +180,45 @@ def read_table(
     return EnergySeries.from_dataframe(
         out, unit="kWh", quantity=quantity, tz=tz, freq=out_freq, provenance=prov
     )
+
+
+def _counter_steps(s: pd.Series, native: pd.Timedelta, resets: Resets) -> tuple[pd.DataFrame, int, int, int]:
+    """Energy between consecutive readings of one counter (`s`: readings by `ds`, sorted), at the earlier
+    reading; with the number of resets, of small decreases kept and of outlier readings dropped (module
+    docstring)."""
+    s = s.dropna()
+    empty = pd.DataFrame({"ds": s.index[:0], "y": np.array([], dtype=float)})
+    if len(s) < 2:
+        return empty, 0, 0, 0
+    t = pd.DatetimeIndex(s.index)
+    v = s.to_numpy(dtype=float)
+    d = v[1:] - v[:-1]
+    up = d[d > 0]
+    typical = float(np.median(up)) if len(up) else 0.0
+    # a reading far from both neighbours, on opposite sides: an outlier, not a step of the counter
+    far = 10 * typical
+    spike = np.zeros(len(v), dtype=bool)
+    if typical > 0 and len(v) >= 3:
+        spike[1:-1] = ((d[:-1] > far) & (d[1:] < -far)) | ((d[:-1] < -far) & (d[1:] > far))
+    if spike.any():
+        t, v = t[~spike], v[~spike]
+        if len(v) < 2:
+            return empty, 0, 0, int(spike.sum())
+        d = v[1:] - v[:-1]
+    gap = np.asarray((t[1:] - t[:-1]) > 1.5 * native)
+    # a reset falls far, or to half or less of a level well above the counter's resolution (0.7 -> 0.1 is a
+    # restart; 0.3 -> 0.2 at dawn, or 11.9 after 12.0, is a reading wobbling at the counter's resolution)
+    big = (d < -far) | ((d < 0) & (v[1:] <= 0.5 * v[:-1]) & (v[:-1] >= 5 * typical))
+    if resets == "restart":
+        new_day = np.asarray(t[1:].normalize() != t[:-1].normalize())
+        reset = (d < 0) & (new_day | big)
+        d = np.where(reset, v[1:], d)
+    else:
+        reset = big
+        d = np.where(reset, np.nan, d)
+    dips = int(((d < 0) & ~reset & ~gap).sum())
+    d = np.where(gap, np.nan, d)
+    return pd.DataFrame({"ds": t[:-1], "y": d}), int((reset & ~gap).sum()), dips, int(spike.sum())
 
 
 def _blank(v: object) -> bool:
@@ -188,4 +235,4 @@ def _freq_alias(native: pd.Timedelta) -> str:
     return f"{seconds}s"
 
 
-__all__ = ["Kind", "read_table"]
+__all__ = ["Kind", "Resets", "read_table"]

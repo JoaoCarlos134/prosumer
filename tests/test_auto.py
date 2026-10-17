@@ -102,3 +102,51 @@ def test_daily_export_says_to_export_the_detailed_data(tmp_path: Path) -> None:
 
 def test_formats_registry_is_public() -> None:
     assert [name for name, _ in auto.FORMATS] == ["solarweb"]
+
+
+# ---------------------------------------------------------------- counters (a real Growatt export)
+GROWATT = Path(__file__).parent / "fixtures" / "growatt_inverter_telemetry_2026-03-13_14.csv"
+
+
+def test_growatt_daily_counter_is_read_as_a_counter_not_as_interval_energy() -> None:
+    """Regression (2026-10-17): on a real Growatt export (3 kW, India, CC BY 4.0) the only column with an
+    energy unit is `E-Today (kWh)`, a counter that restarts every day. It was read as the energy of each
+    5-minute row: ~1,000 kWh a day from a 3 kW system, without any error. Each day must add up to its last
+    reading."""
+    raw = pd.read_csv(GROWATT, parse_dates=["Timestamp"])
+    last = raw.groupby(raw["Timestamp"].dt.date)["E-Today (kWh)"].max()
+    s = read_energy(GROWATT, tz="Asia/Kolkata", quantity="generation")
+    f = s.frame
+    daily = f.groupby(f["ds"].dt.date)["y"].sum()
+    for day, total in last.items():
+        assert daily[day] == pytest.approx(total, abs=0.15)  # 0.1 kWh counter resolution
+    assert f["y"].max() < 3.5  # never more than the system can make in an hour
+    assert s.provenance is not None and "counter" in s.provenance.notes
+    # it agrees with the AC power the inverter logged, integrated over its own steps (within 5% a day)
+    dt = raw["Timestamp"].diff().dt.total_seconds().clip(upper=600).fillna(300)
+    ac = (raw["AC Power (W)"] * dt).groupby(raw["Timestamp"].dt.date).sum() / 3.6e6
+    for day in last.index:
+        assert daily[day] == pytest.approx(ac[day], rel=0.05)
+
+
+def test_interval_energy_is_not_mistaken_for_a_counter(tmp_path: Path) -> None:
+    """The counter test looks at the values: energy per interval rises and falls with the sun."""
+    t = pd.date_range("2025-06-01 05:00", "2025-06-03 19:00", freq="15min")
+    sun = np.clip(np.sin((t.hour.to_numpy() + t.minute.to_numpy() / 60 - 6) / 12 * np.pi), 0, None)
+    path = tmp_path / "pv.csv"
+    pd.DataFrame({"time": t, "Energy (kWh)": np.round(0.5 * sun, 3)}).to_csv(path, index=False)
+    s = read_energy(path, tz="UTC", quantity="generation")
+    assert s.provenance is not None and "kind interval" in s.provenance.notes
+    assert s.frame["y"].sum() == pytest.approx(np.round(0.5 * sun, 3).sum())
+
+
+def test_a_lifetime_register_is_differenced(tmp_path: Path) -> None:
+    t = pd.date_range("2025-06-01 00:00", periods=96, freq="15min")
+    load = 0.2 + 0.1 * (t.hour.to_numpy() >= 18)
+    path = tmp_path / "meter.csv"
+    pd.DataFrame({"time": t, "Total import (kWh)": 1500.0 + np.cumsum(load)}).to_csv(path, index=False)
+    s = read_energy(path, tz="UTC", quantity="consumption", freq=None)
+    assert s.frame["y"].sum() == pytest.approx(load[1:].sum())  # the first reading opens the first interval
+    assert s.provenance is not None and "register" in s.provenance.notes
+    hourly = read_energy(path, tz="UTC", quantity="consumption")  # the last hour has 3 of its 4 quarters
+    assert hourly.frame["valid"].sum() == 23 and not hourly.frame["valid"].iloc[-1]

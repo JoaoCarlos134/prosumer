@@ -41,6 +41,7 @@ A plain JSON object; unknown fields are errors, empty strings mean "not given", 
 | `tilt`, `azimuth`, `kwp` | learnt from the data | the panels, when known |
 | `load_hours`, `load_kw` | 3, 2.0 | the flexible load to place |
 | `test_days` | 28 | days of the forecast check |
+| `models` | "lightgbm" | the forecasts whose median the check scores: "lightgbm" (the three naive rules and LightGBM, seconds), "naive" (the naive rules only) or "all" (also the zero-shot foundation models installed, minutes and torch). On the benchmark the naive median ranked 29th-36th of ~50, with LightGBM 10th-19th, with the foundation models 4th-5th |
 | `price` | none | `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`, `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` or `{"kind": "brazil", "distributor", "icms", "pis_cofins", "connection", "gd", "cosip", "modality", "peak_start"}` (rates as fractions) |
 
 Files: `{"generation": (bytes, name), "consumption": (bytes, name)}`, one or both. With both, the bill nets the
@@ -56,6 +57,11 @@ PV against the household's use hour by hour and the report shows the savings.
 | `windows` | the best block of `load_hours` of each day |
 | `windows_by_cost` | with a price: the cheapest block of each day for `load_kw`, with its expected cost |
 | `pricing` | one line describing the tariff |
+| `charts` | what the pages plot: `history_generation` / `history_consumption` (each day of the file: `energy`, `measured_hours`), `check` (the test hours: measured `y`, `evaluated`, and each forecast row), `performance` (a PV file's clear days: `energy`, `expected`, `index`) |
 | `report` | `Report.to_dict()`: `summary`, `quality`, `clock`, `diagnostics`, `forecast`, `resolution`, `bands`, `economics` (with a price and the consumption), `provenance`, `notes`, `pending` |
 | `notes`, `log` | what the person should know; what each step did |
 | `credits` | the source and licence of every outside piece of data (the licences require showing them) |
+
+How long it takes: seven years of hourly PV data (60,000 hours) took ~9 s with `models="naive"` and ~12 s
+with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB. The roof fit (twice: for the next days and
+for the diagnostics) and the clock check are most of it; a page should show that it is working.

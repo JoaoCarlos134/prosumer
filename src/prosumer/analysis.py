@@ -170,6 +170,9 @@ class Report:
     # with `economics=` and a consumption: the monthly bill, its totals and the savings of the PV
     economics: EconomicsSection | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
+    # the test hours for a chart: unique_id, ds, y (measured; NaN if not), evaluated (scored), then one column
+    # per forecast row; left out of `to_dict` (hundreds of rows per series), as `Diagnosis.index`
+    hourly: pd.DataFrame | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-friendly version (timestamps as ISO text, tables as lists of records)."""
@@ -501,7 +504,9 @@ def analyze(
         else:
             out = rolling_forecast(model, task_m)
             if is_cons and history_only:
-                point_past[name] = rolling_forecast(model, _before(task_m, test_start, bias_days))
+                past_task = _before(task_m, test_start, bias_days)
+                if past_task is not None:
+                    point_past[name] = rolling_forecast(model, past_task)
         fc = fc.merge(out.rename(columns={"yhat": name}), on=["unique_id", "ds"], how="left")
         regimes[name] = "A" if history_only else "C"
     # the output: median of every regime A forecast (the naive ones and the A models; not the reference alone)
@@ -557,6 +562,14 @@ def analyze(
             f"the series repeats exactly: the reference ({reference}) is perfect on every test hour, so "
             "the skill is undefined. A stuck meter, a fixed estimate or synthetic data?"
         )
+    test_hours = frame.loc[frame["ds"] >= test_start, ["unique_id", "ds", "y", "valid"]]
+    hourly = test_hours.merge(fc[["unique_id", "ds", *regimes]], on=["unique_id", "ds"], how="left")
+    scored = actual[["unique_id", "ds"]].assign(evaluated=True)
+    hourly = hourly.merge(scored, on=["unique_id", "ds"], how="left")
+    hourly = hourly.assign(y=hourly["y"].where(hourly["valid"]), evaluated=hourly["evaluated"].eq(True)).drop(
+        columns="valid"
+    )
+    hourly = hourly[["unique_id", "ds", "y", "evaluated", *regimes]]
     rows, aligned = [], {}
     for name, regime in regimes.items():
         m, r = metrics.align(fc[["unique_id", "ds", name]].rename(columns={name: "yhat"}), actual, ref)
@@ -674,6 +687,7 @@ def analyze(
         provenance=sources,
         diagnostics=diag,
         economics=econ,
+        hourly=hourly,
     )
 
 
@@ -889,13 +903,20 @@ def _naive_forecasts(windows: list[Window], site: tuple[float, float] | None, re
     return fc
 
 
-def _before(task: DayAhead, test_start: pd.Timestamp, days: int) -> DayAhead:
-    """The same task over the `days` days before the test, as one fold fitted before them."""
+def _before(task: DayAhead, test_start: pd.Timestamp, days: int) -> DayAhead | None:
+    """The same task over the `days` days before the test, as one fold fitted before them. They start a week
+    (`CONTEXT`) after the first measured day at the earliest, so a trained model has data to fit on (as the
+    test itself needs); None when no day is left."""
+    f = task.series.frame
+    first = f.loc[f["valid"], "ds"].min().normalize()
+    start = max(test_start - pd.Timedelta(days=days), first + pd.Timedelta(hours=CONTEXT))
+    if start >= test_start:
+        return None
     return DayAhead(
         task.series,
-        test_start=test_start - pd.Timedelta(days=days),
+        test_start=start,
         test_end=test_start - pd.Timedelta(days=1),
-        refit_days=days,
+        refit_days=(test_start - start).days,
         context=task.context,
         min_history=task.min_history,
         issue_hour=task.issue_hour,
@@ -909,12 +930,16 @@ def _calibration_bands(
     """The model's bands (and point, `yhat`) over the `days` days before the test (one fold,
     fitted before them): the errors the conformal recalibration learns from, as a running system would have
     them."""
-    return rolling_quantiles(model, _before(task, test_start, days))
+    past = _before(task, test_start, days)
+    if past is None:
+        return pd.DataFrame(columns=["unique_id", "ds", "yhat"])
+    return rolling_quantiles(model, past)
 
 
 def _past_naive(task: DayAhead, test_start: pd.Timestamp, days: int) -> dict[str, pd.DataFrame]:
     """The naive forecasts over the `days` before the test, one frame per forecast."""
-    windows = _before(task, test_start, days).windows()
+    past = _before(task, test_start, days)
+    windows = [] if past is None else past.windows()
     if not windows:
         return {}
     fc = _naive_forecasts(windows, None, "persistence_24h")

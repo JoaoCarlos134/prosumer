@@ -18,6 +18,12 @@
 **Forecasting**
 
 - `forecast.FlowState` (zero-shot, 9 quantiles) with exact parity with the benchmark.
+- `app.run`: the forecast check runs LightGBM by default (`models`: "lightgbm", "naive", "all"); `charts`
+  carries what the pages plot (daily history, the test hours, the clear-day performance); `Report.hourly`
+  keeps the test hours of `analyze`.
+- Fixed: `analyze` with a trained model and less than `bias_days` (consumption) or `calibration_days` (bands)
+  of history before the test raised "No objects to concatenate"; the past folds now start a week after the
+  first day.
 - `analyze`: the row `median_weather` (the median of the weather-based forecasts; with the library's four
   weather rows 1st of 24 on the benchmark's plants, other compositions 1st to 11th), a note when the output
   is the median of the naive forecasts only; `bias_days` and `calibration_days` are arguments.

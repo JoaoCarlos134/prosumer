@@ -327,6 +327,24 @@ def test_consumption_output_is_the_median_without_its_recent_bias() -> None:
     assert "median_corrected" not in set(g.forecast["forecast"])
 
 
+def test_trained_models_with_little_history_before_the_test() -> None:
+    """Regression (2026-10-19): with two weeks before 28 test days, the bias fold of consumption started on
+    the first day, LightGBM had nothing to fit on and `analyze` raised "No objects to concatenate". The past
+    folds now start a week after the first day (the test's own rule), here leaving 7 days."""
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBM, LightGBMQuantile
+
+    s = data.example_house(n_series=1, days=42)
+    r = analyze(s, test_days=28, models=[LightGBM(params={"n_estimators": 20})])
+    assert r.forecast is not None and "LightGBM" in set(r.forecast["forecast"])
+    q = analyze(s, test_days=28, models=[LightGBMQuantile(params={"n_estimators": 20})])
+    assert q.bands is not None and "LightGBM-quantile+conformal" in set(q.bands["source"])
+    # nothing left before the test: no past fold at all, the check still runs
+    short = analyze(data.example_house(n_series=1, days=36), test_days=28, models=[LightGBM()])
+    assert short.forecast is not None
+
+
 def test_bias_days_is_an_argument() -> None:
     """The days the bias factor looks at (`bias_days`, default 14, set by hand) change only
     `median_corrected`; fewer than 7 days, or not a whole number, is refused before any work."""

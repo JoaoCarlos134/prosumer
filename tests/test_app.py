@@ -129,6 +129,45 @@ def test_address_is_geocoded_and_rounded() -> None:
     assert any(c.source == "fake geocoder" for c in r.credits)
 
 
+def test_forecast_check_runs_lightgbm_by_default_and_the_naive_rules_on_request() -> None:
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    files = {"consumption": (_consumption_csv("2024-01-01", 60), "m.csv")}
+    r = app.run(SITE, files, services=_services())
+    assert r.report.forecast is not None and "LightGBM" in set(r.report.forecast["forecast"])
+    assert any("LightGBM" in line for line in r.log)
+    naive = app.run({**SITE, "models": "naive"}, files, services=_services())
+    assert naive.report.forecast is not None and "LightGBM" not in set(naive.report.forecast["forecast"])
+    assert any("naive forecasts only" in n for n in naive.report.notes)
+    with pytest.raises(ValueError, match="models must be one of"):
+        app.run({**SITE, "models": "best"}, files, services=_services())
+
+
+def test_a_model_that_is_not_installed_is_left_out_with_a_note(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(app, "find_spec", lambda name: None)
+    notes: list[str] = []
+    assert app._models("all", notes) == []
+    assert len(notes) == 5 and "LightGBM is not installed" in notes[0]
+
+
+def test_charts_carry_what_the_pages_plot() -> None:
+    files = {
+        "generation": (_pv_csv("2024-01-01", 60), "inverter.csv"),
+        "consumption": (_consumption_csv("2024-01-01", 60), "meter.csv"),
+    }
+    r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=_services())
+    assert set(r.charts) == {"history_generation", "history_consumption", "check", "performance"}
+    h = r.charts["history_consumption"]
+    assert len(h) == 60 and (h["measured_hours"] == 24).all()
+    assert h["energy"].between(24 * 0.3 + 3, 24 * 0.4 + 3).all()  # ~0.35 kWh/h plus 1 kWh at 18-20 h
+    check = r.charts["check"]
+    assert {"y", "evaluated", "median", "clear_sky_persistence"} <= set(check.columns)
+    assert check["ds"].min() >= pd.Timestamp(r.report.summary["test_start"], tz=TZ)
+    assert not r.charts["performance"].empty
+    d = json.loads(r.to_json())
+    assert len(d["charts"]["check"]) == len(check) and d["charts"]["history_generation"][0]["date"]
+
+
 def test_requests_that_cannot_run_say_why() -> None:
     files = {"consumption": (_consumption_csv("2024-01-01", 42), "m.csv")}
     svc = _services()

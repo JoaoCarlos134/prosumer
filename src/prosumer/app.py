@@ -11,6 +11,8 @@ JSON-ready. The steps, each one library call:
     5. when to run a heavy load     -> best_windows (and economics.windows_by_cost with a price)
     6. the analysis of the data     -> analyze (quality, clock, diagnostics, forecast check; with a price and
                                        the consumption, the bill with and without the PV)
+    7. what the pages plot          -> `Result.charts`: the daily energy of each file, the test hours of the
+                                       forecast check, the clear-day performance of a PV file
 
 `files` maps "generation" and/or "consumption" to (bytes, file name): with both, the bill nets the PV against
 the household's use hour by hour and the report has the savings.
@@ -23,7 +25,12 @@ The request is a plain mapping (`Request.from_dict`, unknown keys are an error):
   consumption files are read with the same hints);
 - the next days: `days` (1-35; the weather reaches 16), `tilt`, `azimuth`, `kwp` (optional: learnt from the
   data otherwise), `load_hours` (3), `load_kw` (2.0);
-- `test_days` of the forecast check (28);
+- `test_days` of the forecast check (28); `models`, the forecasts its median takes: "lightgbm" (default: the
+  three naive rules and LightGBM, seconds on a CPU), "naive" (the naive rules only, the fastest) or "all"
+  (also the four zero-shot foundation models that are installed: minutes on a CPU, and torch). Measured on the
+  benchmark (pilot of 2026-10-16), the median of the naive rules alone ranked 29th to 36th of ~50; with
+  LightGBM, 10th to 19th; with the foundation models too, 4th or 5th. A model whose extra is not installed is
+  left out with a note;
 - `price` (optional): `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`,
   `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` (weekends off-peak) or
   `{"kind": "brazil", "distributor": "COPEL-DIS", "icms", "pis_cofins" (fractions, as read on a bill),
@@ -43,6 +50,7 @@ import re
 import tempfile
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -53,6 +61,7 @@ from . import economics as econ
 from .analysis import Report, analyze
 from .contracts import EnergySeries, Quantity
 from .economics import brazil
+from .forecast import Chronos2, FlowState, Forecaster, LightGBM, TiRex2, Toto2
 from .io import geocode as geo
 from .io import open_meteo, read_energy
 from .outlook import MAX_DAYS, Outlook, best_windows, forecast_ahead
@@ -60,6 +69,14 @@ from .provenance import Provenance, of
 
 QUANTITIES: tuple[Quantity, ...] = ("generation", "consumption")
 PRICE_KINDS = ("flat", "tou", "brazil")
+MODEL_SETS = ("lightgbm", "naive", "all")
+# the zero-shot models of `models="all"`: (name, the module its extra installs, the adapter)
+FOUNDATION: tuple[tuple[str, str, Callable[[], Forecaster]], ...] = (
+    ("Chronos-2", "chronos", Chronos2),
+    ("TiRex-2", "tirex2", TiRex2),
+    ("Toto-2.0", "toto2", Toto2),
+    ("FlowState", "tsfm_public", FlowState),
+)
 Files = Mapping[str, tuple[bytes, str]]
 
 
@@ -94,6 +111,7 @@ class Request:
     load_hours: int = 3
     load_kw: float = 2.0
     test_days: int = 28
+    models: str = "lightgbm"
     price: Mapping[str, Any] | None = None
 
     @classmethod
@@ -139,6 +157,8 @@ class Request:
             raise ValueError("load_kw must be positive")
         if self.test_days < 2:
             raise ValueError("test_days must be >= 2")
+        if self.models not in MODEL_SETS:
+            raise ValueError(f"models must be one of {list(MODEL_SETS)}")
         if self.price is not None and self.price.get("kind") not in PRICE_KINDS:
             raise ValueError(f"price.kind must be one of {list(PRICE_KINDS)}")
 
@@ -154,6 +174,10 @@ class Result:
     report: Report
     windows_by_cost: pd.DataFrame | None = None
     pricing: str | None = None
+    # what the pages plot: "history_<file>" (unique_id, date, energy, measured_hours: each day of the file),
+    # "check" (`Report.hourly`: the test hours, measured and forecast), "performance" (`Diagnosis.index`: the
+    # clear days of a PV file, energy, expected and their ratio)
+    charts: dict[str, pd.DataFrame] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     log: list[str] = field(default_factory=list)
     credits: list[Provenance] = field(default_factory=list)
@@ -167,6 +191,7 @@ class Result:
             "windows": _records(self.windows),
             "windows_by_cost": None if self.windows_by_cost is None else _records(self.windows_by_cost),
             "pricing": self.pricing,
+            "charts": {k: _records(v) for k, v in self.charts.items()},
             "report": self.report.to_dict(),
             "notes": list(self.notes),
             "log": list(self.log),
@@ -281,7 +306,17 @@ def run(
         kw["economics"] = pricing
         if main == "generation" and "consumption" in series:
             kw["consumption"] = series["consumption"]
-    report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, **kw)
+    models = _models(req.models, notes)
+    report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, models=models, **kw)
+    if models:
+        log.append(f"Forecast check with the naive rules and {', '.join(m.card.name for m in models)}.")
+
+    # 7. What the pages plot.
+    charts = {f"history_{q}": _daily(s) for q, s in series.items()}
+    if report.hourly is not None:
+        charts["check"] = report.hourly
+    if report.diagnostics is not None:
+        charts["performance"] = report.diagnostics.index
     return Result(
         site={"latitude": site[0], "longitude": site[1], "timezone": tz, "address_found": found_name},
         read=read,
@@ -290,6 +325,7 @@ def run(
         report=report,
         windows_by_cost=by_cost,
         pricing=None if pricing is None else pricing.describe(),
+        charts=charts,
         notes=notes,
         log=log,
         credits=credits,
@@ -297,6 +333,37 @@ def run(
 
 
 # ---------------------------------------------------------------------- pieces
+def _models(choice: str, notes: list[str]) -> list[Forecaster]:
+    """The forecasters the forecast check adds to the naive rules (`Request.models`); a model whose extra is
+    not installed is left out with a note."""
+    if choice == "naive":
+        return []
+    out: list[Forecaster] = []
+    if find_spec("lightgbm") and find_spec("sklearn"):
+        out.append(LightGBM())
+    else:
+        notes.append(
+            "LightGBM is not installed (`pip install prosumer[lightgbm]`): left out of the forecast check."
+        )
+    if choice == "all":
+        for name, module, make in FOUNDATION:
+            if find_spec(module):
+                out.append(make())
+            else:
+                notes.append(f"{name} is not installed (its extra, see the install notes): left out.")
+    return out
+
+
+def _daily(s: EnergySeries) -> pd.DataFrame:
+    """Each day of a file: the energy of its measured hours and how many hours were measured."""
+    f = s.frame.assign(date=s.frame["ds"].dt.tz_localize(None).dt.normalize())
+    f = f.assign(y=f["y"].where(f["valid"]))
+    g = f.groupby(["unique_id", "date"], sort=True)
+    return pd.DataFrame(
+        {"energy": g["y"].sum(min_count=1), "measured_hours": g["valid"].sum().astype(int)}
+    ).reset_index()
+
+
 def _read(data: bytes, name: str, q: str, req: Request, site: tuple[float, float], tz: str) -> EnergySeries:
     suffix = Path(name).suffix.lower()
     suffix = suffix if suffix in (".csv", ".txt", ".xlsx") else ".csv"
@@ -466,4 +533,4 @@ def _json(v: Any) -> Any:
     return v
 
 
-__all__ = ["PRICE_KINDS", "QUANTITIES", "Request", "Result", "Services", "run"]
+__all__ = ["MODEL_SETS", "PRICE_KINDS", "QUANTITIES", "Request", "Result", "Services", "run"]

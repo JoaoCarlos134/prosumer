@@ -21,11 +21,17 @@ candidates, never a guess:
    (MPP1, L2, string 3); still several: `ValueError` with the list. A table of exactly a time and one value
    column takes that column, with the unit given or, when nothing says it, kWh with a note.
 3. an energy column is read as a COUNTER when its values say so, never its name (a "total" column can be
-   either): they never fall within a day (small dips aside) and grow in at least a fifth of the steps. If they
-   also fall back at every change of day it is a daily counter, restarting at midnight (an inverter's
+   either). Within days (resets aside) a counter's falls add up to at most half its rises, in sum and in count
+   (dips at the resolution are small; energy per interval rises and falls by the same amount every day), and
+   it rises by at least two of its own steps a day (median; a load that steps up twice in a week does not).
+   If it also falls back at the change of day it is a daily counter, restarting at midnight (an inverter's
    "energy today": Growatt's `E-Today`), otherwise a register; each step is then the difference of two
-   readings (`meter.read_table(kind="cumulative")`). Found on a real Growatt export (2026-10-17): read as the
-   energy of each row, its `E-Today (kWh)` gave ~1,000 kWh a day from a 3 kW system.
+   readings (`meter.read_table(kind="cumulative")`). A file of a single day whose values do not sit far above
+   their own range (one morning of PV rises like a daily counter) is AMBIGUOUS: an error asks for `kind=`.
+   The thresholds (half, two steps, the single-day rule) were set by hand on a real Growatt export and on the
+   cases of the review of 2026-10-17 (coarse 1 kWh registers, hourly registers, 19 readings, a wobbling
+   daily counter, a load stepping up, a morning of PV). Found on that Growatt export: read as the energy of
+   each row, its `E-Today (kWh)` gave ~1,000 kWh a day from a 3 kW system.
 
 Whatever was chosen goes in the provenance notes (`series.provenance.notes`) and is returned by `sniff`, so
 an app can show it ("read `Energia` in Wh from a Fronius Solar.web export").
@@ -400,13 +406,19 @@ def _read(
     return _noted(s, f"file {path.name}: {found.why}, unit {u}, kind {k}{counter_note}{dropped}{note}")
 
 
+COUNTER_MIN_READINGS = 6
+COUNTER_FALL_SHARE = 0.5  # within days, falls <= half the rises (sum and count): set by hand (rule 3)
+COUNTER_STEPS_PER_DAY = 2  # a counter rises by at least two of its own steps a day (median): set by hand
+
+
 def _counter_kind(times: pd.Series, values: pd.Series, decimal: str | None) -> str | None:
     """'daily' (a counter that restarts every day), 'register' (one that only grows) or None (the rows are the
-    energy of each interval), from the values alone (module docstring, rule 3)."""
+    energy of each interval), from the values alone (module docstring, rule 3). Raises `ValueError` when a
+    single day cannot tell a counter from energy per interval."""
     t = _tables.parse_times(times)
     v = _tables.to_number(values, decimal or _tables.guess_decimal([values]))
     ok = (t.notna() & v.notna()).to_numpy()
-    if ok.sum() < 20:
+    if ok.sum() < COUNTER_MIN_READINGS:
         return None
     r = pd.DataFrame({"t": pd.DatetimeIndex(t[ok]), "v": v[ok].to_numpy(dtype=float)}).sort_values("t")
     when = pd.DatetimeIndex(r["t"])
@@ -415,15 +427,27 @@ def _counter_kind(times: pd.Series, values: pd.Series, decimal: str | None) -> s
     days = when.normalize()
     same = np.asarray(days[1:] == days[:-1])
     up = d[d > 0]
-    if len(up) < 5:
+    if len(up) == 0:  # constant (or all zero): no growth to count
         return None
-    inside = same & (d >= -10 * float(np.median(up)))  # within a day, a reset aside
-    if inside.sum() < 10:
+    typical = float(np.median(up))
+    reset = (d < -10 * typical) | ((d < 0) & (x[1:] <= 0.5 * x[:-1]) & (x[:-1] >= 5 * typical))
+    inside = d[same & ~reset]
+    rise, fall = float(inside[inside > 0].sum()), float(-inside[inside < 0].sum())
+    n_rise, n_fall = int((inside > 0).sum()), int((inside < 0).sum())
+    if n_rise == 0 or fall > COUNTER_FALL_SHARE * rise or n_fall > COUNTER_FALL_SHARE * n_rise:
         return None
-    if np.mean(d[inside] >= 0) < 0.97 or np.mean(d[inside] > 0) < 0.2:
+    growth = pd.Series(x).groupby(np.asarray(days)).agg(lambda g: g.max() - g.min())
+    if float(growth.median()) < COUNTER_STEPS_PER_DAY * typical:
         return None
+    per_day = pd.Series(1, index=np.asarray(days)).groupby(level=0).size()
+    if (per_day >= 2).sum() < 2 and not np.min(x) > np.max(x) - np.min(x):
+        raise ValueError(
+            "The energy column only rises in this file: a counter (each step = the difference of two "
+            "readings) or the energy of each interval (one rising morning of PV) look alike in a single day. "
+            "Give kind='cumulative' or kind='interval'."
+        )
     changes = ~same
-    if changes.sum() >= 2 and np.mean(d[changes] < 0) >= 0.8:
+    if changes.any() and np.mean(d[changes] < 0) >= 0.8:
         return "daily"
     return "register"
 

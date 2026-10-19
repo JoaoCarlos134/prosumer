@@ -12,8 +12,9 @@ holds the time, which hold values, the unit, and what kind of value each row is:
   least five typical steps: the counter was reset, rolled over or replaced) or, with `resets="restart"`, any
   drop across midnight (a daily counter, such as Growatt's `E-Today`):
   `resets="invalid"` (default) makes that interval invalid, `"restart"` takes the new reading as the energy
-  since the restart. A single reading that jumps more than ten typical steps away and comes straight back is
-  an outlier and is dropped (seen on a real Growatt export: an extra row with yesterday's total between two
+  since the restart (across midnight it must still fall to half or less: a 14.6 -> 14.5 wobble at 00:00 is not
+  a restart). Up to three readings that jump more than ten typical steps away and come straight back are
+  outliers and are dropped (seen on a real Growatt export: an extra row with yesterday's total between two
   regular readings). Smaller drops (rounding, a glitch read back) are kept as they are, so the steps still add
   up to the counter's own difference; all of them are counted in the provenance notes;
 - `kind="power"`: the AVERAGE power (W or kW) over each interval, turned into energy by the step's duration.
@@ -195,11 +196,9 @@ def _counter_steps(s: pd.Series, native: pd.Timedelta, resets: Resets) -> tuple[
     d = v[1:] - v[:-1]
     up = d[d > 0]
     typical = float(np.median(up)) if len(up) else 0.0
-    # a reading far from both neighbours, on opposite sides: an outlier, not a step of the counter
+    # up to OUTLIER_RUN readings far from the counter that come straight back: outliers, not steps
     far = 10 * typical
-    spike = np.zeros(len(v), dtype=bool)
-    if typical > 0 and len(v) >= 3:
-        spike[1:-1] = ((d[:-1] > far) & (d[1:] < -far)) | ((d[:-1] < -far) & (d[1:] > far))
+    spike = _outliers(v, far) if typical > 0 else np.zeros(len(v), dtype=bool)
     if spike.any():
         t, v = t[~spike], v[~spike]
         if len(v) < 2:
@@ -210,8 +209,9 @@ def _counter_steps(s: pd.Series, native: pd.Timedelta, resets: Resets) -> tuple[
     # restart; 0.3 -> 0.2 at dawn, or 11.9 after 12.0, is a reading wobbling at the counter's resolution)
     big = (d < -far) | ((d < 0) & (v[1:] <= 0.5 * v[:-1]) & (v[:-1] >= 5 * typical))
     if resets == "restart":
+        # across midnight a restart still falls to half or less: 14.6 -> 14.5 at 00:00 is a wobble (review F5)
         new_day = np.asarray(t[1:].normalize() != t[:-1].normalize())
-        reset = (d < 0) & (new_day | big)
+        reset = (d < 0) & ((new_day & (v[1:] <= 0.5 * v[:-1])) | big)
         d = np.where(reset, v[1:], d)
     else:
         reset = big
@@ -219,6 +219,30 @@ def _counter_steps(s: pd.Series, native: pd.Timedelta, resets: Resets) -> tuple[
     dips = int(((d < 0) & ~reset & ~gap).sum())
     d = np.where(gap, np.nan, d)
     return pd.DataFrame({"ds": t[:-1], "y": d}), int((reset & ~gap).sum()), dips, int(spike.sum())
+
+
+OUTLIER_RUN = 3  # set by hand (review of 2026-10-17: runs of two bad readings in a row were left in)
+
+
+def _outliers(v: np.ndarray, far: float, run: int = OUTLIER_RUN) -> np.ndarray:
+    """Readings of a counter that jump more than `far` away and, within `run` readings, come back to within
+    `far` of where they left, all on the same side: an outlier run, not energy. A restart (a drop that stays
+    down) is not one."""
+    out = np.zeros(len(v), dtype=bool)
+    i = 1
+    while i < len(v):
+        base = v[i - 1]
+        if abs(v[i] - base) > far:
+            side = np.sign(v[i] - base)
+            for j in range(i + 1, min(i + 1 + run, len(v))):
+                if abs(v[j] - base) <= far:
+                    seg = v[i:j]
+                    if np.all(np.sign(seg - base) == side) and np.all(np.abs(seg - base) > far):
+                        out[i:j] = True
+                        i = j - 1
+                    break
+        i += 1
+    return out
 
 
 def _blank(v: object) -> bool:

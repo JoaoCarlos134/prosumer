@@ -265,3 +265,35 @@ def test_unit_and_column_errors() -> None:
 
 def test_module_exports() -> None:
     assert meter.read_table is read_table
+
+
+def test_a_wobble_across_midnight_is_not_a_restart() -> None:
+    """Review F5: 14.6, 14.5 (00:00), 0.0 booked 14.5 kWh into one interval with resets='restart'."""
+    t = pd.date_range("2026-03-13 23:50", periods=6, freq="5min")  # a logger awake around midnight
+    df = pd.DataFrame({"t": t, "e": [14.6, 14.6, 14.5, 0.0, 0.1, 0.2]})
+    s = read_table(
+        df, time_column="t", value_columns="e", tz=TZ, unit="kWh", kind="cumulative", resets="restart"
+    )
+    assert s.frame["y"].max() < 1.0
+    assert s.frame["y"].sum() == pytest.approx(-0.1 + 0.0 + 0.1 + 0.1)  # the dip, the restart, two steps
+
+
+def test_outliers_of_two_or_three_readings_are_dropped() -> None:
+    """Review F6: two consecutive bad readings (13.4, 13.4) left a 12.5 kWh step in a 5-minute interval."""
+    t = pd.date_range("2026-03-30 07:00", periods=30, freq="5min")
+    for run in (2, 3):
+        e = np.round(np.arange(30) * 0.1, 1)
+        e[10 : 10 + run] = 13.4
+        for resets in ("restart", "invalid"):
+            s = read_table(
+                pd.DataFrame({"t": t, "e": e}),
+                time_column="t",
+                value_columns="e",
+                tz=TZ,
+                unit="kWh",
+                kind="cumulative",
+                resets=resets,
+                freq=None,
+            )
+            assert s.frame["y"].max() < 1.0, (run, resets)
+            assert f"{run} outlier reading(s) dropped" in s.provenance.notes

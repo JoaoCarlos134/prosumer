@@ -504,3 +504,19 @@ Observacao POS-HOC (hipotese, nao muda nada): nas duas series de geracao, tirar 
 passa nas usinas e na FV das casas; as ingenuas da geracao sao fracas, +0,013 e +0,055); no consumo nao (K3 p
 0,004). Testar "mediana sem as ingenuas quando ha modelos" pede dado que nao serviu para escolhe-la (nao ha outro
 caso no benchmark): fica registrada para quando houver um sitio novo.
+
+## Parcela de cada canal (MPPT) para separar falha de string de sujeira (17/10/2026, Lactec, CPU) — NAO PASSA
+
+Script `experimentos/testes_previsao/scripts/piloto_mppt.py` (portao no commit `81b06bb`, antes de rodar); saida
+`resultados/pilotos/mppt.json`. Dias claros pela energia CA total, parcela de cada MPPT na energia dos dias claros,
+`diagnostics.changepoints` com os padroes. 1010 s.
+
+- Curitiba (2 MPPT, 213 dias claros): achou 1 dos 3 eventos a +-45 dias: a volta de jul/2023 (2023-08-02, +19%).
+  A falha da string 1 de dez/2022 NAO aparece no prazo (ha um degrau de -27,8% em 2023-03-02, tres meses depois) e a
+  reconfiguracao de jun/2025 tambem nao. Outros degraus: 2022-04-15 +14,5%, 2024-05-29 +11%, 2025-03-21 +8,1%.
+- Controle negativo (PVDAQ 1199, 7 inversores): so 8 dias claros na soma dos inversores (o controle NAO vale: G2
+  "passa" sem informacao). Defeito menor do script: a lista "fora dos eventos" repete o degrau achado.
+
+**Decisao:** G1 nao passa (1 de 3): a parcela por canal nao entra na biblioteca. Sujeira x sombra x falha de string
+continua em aberto; o proximo passo seria olhar as tensoes CC por MPPT (a analise de 5 min viu a reconfiguracao
+nelas), e um controle com mais dias claros.

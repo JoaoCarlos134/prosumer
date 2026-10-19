@@ -41,3 +41,4 @@ experimentos/testes_previsao/dados/_cache/
 # log do steamwebhelper reaberto pelo modo_teste com cwd = scripts/
 experimentos/testes_previsao/scripts/logs/
 /.claude/worktrees/
+site/

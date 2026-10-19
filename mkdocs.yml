@@ -1,0 +1,42 @@
+site_name: prosumer
+site_description: Day-ahead forecasting and analysis of energy prosumers' generation and consumption
+repo_url: https://github.com/JoaoCarlos134/prosumer
+# the library's documentation only; docs/proposta, docs/projeto and docs/literatura are the thesis's records
+docs_dir: docs/library
+site_dir: site
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+nav:
+  - Home: index.md
+  - Reading data: reading.md
+  - Forecasting: forecasting.md
+  - Diagnostics: diagnostics.md
+  - Economics: economics.md
+  - Embedded: embedded.md
+  - App backend: app.md
+  - Tuning: tuning.md
+  - Validation: validation.md
+  - Guia em português: pt/guia.md
+  - API reference: reference.md
+  - Changes: changelog.md
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            members_order: source
+            show_root_heading: true
+            heading_level: 3

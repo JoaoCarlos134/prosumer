@@ -177,10 +177,31 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue
-1. **PVDAQ pilot** (`piloto_pvdaq.py`, gate `7bee35e`): record the result in `PILOTOS_F1_F2.md` and
-   `docs/library/validation.md`; act on the decision rule of its docstring.
-2. The `work-reviewer` report on `9d3ade0..HEAD`: fix what it finds (each fix with its test).
-3. Then the TypeScript site (own repository, after the library is published; runs locally like
+## Where to continue (2026-10-19, Lactec)
+
+Done on 17/10 (all pushed): counters read as counters (real Growatt file), `io.pvdaq`, tarifa branca with PV, the
+app backend `prosumer.app.run` (strict JSON), the user guide `docs/library/` (mkdocs, examples tested), the
+parity tolerance between machines, frames saved to parquet, this file split. The independent review of
+`9d3ade0..f079512` came back "ready with fixes"; F1, F3 (gate of the follow-up pilot), F5, F6, F7 are fixed.
+
+1. **Still open from that review** (each fix with a test):
+   - F2: tarifa branca, a credit is spent in `posto_order` before its own posto (`brazil._branca_scee` step 3);
+     decide the reading (own posto first, as step 1 and the docstring say) and test it.
+   - F4: the `median_weather` note in `analyze` claims "1st of 24" for any composition; the pilot's 4 rows
+     were 1st, LightGBM + the linear model alone 9th (+0.346). State what was measured.
+   - F8: save the Growatt whole-file check (daily median 14.2 kWh, counter = integrated AC power, median 0.999)
+     as a script and output; the counter thresholds are declared in `io.auto` and `docs/library/tuning.md`.
+   - F9: `analysis.py` EconomicsSection docstring (by_block per posto for branca),
+     `examples/site_local/README.md` ("tarifa branca with PV is not modelled"), changelog note that branca
+     without PV now has per-posto by_block.
+   - `BIAS_DAYS` and `CALIBRATION_DAYS` of `analyze` as arguments (tuning page lists them as constants).
+2. **PVDAQ pilot** (`piloto_pvdaq.py`, gate `7bee35e`): the run of 17/10 was stopped by Claude Code for low
+   memory after 2 of 6 systems (~1 h, ~7-15 min per system); rerun it only when the machine has memory to spare
+   (close the browser; ask the user). Its G1 (+-10 degrees) and G2 are weak (review F3): report them as such.
+   Already seen: the roof fit is far too steep outside Parana (clear-sky model without altitude/haze, no
+   temperature; see `docs/library/validation.md`). Then **`piloto_telhado_medido.py`** (gate `0b985d2`, revised
+   before running): fit the roof against NASA irradiance, H2 (the outlook chain) decides.
+3. MPPT channel shares: did not pass (1 of 3 events); next idea in `PILOTOS_F1_F2.md` (DC voltages per MPPT).
+4. Then the TypeScript site (own repository, after the library is published; runs locally like
    `1Projects/Keyword_map`, much more compact): its backend is a thin shell over `prosumer.app.run`.
    Publishing waits for the licence (the author's decision).

@@ -177,24 +177,38 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-19, Lactec)
+## Where to continue (2026-10-19, end of the day at Lactec)
 
-Done on 17/10 (all pushed): counters read as counters (real Growatt file), `io.pvdaq`, tarifa branca with PV, the
-app backend `prosumer.app.run` (strict JSON), the user guide `docs/library/` (mkdocs, examples tested), the
-parity tolerance between machines, frames saved to parquet, this file split. The independent review of
-`9d3ade0..f079512` came back "ready with fixes"; F1, F3 (gate of the follow-up pilot), F5, F6, F7 are fixed.
+Done on 19/10 (all pushed): review fixes F2/F4/F8/F9 and `analyze(bias_days=, calibration_days=)` (`3898067`);
+`app.run` runs LightGBM in the forecast check by default (`models`: lightgbm/naive/all), `Result.charts`
+(daily history, test hours = `Report.hourly`, clear-day performance), fix of the past folds of `analyze`
+(`7895d7f`). Licence: decided to stay PRIVATE for now (all rights reserved; site installs from the private
+repo); recommended path when publishing is in the Lactec machine's memory only: AGPL-3.0 + dual licensing,
+product layer closed, exception for `embedded` output; check Lactec ownership (Lei 9.609 art. 4), university
+IP rules, patents, AI-written code first.
 
-1. **Review fixes done on 19/10** (F2 credit in its own posto first, F4 `median_weather` note from measured
-   numbers (`confere_medianas_c.py`), F8 `confere_growatt.py` (median day 1.001, 182 of 188 within 5%), F9 docs,
-   `bias_days`/`calibration_days` arguments of `analyze`), each with a test where code changed. NOT yet reviewed
-   by the `work-reviewer` (the user asked for no agents on 19/10): review that commit first next session.
-2. **PVDAQ pilot** (`piloto_pvdaq.py`, gate `7bee35e`): the run of 17/10 was stopped by Claude Code for low
-   memory after 2 of 6 systems (~1 h, ~7-15 min per system); rerun it only when the machine has memory to spare
-   (close the browser; ask the user). Its G1 (+-10 degrees) and G2 are weak (review F3): report them as such.
-   Already seen: the roof fit is far too steep outside Parana (clear-sky model without altitude/haze, no
-   temperature; see `docs/library/validation.md`). Then **`piloto_telhado_medido.py`** (gate `0b985d2`, revised
-   before running): fit the roof against NASA irradiance, H2 (the outlook chain) decides.
-3. MPPT channel shares: did not pass (1 of 3 events); next idea in `PILOTOS_F1_F2.md` (DC voltages per MPPT).
-4. Then the TypeScript site (own repository, after the library is published; runs locally like
-   `1Projects/Keyword_map`, much more compact): its backend is a thin shell over `prosumer.app.run`.
-   Publishing waits for the licence (the author's decision).
+The user asked to do groups 1 and 2 of "is the library done" (library first, then the site):
+1. **Review** `9119619..7895d7f` with the `work-reviewer` (no agents were allowed on 19/10).
+2. **Translations EN/PT (decided: both, switchable)**: ~90 notes (`analysis` 27, `outlook` 15, `brazil` 13,
+   `diagnostics` 9, `economics.core` 7, `quality` 5, readers), the app's log/errors/`pending`. Design chosen
+   but not started: `Note(str)` subclass whose text is English (nothing breaks) carrying `key` + params; one
+   catalog key -> (en, pt); PT numbers with a decimal comma; nested Notes for fragments; `Result.to_dict(lang=)`
+   translates; a test that the app's JSON in pt has no untranslated note on the tested paths.
+3. **Group 2 without the roof pilots** (the user said skip them for now): the outlook's trust/skill outside
+   Parana could be checked on the Growatt India file (2026-03..09, overlaps the Open-Meteo previous-runs
+   archive; a light pilot, gate first); bills (GD I 21%, branca with PV) need real detailed bills: blocked.
+4. **Speed**: `app.run` on 7 years of hourly PV ~9 s naive / ~12 s LightGBM; the roof is fitted TWICE (outlook
+   and diagnose, ~2 s each; `physics.solar_position` recomputed per grid point): fit once / cache the sun.
+5. **Tests (asked 19/10)**: 30 files in `tests/` (one per module, flat, no conftest; helpers `aneel_fake.py`,
+   `wasm_c.py`, `fixtures/`), 670 pass in ~100-117 s with `-n 6` (12 logical CPUs; `-n 8` is slower,
+   `--dist worksteal` no gain: keep `-n 6`). ~480 s of test time: `test_diagnostics` 113 s, `test_analysis` 68,
+   `test_forecast_parity` 63 (two benchmark combinations by default, one 45 s), `test_outlook` 50,
+   `test_benchmark_protocol` 45. Redundancy found: `examples/site_local/app.py` re-implements `prosumer.app`
+   (own `_pricing`, `_peak_hours`, the 7 steps) and `test_example_site.py` re-tests it: make the example a thin
+   shell over `app.run` (or retire it when the TS site exists); `_series` helper copied in 6 test files;
+   `test_economics_app.py` tests `analyze(economics=)`, not the app (misnamed). CI installs only `dev,plots`
+   (no LightGBM: its tests and the app's default path skip there) and runs pytest serially: add `lightgbm`
+   and `-n auto`.
+6. PVDAQ + measured-roof pilots (gates `7bee35e`, `0b985d2`): only with memory to spare and the user's OK.
+7. Then the TypeScript site (own private repo, like `1Projects/Keyword_map`: React + Vite + TS + Tailwind,
+   FastAPI serving the build, `run.cmd`; to be confirmed with the user).

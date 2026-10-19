@@ -51,7 +51,8 @@ What is modelled, and where each rule comes from (all sources accessed on 2026-1
   same TE, so the true ratio may differ by ~10%: pass `te_energy={posto: R$/MWh}` from the distributor's
   components) and `posto_order` (the order the other postos receive an excess or a credit; the text names
   none; default the dearest first: ponta, intermediario, fora ponta). The compensation, in that order (own
-  posto, the month's excess to the other postos, then credits), stops where the bill reaches the custo de
+  posto, the month's excess to the other postos, then credits, each again its own posto first and then the
+  others in `posto_order`), stops where the bill reaches the custo de
   disponibilidade, as in the conventional modality; the GD II charge uses each posto's TUSD and TE and the
   book's (conventional) Fio B, another reading. A credit banked before the first month (`initial_credit`)
   counts as fora ponta.
@@ -1019,7 +1020,8 @@ def _branca_scee(
     te_energy: Mapping[str, float] | None,
 ) -> dict[str, Any]:
     """One month of the SCEE under tarifa branca (module docstring): per-posto netting, the month's excess to
-    the other postos by the TE ratio, then credits oldest first, the whole compensation stopped where the bill
+    the other postos by the TE ratio, then credits oldest first (each in its own posto first, then the others
+    in `order`), the whole compensation stopped where the bill
     reaches `minimum_value`. Returns the bill's pieces and the updated credit lots (month, posto, kWh)."""
     imp = np.nan_to_num(m["grid_import"].to_numpy(dtype=float))
     exp = np.nan_to_num(m["export"].to_numpy(dtype=float))
@@ -1071,8 +1073,8 @@ def _branca_scee(
                 left[p] -= move(left[p], te_e[p] / te_e[q], q)
     used = 0.0
     kept: list[tuple[pd.Timestamp, str, float]] = []
-    for t, p, k in sorted(lots, key=lambda x: x[0]):  # 3. credits, oldest first
-        for q in order:
+    for t, p, k in sorted(lots, key=lambda x: x[0]):  # 3. credits, oldest first, own posto first
+        for q in (p, *(x for x in order if x != p)):
             u = move(k, te_e[p] / te_e[q], q)
             k -= u
             used += u

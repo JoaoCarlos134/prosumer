@@ -257,6 +257,21 @@ def test_branca_own_posto_first_then_the_others() -> None:
     assert blocks.loc["ponta", "grid_import"] == pytest.approx(300.0)
 
 
+def test_branca_credit_serves_its_own_posto_first() -> None:
+    """A credit keeps its posto (§9) and, like the month's injection, offsets that posto one for one before
+    any other: 100 kWh banked in fora ponta (`initial_credit`) take the 60 kWh of night load, and the 40 left
+    are 20 kWh in ponta. (Spent in `posto_order` first, the whole credit went to ponta as 50 kWh.)"""
+    load, pv = _branca_day(ponta=100.0, night=10.0)
+    m = _branca(load, pv, initial_credit=100.0)
+    assert m["credit_used"] == pytest.approx(100.0)
+    assert m["compensated"] == pytest.approx(60.0 + 20.0)
+    blocks = brazil.bill(
+        load, pv, book=_book(), modality="Branca", peak_start="18:00", gd="GD I", initial_credit=100.0
+    ).by_block.set_index("block")
+    assert blocks.loc["fora_ponta", "compensated"] == pytest.approx(60.0)
+    assert blocks.loc["ponta", "compensated"] == pytest.approx(20.0)
+
+
 def test_branca_order_of_the_other_postos_is_a_reading() -> None:
     """The text names no order; the default serves the dearest posto first. With intermediario first the
     100 kWh of fora ponta are 100 x 250 / 300 = 83.3 kWh there."""

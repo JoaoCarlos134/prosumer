@@ -58,7 +58,8 @@ Open-Meteo API is for non-commercial use.
   end, whenever that was: check the dates (the page shows the year).
 - A roof you type in was not piloted; the one fitted from the data was.
 - Money: expected costs from point forecasts (a cloudy surprise moves them); calendar months, not the
-  meter's reading cycle; hourly netting. Brazil: tarifa convencional only (tarifa branca with PV is not
-  modelled), no real bill of these distributors was checked against; a month without a published bandeira
+  meter's reading cycle; hourly netting. Brazil: this page offers the tarifa convencional only (the library
+  bills tarifa branca too, with and without PV, from `prosumer.economics.brazil`), no real bill of these
+  distributors was checked against; a month without a published bandeira
   takes the last one, with a note.
 - Only localhost: it is not meant to be exposed on a network.

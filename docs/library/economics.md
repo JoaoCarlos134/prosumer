@@ -74,7 +74,8 @@ Every reading of the law that the text leaves open is a parameter, with the dist
 default where it is known: `after_2028` (GD II from 2029), `gd2_minimum` (the law and REN 1.000 differ),
 `icms_exempt_compensated` ("all", "te_only", "none"), `bandeira_on_minimum`, and for tarifa branca with
 generation `te_energy` (the TE Energia component of each posto; by default the homologated TE stands in for it)
-and `posto_order` (the order the other postos receive an excess; by default the dearest first).
+and `posto_order` (the order the other postos receive an excess or a credit, once its own posto is served; by
+default the dearest first).
 
 Not modelled: COSIP read from a bill (type it as `Setup(cosip=...)`), grupo A (demand charges), the social
 tariff, shared or remote generation, the tax reform of LC 214/2025. Checked against real bills: the energy of

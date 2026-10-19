@@ -184,17 +184,10 @@ app backend `prosumer.app.run` (strict JSON), the user guide `docs/library/` (mk
 parity tolerance between machines, frames saved to parquet, this file split. The independent review of
 `9d3ade0..f079512` came back "ready with fixes"; F1, F3 (gate of the follow-up pilot), F5, F6, F7 are fixed.
 
-1. **Still open from that review** (each fix with a test):
-   - F2: tarifa branca, a credit is spent in `posto_order` before its own posto (`brazil._branca_scee` step 3);
-     decide the reading (own posto first, as step 1 and the docstring say) and test it.
-   - F4: the `median_weather` note in `analyze` claims "1st of 24" for any composition; the pilot's 4 rows
-     were 1st, LightGBM + the linear model alone 9th (+0.346). State what was measured.
-   - F8: save the Growatt whole-file check (daily median 14.2 kWh, counter = integrated AC power, median 0.999)
-     as a script and output; the counter thresholds are declared in `io.auto` and `docs/library/tuning.md`.
-   - F9: `analysis.py` EconomicsSection docstring (by_block per posto for branca),
-     `examples/site_local/README.md` ("tarifa branca with PV is not modelled"), changelog note that branca
-     without PV now has per-posto by_block.
-   - `BIAS_DAYS` and `CALIBRATION_DAYS` of `analyze` as arguments (tuning page lists them as constants).
+1. **Review fixes done on 19/10** (F2 credit in its own posto first, F4 `median_weather` note from measured
+   numbers (`confere_medianas_c.py`), F8 `confere_growatt.py` (median day 1.001, 182 of 188 within 5%), F9 docs,
+   `bias_days`/`calibration_days` arguments of `analyze`), each with a test where code changed. NOT yet reviewed
+   by the `work-reviewer` (the user asked for no agents on 19/10): review that commit first next session.
 2. **PVDAQ pilot** (`piloto_pvdaq.py`, gate `7bee35e`): the run of 17/10 was stopped by Claude Code for low
    memory after 2 of 6 systems (~1 h, ~7-15 min per system); rerun it only when the machine has memory to spare
    (close the browser; ask the user). Its G1 (+-10 degrees) and G2 are weak (review F3): report them as such.

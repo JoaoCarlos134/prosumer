@@ -1,0 +1,26 @@
+{
+ "arquivo": "Inverter Telemetry.xlsx",
+ "notas_do_leitor": "file Inverter Telemetry.xlsx: column 'E-Today (kWh)': the only one with an energy unit, unit kWh, kind cumulative; its values only grow within each day and restart at midnight: read as a daily counter; kind=cumulative, unit=kWh; native step 0 days 00:05:00; 0 duplicate timestamp(s) dropped, first kept; 5 counter reset(s) taken as a restart from zero; 5 outlier reading(s) dropped; 157 small decrease(s) kept; a step is valid with >= 0.917 of its native steps",
+ "dias": 188,
+ "kwh_dia": {
+  "mediana": 14.2,
+  "max": 19.3
+ },
+ "kwh_hora_max": 2.8,
+ "horas_comparadas": 2139,
+ "dias_comparados": 188,
+ "razao_contador_ca_por_dia": {
+  "quantis": {
+   "0": 0.9548,
+   "0.05": 0.9774,
+   "0.25": 0.9945,
+   "0.5": 1.001,
+   "0.75": 1.0079,
+   "0.95": 1.0249,
+   "1": 1.1472
+  },
+  "dentro_de_5pct": "182 de 188"
+ },
+ "razao_no_total": 1.0026,
+ "tempo_s": 5.6
+}

@@ -20,7 +20,9 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
   ranked 29th to 36th. With the library's five models (LightGBM + four foundation models) it came within 0.01
   of the 47-model median in the three history-only tests, but did not tie with the best model in two of them.
   With a weather forecast, the median of the library's four weather rows was 1st of 24 on the plants (+0.372,
-  ahead of the 22-model median).
+  ahead of the 22-model median); over every composition of two to four of them (check of 2026-10-19,
+  `confere_medianas_c.py`), 1st to 11th, above each of its members in 10 of 11 (Chronos-2 with TiRex-2 fell
+  below TiRex-2 alone); LightGBM with the linear model, 9th (+0.346). One test, two plants in Parana.
 - **The coming days** (horizon pilot, 2026-10-12): on two plants in Parana the weather forecast beat the
   seasonal expectation on the daily total at every lead 1-7 (skill +0.49 at lead 1 to +0.20 at lead 7), and
   showed no skill at leads 8-15 (two months of data only). `trust` and `skill` come from there.
@@ -31,7 +33,10 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
 
 - **Readers on real files from other brands**: Fronius Solar.web (7 and 5 years of two real plants), Growatt
   (a real export from India, Kaggle, CC BY 4.0: the counter bug was found there), NREL PVDAQ (10 systems' day
-  files: their column names do not say the unit).
+  files: their column names do not say the unit). On the whole Growatt file (188 days, 3 kW) the daily counter
+  read by the library gives a median of 14.2 kWh a day and matches the inverter's AC power integrated over
+  the same hours: median day 1.001, 182 of 188 days within 5% (`confere_growatt.py`, 2026-10-19). The same
+  file chose the counter thresholds, so this checks the reading, not the thresholds.
 - **PVDAQ pilot** (six US systems with a known roof: Colorado, Maryland, New Jersey, Maine, Nevada): roof fit,
   clock check and the outlook's physical chain against the same procedure on a Parana plant. Not finished (the
   run of 2026-10-17 was stopped for lack of memory after two systems). What it showed already, and the checks

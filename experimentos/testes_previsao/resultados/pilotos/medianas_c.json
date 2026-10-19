@@ -1,0 +1,190 @@
+{
+ "pergunta": "mediana das linhas de regime C por composicao (usinas|C)",
+ "portao": "nenhum (conferencia)",
+ "teste": {
+  "melhor": "Ensemble-mediana",
+  "skill_melhor": 0.3673,
+  "skill_ensemble": 0.3673,
+  "n_linhas": 23,
+  "composicoes": {
+   "LightGBM+Chronos-2": {
+    "skill": 0.3421,
+    "dm_p_vs_melhor": 0.0009,
+    "MBE": 0.0595,
+    "R2": 0.8466,
+    "horas": 8940,
+    "posicao": "11o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+TiRex-2": {
+    "skill": 0.3723,
+    "dm_p_vs_melhor": 0.2195,
+    "MBE": 0.0183,
+    "R2": 0.8604,
+    "horas": 8940,
+    "posicao": "1o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+linear_fisico": {
+    "skill": 0.3465,
+    "dm_p_vs_melhor": 0.0,
+    "MBE": 0.0094,
+    "R2": 0.8487,
+    "horas": 8940,
+    "posicao": "9o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false,
+    "acima_de_cada_membro": true
+   },
+   "Chronos-2+TiRex-2": {
+    "skill": 0.3484,
+    "dm_p_vs_melhor": 0.0039,
+    "MBE": 0.0769,
+    "R2": 0.8496,
+    "horas": 8940,
+    "posicao": "9o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false,
+    "acima_de_cada_membro": false
+   },
+   "Chronos-2+linear_fisico": {
+    "skill": 0.3348,
+    "dm_p_vs_melhor": 0.0,
+    "MBE": 0.068,
+    "R2": 0.8432,
+    "horas": 8940,
+    "posicao": "11o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false,
+    "acima_de_cada_membro": true
+   },
+   "TiRex-2+linear_fisico": {
+    "skill": 0.3618,
+    "dm_p_vs_melhor": 0.28,
+    "MBE": 0.0268,
+    "R2": 0.8557,
+    "horas": 8940,
+    "posicao": "2o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+Chronos-2+TiRex-2": {
+    "skill": 0.3628,
+    "dm_p_vs_melhor": 0.332,
+    "MBE": 0.0488,
+    "R2": 0.8561,
+    "horas": 8940,
+    "posicao": "2o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+Chronos-2+linear_fisico": {
+    "skill": 0.3589,
+    "dm_p_vs_melhor": 0.0627,
+    "MBE": 0.0256,
+    "R2": 0.8544,
+    "horas": 8940,
+    "posicao": "2o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+TiRex-2+linear_fisico": {
+    "skill": 0.3683,
+    "dm_p_vs_melhor": 0.6704,
+    "MBE": 0.0078,
+    "R2": 0.8586,
+    "horas": 8940,
+    "posicao": "1o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "Chronos-2+TiRex-2+linear_fisico": {
+    "skill": 0.3643,
+    "dm_p_vs_melhor": 0.4694,
+    "MBE": 0.0414,
+    "R2": 0.8568,
+    "horas": 8940,
+    "posicao": "2o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM+Chronos-2+TiRex-2+linear_fisico": {
+    "skill": 0.3724,
+    "dm_p_vs_melhor": 0.2502,
+    "MBE": 0.0309,
+    "R2": 0.8604,
+    "horas": 8940,
+    "posicao": "1o de 24",
+    "perto_do_ensemble": true,
+    "empata_com_melhor": true,
+    "passa": true,
+    "acima_de_cada_membro": true
+   },
+   "LightGBM": {
+    "skill": 0.3303,
+    "dm_p_vs_melhor": 0.0,
+    "MBE": 0.001,
+    "R2": 0.8411,
+    "horas": 8940,
+    "posicao": "13o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false
+   },
+   "Chronos-2": {
+    "skill": 0.2766,
+    "dm_p_vs_melhor": 0.0,
+    "MBE": 0.1181,
+    "R2": 0.8146,
+    "horas": 8940,
+    "posicao": "18o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false
+   },
+   "TiRex-2": {
+    "skill": 0.3546,
+    "dm_p_vs_melhor": 0.118,
+    "MBE": 0.0357,
+    "R2": 0.8524,
+    "horas": 8940,
+    "posicao": "3o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": true,
+    "passa": false
+   },
+   "linear_fisico": {
+    "skill": 0.3118,
+    "dm_p_vs_melhor": 0.0,
+    "MBE": 0.0179,
+    "R2": 0.8322,
+    "horas": 8940,
+    "posicao": "16o de 24",
+    "perto_do_ensemble": false,
+    "empata_com_melhor": false,
+    "passa": false
+   }
+  }
+ },
+ "acima_de_cada_membro": "10 de 11",
+ "tempo_s": 2.2
+}

@@ -273,6 +273,25 @@ def test_bands_section_scores_each_band_against_the_14_day_reference() -> None:
     json.dumps(r.to_dict())
 
 
+def test_calibration_days_is_an_argument() -> None:
+    """The days whose errors recalibrate the bands (`calibration_days`, default 28, set by hand) change only
+    the conformal band."""
+    pytest.importorskip("lightgbm")
+    pytest.importorskip("sklearn")
+    from prosumer.forecast import LightGBMQuantile
+
+    s = data.example_house(n_series=1, days=70)
+    model = [LightGBMQuantile(params={"n_estimators": 30})]
+    base = analyze(s, test_days=14, models=model)
+    short = analyze(s, test_days=14, models=model, calibration_days=10)
+    assert base.bands is not None and short.bands is not None
+    b, c = base.bands.set_index("source"), short.bands.set_index("source")
+    assert b.loc["LightGBM-quantile", "CRPS"] == c.loc["LightGBM-quantile", "CRPS"]
+    assert b.loc["LightGBM-quantile+conformal", "CRPS"] != c.loc["LightGBM-quantile+conformal", "CRPS"]
+    with pytest.raises(ValueError, match="calibration_days"):
+        analyze(s, test_days=14, calibration_days=6)
+
+
 class _Shrunk:
     """A history model that forecasts 60% of the last week's mean: the foundation models' bias on houses."""
 
@@ -306,3 +325,21 @@ def test_consumption_output_is_the_median_without_its_recent_bias() -> None:
     g = analyze(plant, site=(-25.43, -49.27), test_days=14)
     assert g.summary["output"] == "median" and g.forecast is not None
     assert "median_corrected" not in set(g.forecast["forecast"])
+
+
+def test_bias_days_is_an_argument() -> None:
+    """The days the bias factor looks at (`bias_days`, default 14, set by hand) change only
+    `median_corrected`; fewer than 7 days, or not a whole number, is refused before any work."""
+    s = data.example_house(n_series=2, days=60)
+    models = [_Shrunk(f"shrunk_{i}") for i in range(4)]
+    base = analyze(s, test_days=14, models=models).forecast
+    same = analyze(s, test_days=14, models=models, bias_days=analysis.BIAS_DAYS).forecast
+    longer = analyze(s, test_days=14, models=models, bias_days=28).forecast
+    assert base is not None and same is not None and longer is not None
+    pd.testing.assert_frame_equal(base, same)
+    b, lo = base.set_index("forecast"), longer.set_index("forecast")
+    assert lo.loc["median", "skill"] == b.loc["median", "skill"]
+    assert lo.loc["median_corrected", "skill"] != b.loc["median_corrected", "skill"]
+    for bad in (6, 0, 14.0, True):
+        with pytest.raises(ValueError, match="bias_days"):
+            analyze(s, test_days=14, bias_days=bad)

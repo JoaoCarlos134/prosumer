@@ -60,8 +60,8 @@ default chosen on the project's sites shaped a result. Origins:
 | Setting | Default | Origin |
 |---|---|---|
 | `test_days` (argument) | 28 | generic |
-| `BIAS_DAYS` (module constant, not an argument yet) | 14 | set by hand in the bias-correction pilot (Dingle houses; the value used, not swept) |
-| `CALIBRATION_DAYS` (module constant, not an argument yet) | 28 | set by hand in the conformal pilot (the benchmark's three cases; not swept) |
+| `bias_days` (argument) | 14, at least 7 | set by hand in the bias-correction pilot (Dingle houses; the value used, not swept) |
+| `calibration_days` (argument) | 28, at least 7 | set by hand in the conformal pilot (the benchmark's three cases; not swept) |
 
 ## Economics readings (`economics.brazil`)
 

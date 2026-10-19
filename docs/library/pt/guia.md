@@ -80,7 +80,8 @@ dentro", bandeira do mês (só na energia faturada), custo de disponibilidade (3
 da tarifa branca, e o SCEE da Lei 14.300/2022: GD I com compensação integral até 2045, GD II com a rampa do Fio
 B (15% em 2023 ... 90% em 2028), créditos de 60 meses, o mais antigo primeiro. **Tarifa branca com geração**
 (REN 1.000 art. 655-G): a injeção compensa primeiro o próprio posto; o excedente vai para os outros postos,
-convertido pela razão da TE Energia entre eles; o que sobra vira crédito do posto em que foi injetado.
+convertido pela razão da TE Energia entre eles; o que sobra vira crédito do posto em que foi injetado, e o
+crédito também compensa primeiro o seu posto.
 
 Onde a lei deixa a leitura aberta, a escolha é um parâmetro, com a prática das distribuidoras como padrão:
 `after_2028` (GD II depois de 2028), `gd2_minimum` (a lei e a REN 1.000 diferem sobre o mínimo da GD II),

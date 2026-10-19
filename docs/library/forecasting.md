@@ -31,8 +31,10 @@ The table has one row per forecast, all scored on the same hours:
 - `median_corrected` (consumption): the median with its recent bias removed, a row, not the output.
 - With `weather=` (a day-ahead weather forecast, e.g. `io.open_meteo.wide(...)`): `weather_linear` (energy =
   a + b x forecast GHI) and every model that takes covariates are regime C rows, and `median_weather` is
-  their median when there are two or more. On the benchmark's plants the median of the library's four
-  weather rows ranked 1st of 24: with a weather forecast, it is the row to read.
+  their median when there are two or more. On the benchmark's plants (the only test with a real weather
+  forecast, 24 rows) the medians of two to four of the library's weather rows ranked 1st to 11th and beat
+  each of their members in 10 of 11 compositions; the four together ranked 1st (+0.372), LightGBM with the
+  linear model 9th (+0.346, against +0.330 and +0.312 alone).
 - `resolution`: the same scores by hour, day/night blocks, evening peak and daily total (the best model
   changes with the resolution; use the one of your decision).
 - `bands` (with a model that gives quantiles, e.g. `forecast.LightGBMQuantile()`): coverage of the 80% and 60%

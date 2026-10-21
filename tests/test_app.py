@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 from functools import partial
 from typing import Any
@@ -120,6 +121,22 @@ def test_a_misspelt_connection_is_a_message_before_any_download() -> None:
         {**SITE, "models": "naive", "price": {**price, "connection": "40"}}, files, services=_services()
     )
     assert r.report.economics is not None and "40 kWh" in str(r.pricing)
+
+
+def test_a_pv_file_dead_through_the_test_days_skips_only_the_forecast_check() -> None:
+    # regression 2026-10-21: an inverter dead in the last `test_days` raised "Mean of the actual values is
+    # zero" from the metrics and the whole page was lost
+    f = pd.read_csv(io.BytesIO(_pv_csv("2024-01-01", 60)))
+    f.iloc[-28 * 24 :, 1] = 0.0
+    files = {"generation": (f.to_csv(index=False).encode(), "inverter.csv")}
+    r = app.run({**SITE, "models": "naive"}, files, services=_services())
+    assert r.report.forecast is None and r.report.diagnostics is not None
+    assert any(
+        n.startswith("Forecast check skipped: every test hour it would score is zero") for n in r.report.notes
+    )
+    f.loc[f.index[pd.to_datetime(f["time"]).dt.hour == 12][-1], "Energy (kWh)"] = 0.5  # one hour is enough
+    files = {"generation": (f.to_csv(index=False).encode(), "inverter.csv")}
+    assert app.run({**SITE, "models": "naive"}, files, services=_services()).report.forecast is not None
 
 
 def test_failed_downloads_are_messages_for_the_person() -> None:

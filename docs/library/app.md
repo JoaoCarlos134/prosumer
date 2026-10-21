@@ -42,7 +42,7 @@ A plain JSON object; unknown fields are errors, empty strings mean "not given", 
 | `load_hours`, `load_kw` | 3, 2.0 | the flexible load to place |
 | `test_days` | 28 | days of the forecast check |
 | `models` | "lightgbm" | the forecasts whose median the check scores: "lightgbm" (the three naive rules and LightGBM, seconds), "naive" (the naive rules only) or "all" (also the zero-shot foundation models installed, minutes and torch). On the benchmark the naive median ranked 29th-36th of ~50, with LightGBM 10th-19th, with the foundation models 4th-5th |
-| `price` | none | `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`, `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` or `{"kind": "brazil", "distributor", "icms", "pis_cofins", "connection", "gd", "cosip", "modality", "peak_start"}` (rates as fractions) |
+| `price` | none | `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`, `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` or `{"kind": "brazil", "distributor", "icms", "pis_cofins", "connection", "gd", "cosip", "modality", "peak_start"}` (rates as fractions; `gd` "GD I" or "GD II" is required with a PV file; `peak_start` "HH:MM" for the branca) |
 
 Files: `{"generation": (bytes, name), "consumption": (bytes, name)}`, one or both. With both, the bill nets the
 PV against the household's use hour by hour and the report shows the savings.

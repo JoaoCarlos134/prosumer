@@ -45,6 +45,13 @@ PT: dict[str, str] = {
     "every value is zero (a dead meter or inverter, or the wrong column).": (
         "todos os valores são zero (medidor ou inversor parado, ou a coluna errada)."
     ),
+    (
+        "every test hour it would score is zero (did the meter or inverter stop in the last {days} days?), "
+        "so the normalised errors are undefined."
+    ): (
+        "toda hora de teste que ela avaliaria é zero (o medidor ou o inversor parou nos últimos {days} "
+        "dias?), então os erros normalizados não estão definidos."
+    ),
     "it needs {days} days of history before the {test_days} test days.": (
         "ela precisa de {days} dias de histórico antes dos {test_days} dias de teste."
     ),
@@ -281,6 +288,23 @@ PT: dict[str, str] = {
         "a alíquota de PIS/COFINS da sua conta (uma fração, p. ex. 0,0925)"
     ),
     "ICMS and PIS/COFINS are fractions (0.19 for 19%)": "ICMS e PIS/COFINS são frações (0,19 para 19%)",
+    "ICMS + PIS/COFINS must be below 1, not {total:.4g}": (
+        "ICMS + PIS/COFINS deve ser menor que 1, não {total:.4g}"
+    ),
+    "kind must be one of {kinds}, not {value!r}": "kind deve ser um de {kinds}, não {value!r}",
+    "Unknown time zone {tz!r}: give an IANA name, e.g. America/Sao_Paulo": (
+        "Fuso horário desconhecido {tz!r}: informe um nome IANA, p. ex. America/Sao_Paulo"
+    ),
+    "price.scheme must be one of {schemes}, not {value!r}": (
+        "price.scheme deve ser um de {schemes}, não {value!r}"
+    ),
+    (
+        "With a generation file, give price.gd: 'GD I' (generation connected or its access requested by "
+        "{day}) or 'GD II' (later)"
+    ): (
+        "Com um arquivo de geração, informe price.gd: 'GD I' (geração conectada ou com acesso solicitado até "
+        "{day}) ou 'GD II' (depois)"
+    ),
     "the COSIP": "a COSIP",
     (
         "Could not download {agent}'s tariffs from ANEEL's open data ({error}). Check the connection, or "
@@ -380,6 +404,9 @@ PT: dict[str, str] = {
     # ---- economics.brazil
     "peak_start must leave room for the intermediario hours (01:00-20:00)": (
         "peak_start deve deixar espaço para as horas do intermediário (01:00-20:00)"
+    ),
+    "peak_start {value!r}: give it as HH:MM, e.g. 18:00": (
+        "peak_start {value!r}: informe como HH:MM, p. ex. 18:00"
     ),
     "The minimum in kWh must be >= 0, not {value!r}": "O mínimo em kWh deve ser >= 0, não {value!r}",
     "Give the connection date or the access request date": (
@@ -499,6 +526,9 @@ PT: dict[str, str] = {
     "flat": "preço único",
     "{n} time-of-use blocks": "{n} blocos por horário",
     # ---- io
+    "No components resource for {year} ({file}) in ANEEL's open data": (
+        "Não há recurso de componentes tarifárias de {year} ({file}) nos dados abertos da ANEEL"
+    ),
     "END": "FIM",
     "START": "INÍCIO",
     "Cannot infer the time step (fewer than two distinct timestamps); pass step=": (

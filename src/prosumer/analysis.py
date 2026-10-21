@@ -484,6 +484,13 @@ def analyze(
     actual = frame.loc[frame["valid"], ["unique_id", "ds", "y"]]
     keep = _evaluated(actual, fc, is_gen, site, test_start)
     actual = actual.loc[keep]
+    dead = Note(
+        "every test hour it would score is zero (did the meter or inverter stop in the last {days} days?), "
+        "so the normalised errors are undefined.",
+        days=test_days,
+    )
+    if len(actual) and not (actual["y"] != 0).any():  # the normalised metrics would divide by zero
+        return skipped(dead)
     regimes = {OUTPUT: "A", **dict.fromkeys(_NAIVE, "A"), reference: "A"}
     weather_table = None
     bands_raw: dict[str, pd.DataFrame] = {}
@@ -588,6 +595,8 @@ def analyze(
                 n=int(flagged.sum()),
             )
         )
+    if len(actual) and not (actual["y"] != 0).any():  # what the common support left
+        return skipped(dead)
     ref = fc[["unique_id", "ds", reference]].rename(columns={reference: "yhat"})
     _, r_ref = metrics.align(ref, actual, ref)
     if len(r_ref) and not (r_ref["yhat"].to_numpy() != r_ref["y"].to_numpy()).any():

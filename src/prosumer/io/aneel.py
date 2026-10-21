@@ -175,7 +175,9 @@ def fetch_components(
     want = f"componentes-tarifarias-{year}.csv"
     ids = [r["id"] for r in pkg["resources"] if r.get("name") == want]
     if not ids:
-        raise ValueError(f"No components resource for {year} ({want})")
+        raise ValueError(
+            Note("No components resource for {year} ({file}) in ANEEL's open data", year=year, file=want)
+        )
     f = {
         "SigNomeAgente": distributor,
         "DscSubGrupoTarifario": subgroup,

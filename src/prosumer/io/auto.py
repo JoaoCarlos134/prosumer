@@ -162,6 +162,10 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
                     "No column of dates and times found among {cols}; give the time column's name", cols=cols
                 )
             )
+    elif time_column not in cols:
+        raise ValueError(
+            Note("Column {column!r} not in the file; it has {cols}", column=time_column, cols=cols)
+        )
     first = head[time_column].iloc[0] if len(head) else None
     units_row = bool(
         len(head) > 1

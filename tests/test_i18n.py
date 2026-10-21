@@ -202,6 +202,8 @@ def test_the_app_page_in_portuguese_pv_and_consumption_with_a_brazilian_price() 
 
 def test_errors_of_the_app_are_notes_with_portuguese() -> None:
     files = {"consumption": (_consumption_csv("2024-01-01", 42), "m.csv")}
+    pv = {"generation": (_pv_csv("2026-07-01", 60), "pv.csv"), **files}
+    brazil = {"kind": "brazil", "icms": 0.19, "pis_cofins": 0.0925}
     cases = [
         ({**SITE, "days": 99}, files, "days deve estar entre 1 e 35"),
         ({**SITE, "load_kw": "dois"}, files, "load_kw: 'dois' não é um número"),
@@ -215,6 +217,25 @@ def test_errors_of_the_app_are_notes_with_portuguese() -> None:
             files,
             "ICMS e PIS/COFINS são frações",
         ),
+        # regressions 2026-10-21: each of these was a plain English error, a KeyError or a crash
+        ({**SITE, "kind": "foo"}, files, "kind deve ser um de"),
+        ({**SITE, "timezone": "Mars/Base"}, files, "Fuso horário desconhecido 'Mars/Base'"),
+        ({**SITE, "time_column": "nope"}, files, "A coluna 'nope' não está no arquivo"),
+        (
+            {**SITE, "price": {"kind": "flat", "price": 1, "scheme": "feed_in"}},
+            files,
+            "price.scheme deve ser",
+        ),
+        ({**SITE, "price": {**brazil, "icms": 0.6, "pis_cofins": 0.5}}, files, "ICMS + PIS/COFINS deve ser"),
+        ({**SITE, "price": {**brazil, "icms": -0.1}}, files, "ICMS e PIS/COFINS são frações"),
+        ({**SITE, "price": {**brazil, "modality": "Branca", "peak_start": "18"}}, files, "peak_start '18'"),
+        ({**SITE, "price": brazil}, pv, "Com um arquivo de geração, informe price.gd"),
+        ({**SITE, "price": {**brazil, "gd": "GD III"}}, pv, "Com um arquivo de geração, informe price.gd"),
+        (
+            {**SITE, "price": {**brazil, "gd": "GD II"}},  # Fio B of 2025 too: the fixture has only 2026
+            pv,
+            "Não há recurso de componentes tarifárias de 2025",
+        ),
         (SITE, {"consumption": (b"", "m.csv")}, "Nenhum arquivo recebido"),
         (
             SITE,
@@ -224,7 +245,7 @@ def test_errors_of_the_app_are_notes_with_portuguese() -> None:
     ]
     for request, given, pt in cases:
         with pytest.raises(ValueError) as caught:
-            app.run(request, given, services=_services())
+            app.run({"models": "naive", **request}, given, services=_services("2026-08-30"))
         assert isinstance(i18n.as_note(caught.value), Note), caught.value
         assert i18n.message(caught.value, "pt", strict=True).startswith(pt), i18n.message(caught.value, "pt")
 

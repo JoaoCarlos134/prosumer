@@ -34,7 +34,8 @@ The request is a plain mapping (`Request.from_dict`, unknown keys are an error):
 - `price` (optional): `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`,
   `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` (weekends off-peak) or
   `{"kind": "brazil", "distributor": "COPEL-DIS", "icms", "pis_cofins" (fractions, as read on a bill),
-  "connection", "gd", "cosip", "modality", "peak_start"}` (ANEEL's open data; GD only with a PV file).
+  "connection", "gd", "cosip", "modality", "peak_start"}` (ANEEL's open data; `gd`, "GD I" or "GD II", is
+  required with a PV file and ignored without; `peak_start` "HH:MM" for the tarifa branca).
 
 Languages: every note, log line and error message of `run` is a `prosumer.i18n.Note`:
 `Result.to_dict(lang="pt")` (or `to_json`) gives the page in Portuguese, `i18n.message(error, "pt")` an
@@ -58,6 +59,7 @@ from dataclasses import dataclass, field, fields
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, cast
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import numpy as np
 import pandas as pd
@@ -77,6 +79,8 @@ from .provenance import Provenance, of
 QUANTITIES: tuple[Quantity, ...] = ("generation", "consumption")
 PRICE_KINDS = ("flat", "tou", "brazil")
 MODEL_SETS = ("lightgbm", "naive", "all")
+GD_CLASSES = ("GD I", "GD II")  # `brazil.GD`
+READ_KINDS = ("interval", "cumulative", "power")  # `io.read_energy(kind=)`
 # the zero-shot models of `models="all"`: (name, the module its extra installs, the adapter)
 FOUNDATION: tuple[tuple[str, str, Callable[[], Forecaster]], ...] = (
     ("Chronos-2", "chronos", Chronos2),
@@ -174,6 +178,20 @@ class Request:
             raise ValueError(Note("models must be one of {sets}", sets=list(MODEL_SETS)))
         if self.price is not None and self.price.get("kind") not in PRICE_KINDS:
             raise ValueError(Note("price.kind must be one of {kinds}", kinds=list(PRICE_KINDS)))
+        if self.kind is not None and self.kind not in READ_KINDS:
+            raise ValueError(
+                Note("kind must be one of {kinds}, not {value!r}", kinds=list(READ_KINDS), value=self.kind)
+            )
+        if self.timezone is not None:
+            try:
+                ZoneInfo(self.timezone)
+            except (ZoneInfoNotFoundError, ValueError):
+                raise ValueError(
+                    Note(
+                        "Unknown time zone {tz!r}: give an IANA name, e.g. America/Sao_Paulo",
+                        tz=self.timezone,
+                    )
+                ) from None
 
 
 @dataclass
@@ -498,11 +516,25 @@ def _pricing(
         agent = str(p.pop("distributor", "COPEL-DIS"))
         icms = num("icms", Note("the ICMS rate of your bill (a fraction, e.g. 0.19)"))
         pis = num("pis_cofins", Note("the PIS/COFINS rate of your bill (a fraction, e.g. 0.0925)"))
-        if icms >= 1 or pis >= 1:
+        if not (0 <= icms < 1 and 0 <= pis < 1):
             raise ValueError(Note("ICMS and PIS/COFINS are fractions (0.19 for 19%)"))
+        if icms + pis >= 1:
+            raise ValueError(Note("ICMS + PIS/COFINS must be below 1, not {total:.4g}", total=icms + pis))
         gd = p.pop("gd", None) if with_pv else None
+        if with_pv and gd not in GD_CLASSES:
+            raise ValueError(
+                Note(
+                    "With a generation file, give price.gd: 'GD I' (generation connected or its access "
+                    "requested by {day}) or 'GD II' (later)",
+                    day=brazil.GD_I_REQUESTED_BY,
+                )
+            )
         modality = str(p.pop("modality", brazil.CONVENTIONAL))
         peak_start = p.pop("peak_start", None)
+        if peak_start is not None:
+            peak_start = str(peak_start).strip() or None
+        if peak_start is not None:
+            brazil.branca_blocks(peak_start)  # its errors now, not after the downloads
         connection = _connection(p.pop("connection", "bifasico_3"))
         cosip = num("cosip", Note("the COSIP"), 0.0)
         years: list[int] = []
@@ -535,6 +567,14 @@ def _pricing(
     export = num("export_price", Note("the export price"), 0.0)
     fixed = num("fixed", Note("the fixed charge"), 0.0)
     scheme = str(p.pop("scheme", "net_metering"))
+    if scheme not in econ.SCHEMES:
+        raise ValueError(
+            Note(
+                "price.scheme must be one of {schemes}, not {value!r}",
+                schemes=list(econ.SCHEMES),
+                value=scheme,
+            )
+        )
     if kind == "flat":
         tariff = econ.Tariff.flat(
             num("price", Note("the price per kWh")), export_price=export, fixed=fixed, currency=currency

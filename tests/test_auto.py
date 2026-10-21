@@ -87,6 +87,16 @@ def test_ambiguous_or_missing_energy_is_an_error_with_the_columns(tmp_path: Path
         sniff(g)
 
 
+def test_a_time_column_not_in_the_file_is_a_message_with_the_columns(tmp_path: Path) -> None:
+    # regression 2026-10-21: a misspelt `time_column` was a bare KeyError
+    f = _csv(tmp_path / "a.csv", pd.DataFrame({"time": T, "energy_kWh": SUN}))
+    with pytest.raises(ValueError, match=r"Column 'nope' not in the file; it has \['time', 'energy_kWh'\]"):
+        read_energy(f, tz=TZ, time_column="nope")
+    with pytest.raises(ValueError, match="Column 'nope' not in the file"):
+        read_energy(f, tz=TZ, value_column="nope")
+    assert read_energy(f, tz=TZ, time_column="time").series == ["energy_kWh"]
+
+
 def test_daily_export_says_to_export_the_detailed_data(tmp_path: Path) -> None:
     days = pd.date_range("2025-08-01", periods=10, freq="D")
     lines = [

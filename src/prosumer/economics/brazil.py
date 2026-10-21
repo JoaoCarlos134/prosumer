@@ -121,6 +121,7 @@ the import-weighted mean of the month's hourly prices, so a month that straddles
 
 from __future__ import annotations
 
+import re
 import warnings
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -229,8 +230,10 @@ def branca_blocks(peak_start: str = "18:00") -> dict[int, str | dict[str, float]
     """Hour -> posto (or share of each posto) on working days, for a ponta of 3 h starting at `peak_start`
     ("HH:MM"), intermediario the hour before and after ([R] art. 2 XXXVIII). Boundaries inside an hour split
     it in shares (energy assumed even within the hour)."""
-    hh, mm = (int(x) for x in peak_start.split(":"))
-    p0 = hh * 60 + mm
+    m = re.fullmatch(r"\s*(\d{1,2}):(\d{2})\s*", str(peak_start))
+    if not m or int(m.group(2)) >= 60:
+        raise ValueError(Note("peak_start {value!r}: give it as HH:MM, e.g. 18:00", value=peak_start))
+    p0 = int(m.group(1)) * 60 + int(m.group(2))
     if not 60 <= p0 <= 20 * 60:
         raise ValueError(Note("peak_start must leave room for the intermediario hours (01:00-20:00)"))
     spans = {"intermediario": [(p0 - 60, p0), (p0 + 180, p0 + 240)], "ponta": [(p0, p0 + 180)]}

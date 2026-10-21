@@ -98,6 +98,9 @@ def test_branca_postos() -> None:
     ]
     half = brazil.branca_blocks("17:30")
     assert half[17] == {"intermediario": 0.5, "ponta": 0.5}
+    for wrong in ("18", "18h", "18:75", ""):  # regression 2026-10-21: "18" was "not enough values to unpack"
+        with pytest.raises(ValueError, match="give it as HH:MM"):
+            brazil.branca_blocks(wrong)
     assert half[21] == {"intermediario": 0.5, "fora_ponta": 0.5}
     t = brazil.tariff(_book(), "2026-03", modality="Branca", peak_start="18:00")
     ds = pd.DatetimeIndex(

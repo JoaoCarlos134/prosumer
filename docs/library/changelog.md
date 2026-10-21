@@ -20,6 +20,15 @@
   (it was the bare network error), as a tariff already was.
 - Fixed: a Brazilian price with an unknown `connection` (e.g. "bifasico") crashed `app.run` with a bare
   `KeyError`; `brazil.bill` and the app now say which connections exist (or take the minimum in kWh).
+- Fixed (review of 2026-10-21): what the person types into `app.run` is checked with a message in both
+  languages: `kind`, `timezone` (an unknown zone was a `ZoneInfoNotFoundError`), `time_column` (a name not in
+  the file was a bare `KeyError`, also in `io.read_energy`), `price.scheme`, ICMS and PIS/COFINS each in
+  [0, 1) and their sum below 1, `peak_start` (a value without ":" crashed `brazil.branca_blocks`), `gd`
+  (required with a PV file: the message asked for dates the request cannot take) and a missing ANEEL
+  components file of a year GD II needs.
+- Fixed: a PV or meter file whose evaluated test hours are all zero (an inverter dead in the last
+  `test_days`) made `analyze`, and so `app.run`, raise from the metrics; the forecast check is now skipped
+  with a note and the rest of the report is kept.
 
 **Reading data**
 

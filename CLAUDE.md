@@ -214,7 +214,16 @@ row name). Tests of the memories written (`test_physics` long-span memory, `test
 across `forecast_ahead` + `diagnose`, a changed value misses, copies, LRU of `ROOF_MEMORY`).
 Timings reproduced by the reviewer before the speed commit: 8.0 s naive / 10.5 s default on 60,000 h.
 
-Next: a review (work-reviewer) of `24045e5..HEAD` (speed commit + these fixes), then items 3-7 below.
+Also done in the cloud on 21/10 (same branch): the example site is a thin shell over `app.run`; `app.run` takes
+blank price fields as "not given" and ignores `gd` without PV; CI installs `lightgbm` and runs `-n auto`;
+`tests/series.py` (shared helper), `test_economics_app.py` -> `test_economics_pricing.py`; `docs/REPO_MAP.md`
+(the map of the repository, with two Mermaid diagrams). Speed of `_segment`/`clock_offset`: given to the
+`library-builder` agent. Growatt trust/skill pilot (item 3): blocked here (the full file needs a Kaggle login).
+
+**The user's decision (21/10): after the work-reviewer has reviewed the branch `claude/cool-pascal-hxh4ol`
+(`24045e5..HEAD`) and its findings are dealt with, merge the branch into `main`.**
+
+Next: that review, its fixes, the merge into `main`; then the TypeScript site (item 7 below).
 
 ### The list of 2026-10-19 (item 2 done on 21/10)
 

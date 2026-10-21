@@ -4,31 +4,100 @@ What every part of `prosumer` is, what its main functions do, where each piece o
 it goes. Written on 2026-10-21. The rules and the current state are in `CLAUDE.md`; this file is the
 structure. Update it when a module, a data source or a pipeline step is added.
 
-## 1. The whole in one picture
+## 1. The whole in two pictures
 
+**The app's data path**: what the library does with a person's files (GitHub draws these diagrams; elsewhere,
+paste the block into https://mermaid.live).
+
+```mermaid
+flowchart LR
+    USER["👤 <b>The person's files</b><br/>inverter / meter exports<br/><i>CSV · XLSX · any brand</i>"]
+
+    subgraph OUT["🌐 Outside services · public data"]
+        direction TB
+        NOM["<b>Nominatim</b><br/>address → site"]
+        OM["<b>Open-Meteo</b><br/>weather forecast · time zone<br/><i>CC BY 4.0</i>"]
+        AN["<b>ANEEL</b><br/>tariffs · bandeiras<br/><i>ODbL</i>"]
+    end
+
+    subgraph LIB["📦 Library · src/prosumer"]
+        direction TB
+        IO["<b>1 · io</b><br/>read_energy · geocode<br/>open_meteo · aneel"]
+        ES["<b>contracts</b><br/>EnergySeries<br/><i>+ provenance · i18n</i>"]
+        CHK["<b>2 · checks</b><br/>quality · diagnostics"]
+        FC["<b>3 · forecast</b><br/>forecast_ahead · best_windows<br/><i>Naive · LightGBM · Chronos-2 …</i>"]
+        EC["<b>4 · economics</b><br/>Tariff · bill · brazil.Setup"]
+        AZ["<b>5 · analyze</b><br/>→ Report"]
+        APP["<b>6 · app.run</b><br/>→ Result<br/><i>to_json · en / pt</i>"]
+        IO --> ES
+        ES --> CHK & FC & EC
+        CHK & FC & EC --> AZ
+        AZ --> APP
+    end
+
+    SITE(["🖥️ <b>examples/site_local</b><br/>HTML · stdlib server"])
+    TCC(["📱 <b>TCC site</b><br/>TypeScript · next"])
+
+    USER -->|"bytes · never leave the machine"| IO
+    OUT -->|"HTTP · rounded site only"| IO
+    APP -->|"HTML"| SITE
+    APP -->|"JSON"| TCC
+
+    classDef box fill:#1f1f1f,stroke:#555,color:#f2f2f2
+    classDef key fill:#c8102e,stroke:#7a0a1c,color:#ffffff
+    classDef product fill:#1e6b3a,stroke:#0f3d20,color:#ffffff
+    class USER,NOM,OM,AN,IO,ES,CHK,FC,EC,AZ box
+    class APP key
+    class SITE,TCC product
+    style LIB fill:#eef4ff,stroke:#7a8fb8,color:#1a1a1a
+    style OUT fill:#f3f3f3,stroke:#999,color:#1a1a1a
 ```
-                         OUTSIDE WORLD                                     THIS REPOSITORY
-  ┌───────────────────────────────────────────────┐
-  │ the person's files (inverter / meter exports)  │──► src/prosumer/io ──► EnergySeries ──► analysis, outlook,
-  │ Nominatim (address)  Open-Meteo (weather, tz)  │──► src/prosumer/io                     diagnostics, quality,
-  │ ANEEL open data (tariffs)  NASA POWER  PVDAQ   │──► src/prosumer/io                     economics, forecast
-  │ figshare (Dingle houses, CC0)                  │──► src/prosumer/data                          │
-  └───────────────────────────────────────────────┘                                              ▼
-                                                                    prosumer.app.run ──► Result.to_json(lang)
-  [PRIVATE, Lactec machine only]                                          │                    │
-  Fronius 5-min exports of the two Paraná plants, bills                   ▼                    ▼
-        │ 01_prepara_dados.py (runs only there)              examples/site_local      the TCC's TypeScript
-        ▼                                                    (HTML, stdlib server)    site (to be built)
-  experimentos/testes_previsao/dados/*.parquet
-        │ 02, 02b, 03, 03b, 03c, 04 (+ 08/09 downloads)
-        ▼
-  resultados/previsoes/*.parquet ──► 07 ensemble ──► 05 metrics ──► metricas.csv, dm_*.csv
-        │                                                  ├──► 06 figures, 05b resolutions, docs/literatura xlsx
-        │                                                  └──► tests/test_benchmark_regression.py (the library
-        ▼                                                       must reproduce the published numbers)
-  piloto_*.py ──► resultados/pilotos/ ──► docs/projeto/PILOTOS_F1_F2.md (gate before, record after)
 
-  legado/ (the original scripts) ──ported──► src/prosumer (each module cites its source)
+**The research behind it**: where the benchmark's data come from, and how its results reach the library.
+
+```mermaid
+flowchart LR
+    subgraph PRIV["🔒 Private · Lactec machine only"]
+        LAC["<b>Paraná plants</b><br/>Fronius 5-min exports · bills<br/><i>teacher's permission needed</i>"]
+    end
+    subgraph PUB["🌐 Public sources"]
+        direction TB
+        OM["<b>Open-Meteo</b><br/>past day-ahead runs"]
+        FIG["<b>figshare</b><br/>Dingle houses · weather<br/><i>CC0</i>"]
+    end
+
+    subgraph BENCH["🧪 Benchmark · experimentos/testes_previsao"]
+        direction TB
+        DADOS["<b>dados/</b><br/>usinas · casas · weather<br/><i>*.parquet</i>"]
+        RUN["<b>02 · 03 · 04</b><br/>57 models"]
+        EVAL["<b>07 → 05 → 06</b><br/>ensemble · metrics · figures"]
+        PIL["<b>piloto_*.py</b><br/>gate committed first"]
+        DADOS --> RUN
+        RUN -->|"resultados/previsoes/"| EVAL
+        DADOS --> PIL
+    end
+
+    LEG["📜 <b>legado/</b><br/>original scripts"]
+    LIB["📦 <b>Library</b><br/>src/prosumer"]
+    DOCS["📚 <b>docs/</b><br/>LEIA-ME · PILOTOS_F1_F2<br/>spreadsheets · papers"]
+
+    LAC -->|"01_prepara_dados.py"| DADOS
+    PUB -->|"08 · 09"| DADOS
+    EVAL -->|"metricas.csv"| DOCS
+    EVAL -->|"test_benchmark_regression"| LIB
+    PIL -->|"resultados/pilotos/"| DOCS
+    LEG -.->|"ported"| LIB
+    DOCS -.->|"constants · notes · tuning.md"| LIB
+
+    classDef box fill:#1f1f1f,stroke:#555,color:#f2f2f2
+    classDef key fill:#c8102e,stroke:#7a0a1c,color:#ffffff
+    classDef product fill:#1e6b3a,stroke:#0f3d20,color:#ffffff
+    class OM,FIG,DADOS,RUN,EVAL,PIL,LEG,DOCS box
+    class LAC key
+    class LIB product
+    style BENCH fill:#fff4e6,stroke:#c79a5b,color:#1a1a1a
+    style PUB fill:#f3f3f3,stroke:#999,color:#1a1a1a
+    style PRIV fill:#fde8ea,stroke:#c8102e,color:#1a1a1a
 ```
 
 Three products, in order of importance (CLAUDE.md, "Library first"):

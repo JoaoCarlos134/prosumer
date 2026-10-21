@@ -40,6 +40,11 @@
 - Fixed: `app.run` took a blank price field (`"currency": ""`, as a web form sends it) as its value, and
   `gd` with a consumption file only was an unknown field; blank is "not given" and `gd` is ignored without PV.
   The example site (`examples/site_local`) is now a thin shell over `app.run`.
+- Fixed (review of 2026-10-21): `physics.mean_sun` remembered for a long span returned the first caller's
+  index name and freq; `metrics.skill_ci95` warned (divide by zero) when a resampled set of test days had no
+  reference error, which a nearly dead test period gives (its bounds are NaN, quietly); the example page told a
+  person who had sent the consumption to "upload it" when the bill could not be made (it says why now), and
+  its tax boxes, in %, got messages in fractions.
 - Fixed: a PV or meter file whose evaluated test hours are all zero (an inverter dead in the last
   `test_days`) made `analyze`, and so `app.run`, raise from the metrics; the forecast check is now skipped
   with a note and the rest of the report is kept.

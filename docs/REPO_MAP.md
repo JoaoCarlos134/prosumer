@@ -138,12 +138,16 @@ Three products, in order of importance (CLAUDE.md, "Library first"):
    ├──► economics (core, brazil ──► io.aneel)
    └──► io (geocode, open_meteo, auto ──► meter, fronius ──► _tables)
 
-  foundation layer, imported by everything:  contracts (EnergySeries)   i18n (Note)   provenance
+  economics.core ──► outlook (the Outlook it ranks windows over; outlook imports io and diagnostics)
+
+  foundation layer, imported by everything:  contracts (EnergySeries; it uses io._tables and so physics)
+                                             i18n (Note)   provenance
   no internal imports:                       physics   metrics   postprocessing
 ```
 
-`economics` imports nothing from `io` at import time (`TariffBook.from_aneel` imports `io.aneel` inside the
-function). `embedded` stands apart: it needs only `forecast.lightgbm` and `protocol`.
+`economics.brazil` reaches `io.aneel` only inside `TariffBook.from_aneel` (a function-level import), but
+`economics.core` imports `outlook`, which imports `io`: importing `economics` loads `io`. `embedded` stands
+apart: it needs only `forecast.lightgbm` and `protocol`.
 
 ### 3.2 Modules, their main functions, what goes in and out
 
@@ -208,7 +212,7 @@ function). `embedded` stands apart: it needs only `forecast.lightgbm` and `proto
 | Module | Main names | What it does |
 |---|---|---|
 | `analysis` | `analyze(series, site=, weather=, models=, economics=, ...)` -> `Report` (`summary`, `quality`, `clock`, `forecast` table, `hourly`, `resolution`, `bands`, `diagnostics`, `economics`, `provenance`, `notes`, `pending`; `to_dict(lang)`, `to_markdown`) | quality -> clock (sun, weather) -> diagnostics (PV with site) -> bill (with a price) -> the forecast check: the last `test_days` forecast day-ahead by the naive rules + the given models, scored against the reference; the output is their median (`median`, and `median_weather` for regime C) |
-| `app` | `run(request, files, services=)` -> `Result` (`to_dict(lang)`, `to_json`); `Request.from_dict` (validates every answer with a `Note`), `Services` (replaceable outside calls) | the app's whole backend: 1 where (geocode, round, tz) -> 2 read each file -> 3 weather (PV) -> 4 `forecast_ahead` -> 5 `best_windows` (+ `windows_by_cost` with a price) -> 6 `analyze` (with the bill and the PV savings) -> 7 `charts` |
+| `app` | `run(request, files, services=)` -> `Result` (`to_dict(lang)`, `to_json`); `Request.from_dict` (checks the answers that can crash a run, with a `Note`; a negative price or COSIP is not refused), `Services` (replaceable outside calls) | the app's whole backend: 1 where (geocode, round, tz) -> 2 read each file -> 3 weather (PV) -> 4 `forecast_ahead` -> 5 `best_windows` (+ `windows_by_cost` with a price) -> 6 `analyze` (with the bill and the PV savings) -> 7 `charts` |
 
 ### 3.3 What leaves the machine
 
@@ -218,8 +222,8 @@ locally; a model whose card says `sends_data` gets a note in the report.
 
 ## 4. The tests, `tests/`
 
-One file per module (`test_<module>.py`), flat, no conftest; ~700 tests (~22 min serially on 4 CPUs in the
-cloud, ~110 s with `-n 6` at Lactec). Helpers: `aneel_fake.py` (a fake ANEEL CKAN, and the live extract of
+One file per module (`test_<module>.py`), flat, no conftest; ~710 tests (~20 min with `pytest -n 4` in the
+cloud container, ~110 s with `-n 6` at Lactec). Helpers: `aneel_fake.py` (a fake ANEEL CKAN, and the live extract of
 2026-10-12), `series.py` (an hourly `EnergySeries` for the economics tests), `wasm_c.py` (C -> WebAssembly to run
 the embedded headers). `test_i18n` imports its helpers from `test_app`.
 

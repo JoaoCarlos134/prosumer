@@ -99,7 +99,7 @@ _T = TypeVar("_T", np.ndarray, pd.DataFrame)
 
 def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], compute: Callable[[], _T]) -> _T:
     """`compute()`, or a copy of its remembered result for the same `times` (every instant and the zone) and
-    `key`."""
+    `key`; a remembered frame takes the caller's `times` as its index (its name and freq may differ)."""
     if len(times) < MEMORY_MIN_TIMES:
         return compute()
     ints = np.ascontiguousarray(times.asi8)  # type: ignore[attr-defined]
@@ -110,7 +110,10 @@ def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], comput
         hit = cache.get(full)
         if hit is not None:
             cache.move_to_end(full)
-            return hit.copy()
+            out = hit.copy()
+            if isinstance(out, pd.DataFrame):
+                out.index = times
+            return out
     out = compute()
     with _MEMORY_LOCK:
         cache[full] = out.copy()

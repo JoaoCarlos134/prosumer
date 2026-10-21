@@ -115,3 +115,6 @@ def test_long_spans_are_remembered_by_their_instants_and_inputs(
     fn(_hours("2024-01-01", 2), LAT, LON)
     fn(_hours("2024-01-01", 2), LAT, LON)
     assert len(calls) == 6  # 48 hours: below MEMORY_MIN_TIMES, never kept
+    if name == "mean_sun":  # regression 2026-10-21: a hit returned the first caller's index (name, freq)
+        named = fn(times.rename("ds"), LAT, LON)
+        assert len(calls) == 6 and named.index.name == "ds" and named.index.equals(times)

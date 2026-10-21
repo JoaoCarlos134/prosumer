@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import warnings
 from functools import partial
 from typing import Any
 
@@ -136,7 +137,9 @@ def test_a_pv_file_dead_through_the_test_days_skips_only_the_forecast_check() ->
     )
     f.loc[f.index[pd.to_datetime(f["time"]).dt.hour == 12][-1], "Energy (kWh)"] = 0.5  # one hour is enough
     files = {"generation": (f.to_csv(index=False).encode(), "inverter.csv")}
-    assert app.run({**SITE, "models": "naive"}, files, services=_services()).report.forecast is not None
+    with warnings.catch_warnings():  # the day bootstrap of a nearly dead test: NaN bounds, no warnings
+        warnings.simplefilter("error", RuntimeWarning)
+        assert app.run({**SITE, "models": "naive"}, files, services=_services()).report.forecast is not None
 
 
 def test_blank_price_fields_are_not_given_and_gd_without_pv_is_ignored() -> None:
@@ -149,6 +152,34 @@ def test_blank_price_fields_are_not_given_and_gd_without_pv_is_ignored() -> None
     price = {"kind": "brazil", "icms": 0.19, "pis_cofins": 0.0925, "gd": "GD II", "peak_start": ""}
     r = app.run({**SITE, "models": "naive", "price": price}, files, services=_services())
     assert r.report.economics is not None and "no GD class" in str(r.pricing)
+
+
+def test_peak_hours_wrap_past_midnight_and_bad_ones_are_messages() -> None:
+    # ported 2026-10-21 from the example site's tests (review F4 of 2026-10-17): the app parses the price now
+    files = {"consumption": (_consumption_csv("2024-01-01", 42), "m.csv")}
+    tou = {"kind": "tou", "peak_price": "0,5", "offpeak_price": 0.2}
+    for bad in ("17:30-20:30", "18-18", "evening"):
+        with pytest.raises(ValueError, match="whole hours"):
+            app.run(
+                {**SITE, "models": "naive", "price": tou | {"peak_hours": bad}}, files, services=_services()
+            )
+    night = app._pricing(tou | {"peak_hours": "22-6"}, {}, _services(), [], [])
+    assert isinstance(night, app.econ.Plan)
+    assert night.tariff.weekday[23] == "peak" and night.tariff.weekday[6] == "off_peak"
+    assert night.tariff.weekday[21] == "off_peak" and night.tariff.weekday[0] == "peak"
+
+
+def test_gd_ii_pv_in_a_year_aneel_has_not_published_takes_the_fio_b_of_the_year_before() -> None:
+    # ported 2026-10-21 from the example site's tests (review F1 of 2026-10-17): PV in 2027, Copel's Fio B of
+    # 2026 starts on 24/6/2026 and the 2027 file is not published (the fixture has 2026 only)
+    files = {
+        "generation": (_pv_csv("2027-01-01", 60), "inversor.csv"),
+        "consumption": (_consumption_csv("2027-01-01", 60), "medidor.csv"),
+    }
+    price = {"kind": "brazil", "icms": 0.19, "pis_cofins": 0.0925, "gd": "GD II"}
+    r = app.run({**SITE, "models": "naive", "price": price}, files, services=_services("2027-03-02"))
+    assert any("no tariff components file for 2027 yet" in n for n in r.notes), r.notes
+    assert r.report.economics is not None and r.windows_by_cost is not None and len(r.windows_by_cost)
 
 
 def test_failed_downloads_are_messages_for_the_person() -> None:

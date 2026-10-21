@@ -91,5 +91,6 @@ the pricing have no untranslated text.
 
 How long it takes: seven years of hourly PV data (60,000 hours) took ~9 s with `models="naive"` and ~12 s
 with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB; since the roof is fitted once for the
-next days and the diagnostics (2026-10-21), ~6 s with `models="naive"`. The clock check, reading the file and
-the change points of the diagnostics are most of what is left; a page should show that it is working.
+next days and the diagnostics and the change points and the clock check were vectorised (2026-10-21), ~4 s
+with `models="naive"` and ~6.6 s with the default (cloud container, 4 CPUs). Reading the file and the clock
+check are most of what is left; a page should show that it is working.

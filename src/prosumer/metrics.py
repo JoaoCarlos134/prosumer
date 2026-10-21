@@ -105,8 +105,10 @@ def skill_ci95(
         raise ValueError("Fewer than two days: cannot estimate a CI by day bootstrap")
     idx = rng.integers(0, n, size=(resamples, n))
     a, c, r = se["sum"].to_numpy(), se["count"].to_numpy(), sr.to_numpy()
-    s = 1 - np.sqrt(a[idx].sum(1) / c[idx].sum(1)) / np.sqrt(r[idx].sum(1) / c[idx].sum(1))
-    lo, hi = np.percentile(s, [2.5, 97.5])
+    # a resample whose reference error is zero (e.g. test days that are all zero) has no skill: NaN, quietly
+    with np.errstate(divide="ignore", invalid="ignore"):
+        s = 1 - np.sqrt(a[idx].sum(1) / c[idx].sum(1)) / np.sqrt(r[idx].sum(1) / c[idx].sum(1))
+        lo, hi = np.percentile(s, [2.5, 97.5])
     return float(lo), float(hi)
 
 

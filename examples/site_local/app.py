@@ -49,6 +49,7 @@ PRICE_FIELDS = {
             "export_price": "export_price", "fixed": "fixed", "currency": "currency", "scheme": "scheme"},
     "brazil": {"distributor": "distributor", "connection": "connection", "gd": "gd", "cosip": "cosip"},
 }  # fmt: skip
+TAXES = {"icms": "the ICMS rate of your bill", "pis_cofins": "the PIS/COFINS rate of your bill"}
 
 
 # ---------------------------------------------------------------------- the backend: one library call
@@ -71,17 +72,25 @@ def _request(form: dict[str, str]) -> dict[str, Any]:
     price: dict[str, Any] = {"kind": kind}
     price |= {new: form[old] for old, new in PRICE_FIELDS.get(kind, {}).items() if old in form}
     if kind == "brazil":
-        price |= {k: _percent(form.get(k, "")) for k in ("icms", "pis_cofins")}
+        price |= {k: _percent(form.get(k, ""), what) for k, what in TAXES.items()}
     request["price"] = price
     return request
 
 
-def _percent(text: str) -> float | str:
-    """'19' or '9,25' (%) -> 0.19, 0.0925; anything else as it is, for `app.run` to say what is wrong."""
+def _percent(text: str, what: str) -> float:
+    """'19' or '9,25' (%, as the form asks) -> 0.19, 0.0925. The messages speak in % too: `app.run`'s own
+    would ask for a fraction, which is not what this form's box says."""
+    if not text.strip():
+        raise ValueError(f"Give {what}, in % as on your bill (e.g. 19).")
     try:
-        return float(text.strip().replace(",", ".")) / 100
+        value = float(text.strip().replace(",", "."))
     except ValueError:
-        return text
+        raise ValueError(
+            f"{what[0].upper()}{what[1:]}: {text!r} is not a number (type it in %, e.g. 19)."
+        ) from None
+    if not 0 <= value < 100:
+        raise ValueError(f"{what[0].upper()}{what[1:]} is in %, between 0 and 100, not {text!r}.")
+    return value / 100
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)
@@ -154,7 +163,11 @@ def _money(r: app.Result, hours: int, kw: float) -> str:
     ]
     econ = r.report.economics
     if econ is None:
-        parts.append("<p>The monthly bill needs your consumption: upload it to see what you pay.</p>")
+        if "consumption" not in r.read:
+            parts.append("<p>The monthly bill needs your consumption: upload it to see what you pay.</p>")
+        else:  # the consumption was sent but the bill could not be made: say why (the report's note)
+            why = [n for n in r.report.notes if n.startswith("Economics left out")]
+            parts.append(f"<p>No bill for your data. {html.escape(' '.join(why))}</p>")
         return "\n".join(parts)
     rows = "".join(
         f"<tr><td>{m['month']:%Y-%m}</td><td>{m['consumption']:.0f}</td><td>{m['total']:.2f}</td>"

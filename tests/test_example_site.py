@@ -6,6 +6,7 @@ nor a weather forecast; a Brazilian tariff comes from a fake ANEEL with the fixt
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 from typing import Any
 
@@ -147,7 +148,24 @@ def test_the_form_becomes_the_request_of_app_run() -> None:
     assert "price" not in site._request(FORM | {"price": "none", "flat_price": "0.3"})
     tou = site._request(FORM | {"price": "tou", "peak_hours": "22-6", "flat_price": "0.3", "icms": "19"})
     assert tou["price"] == {"kind": "tou", "peak_hours": "22-6"}
-    assert site._request(FORM | {"price": "brazil", "icms": "dezenove"})["price"]["icms"] == "dezenove"
+    # regression 2026-10-21: the box asks for %, the messages said "a fraction" (app.run's own words)
+    for icms, said in (("", "Give the ICMS rate of your bill, in %"), ("19%", "not a number (type it in %"),
+                       ("120", "is in %, between 0 and 100")):  # fmt: skip
+        with pytest.raises(ValueError, match=re.escape(said)):
+            site._request(FORM | {"price": "brazil", "icms": icms, "pis_cofins": "9.25"})
+
+
+def test_a_bill_that_cannot_be_made_says_why_not_upload_the_consumption(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression 2026-10-21: with the consumption sent, a bill that failed (no tariff in force on the data's
+    first months: the fixture has Copel's vigencia from 24/6/2026 only) told the person to upload it."""
+    site = _app()
+    monkeypatch.setattr(site, "ANEEL_GET", from_fixture())
+    form = FORM | {"price": "brazil", "icms": "19", "pis_cofins": "9.25", "gd": "GD II"}
+    page = site.forecast_page(form, _csv("2026-01-01", 273))
+    assert "upload it" not in page
+    assert "No bill for your data. Economics left out:" in page and "tariff in force on" in page
 
 
 def test_brazilian_tariff_needs_the_taxes_and_says_when_offline(monkeypatch: pytest.MonkeyPatch) -> None:

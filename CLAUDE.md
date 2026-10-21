@@ -222,6 +222,14 @@ blank price fields as "not given" and ignores `gd` without PV; CI installs `ligh
 (the map of the repository, with two Mermaid diagrams). Speed of `_segment`/`clock_offset`: given to the
 `library-builder` agent. Growatt trust/skill pilot (item 3): blocked here (the full file needs a Kaggle login).
 
+Review of `24045e5..HEAD` (work-reviewer, 21/10): **ready with fixes, nothing MAJOR**; speed commits checked
+byte-identical (en/pt) on 7 years with steps, vectorised `_segment` = old loop on 3000 cases, the 9 earlier
+findings fixed with red-before tests, REPO_MAP names verified, full suite 691 passed. Its findings 1-8 fixed the
+same day (example bill message and % tax messages, ported peak-hour and GD II tests to `test_app`, `mean_sun`
+cache index, quiet bootstrap NaN, CI paths for `examples/` and `docs/library/`, app.md timing, REPO_MAP import
+notes). Left: nit 9 (example shows ANEEL codes, "Price: flat"); a nearly dead test period (one non-zero hour)
+still scores meaningless numbers without a note (a threshold would be a constant chosen on nothing).
+
 **The user's decision (21/10): after the work-reviewer has reviewed the branch `claude/cool-pascal-hxh4ol`
 (`24045e5..HEAD`) and its findings are dealt with, merge the branch into `main`.**
 

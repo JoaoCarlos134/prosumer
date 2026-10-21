@@ -79,7 +79,7 @@ NeuralForecast não aceita covariáveis futuras, então não usaria a previsão 
 Tudo cabe em 5 MB: `dados/usinas_horario.parquet`, `casas_horario.parquet`,
 `previsao_tempo.parquet` (o arquivo de previsões do regime C) e, desde 07/10/2026,
 `clima_casas_horario.parquet` (clima medido das casas, de `scripts/09_clima_casas.py`; abre o regime B
-nas casas, ainda não rodado).
+nas casas, rodado depois da v2 de 06/10: 23 linhas em `casas_prod` e em `casas_cons`; ver a nota no topo).
 
 **Problemas nos dados (e o que foi feito):**
 

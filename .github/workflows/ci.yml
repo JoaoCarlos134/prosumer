@@ -1,7 +1,7 @@
 name: CI
 
-# Roda so no que e da biblioteca. O benchmark em experimentos/ nao entra: ele precisa dos dados
-# das usinas, que sao de terceiros e nao estao no repositorio.
+# Roda so no que e da biblioteca. O benchmark em experimentos/ nao entra: ele precisa dos dados das usinas,
+# que sao de terceiros (o arquivo esta no repositorio, que e privado, mas o CI nao o usa).
 on:
   push:
     branches: [main]

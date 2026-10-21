@@ -7,7 +7,8 @@ user (João Carlos Jachenski Junior) works in English with Claude. The LIBRARY (
 README, pyproject, `docs/library/`) is in English; project docs (`docs/projeto`, `docs/proposta`), benchmark
 scripts and their comments stay in Portuguese (code comments without accents): keep that convention there.
 
-This file holds the rules and the current state. The dated diary of 06/10-17/10/2026 (every run, pilot,
+This file holds the rules and the current state; `docs/REPO_MAP.md` is the map of the whole repository (every
+part, its main functions, where each piece of data comes from and goes). The dated diary of 06/10-17/10/2026 (every run, pilot,
 environment fix and decision, with numbers) moved verbatim to `docs/projeto/HISTORICO.md` on 2026-10-17:
 look there for the history of anything below.
 
@@ -61,7 +62,7 @@ look there for the history of anything below.
   references, review draft `smart_buildings.docx`.
 - `experimentos/testes_previsao/` — the forecasting benchmark (details below). `LEIA-ME.md` there is the
   v2 write-up (rewritten 2026-10-06), with the protocol, the final numbers and the six defects fixed
-  along the way; `ambientes/LEIA-ME.md` has the install deviations each of the four envs needs.
+  along the way; `ambientes/LEIA-ME.md` has the install deviations each of the six envs needs.
 - `legado/` — the project's original scripts (ia_solar analysis, modelling base, TFLite models, ANEEL
   tariffs, graph scripts). Reference only: raw 5-min data stayed at Lactec, so most won't run here.
   Some file names were changed by the anonymization (e.g. `*_curitiba*` scripts).
@@ -104,7 +105,7 @@ Pipeline (run from `scripts/`):
     09_clima_casas.py            measured weather of the houses (Dingle station, figshare CC0) -> dados/clima_casas_horario.parquet
     01_prepara_dados.py          builds dados/*.parquet from Lactec raw data — does NOT run here
 
-Environments: four, frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
+Environments: six (`previsao`, `previsao_gpu`, `lote2`, `lote2_hf`, `moirai`, `classicos`), frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
 expect them in `~/.venvs/<name>` (override with `VENVS`). `previsao` runs almost everything.
 
 Benchmark results and findings (v2, 57 models, 260 rows of `resultados/metricas.csv`): `experimentos/testes_previsao/LEIA-ME.md`;

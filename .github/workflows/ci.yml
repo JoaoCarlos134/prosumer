@@ -62,12 +62,16 @@ jobs:
       # -n auto: os runners tem 4 CPUs; em serie a suite passa de 20 min
       - name: pytest
         run: pytest -n auto --cov --cov-report=term-missing --cov-report=xml
+      # Artefatos: guardados 3 dias e sem derrubar o job. Em 21/10/2026 a cota de armazenamento de artefatos da
+      # conta estourou e o upload deixou o CI vermelho com os testes todos passando.
       - name: Guarda a cobertura
         if: matrix.python == '3.12'
+        continue-on-error: true
         uses: actions/upload-artifact@v6
         with:
           name: cobertura
           path: coverage.xml
+          retention-days: 3
 
   empacota:
     runs-on: ubuntu-24.04
@@ -83,7 +87,10 @@ jobs:
         run: uv build
       - name: Confere os metadados do pacote
         run: uvx twine check dist/*
-      - uses: actions/upload-artifact@v6
+      - name: Guarda o pacote
+        continue-on-error: true
+        uses: actions/upload-artifact@v6
         with:
           name: dist
           path: dist/
+          retention-days: 3

@@ -194,50 +194,26 @@ Speed (21/10, stopped by the user mid-way, committed after this note): `app.run`
 Done: `physics._PoaParts` (fit_orientation computes the plane-independent part once), `diagnostics._roof`
 remembered by a fingerprint of its inputs (`_fit_roof` does the work; LRU of 4, lock, returns copies),
 `physics.clear_sky_ghi`/`mean_sun` remembered on spans >= 1000 times (`MEMORY` = 6), `_complete_days` without a
-lambda per day. NOT done: tests of the memories (fitted once across `forecast_ahead` + `diagnose`; a changed
-value misses; the returned copy cannot alter the cache) - write them first. Still slow, if wanted:
+lambda per day. Tests of the memories: written in the cloud on 21/10 (below). Still slow, if wanted:
 `diagnostics._segment` (change points, pure Python DP, ~0.85 s per call, 2 calls), `quality.clock_offset`
 (~2 s), reading the file (~2 s).
 
-**Review of `9119619..24045e5` (work-reviewer, 21/10; the speed commit `7056c1e` was NOT in it). Verdict:
-ready with fixes.** English text byte-identical in 165 old/new scenarios (only the intended changes differ);
-every regression test fails on the code before its fix; translations faithful (numbers checked in all 229).
-Findings, to fix in the cloud in this order (each fix of a crash ships with its regression test):
-1. MAJOR: `app.run` still raises plain-English (some not `ValueError`) errors for what the person types,
-   contradicting `docs/library/app.md` ("errors work the same way"). Validate in `Request.check`/`_pricing`
-   with Notes and add each to `test_errors_of_the_app_are_notes_with_portuguese`: `kind: "foo"`
-   (`io/meter.py` "kind must be ..."); `price.scheme: "feed_in"` (`economics/core.py` Plan); `icms 0.6` +
-   `pis_cofins 0.5` or `icms -0.1` ("ICMS + PIS/COFINS must be in [0, 1)", `brazil.py`; the app checks each
-   only `>= 1`); branca `peak_start: "18"` -> "not enough values to unpack" (`brazil.branca_blocks`); GD II
-   with PV in a year whose ANEEL components file is missing (not the last year) -> "No components resource"
-   (`io/aneel.py` via `TariffBook.from_aneel`).
-2. MAJOR (bare KeyError class, like the `connection` bug): `time_column: "nope"` -> `KeyError` at
-   `io/auto.py` `_sniff_table` (`head[time_column]` unchecked: use the "Column {column!r} not in the file"
-   Note); `timezone: "Mars/Base"` -> `ZoneInfoNotFoundError` (check the zone in `Request.check`).
-3. MAJOR (older): a PV file whose last `test_days` are all zero (dead inverter) makes `app.run` raise
-   "Mean of the actual values is zero..." (`metrics.py`) and the page is lost; `analysis.py` guards only an
-   all-zero series. Fix: `skipped(Note(...))` when the evaluated test actuals are all zero + regression test
-   (repro: `_pv_csv("2024-01-01", 60)` with the last 672 rows set to 0, `models="naive"`).
-4. minor: `Plan.sources()` (`economics/core.py`) builds `f"{name}: prices typed by the user"` from the Note
-   tariff name: English on the pt page (`report.provenance[].source`). Make it a Note.
-5. minor, pt formatting: `pd.Timedelta` shows "0 days 00:05:00" (meter, fronius, auto `every`);
-   `Setup.describe` pre-formats "40.5 kWh" (decimal point stays); `{month}`/`{months}`/`{last}` passed as ISO
-   "2026-02" text while dates are dd/mm/yyyy; the i18n docstring promises a thousands point that no template
-   uses ("34584,0 kWh"); a list placeholder empty or mixing Notes and str falls back to Python's repr
-   (no call site reaches it today).
-6. minor (older): PV + Brazilian price without `gd` -> "Give the connection date or the access request
-   date", but the request cannot take those fields (`connected` is an unknown price field): ask for `gd`.
-7. minor: the `median_weather` note should say the medians were measured on the benchmark's saved forecasts,
-   whose `linear_fisico` uses plane-of-array irradiance (the library's `weather_linear` uses mean GHI).
-8. nit: `docs/library/app.md` overstates: the typed-ICMS credit's notes ARE translated; `_check_page` covers
-   2 naive runs and only notes/log/read.how/pending/economics notes+tariff/pricing.
-9. nits: role "weather" -> "previsão do tempo" also labels measured weather (consistent with the row name);
-   `_ROLE[role]` KeyErrors for a role outside the four; `i18n.frame` iterates `rows` twice (a generator
-   breaks it).
+**Review of `9119619..24045e5` (work-reviewer, 21/10; verdict: ready with fixes): all 9 findings fixed in the
+cloud on 21/10** (branch `claude/cool-pascal-hxh4ol`, `cb3e96c` and the commit after it; each crash fix with
+its regression test, checked red on the old code). What changed: `app.run` checks `kind`, `timezone`,
+`price.scheme`, ICMS/PIS each in [0, 1) and their sum < 1, `peak_start` (HH:MM, also in
+`brazil.branca_blocks`), `gd` (required with PV) with Notes before any download; `read_energy(time_column=)`
+not in the file is a message; ANEEL's missing components file is a Note; `analyze` skips the forecast check
+(note) when every evaluated test hour is zero (dead inverter); typed-price/typed-rate/"not declared" sources
+are Notes; `i18n` renders a `timedelta` as "5 min"/"1 day" (English changed too, was "0 days 00:05:00") and a
+monthly `pd.Period` as 2026-02 / 02/2026, joins lists that hold Notes or months; `median_weather` note says
+the benchmark's linear model used POA irradiance; `docs/library/app.md` claims corrected; `_ROLE.get`;
+`i18n.frame` takes a generator. Left as is: role "weather" also labels measured weather (consistent with the
+row name). Tests of the memories written (`test_physics` long-span memory, `test_diagnostics` roof fitted once
+across `forecast_ahead` + `diagnose`, a changed value misses, copies, LRU of `ROOF_MEMORY`).
 Timings reproduced by the reviewer before the speed commit: 8.0 s naive / 10.5 s default on 60,000 h.
 
-Next in the cloud: review findings 1-3 (with regression tests), then 4-9, then the tests of the memories
-(above), then a review of `24045e5..HEAD`, then items 3-7 below.
+Next: a review (work-reviewer) of `24045e5..HEAD` (speed commit + these fixes), then items 3-7 below.
 
 ### The list of 2026-10-19 (item 2 done on 21/10)
 

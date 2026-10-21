@@ -64,6 +64,8 @@ ECONOMICS_LEFT = Note(
     "`brazil.Setup(cosip=...)`), grupo A (demand charges), the tax reform of LC 214/2025."
 )
 
+NOT_DECLARED = Note("not declared")  # the `source` of an input that does not say where it came from
+
 # keys and values are `Note`s: `Report.to_dict(lang=)` translates both; the English keys still look them up
 PENDING: dict[str, str] = {
     Note("weather (regimes B and C)"): Note(
@@ -578,7 +580,9 @@ def analyze(
                 "one test only, the benchmark's two plants (24 rows): the medians of two to four of the "
                 "library's weather rows ranked 1st to 11th and beat each of their members in 10 of 11 "
                 "compositions; the four together ranked 1st (+0.372), LightGBM with the linear model 9th "
-                "(+0.346; +0.330 and +0.312 alone) (2026-10-16 and 2026-10-19).",
+                "(+0.346; +0.330 and +0.312 alone) (2026-10-16 and 2026-10-19). Measured on the "
+                "benchmark's saved forecasts, whose linear model fits the irradiance on the plane of the "
+                "modules; this one (`weather_linear`) fits the mean GHI.",
                 output=WEATHER_OUTPUT,
                 n=len(weather_rows),
                 rows=", ".join(weather_rows),
@@ -841,19 +845,19 @@ def _provenance(
     `extra` inputs: the second series and the tariff of the economics section) with its source and licence,
     and the notes the app must show: unknown licences, non-commercial terms and models that send the data
     out. The built-in naive forecasts are rules of this library and need no row."""
-    undeclared = Provenance(source="not declared")
+    undeclared = Provenance(source=NOT_DECLARED)
     entries: list[_Entry] = [("series", s.quantity, s.provenance or undeclared, False)]
     if weather is not None:
         entries.append(("weather", "weather forecast", provenance_of(weather) or undeclared, False))
     for m in models:
         c = m.card
-        card = Provenance(source=c.source or "not declared", license=c.license)
+        card = Provenance(source=c.source or NOT_DECLARED, license=c.license)
         entries.append(("model", c.name, card, c.sends_data))
     entries += list(extra)
     rows = _provenance_rows(entries)
     notes: list[str] = []
     unknown = [
-        Note("{role} ({name})", role=_ROLE[role], name=name)
+        Note("{role} ({name})", role=_ROLE.get(role, role), name=name)
         for role, name, p, _ in entries
         if not p.license_known
     ]
@@ -871,7 +875,7 @@ def _provenance(
             notes.append(
                 Note(
                     "The {role} {name!r} is for non-commercial use only ({license}; {conditions}).",
-                    role=_ROLE[role],
+                    role=_ROLE.get(role, role),
                     name=name,
                     license=p.license,
                     conditions=p.notes,
@@ -960,9 +964,7 @@ def _economics(
         return None, [], Note("Economics left out: {error}", error=e)
     entries: list[_Entry] = []
     if other is not None:
-        entries.append(
-            ("series", other.quantity, other.provenance or Provenance(source="not declared"), False)
-        )
+        entries.append(("series", other.quantity, other.provenance or Provenance(source=NOT_DECLARED), False))
     entries += [("tariff", name, prov, False) for name, prov in p.sources()]
     notes = list(b.notes)
     totals = b.totals()

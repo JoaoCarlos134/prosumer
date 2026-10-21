@@ -328,7 +328,7 @@ def read_energy(
     except ValueError as e:
         if "shorter than the data's step" in str(e):
             native = pd.Timedelta(str(e).split("step (")[-1].split(")")[0])
-            every = Note("day") if native == pd.Timedelta(days=1) else f"{native}"
+            every = Note("day") if native == pd.Timedelta(days=1) else native
             raise ValueError(
                 Note(
                     "{file} has one value per {every}, coarser than the {freq!r} steps asked for: export the "

@@ -10,9 +10,12 @@ import pickle
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 
+from aneel_fake import from_fixture
 from prosumer import app, i18n
+from prosumer.economics import brazil
 from prosumer.i18n import Note
 from prosumer.i18n.pt import PT
 from test_app import SITE, _consumption_csv, _pv_csv, _services
@@ -46,6 +49,25 @@ def test_portuguese_numbers_take_the_decimal_comma_and_dates_are_day_first() -> 
         n=7,
     )
     assert grouped.text("pt").startswith("7 horas")  # an int stays an int
+
+
+def test_time_steps_months_and_kwh_render_for_the_person() -> None:
+    # regressions 2026-10-21: a step read "0 days 00:05:00", months stayed ISO on the Portuguese page and the
+    # connection minimum kept its decimal point
+    step = Note("native step {step}", step=pd.Timedelta(minutes=5))
+    assert step == "native step 5 min" and step.text("pt") == "passo original 5 min"
+    assert Note("{x}", x=pd.Timedelta(days=1)).text("pt") == "1 dia"
+    assert Note("{x}", x=pd.Timedelta(hours=1, minutes=30)) == "1 h 30 min"
+    month = Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=pd.Period("2026-02", "M"))
+    assert month.endswith("for 2026-02; pass assume_bandeira (R$/MWh)") and "02/2026" in month.text("pt")
+    clock = Note("{h:+g} h in {months}", h=1, months=[pd.Period("2025-11", "M"), pd.Period("2026-01", "M")])
+    assert clock == "+1 h in 2025-11, 2026-01" and clock.text("pt").endswith("11/2025, 01/2026")
+    mixed = Note("{x}", x=[Note("later"), "gfs"])
+    assert mixed == "later, gfs" and mixed.text("pt") == "mais tarde, gfs"
+    assert Note("{x}", x=["a", "b"]) == "['a', 'b']"  # plain texts (column names) keep their brackets
+    book = brazil.TariffBook.from_aneel("COPEL-DIS", icms=0.19, pis_cofins=0.0925, get=from_fixture())
+    described = brazil.Setup(book=book, connection=40.5).describe()
+    assert "40.5 kWh" in described and "40,5 kWh" in i18n.translate(described, "pt")
 
 
 def test_fragments_lists_errors_and_joins_render_in_the_same_language() -> None:
@@ -175,6 +197,12 @@ def test_the_app_page_in_portuguese_consumption_with_a_flat_price() -> None:
     assert pt["log"][0].startswith("Local digitado: -25,43; -49,27.")
     assert pt["read"]["consumption"]["how"].startswith("arquivo medidor.csv: coluna 'consumo (kWh)'")
     assert "por horário (ponta das 18:00 às 21:00 nos dias úteis)" in pt["pricing"]
+    # regression 2026-10-21: the typed tariff's source was English on the Portuguese page
+    assert any(
+        row["source"]
+        == "por horário (ponta das 18:00 às 21:00 nos dias úteis): preços digitados pelo usuário"
+        for row in pt["report"]["provenance"]
+    ), pt["report"]["provenance"]
     assert pt["report"]["pending"]["conta de energia"].startswith("Não modelado")  # the bill was made
     assert any(
         n.startswith("A saída (`median`) é a mediana só das 3 previsões ingênuas")
@@ -257,3 +285,7 @@ def test_a_note_in_a_table_cell_is_kept_and_translated() -> None:
         {"tariff": "2 blocos por horário", "price": 0.8}
     ]
     assert kept["price"].dtype == float
+    generated = i18n.frame(r for r in rows)  # regression 2026-10-21: a generator lost its Note column
+    assert i18n.translate(generated.to_dict(orient="records"), "pt") == [
+        {"tariff": "2 blocos por horário", "price": 0.8}
+    ]

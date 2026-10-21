@@ -9,6 +9,7 @@ from __future__ import annotations
 
 PT: dict[str, str] = {
     # ---- analysis
+    "not declared": "não declarada",
     (
         "Not modelled: COSIP read from a bill (type it as `brazil.Setup(cosip=...)`), grupo A (demand "
         "charges), the tax reform of LC 214/2025."
@@ -76,13 +77,15 @@ PT: dict[str, str] = {
         "only, the benchmark's two plants (24 rows): the medians of two to four of the library's weather "
         "rows ranked 1st to 11th and beat each of their members in 10 of 11 compositions; the four together "
         "ranked 1st (+0.372), LightGBM with the linear model 9th (+0.346; +0.330 and +0.312 alone) "
-        "(2026-10-16 and 2026-10-19)."
+        "(2026-10-16 and 2026-10-19). Measured on the benchmark's saved forecasts, whose linear model fits "
+        "the irradiance on the plane of the modules; this one (`weather_linear`) fits the mean GHI."
     ): (
         "`{output}` é a mediana das {n} previsões que usam o tempo ({rows}). Medido em um único teste, as "
         "duas usinas do benchmark (24 linhas): as medianas de duas a quatro das linhas com tempo da "
         "biblioteca ficaram entre a 1ª e a 11ª posição e superaram cada um de seus membros em 10 de 11 "
         "composições; as quatro juntas ficaram em 1º (+0,372), o LightGBM com o modelo linear em 9º (+0,346; "
-        "+0,330 e +0,312 sozinhos) (16/10/2026 e 19/10/2026)."
+        "+0,330 e +0,312 sozinhos) (16/10/2026 e 19/10/2026). Medido nas previsões salvas do benchmark, cujo "
+        "modelo linear usa a irradiância no plano dos módulos; este (`weather_linear`) usa o GHI médio."
     ),
     "{n} test hours without a forecast from every model left out of every row.": (
         "{n} horas de teste sem a previsão de todos os modelos ficaram fora de todas as linhas."
@@ -402,6 +405,9 @@ PT: dict[str, str] = {
         "uma falha, um novo sombreamento ou uma mudança no arranjo"
     ),
     # ---- economics.brazil
+    "tariff book {name}: not declared": "tabela tarifária {name}: não declarada",
+    "ICMS and PIS/COFINS rates typed by the user": "alíquotas de ICMS e PIS/COFINS digitadas pelo usuário",
+    "{kwh:g} kWh": "{kwh:g} kWh",
     "peak_start must leave room for the intermediario hours (01:00-20:00)": (
         "peak_start deve deixar espaço para as horas do intermediário (01:00-20:00)"
     ),
@@ -505,6 +511,7 @@ PT: dict[str, str] = {
     ),
     "distributor": "distribuidora",
     # ---- economics.core
+    "{name}: prices typed by the user": "{name}: preços digitados pelo usuário",
     (
         "Import and export are netted hour by hour; a real meter nets instant by instant, so within an hour "
         "with both PV and load the real flows are larger than these."

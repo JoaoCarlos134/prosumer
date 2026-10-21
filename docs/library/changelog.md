@@ -26,6 +26,11 @@
   [0, 1) and their sum below 1, `peak_start` (a value without ":" crashed `brazil.branca_blocks`), `gd`
   (required with a PV file: the message asked for dates the request cannot take) and a missing ANEEL
   components file of a year GD II needs.
+- Portuguese pages: the source of typed prices and ICMS/PIS rates, and "not declared", are translated; a
+  time step reads "5 min" or "1 day" in both languages (it was pandas' "0 days 00:05:00"); months read
+  02/2026 in Portuguese; the connection minimum of a Brazilian price takes the decimal comma; a list that
+  holds notes is joined in the page's language even when it mixes plain texts. `i18n.frame` takes a
+  generator.
 - Fixed: a PV or meter file whose evaluated test hours are all zero (an inverter dead in the last
   `test_days`) made `analyze`, and so `app.run`, raise from the metrics; the forecast check is now skipped
   with a note and the rest of the report is kept.

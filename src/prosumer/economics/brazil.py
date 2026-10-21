@@ -443,7 +443,7 @@ class TariffBook:
                 prov.append(p)
         prov.append(
             Provenance(
-                source="ICMS and PIS/COFINS rates typed by the user",
+                source=Note("ICMS and PIS/COFINS rates typed by the user"),
                 license="n/a",
                 notes=Note(
                     "ICMS {icms}, PIS/COFINS {pis_cofins}; not checked against a bill",
@@ -562,7 +562,7 @@ class TariffBook:
             if b is None:
                 if assume_bandeira is None:
                     raise ValueError(
-                        Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=f"{d:%Y-%m}")
+                        Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=d.to_period("M"))
                     )
                 b = ("assumed", float(assume_bandeira))
             icms, pis = self.tax(d)
@@ -670,7 +670,7 @@ def tariff(
     if b is None:
         if assume_bandeira is None:
             raise ValueError(
-                Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=f"{m:%Y-%m}")
+                Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=m.to_period("M"))
             )
         b = ("assumed", float(assume_bandeira))
     icms, pis = book.tax(day)
@@ -1232,10 +1232,10 @@ class Setup:
         return got[1], Note(
             "No bandeira published for {months} yet: assumed the last one ({flag}, {add:.2f} R$/MWh, "
             "{last}).",
-            months=", ".join(missing),
+            months=[pd.Period(m, "M") for m in missing],
             flag=got[0],
             add=got[1],
-            last=last,
+            last=pd.Period(last, "M"),
         )
 
     def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill:
@@ -1308,11 +1308,13 @@ class Setup:
     def sources(self) -> list[tuple[str, Provenance]]:
         name = self.book.distributor or "tariff book"
         if not self.book.provenance:
-            return [(name, Provenance(source=f"tariff book {name}: not declared"))]
+            return [(name, Provenance(source=Note("tariff book {name}: not declared", name=name)))]
         return [(name, p) for p in self.book.provenance]
 
     def describe(self) -> str:
-        minimum = self.connection if isinstance(self.connection, str) else f"{self.connection:g} kWh"
+        minimum = (
+            self.connection if isinstance(self.connection, str) else Note("{kwh:g} kWh", kwh=self.connection)
+        )
         gd = self.gd or (Note("GD by date") if self.connected or self.requested else Note("no GD class"))
         return Note(
             "{distributor} {subgroup} {modality}, {minimum}, {gd}, BRL",

@@ -9,11 +9,14 @@ whole output, and `message(error, lang)` gives an error's text.
 
 The English template is the key: the Portuguese catalog (`i18n.pt.PT`) maps each template to its translation,
 with the same placeholders. Rendered in Portuguese, numbers take the decimal comma (and the point between
-thousands) and dates are day/month/year; a placeholder filled with a `Note` (a fragment: "later", the reason a
-check was skipped) is rendered in the same language, as is an error whose message is a `Note`, and a list of
-notes is joined with commas. A template made only of placeholders and punctuation (`Note.join`) needs no
-translation. A template missing from the catalog falls back to English; `strict=True` raises instead (the
-tests use it, and a test checks that every template in the code is in the catalog).
+thousands where the template groups them, `{x:,.0f}`), dates are day/month/year and a month (a monthly
+`pandas.Period`) month/year; a time step (a `timedelta`) reads "15 min" or "1 day" in either language. A
+placeholder filled with a `Note` (a fragment: "later", the reason a check was skipped) is rendered in the
+same language, as is an error whose message is a `Note`, and a list holding notes or months is joined with
+commas (a list of plain texts, such as column names, keeps Python's brackets). A template made only of
+placeholders and punctuation (`Note.join`) needs no translation. A template missing from the catalog falls
+back to English; `strict=True` raises instead (the tests use it, and a test checks that every template in the
+code is in the catalog).
 
 Not translated, by design: identifiers and codes (table columns, forecast names, the `source` and
 `confidence` values, units, request fields), names (series, distributors, data sources), the licences and
@@ -26,7 +29,7 @@ from __future__ import annotations
 import datetime as _dt
 import numbers
 import string
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -126,12 +129,13 @@ def replace(x: str, old: str, new: str) -> str:
     return Note(x.template, **params)
 
 
-def frame(rows: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
+def frame(rows: Iterable[Mapping[str, Any]]) -> pd.DataFrame:
     """`pd.DataFrame(rows)`, with each column that holds a `Note` kept as plain objects: pandas 3 turns a text
     column into its string type, which keeps only the English text."""
     import pandas as pd
 
-    out = pd.DataFrame(list(rows))
+    rows = list(rows)  # read twice below: a generator would be empty the second time
+    out = pd.DataFrame(rows)
     for c in out.columns:
         values = [r.get(c) for r in rows]
         if any(isinstance(v, Note) for v in values):
@@ -189,8 +193,13 @@ class _Formatter(string.Formatter):
             return format(value.text(self.lang, strict=self.strict), format_spec)
         if isinstance(value, BaseException):
             return format(message(value, self.lang, strict=self.strict), format_spec)
-        if isinstance(value, list | tuple) and value and all(isinstance(v, Note) for v in value):
-            return format(", ".join(v.text(self.lang, strict=self.strict) for v in value), format_spec)
+        if isinstance(value, list | tuple) and any(isinstance(v, Note) or _is_month(v) for v in value):
+            return format(", ".join(self.format_field(v, "") for v in value), format_spec)
+        if _is_month(value) and not format_spec:
+            y, m = value.year, value.month
+            return f"{m:02d}/{y:04d}" if self.lang == "pt" else f"{y:04d}-{m:02d}"
+        if isinstance(value, _dt.timedelta) and not format_spec:
+            return _duration(value, self.lang)
         if self.lang != "en":
             if isinstance(value, numbers.Number) and not isinstance(value, bool):
                 return format(value, format_spec).translate(_SWAP)
@@ -202,6 +211,28 @@ class _Formatter(string.Formatter):
                 except ValueError:  # NaT
                     pass
         return format(value, format_spec)
+
+
+def _is_month(value: Any) -> bool:
+    """A monthly `pandas.Period` (`Period("2026-02", "M")`): 2026-02 in English, 02/2026 in Portuguese."""
+    return type(value).__name__ == "Period" and str(getattr(value, "freqstr", "")) == "M"
+
+
+_UNITS = {"en": ("day", "days"), "pt": ("dia", "dias")}
+
+
+def _duration(td: _dt.timedelta, lang: str) -> str:
+    """A time step for the person: "1 day", "15 min", "1 h 30 min" (pandas writes "0 days 00:15:00")."""
+    seconds = int(td.total_seconds())
+    if seconds <= 0 or seconds != td.total_seconds():
+        return str(td)
+    days, rest = divmod(seconds, 86400)
+    h, rest = divmod(rest, 3600)
+    m, sec = divmod(rest, 60)
+    one, many = _UNITS[lang]
+    parts = [f"{days} {one if days == 1 else many}"] if days else []
+    parts += [f"{v} {u}" for v, u in ((h, "h"), (m, "min"), (sec, "s")) if v]
+    return " ".join(parts)
 
 
 __all__ = ["LANGS", "Note", "as_note", "catalog", "frame", "message", "placeholders", "replace", "translate"]

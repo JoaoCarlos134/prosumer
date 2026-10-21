@@ -78,3 +78,40 @@ def test_fit_orientation_recovers_a_known_roof() -> None:
     assert r2 > 0.95
     assert tilt == pytest.approx(20, abs=5)
     assert min(abs(az - 30), 360 - abs(az - 30)) <= 10
+
+
+@pytest.mark.parametrize("name", ["clear_sky_ghi", "mean_sun"])
+def test_long_spans_are_remembered_by_their_instants_and_inputs(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`physics.MEMORY` (2026-10-21): the same long span is computed once; another instant, site or zone
+    label of the same instants is computed again; a short span is never kept; a caller gets a copy."""
+    from collections import OrderedDict
+
+    calls: list[int] = []
+    real = getattr(physics, f"_{name}")
+
+    def counted(*a: object, **k: object) -> object:
+        calls.append(1)
+        return real(*a, **k)
+
+    monkeypatch.setattr(physics, f"_{name}", counted)
+    monkeypatch.setattr(physics, "_MEMORY", {"clear_sky": OrderedDict(), "sun": OrderedDict()})
+    fn = getattr(physics, name)
+    times = _hours("2024-01-01", 60)  # 1440 hours, above MEMORY_MIN_TIMES
+    first = fn(times, LAT, LON)
+    second = fn(times, LAT, LON)
+    assert len(calls) == 1 and np.array_equal(np.asarray(first), np.asarray(second))
+    if isinstance(second, pd.DataFrame):
+        second.iloc[:, 0] = -1.0
+    else:
+        second[:] = -1.0
+    assert np.array_equal(np.asarray(fn(times, LAT, LON)), np.asarray(first))  # the change did not reach it
+    assert len(calls) == 1
+    fn(times[1:].append(times[-1:] + pd.Timedelta(hours=1)), LAT, LON)  # one instant moved
+    fn(times, LAT + 0.01, LON)
+    fn(times.tz_convert("UTC"), LAT, LON)  # the same instants, another label: keyed apart (its index differs)
+    assert len(calls) == 4
+    fn(_hours("2024-01-01", 2), LAT, LON)
+    fn(_hours("2024-01-01", 2), LAT, LON)
+    assert len(calls) == 6  # 48 hours: below MEMORY_MIN_TIMES, never kept

@@ -376,3 +376,46 @@ def test_options_are_checked_and_analyze_passes_them_through() -> None:
     other = {"penalty": 1.0, "clear_ratio": 0.85}
     r = analyze(s, site=SITE, test_days=14, kwp=4.0, diagnostics_options=other)
     assert not [n for n in r.notes if n.startswith("Diagnostics:")]
+
+
+def test_the_roof_is_fitted_once_for_the_outlook_and_the_diagnosis(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The remembered roof fit (`diagnostics._roof`, 2026-10-21): one fit serves `forecast_ahead` and
+    `diagnose` on the same series; a changed value is a new fit; what a caller gets is a copy."""
+    from collections import OrderedDict
+
+    from prosumer import forecast_ahead
+
+    fits: list[int] = []
+    real = diagnostics._fit_roof
+
+    def counted(*a: Any, **k: Any) -> pd.DataFrame:
+        fits.append(1)
+        return real(*a, **k)
+
+    monkeypatch.setattr(diagnostics, "_fit_roof", counted)
+    monkeypatch.setattr(diagnostics, "_ROOFS", OrderedDict())
+    f = _plant(days=400)
+    s = _series(f)
+    forecast_ahead(s, site=SITE, days=2)
+    d = diagnostics.diagnose(s, SITE, kwp=4.0)
+    assert len(fits) == 1
+    assert diagnostics.diagnose(s, SITE, kwp=4.0).orientation.equals(d.orientation)
+    assert len(fits) == 1
+
+    changed = f.copy()
+    changed.loc[changed["y"].idxmax(), "y"] *= 0.9  # one hour differs: not the same inputs
+    diagnostics.diagnose(_series(changed), SITE, kwp=4.0)
+    assert len(fits) == 2
+
+    first = diagnostics.roof_orientation(s, SITE)
+    first.loc[:, "tilt"] = -99.0  # the caller changes its table...
+    assert (diagnostics.roof_orientation(s, SITE)["tilt"] != -99.0).all()  # ...not the remembered one
+    assert len(fits) == 2
+
+    for i in range(diagnostics.ROOF_MEMORY):  # the oldest fit is forgotten past ROOF_MEMORY
+        other = f.assign(y=f["y"] * (1 - 0.01 * (i + 1)))
+        diagnostics.diagnose(_series(other), SITE, kwp=4.0)
+    assert len(diagnostics._ROOFS) == diagnostics.ROOF_MEMORY
+    n = len(fits)
+    diagnostics.diagnose(s, SITE, kwp=4.0)
+    assert len(fits) == n + 1

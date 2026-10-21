@@ -79,12 +79,17 @@ except ValueError as e:
     print(i18n.message(e, "pt"))  # days deve estar entre 1 e 35
 ```
 
-Codes and names are not translated: table columns, forecast names, the `source` and `confidence` values,
-units, request fields, series and distributor names, and the licences and citations of `credits` (kept in
-their source's words). The page labels the codes itself. The Portuguese is one catalog of templates
-(`prosumer/i18n/pt.py`); a test checks that every template in the code has its translation with the same
-placeholders, and that the app's page in Portuguese has no untranslated note.
+Codes and names are not translated: table columns, forecast names, the `confidence` values, units, request
+fields, series and distributor names, and the sources, licences and citations of the outside data in
+`credits` (kept in their source's words). What the library writes there itself is translated: the source
+of what the person typed (prices, ICMS and PIS/COFINS rates), its notes, and "not declared". The page labels
+the codes itself. The Portuguese is one catalog of templates (`prosumer/i18n/pt.py`); a test checks that
+every template in the code has its translation with the same placeholders, and two runs of the app
+(consumption with a time-of-use price; PV and consumption with a Brazilian price, both `models="naive"`)
+check that the notes, the log, how each file was read, the pending items, the bill's notes and tariff, and
+the pricing have no untranslated text.
 
 How long it takes: seven years of hourly PV data (60,000 hours) took ~9 s with `models="naive"` and ~12 s
-with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB. The roof fit (twice: for the next days and
-for the diagnostics) and the clock check are most of it; a page should show that it is working.
+with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB; since the roof is fitted once for the
+next days and the diagnostics (2026-10-21), ~6 s with `models="naive"`. The clock check, reading the file and
+the change points of the diagnostics are most of what is left; a page should show that it is working.

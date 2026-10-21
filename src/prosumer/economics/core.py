@@ -631,7 +631,9 @@ class Plan:
 
     def sources(self) -> list[tuple[str, Provenance]]:
         name = self.tariff.name or "tariff"
-        p = self.source or Provenance(source=f"{name}: prices typed by the user", license=NOT_APPLICABLE)
+        p = self.source or Provenance(
+            source=Note("{name}: prices typed by the user", name=name), license=NOT_APPLICABLE
+        )
         return [(name, p)]
 
     def describe(self) -> str:

@@ -148,7 +148,7 @@ def clock_notes(table: pd.DataFrame) -> list[str]:
                 Note(
                     "{h:+g} h in {months}",
                     h=h,
-                    months=", ".join(months.loc[months["offset_h"] == h, "period"]),
+                    months=[pd.Period(p, "M") for p in months.loc[months["offset_h"] == h, "period"]],
                 )
                 for h in found
             ]

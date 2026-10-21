@@ -199,8 +199,45 @@ value misses; the returned copy cannot alter the cache) - write them first. Stil
 `diagnostics._segment` (change points, pure Python DP, ~0.85 s per call, 2 calls), `quality.clock_offset`
 (~2 s), reading the file (~2 s).
 
-Review: `work-reviewer` launched on `9119619..24045e5` (before the speed commit); its findings go below when
-it reports. Next in the cloud: act on the review findings, then the tests of the memories, then items 3-7.
+**Review of `9119619..24045e5` (work-reviewer, 21/10; the speed commit `7056c1e` was NOT in it). Verdict:
+ready with fixes.** English text byte-identical in 165 old/new scenarios (only the intended changes differ);
+every regression test fails on the code before its fix; translations faithful (numbers checked in all 229).
+Findings, to fix in the cloud in this order (each fix of a crash ships with its regression test):
+1. MAJOR: `app.run` still raises plain-English (some not `ValueError`) errors for what the person types,
+   contradicting `docs/library/app.md` ("errors work the same way"). Validate in `Request.check`/`_pricing`
+   with Notes and add each to `test_errors_of_the_app_are_notes_with_portuguese`: `kind: "foo"`
+   (`io/meter.py` "kind must be ..."); `price.scheme: "feed_in"` (`economics/core.py` Plan); `icms 0.6` +
+   `pis_cofins 0.5` or `icms -0.1` ("ICMS + PIS/COFINS must be in [0, 1)", `brazil.py`; the app checks each
+   only `>= 1`); branca `peak_start: "18"` -> "not enough values to unpack" (`brazil.branca_blocks`); GD II
+   with PV in a year whose ANEEL components file is missing (not the last year) -> "No components resource"
+   (`io/aneel.py` via `TariffBook.from_aneel`).
+2. MAJOR (bare KeyError class, like the `connection` bug): `time_column: "nope"` -> `KeyError` at
+   `io/auto.py` `_sniff_table` (`head[time_column]` unchecked: use the "Column {column!r} not in the file"
+   Note); `timezone: "Mars/Base"` -> `ZoneInfoNotFoundError` (check the zone in `Request.check`).
+3. MAJOR (older): a PV file whose last `test_days` are all zero (dead inverter) makes `app.run` raise
+   "Mean of the actual values is zero..." (`metrics.py`) and the page is lost; `analysis.py` guards only an
+   all-zero series. Fix: `skipped(Note(...))` when the evaluated test actuals are all zero + regression test
+   (repro: `_pv_csv("2024-01-01", 60)` with the last 672 rows set to 0, `models="naive"`).
+4. minor: `Plan.sources()` (`economics/core.py`) builds `f"{name}: prices typed by the user"` from the Note
+   tariff name: English on the pt page (`report.provenance[].source`). Make it a Note.
+5. minor, pt formatting: `pd.Timedelta` shows "0 days 00:05:00" (meter, fronius, auto `every`);
+   `Setup.describe` pre-formats "40.5 kWh" (decimal point stays); `{month}`/`{months}`/`{last}` passed as ISO
+   "2026-02" text while dates are dd/mm/yyyy; the i18n docstring promises a thousands point that no template
+   uses ("34584,0 kWh"); a list placeholder empty or mixing Notes and str falls back to Python's repr
+   (no call site reaches it today).
+6. minor (older): PV + Brazilian price without `gd` -> "Give the connection date or the access request
+   date", but the request cannot take those fields (`connected` is an unknown price field): ask for `gd`.
+7. minor: the `median_weather` note should say the medians were measured on the benchmark's saved forecasts,
+   whose `linear_fisico` uses plane-of-array irradiance (the library's `weather_linear` uses mean GHI).
+8. nit: `docs/library/app.md` overstates: the typed-ICMS credit's notes ARE translated; `_check_page` covers
+   2 naive runs and only notes/log/read.how/pending/economics notes+tariff/pricing.
+9. nits: role "weather" -> "previsão do tempo" also labels measured weather (consistent with the row name);
+   `_ROLE[role]` KeyErrors for a role outside the four; `i18n.frame` iterates `rows` twice (a generator
+   breaks it).
+Timings reproduced by the reviewer before the speed commit: 8.0 s naive / 10.5 s default on 60,000 h.
+
+Next in the cloud: review findings 1-3 (with regression tests), then 4-9, then the tests of the memories
+(above), then a review of `24045e5..HEAD`, then items 3-7 below.
 
 ### The list of 2026-10-19 (item 2 done on 21/10)
 
@@ -225,7 +262,7 @@ The user asked to do groups 1 and 2 of "is the library done" (library first, the
 4. **Speed**: `app.run` on 7 years of hourly PV ~9 s naive / ~12 s LightGBM; the roof is fitted TWICE (outlook
    and diagnose, ~2 s each; `physics.solar_position` recomputed per grid point): fit once / cache the sun.
 5. **Tests (asked 19/10)**: 30 files in `tests/` (one per module, flat, no conftest; helpers `aneel_fake.py`,
-   `wasm_c.py`, `fixtures/`), 670 pass in ~100-117 s with `-n 6` (12 logical CPUs; `-n 8` is slower,
+   `wasm_c.py`, `fixtures/`), 683 pass (21/10) in ~110 s with `-n 6` (12 logical CPUs; `-n 8` is slower,
    `--dist worksteal` no gain: keep `-n 6`). ~480 s of test time: `test_diagnostics` 113 s, `test_analysis` 68,
    `test_forecast_parity` 63 (two benchmark combinations by default, one 45 s), `test_outlook` 50,
    `test_benchmark_protocol` 45. Redundancy found: `examples/site_local/app.py` re-implements `prosumer.app`

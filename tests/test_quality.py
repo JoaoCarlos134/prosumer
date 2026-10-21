@@ -243,3 +243,103 @@ def test_analyze_passes_the_clock_options_by_name() -> None:
         analyze(s, site=SITE, test_days=7, clock_options={"site": SITE})
     with pytest.raises(ValueError, match="Unknown clock_weather_options"):
         analyze(s, site=SITE, test_days=7, clock_weather_options={"column": "ghi"})
+
+
+def _corr_reference(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """`quality._corr` as it was before the production side was centred once (2026-10-21)."""
+    a = a - a.mean(axis=-1, keepdims=True)
+    b = b - b.mean(axis=-1, keepdims=True)
+    den = np.sqrt((a * a).sum(axis=-1) * (b * b).sum(axis=-1))
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(den > 0, (a * b).sum(axis=-1) / den, np.nan)
+
+
+def _fit_reference(
+    cells: pd.DataFrame, cs: np.ndarray, spd: int, shifts: np.ndarray, hours_per_step: float
+) -> dict[str, float | int] | None:
+    """`quality._fit` as it was before 2026-10-21: `_corr` recomputed the production side per orientation."""
+    from prosumer.quality import _centroid
+
+    dates, d_idx = np.unique(cells["date"].to_numpy(), return_inverse=True)
+    n_days, n_o = len(dates), cs.shape[1]
+    pos = cells["pos"].to_numpy()
+    ok = (pos >= 0) & (pos < spd)
+    p = np.full((n_days, spd), np.nan)
+    c = np.full((n_o, n_days, spd), np.nan)
+    p[d_idx[ok], pos[ok]] = cells["y"].to_numpy(float)[ok]
+    c[:, d_idx[ok], pos[ok]] = cs[ok].T
+    if not np.nansum(p) > 0:
+        return None
+    idx = (np.arange(spd)[None, :] + shifts[:, None]) % spd
+    pk = p[:, idx].transpose(1, 0, 2)
+    both = (~np.isnan(pk) & ~np.isnan(p)[None]).astype(float)
+    n = both.sum(axis=1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        prof_p = np.nansum(pk * both, axis=1) / n
+        prof_c = np.einsum("kds,ods->oks", both, np.nan_to_num(c)) / n[None]
+    score = _corr_reference(prof_p[None], prof_c)
+    best_o = np.where(np.isnan(score), -np.inf, score).argmax(axis=0)
+    by_k = score[best_o, np.arange(len(shifts))]
+    if np.isnan(by_k).all():
+        return None
+    k = int(np.nanargmax(by_k))
+    zero = int(np.flatnonzero(shifts == 0)[0])
+    complete = ~np.isnan(p).any(axis=1) & (np.nansum(p, axis=1) > 0)
+    if complete.any():
+        day = np.full((len(shifts), int(complete.sum())), -np.inf)
+        for co in c[:, complete]:
+            r = _corr_reference(pk[:, complete], co[None])
+            day = np.maximum(day, np.where(np.isnan(r), -np.inf, r))
+        agreement = float(np.mean(day.argmax(axis=0) == k))
+    else:
+        agreement = float("nan")
+    o = best_o[k]
+    return {
+        "offset_h": float(shifts[k] * hours_per_step),
+        "centroid_shift_h": ((_centroid(prof_p[zero]) - _centroid(prof_c[o, zero]) + spd / 2) % spd - spd / 2)
+        * hours_per_step,
+        "score": float(by_k[k]),
+        "score_zero": float(by_k[zero]),
+        "days": int(np.sum(~np.isnan(p).all(axis=1))),
+        "agreement": agreement,
+    }
+
+
+def test_the_faster_clock_check_gives_the_same_table(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Centring the production once (not per orientation) and the month labels without strftime (2026-10-21)
+    change no float: the table equals the one of the code before, exactly."""
+    from prosumer import quality
+
+    rng = np.random.default_rng(11)
+    a = rng.normal(size=(5, 7, 24))
+    a[0, 1] = 3.0  # a constant row: NaN
+    a[2, 3, 5] = np.nan
+    b = rng.normal(size=(1, 7, 24))
+    b[0, 4] = 0.0
+    centred = a - a.mean(axis=-1, keepdims=True)
+    got = quality._corr_centred(centred, (centred * centred).sum(axis=-1), b)
+    np.testing.assert_array_equal(got, _corr_reference(a, b))  # bit for bit, NaN where the reference has it
+
+    idx, y = _pv(days=90, start="2023-11-20", seed=6)  # across a new year, late, days that disagree
+    noisy = y * rng.uniform(0.2, 1.8, len(y))
+    noisy[200:260] = np.nan  # a gap: incomplete days
+    noisy[1000:1100] = 0.0  # a dead stretch: days with no production
+    site = (52.14, -10.27)
+    dub, ydub = _pv(tz="Europe/Dublin", site=site, days=365, azimuth=180.0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        gmt = _series(dub.tz_convert("UTC").tz_localize(None), ydub, tz="Europe/Dublin", dst="drop")
+    q = pd.date_range("2024-03-01", periods=40 * 96, freq="15min", tz=TZ)
+    yq = physics.poa_isotropic(physics.clear_sky_ghi(q, *SITE), physics.mean_sun(q, *SITE), 20.0, 90.0) / 4000
+    frame = pd.DataFrame({"unique_id": "pv", "ds": q + pd.Timedelta(minutes=45), "y": yq})
+    quarter = EnergySeries.from_dataframe(frame, unit="kWh", quantity="generation", tz=TZ, freq="15min")
+    cases = [(_series(idx + pd.Timedelta(hours=2), noisy), SITE), (gmt, site), (quarter, SITE)]
+    for s, where in cases:
+        new = clock_offset(s, where)
+        wall = pd.DatetimeIndex(s.frame["ds"]).tz_localize(None)
+        assert list(new["period"]) == ["all", *sorted(set(wall.strftime("%Y-%m")))]
+        with monkeypatch.context() as m:
+            m.setattr(quality, "_fit", _fit_reference)
+            old = clock_offset(s, where)
+        pd.testing.assert_frame_equal(new, old, check_exact=True)
+    assert set(clock_offset(cases[0][0], SITE)["offset_h"]) - {2.0}  # some months disagree: a real test

@@ -125,8 +125,8 @@ def clock_offset(
         cs = clear.reindex(ds).to_numpy()
         periods: list[tuple[str, np.ndarray]] = [("all", np.ones(len(g), bool))]
         if by == "month":
-            month = wall.strftime("%Y-%m").to_numpy()
-            periods += [(str(m), month == m) for m in np.unique(month)]
+            month = (wall.year * 100 + wall.month).to_numpy()  # 201907: the "2019-07" label without strftime
+            periods += [(f"{m // 100:04d}-{m % 100:02d}", month == m) for m in np.unique(month)]
         for name, sel in periods:
             row = _fit(cells[sel], cs[sel], spd, shifts, hours_per_step)
             if row is None or (name != "all" and row["days"] < min_days):
@@ -400,8 +400,12 @@ def _fit(
     complete = ~np.isnan(p).any(axis=1) & (np.nansum(p, axis=1) > 0)
     if complete.any():
         day = np.full((len(shifts), int(complete.sum())), -np.inf)
+        # the production side does not depend on the orientation: centred once, not once per orientation
+        a = pk[:, complete]
+        a = a - a.mean(axis=-1, keepdims=True)
+        aa = (a * a).sum(axis=-1)
         for co in c[:, complete]:  # one orientation at a time: memory stays (K, days, spd)
-            r = _corr(pk[:, complete], co[None])
+            r = _corr_centred(a, aa, co[None])
             day = np.maximum(day, np.where(np.isnan(r), -np.inf, r))
         agreement = float(np.mean(day.argmax(axis=0) == k))
     else:
@@ -421,8 +425,14 @@ def _fit(
 def _corr(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Pearson correlation along the last axis, NaN where either side is constant."""
     a = a - a.mean(axis=-1, keepdims=True)
+    return _corr_centred(a, (a * a).sum(axis=-1), b)
+
+
+def _corr_centred(a: np.ndarray, aa: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """`_corr` with `a` already centred and `aa` its sum of squares, for one `a` against many `b` (the same
+    operations in the same order: the same floats)."""
     b = b - b.mean(axis=-1, keepdims=True)
-    den = np.sqrt((a * a).sum(axis=-1) * (b * b).sum(axis=-1))
+    den = np.sqrt(aa * (b * b).sum(axis=-1))
     with np.errstate(invalid="ignore", divide="ignore"):
         return np.where(den > 0, (a * b).sum(axis=-1) / den, np.nan)
 

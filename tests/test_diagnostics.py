@@ -419,3 +419,61 @@ def test_the_roof_is_fitted_once_for_the_outlook_and_the_diagnosis(monkeypatch: 
     n = len(fits)
     diagnostics.diagnose(s, SITE, kwp=4.0)
     assert len(fits) == n + 1
+
+
+def _segment_reference(
+    t: np.ndarray, y: np.ndarray, min_size: int, max_breaks: int, penalty: float
+) -> list[int]:
+    """`diagnostics._segment` as it was before it was vectorised (2026-10-21): one k, one end at a time."""
+    n = len(y)
+    cost = diagnostics._line_costs(t, y)
+    best: tuple[float, list[int]] | None = None
+    for k in range(1, max_breaks + 2):
+        if k * min_size > n:
+            break
+        f = np.full((k + 1, n + 1), np.inf)
+        back = np.zeros((k + 1, n + 1), dtype=int)
+        f[0, 0] = 0.0
+        for j in range(1, k + 1):
+            for e in range(j * min_size, n + 1):
+                starts = np.arange((j - 1) * min_size, e - min_size + 1)
+                v = f[j - 1, starts] + cost[starts, e]
+                i = int(np.argmin(v))
+                f[j, e], back[j, e] = v[i], starts[i]
+        breaks, e = [], n
+        for j in range(k, 0, -1):
+            e = int(back[j, e])
+            breaks.append(e)
+        sse = max(float(f[k, n]), 1e-12 * n)
+        bic = n * np.log(sse / n) + penalty * (3 * k - 1) * np.log(n)
+        if best is None or bic < best[0]:
+            best = (bic, sorted(b for b in breaks if b > 0))
+    return [] if best is None else best[1]
+
+
+def test_the_vectorised_segmentation_matches_the_loop_it_replaced() -> None:
+    rng = np.random.default_rng(7)
+    cases: list[tuple[np.ndarray | None, np.ndarray, int, int, float]] = []
+    for n in (0, 1, 14, 15, 29, 30, 31, 47, 120, 333):  # shorter than one segment, exactly one or two, longer
+        cases.append((None, rng.normal(1.0, 0.05, n), 15, 11, 3.0))
+    steps = np.repeat([0.8, 0.6, 0.75, 0.7, 0.9], 60) + np.linspace(0, -0.05, 300)
+    for penalty in (6.0, 3.0, 1.0, 0.1, 0.001):  # from no break to as many as allowed
+        cases.append((None, steps + rng.normal(0, 0.01, 300), 15, 11, penalty))
+    days = np.arange(80.0)
+    cases += [
+        (None, np.ones(90), 15, 11, 3.0),  # every segment fits exactly
+        (None, np.r_[np.zeros(40), np.ones(40)], 15, 0, 3.0),  # max_breaks 0: a single line
+        (None, steps[:200] + rng.normal(0, 0.02, 200), 2, 3, 0.5),  # the smallest segments allowed
+        (None, steps[:200] + rng.normal(0, 0.02, 200), 40, 11, 0.5),  # few lines fit: fewer k than max_breaks
+        # ties: the kink point lies on both lines (break at 20 or 21), equally good tiles; the earliest wins
+        (days[:41], np.abs(days[:41] - 20), 3, 5, 3.0),
+        (days[:61], np.minimum(np.abs(days[:61] - 20), 15.0), 2, 5, 3.0),
+        (days, np.tile([1.0, 1.0, 2.0, 2.0], 20), 5, 5, 0.001),
+    ]
+    for t, y, min_size, max_breaks, penalty in cases:
+        if t is None:
+            t = np.cumsum(rng.integers(1, 4, len(y))) / 365.25  # clear days come with gaps
+        got = diagnostics._segment(t, y, min_size, max_breaks, penalty)
+        want = _segment_reference(t, y, min_size, max_breaks, penalty)
+        assert got == want, (len(y), min_size, max_breaks, penalty)
+    assert diagnostics._segment(days[:41], np.abs(days[:41] - 20), 3, 5, 3.0) == [20]

@@ -507,19 +507,24 @@ def _segment(t: np.ndarray, y: np.ndarray, min_size: int, max_breaks: int, penal
     """Break positions of the BIC-best piecewise-linear fit (exact dynamic programming)."""
     n = len(y)
     cost = _line_costs(t, y)
+    # f[j, e]: least SSE of the first e points in j lines; back[j, e]: where the last line starts. A row does
+    # not depend on how many lines the whole fit has, so the rows are filled once for the largest k and
+    # shared by every k below.
+    top = min(max_breaks + 1, n // min_size)
+    f = np.full((top + 1, n + 1), np.inf)
+    back = np.zeros((top + 1, n + 1), dtype=int)
+    f[0, 0] = 0.0
+    for j in range(1, top + 1):
+        # every end e at once: v[s, e] = f[j-1, s] + cost[s, e] over the starts s, with the starts too late
+        # for e (s > e - min_size) set to inf; argmin keeps the first (earliest) start on ties
+        lo, ends = (j - 1) * min_size, np.arange(j * min_size, n + 1)
+        starts = np.arange(lo, n - min_size + 1)
+        v = f[j - 1, starts, None] + cost[lo : n - min_size + 1, j * min_size :]
+        v[starts[:, None] > ends[None, :] - min_size] = np.inf
+        i = np.argmin(v, axis=0)
+        f[j, ends], back[j, ends] = v[i, np.arange(len(ends))], starts[i]
     best: tuple[float, list[int]] | None = None
-    for k in range(1, max_breaks + 2):
-        if k * min_size > n:
-            break
-        f = np.full((k + 1, n + 1), np.inf)
-        back = np.zeros((k + 1, n + 1), dtype=int)
-        f[0, 0] = 0.0
-        for j in range(1, k + 1):
-            for e in range(j * min_size, n + 1):
-                starts = np.arange((j - 1) * min_size, e - min_size + 1)
-                v = f[j - 1, starts] + cost[starts, e]
-                i = int(np.argmin(v))
-                f[j, e], back[j, e] = v[i], starts[i]
+    for k in range(1, top + 1):
         breaks, e = [], n
         for j in range(k, 0, -1):
             e = int(back[j, e])

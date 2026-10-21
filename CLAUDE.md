@@ -195,9 +195,11 @@ Speed (21/10, stopped by the user mid-way, committed after this note): `app.run`
 Done: `physics._PoaParts` (fit_orientation computes the plane-independent part once), `diagnostics._roof`
 remembered by a fingerprint of its inputs (`_fit_roof` does the work; LRU of 4, lock, returns copies),
 `physics.clear_sky_ghi`/`mean_sun` remembered on spans >= 1000 times (`MEMORY` = 6), `_complete_days` without a
-lambda per day. Tests of the memories: written in the cloud on 21/10 (below). Still slow, if wanted:
-`diagnostics._segment` (change points, pure Python DP, ~0.85 s per call, 2 calls), `quality.clock_offset`
-(~2 s), reading the file (~2 s).
+lambda per day. Tests of the memories: written in the cloud on 21/10 (below). Second pass in the cloud (21/10,
+`library-builder`): `_segment` vectorised (0.5 -> 0.07 s per call) and `clock_offset` centred once (1.2 -> 0.5 s);
+`app.run` ~6.0 -> ~4.1 s naive, ~8.3 -> ~6.6 s LightGBM (cloud, 4 CPUs), JSON byte-identical en/pt. Left: reading
+the file (~1.5 s cold: dates parsed 4 times; not clearly safe to merge), `_changepoints` runs twice on the same
+input, the cold sun inside `clock_offset` (~0.6 s).
 
 **Review of `9119619..24045e5` (work-reviewer, 21/10; verdict: ready with fixes): all 9 findings fixed in the
 cloud on 21/10** (branch `claude/cool-pascal-hxh4ol`, `cb3e96c` and the commit after it; each crash fix with

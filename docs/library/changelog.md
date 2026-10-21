@@ -9,6 +9,12 @@
   is remembered by its inputs (`forecast_ahead` and `diagnose` on the same series fit it once); the clear sky
   and the sun vectors of long spans are remembered too (`physics.MEMORY`); the complete days are counted
   without a Python function per day.
+- `app.run` on seven years of hourly PV: ~6.0 s -> ~4.1 s naive, ~8.3 s -> ~6.6 s with LightGBM (measured in
+  the cloud container, 4 CPUs; same JSON byte for byte, English and Portuguese). The change-point search
+  (`diagnostics`) fills each row of its dynamic programme for every end at once and shares the rows between
+  the numbers of segments (0.47-0.61 s -> 0.07 s per call on 973 clear days, called twice); the clock check
+  (`quality.clock_offset`) centres the production profiles once instead of once per plane orientation and
+  labels the months without `strftime` (1.17 s -> 0.50 s with the sun already computed).
 
 **Languages**
 

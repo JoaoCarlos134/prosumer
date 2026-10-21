@@ -19,20 +19,23 @@ page then shows the cheapest block of each day by expected cost next to the best
 consumption file, your bill month by month with the expected monthly bill (the mean of the complete months).
 Without a connection the Brazilian tariff fails with a clear message (choose a flat or time-of-use price).
 
-## The backend in seven steps (`forecast_page` in `app.py`)
+## The backend: one call to `prosumer.app.run`
+
+`app.py` turns the form into the request of `prosumer.app.run` (`_request`: only the price fields of the kind
+chosen, the ICMS and PIS/COFINS typed in % as fractions) and its `Result` into HTML (`_render`); everything
+else is the library's. `run` does seven steps, each one library call (its docstring has the details):
 
 | Step | What | Library call |
 |---|---|---|
-| 1 | read the CSV (separator, decimal comma and date order are guessed) | `prosumer.io.meter.read_table` |
-| 2 | where: the typed coordinates, or the address geocoded; rounded to ~1 km; the time zone | `prosumer.io.geocode.geocode`, `round_site`, `timezone_at` |
+| 1 | where: the typed coordinates, or the address geocoded; rounded to ~1 km; the time zone | `prosumer.io.geocode.geocode`, `round_site`, `timezone_at` |
+| 2 | read the file (layout recognised; energy column by name and unit, never by position) | `prosumer.io.read_energy` |
 | 3 | the weather forecast of the next days, six models (production only) | `prosumer.io.open_meteo.fetch_forecast` |
 | 4 | the forecast, hourly and per day, with a confidence label | `prosumer.forecast_ahead` |
-| 5 | the best block of hours of each day for a heavy load | `prosumer.best_windows` |
-| 6 | with a price: the cheapest block of each day by expected cost, with the day's confidence | `prosumer.economics.windows_by_cost` |
-| 7 | with a price and a consumption file: the bill of each month of your data and the expected monthly bill | `Plan.bill(...).totals()` / `brazil.Setup.bill(...).totals()` |
+| 5 | the best block of hours of each day for a heavy load; with a price, the cheapest by expected cost | `prosumer.best_windows`, `prosumer.economics.windows_by_cost` |
+| 6 | the analysis of the data (quality, clock, forecast check; with a price and a consumption file, the bill of each month and the expected monthly bill) | `prosumer.analyze` |
+| 7 | what the pages plot | `Result.charts` |
 
-The price itself is read from the form by `_pricing`: `economics.Tariff` + `economics.Plan`, or
-`economics.brazil.TariffBook.from_aneel` (one download from ANEEL) + `economics.brazil.Setup`.
+The TCC's site does the same in TypeScript, on the same JSON (`Result.to_json`, also in Portuguese).
 
 How step 4 works: for production, the plant's effective power and the roof's orientation are learnt from
 its own clear days; each hour is that power times the sunlight on the panel plane computed from the weather

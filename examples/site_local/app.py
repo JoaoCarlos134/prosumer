@@ -4,21 +4,14 @@ Run it (from the repository root, with the library installed in the environment)
 
     python examples/site_local/app.py          # then open http://127.0.0.1:8000
 
-Nothing but the Python standard library and `prosumer`: no web framework, no JavaScript. The whole backend is
-the function `forecast_page` below, in numbered steps that map one to one to library calls:
+Nothing but the Python standard library and `prosumer`: no web framework, no JavaScript. The backend is one
+library call, `prosumer.app.run` (its docstring lists its seven steps: where, read, weather, the next days,
+the best hours, the analysis, the charts); this file only turns the form into its request (`_request`) and
+its `Result` into HTML (`_render`). The TCC's site does the same in TypeScript.
 
-    1. where is it                  -> prosumer.io.geocode.geocode / round_site / timezone_at
-    2. read the file                -> prosumer.io.read_energy (recognises the layout; energy column by
-                                       name and unit, never by position)
-    3. the weather of the next days -> prosumer.io.open_meteo.fetch_forecast
-    4. the forecast                 -> prosumer.forecast_ahead
-    5. when to run heavy loads      -> prosumer.best_windows
-    6. the same, by cost            -> prosumer.economics.windows_by_cost      (with a price)
-    7. the monthly bill of the data -> Plan.bill / brazil.Setup.bill, .totals() (with a price, consumption)
-
-The price comes from the form (`_pricing`): a flat price, a simple time-of-use price, or a Brazilian
-distributor's tarifa convencional downloaded from ANEEL's open data (`brazil.TariffBook.from_aneel`) with the
-ICMS and PIS/COFINS the person types.
+The price comes from the form: a flat price, a simple time-of-use price, or a Brazilian distributor's tarifa
+convencional downloaded from ANEEL's open data with the ICMS and PIS/COFINS the person types (in %, as on the
+bill).
 
 Privacy: the file never leaves this machine. Only the address (to Nominatim, if you type one instead of
 coordinates), the coordinates rounded to 2 decimals (to Open-Meteo, for the weather) and, for a Brazilian
@@ -28,243 +21,163 @@ tariff, the distributor's name (to ANEEL) go out. The free Open-Meteo API is for
 from __future__ import annotations
 
 import html
-import re
-import tempfile
 import traceback
 from email.parser import BytesParser
 from email.policy import default
+from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-
-import pandas as pd
+from typing import Any
 
 import prosumer
-from prosumer import economics
+from prosumer import app
 from prosumer.economics import brazil
-from prosumer.io import geocode, open_meteo, read_energy
-from prosumer.provenance import Provenance, of
+from prosumer.provenance import Provenance
 
 HERE = Path(__file__).resolve().parent
 HOST, PORT = "127.0.0.1", 8000
 ANEEL_GET = None  # the HTTP getter of io.aneel (None: the live API); the tests put a fake ANEEL here
-DISTRIBUTORS = {  # ANEEL's SigAgente -> what the person knows it as
-    "COPEL-DIS": "Copel (PR)",
-    "CEMIG-D": "Cemig (MG)",
-    "ELETROPAULO": "Enel SP",
-    "LIGHT SESA": "Light (RJ)",
-}
+# the form's fields that `app.run` takes as they are (the price fields depend on the kind of price)
+PLAIN = (
+    "address", "latitude", "longitude", "timezone", "file_times", "time_column", "value_column", "unit",
+    "kind", "days", "tilt", "azimuth", "kwp", "load_hours", "load_kw", "models",
+)  # fmt: skip
+PRICE_FIELDS = {
+    "flat": {"flat_price": "price", "export_price": "export_price", "fixed": "fixed", "currency": "currency",
+             "scheme": "scheme"},
+    "tou": {"peak_hours": "peak_hours", "peak_price": "peak_price", "offpeak_price": "offpeak_price",
+            "export_price": "export_price", "fixed": "fixed", "currency": "currency", "scheme": "scheme"},
+    "brazil": {"distributor": "distributor", "connection": "connection", "gd": "gd", "cosip": "cosip"},
+}  # fmt: skip
 
 
-# ---------------------------------------------------------------------- the backend: seven steps
+# ---------------------------------------------------------------------- the backend: one library call
 def forecast_page(form: dict[str, str], csv: bytes, filename: str = "data.csv") -> str:
-    """Form fields + file bytes -> the result page (HTML). Each step adds a line to `log`, shown below."""
-    log: list[str] = []
-    credits: list = []  # where each piece of outside data came from, shown at the end (licences require it)
+    """Form fields + file bytes -> the result page (HTML)."""
     quantity = form.get("quantity") or "generation"
-    if not csv:
-        raise ValueError("No file was received: choose your data file and send the form again.")
-
-    # 1. Where. Typed coordinates win; otherwise the address is geocoded and the first match is used.
-    if form.get("latitude") and form.get("longitude"):
-        lat, lon = float(form["latitude"]), float(form["longitude"])
-        log.append(f"Site typed: {lat}, {lon}.")
-    elif form.get("address"):
-        found = geocode.geocode(form["address"], limit=1)
-        if found.empty:
-            raise ValueError(f"Address not found: {form['address']!r}. Type the coordinates instead.")
-        lat, lon = float(found["latitude"].to_numpy()[0]), float(found["longitude"].to_numpy()[0])
-        log.append(f"Address found: {found.loc[0, 'name']}.")
-        credits.append(of(found))
-    else:
-        raise ValueError("Give an address or the latitude and longitude.")
-    site = geocode.round_site(lat, lon)  # ~1 km: enough for the weather and the sun
-    tz = form.get("timezone") or geocode.timezone_at(*site)
-    log.append(f"Site used (rounded): {site[0]}, {site[1]}; time zone {tz}.")
-
-    # 2. Read the file. Its layout is recognised (an inverter portal's export, a meter table) and the energy
-    #    column is chosen by its name and unit, never by its position; what was read is shown on the page.
-    suffix = (
-        Path(filename).suffix.lower()
-        if Path(filename).suffix.lower() in (".csv", ".txt", ".xlsx")
-        else ".csv"
-    )
-    with tempfile.TemporaryDirectory() as tmp:
-        path = Path(tmp) / f"upload{suffix}"
-        path.write_bytes(csv)
-        series = read_energy(
-            path,
-            tz=tz,
-            quantity=quantity,  # type: ignore[arg-type]
-            time_column=form.get("time_column") or None,
-            value_column=form.get("value_column") or None,
-            unit=form.get("unit") or None,  # type: ignore[arg-type]
-            kind=form.get("kind") or None,  # type: ignore[arg-type]
-            freq="h",
-            site=site if quantity == "generation" else None,  # the inverter sleeps at night: zeros
-            source_tz="UTC" if form.get("file_times") == "UTC" else None,  # UTC loggers: no DST gap or repeat
-        )
-    span = series.frame["ds"]
-    how = series.provenance.notes.split("; ")[0] if series.provenance else ""
-    log.append(f"Read {how.replace('upload' + suffix, filename)}.")
-    log.append(
-        f"{len(series.frame)} hours, {span.min():%Y-%m-%d} to {span.max():%Y-%m-%d}, "
-        f"{series.frame['valid'].mean():.0%} measured; {len(series.series)} series."
-    )
-
-    # 3. The weather of the next days (only generation uses it). Up to 16 days: the API's limit.
-    days = int(form.get("days") or 7)
-    weather = None
-    if quantity == "generation":
-        weather = open_meteo.fetch_forecast(*site, days=min(days, open_meteo.MAX_FORECAST_DAYS), tz=tz)
-        log.append(f"Weather forecast downloaded: {weather['model'].nunique()} models.")
-        credits.append(of(weather))
-
-    # 4. The forecast. Tilt, azimuth and kWp are optional: without them the library learns them from the data.
-    def number(key: str) -> float | None:
-        return float(form[key]) if form.get(key) else None
-
-    tilt, azimuth, kwp = number("tilt"), number("azimuth"), number("kwp")
-    out = prosumer.forecast_ahead(
-        series, days=days, site=site, weather=weather, tilt=tilt, azimuth=azimuth, kwp=kwp
-    )
-
-    # 5. When to run a heavy load: the best block of hours of each day.
-    hours = int(form.get("load_hours") or 3)
-    windows = prosumer.best_windows(out, hours)
-
-    # The analysis of the data you sent: quality, clock, how well simple forecasts did on your last weeks,
-    # and (production) the panels' orientation and performance over time.
-    report = prosumer.analyze(series, site=site, kwp=kwp)
-
-    money = Money()
-    pricing = _pricing(form, out, credits)  # the price typed in the form, or None
-    if isinstance(pricing, brazil.Setup):
-        money.notes += pricing.book.notes  # what the download had to assume (e.g. a year not published)
-    if pricing is not None:
-        money.tariff = pricing.describe()
-        # 6. The same by cost: the cheapest block of each day for a load of `kw` kW, with its confidence.
-        money.kw = float((form.get("load_kw") or "2.0").replace(",", "."))
-        outlooks = {"generation": out} if quantity == "generation" else {"consumption": out}
-        money.windows = economics.windows_by_cost(pricing, **outlooks, hours=hours, kw=money.kw, top=1)
-        money.notes += money.windows.attrs["notes"]
-
-        # 7. The bill of each month of your data (the bill needs what the household used: consumption only).
-        if quantity == "consumption":
-            try:
-                bill = pricing.bill(series)
-                money.monthly, money.totals = bill.monthly, bill.totals()
-                money.notes += bill.notes
-            except (ValueError, NotImplementedError) as e:  # e.g. no tariff in force on the data's dates
-                money.notes.append(f"No bill for your data: {e}")
-        else:
-            money.notes.append("The monthly bill needs your consumption: upload it to see what you pay.")
-
-    return _render(out, windows, hours, log, [c for c in credits if c is not None], money, report)
+    services = app.Services(tariff_book=partial(brazil.TariffBook.from_aneel, get=ANEEL_GET))
+    request = app.Request.from_dict(_request(form))  # its errors are messages for the person
+    result = app.run(request, {quantity: (csv, filename)}, services=services)
+    return _render(result, request)
 
 
-class Money:
-    """What steps 6 and 7 found, for the page (empty when no price was given)."""
-
-    def __init__(self) -> None:
-        self.tariff = ""
-        self.kw = 0.0
-        self.windows: pd.DataFrame | None = None
-        self.monthly: pd.DataFrame | None = None
-        self.totals: pd.DataFrame | None = None
-        self.notes: list[str] = []
-
-
-def _pricing(form: dict[str, str], out: prosumer.Outlook, credits: list) -> economics.Pricing | None:
-    """The form's price as a `Pricing`: `economics.Plan` (flat or time-of-use) or `brazil.Setup` (ANEEL)."""
+def _request(form: dict[str, str]) -> dict[str, Any]:
+    """The form as `app.run`'s request: blank boxes are "not given" there; the price keeps only the fields
+    of its kind, and the Brazilian taxes typed in % become the fractions the library takes."""
+    request: dict[str, Any] = {k: form[k] for k in PLAIN if k in form}
     kind = form.get("price") or "none"
     if kind == "none":
-        return None
-
-    def number(key: str, what: str, default: float | None = None) -> float:
-        """A number typed in the form (decimal comma or point); `default` when empty, else required."""
-        text = (form.get(key) or "").strip()
-        if not text:
-            if default is None:
-                raise ValueError(f"Give {what}.")
-            return default
-        try:
-            return float(text.replace(",", "."))
-        except ValueError:
-            raise ValueError(f"{what[0].upper()}{what[1:]}: {text!r} is not a number.") from None
-
+        return request
+    price: dict[str, Any] = {"kind": kind}
+    price |= {new: form[old] for old, new in PRICE_FIELDS.get(kind, {}).items() if old in form}
     if kind == "brazil":
-        agent = form.get("distributor") or "COPEL-DIS"
-        icms = number("icms", "the ICMS rate of your bill (%)") / 100  # user inputs: no table by state
-        pis = number("pis_cofins", "the PIS/COFINS rate of your bill (%)") / 100
-        gd = (form.get("gd") or None) if out.quantity == "generation" else None  # GD: only with PV
-        years: list[int] = []
-        if out.quantity == "generation" and gd == "GD II":
-            # a year's Fio B starts at the distributor's adjustment (Copel: 24 June): the earlier days of
-            # each year need the year before; the latest year may not be published yet (a note, not an error)
-            years = sorted({y + k for y in set(out.hourly["ds"].dt.year) for k in (-1, 0)})
-        try:
-            book = brazil.TariffBook.from_aneel(
-                agent, icms=icms, pis_cofins=pis, fio_b_years=years, extend_last=True, get=ANEEL_GET
-            )
-        except (OSError, RuntimeError) as e:  # offline, or ANEEL's API down
-            raise ValueError(
-                f"Could not download {DISTRIBUTORS.get(agent, agent)}'s tariffs from ANEEL's open data "
-                f"({e}). "
-                "Check the internet connection, or choose a flat or time-of-use price instead."
-            ) from e
-        credits.extend(book.provenance)
-        return brazil.Setup(
-            book=book,
-            connection=form.get("connection") or "bifasico_3",
-            gd=gd,  # type: ignore[arg-type]
-            cosip=number("cosip", "the COSIP", 0.0),
-        )
-    currency = form.get("currency") or "EUR"
-    export = number("export_price", "the export price", 0.0)
-    fixed = number("fixed", "the fixed charge", 0.0)
-    scheme = form.get("scheme") or "net_metering"
-    if kind == "flat":
-        tariff = economics.Tariff.flat(
-            number("flat_price", "the price per kWh"),
-            export_price=export,
-            fixed=fixed,
-            currency=currency,
-            name="your flat price",
-        )
-    elif kind == "tou":
-        a, b = _peak_hours(form.get("peak_hours") or "17-21")
-        peak = {h for h in range(24) if (a <= h < b if a < b else h >= a or h < b)}
-        tariff = economics.Tariff(
-            prices={
-                "peak": number("peak_price", "the peak price"),
-                "off_peak": number("offpeak_price", "the off-peak price"),
-            },
-            weekday={h: "peak" if h in peak else "off_peak" for h in range(24)},
-            weekend=dict.fromkeys(range(24), "off_peak"),  # no peak on Saturdays and Sundays
-            export_price=export,
-            fixed=fixed,
-            currency=currency,
-            name=f"your time-of-use price (peak {a:02d}:00-{b:02d}:00 on weekdays)",
-        )
-    else:
-        raise ValueError(f"Unknown price kind {kind!r}")
-    return economics.Plan(tariff, scheme=scheme)  # type: ignore[arg-type]
+        price |= {k: _percent(form.get(k, "")) for k in ("icms", "pis_cofins")}
+    request["price"] = price
+    return request
 
 
-def _peak_hours(text: str) -> tuple[int, int]:
-    """'17-21' -> (17, 21): whole hours, start-end, end may wrap past midnight ('22-6')."""
-    m = re.fullmatch(r"\s*(\d{1,2})\s*-\s*(\d{1,2})\s*", text)
-    a, b = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
-    if not m or not (0 <= a <= 23 and 0 <= b <= 24) or a == b % 24:
-        raise ValueError(
-            f"Peak hours {text!r}: give whole hours as start-end on a 24 h clock, e.g. 17-21 (17:00 to "
-            "21:00); the start and the end must differ. A peak that starts or ends inside an hour is not "
-            "supported in this form."
-        )
-    return a, b
+def _percent(text: str) -> float | str:
+    """'19' or '9,25' (%) -> 0.19, 0.0925; anything else as it is, for `app.run` to say what is wrong."""
+    try:
+        return float(text.strip().replace(",", ".")) / 100
+    except ValueError:
+        return text
 
 
 # ---------------------------------------------------------------------- HTML (plain tables, no script)
+def _render(r: app.Result, request: app.Request) -> str:
+    out = next(iter(r.outlooks.values()))
+    hours = request.load_hours
+    daily = out.daily
+    top = max(float(daily["high"].max()), 1e-9)
+    rows = []
+    for _, d in daily.iterrows():
+        bar = int(300 * d["total"] / top)
+        rows.append(
+            f"<tr><td>{d['date']:%a %d %b %Y}</td><td>{d['lead_day']}</td>"
+            f"<td>{d['total']:.1f}</td><td>{d['low']:.1f} - {d['high']:.1f}</td>"
+            f"<td>{html.escape(str(d['confidence']))}</td>"
+            f"<td><span class=bar style='width:{bar}px'></span></td></tr>"
+        )
+    best = "".join(
+        f"<tr><td>{w['date']:%a %d %b %Y}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
+        f"<td>{w['energy']:.1f}</td><td>{html.escape(str(w['confidence']))}</td></tr>"
+        for _, w in r.windows.iterrows()
+    )
+    hourly = out.hourly.assign(ds=out.hourly["ds"].dt.strftime("%Y-%m-%d %H:%M"))
+    hourly = hourly[["ds", "lead_day", "y_hat", "low", "high", "source", "n_models"]].round(3)
+    what = "production" if out.quantity == "generation" else "consumption"
+    pick = "most production" if out.quantity == "generation" else "least consumption"
+    method = html.escape(str(out.method.get("series", out.method)))
+    notes = [*out.notes, *r.notes]
+    return _page(
+        f"""
+<h1>Forecast of your {what}, kWh</h1>
+<p><a href="/">New forecast</a></p>
+<h2>What was read and learnt</h2>
+<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in r.log)}</ul>
+{_learnt(out)}
+<h2>Per day</h2>
+<table><tr><th>Day</th><th>Lead</th><th>Total</th><th>Range</th><th>Confidence</th><th></th></tr>
+{"".join(rows)}</table>
+<p class=small>{_range_note(out.quantity)}</p>
+<h2>Best {hours} hours of each day for a heavy load ({pick})</h2>
+<table><tr><th>Day</th><th>Hours</th><th>kWh in the block</th><th>Confidence</th></tr>{best}</table>
+{_money(r, hours, request.load_kw)}
+<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in notes)}</ul>
+<h2>Analysis of your data</h2>
+{_markdown(r.report.to_markdown())}
+<details><summary>Every number the forecast used</summary><pre>{method}</pre></details>
+<h2>Data sources</h2><ul>{"".join(f"<li>{t}</li>" for t in dict.fromkeys(map(_credit, r.credits)))}</ul>
+<details><summary>Every hour</summary>{hourly.to_html(index=False)}</details>
+"""
+    )
+
+
+def _money(r: app.Result, hours: int, kw: float) -> str:
+    """The cheapest block of each day by cost (next to the best one by energy) and the monthly bill."""
+    if r.windows_by_cost is None:
+        return ""
+    w = r.windows_by_cost
+    cur = html.escape(str(w["currency"].iloc[0])) if len(w) else ""
+    cheap = "".join(
+        f"<tr><td>{x['date']:%a %d %b %Y}</td><td>{x['start']:%H:%M} - {x['end']:%H:%M}</td>"
+        f"<td>{x['cost']:.2f}</td><td>{x['grid_kwh']:.1f}</td><td>{x['pv_kwh']:.1f}</td>"
+        f"<td>{html.escape(str(x['confidence']))}</td></tr>"
+        for _, x in w.iterrows()
+    )
+    parts = [
+        f"<h2>Cheapest {hours} hours of each day for a {kw:g} kW load, by expected cost</h2>",
+        f"<p class=small>Price: {html.escape(str(r.pricing))}.</p>",
+        f"<table><tr><th>Day</th><th>Hours</th><th>Cost, {cur}</th><th>kWh from the grid</th>"
+        f"<th>kWh from your PV</th><th>Confidence</th></tr>{cheap}</table>",
+    ]
+    econ = r.report.economics
+    if econ is None:
+        parts.append("<p>The monthly bill needs your consumption: upload it to see what you pay.</p>")
+        return "\n".join(parts)
+    rows = "".join(
+        f"<tr><td>{m['month']:%Y-%m}</td><td>{m['consumption']:.0f}</td><td>{m['total']:.2f}</td>"
+        f"<td>{m['coverage']:.0%}</td></tr>"
+        for _, m in econ.monthly.iterrows()
+    )
+    t = econ.totals.iloc[0]
+    expected = (
+        f"Expected monthly bill: <b>{t['mean_month']:.2f} {cur}</b> (mean of the "
+        f"{int(t['complete_months'])} complete month(s) of your data)."
+        if t["complete_months"] > 0
+        else "No month of your data is complete, so there is no expected monthly bill."
+    )
+    parts += [
+        "<h2>Your bill, month by month (from your data)</h2>",
+        f"<p>{expected}</p>",
+        f"<table><tr><th>Month</th><th>kWh</th><th>Bill, {cur}</th><th>Hours measured</th></tr>{rows}"
+        "</table>",
+        f"<ul>{''.join(f'<li>{html.escape(n)}</li>' for n in econ.notes)}</ul>",
+    ]
+    return "\n".join(parts)
+
+
 def _learnt(out: prosumer.Outlook) -> str:
     """One readable line per series: the plant the forecast is built on (a wrong file shows up here)."""
     lines = []
@@ -308,100 +221,6 @@ def _markdown(md: str) -> str:
             out.append(f"<p>{html.escape(s)}</p>")
     flush()
     return "\n".join(out)
-
-
-def _render(
-    out: prosumer.Outlook,
-    windows: pd.DataFrame,
-    hours: int,
-    log: list[str],
-    credits: list,
-    money: Money,
-    report: prosumer.Report | None = None,
-) -> str:
-    daily = out.daily
-    top = max(float(daily["high"].max()), 1e-9)
-    rows = []
-    for _, d in daily.iterrows():
-        bar = int(300 * d["total"] / top)
-        rows.append(
-            f"<tr><td>{d['date']:%a %d %b %Y}</td><td>{d['lead_day']}</td>"
-            f"<td>{d['total']:.1f}</td><td>{d['low']:.1f} - {d['high']:.1f}</td>"
-            f"<td>{html.escape(str(d['confidence']))}</td>"
-            f"<td><span class=bar style='width:{bar}px'></span></td></tr>"
-        )
-    best = "".join(
-        f"<tr><td>{w['date']:%a %d %b %Y}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
-        f"<td>{w['energy']:.1f}</td><td>{html.escape(str(w['confidence']))}</td></tr>"
-        for _, w in windows.iterrows()
-    )
-    hourly = out.hourly.assign(ds=out.hourly["ds"].dt.strftime("%Y-%m-%d %H:%M"))
-    hourly = hourly[["ds", "lead_day", "y_hat", "low", "high", "source", "n_models"]].round(3)
-    what = "production" if out.quantity == "generation" else "consumption"
-    pick = "most production" if out.quantity == "generation" else "least consumption"
-    method = html.escape(str(out.method.get("series", out.method)))
-    return _page(
-        f"""
-<h1>Forecast of your {what}, kWh</h1>
-<p><a href="/">New forecast</a></p>
-<h2>What was read and learnt</h2>
-<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in log)}</ul>
-{_learnt(out)}
-<h2>Per day</h2>
-<table><tr><th>Day</th><th>Lead</th><th>Total</th><th>Range</th><th>Confidence</th><th></th></tr>
-{"".join(rows)}</table>
-<p class=small>{_range_note(out.quantity)}</p>
-<h2>Best {hours} hours of each day for a heavy load ({pick})</h2>
-<table><tr><th>Day</th><th>Hours</th><th>kWh in the block</th><th>Confidence</th></tr>{best}</table>
-{_money(money, hours)}
-<h2>Notes</h2><ul>{"".join(f"<li>{html.escape(n)}</li>" for n in out.notes + money.notes)}</ul>
-<h2>Analysis of your data</h2>
-{_markdown(report.to_markdown()) if report is not None else "<p>Not run.</p>"}
-<details><summary>Every number the forecast used</summary><pre>{method}</pre></details>
-<h2>Data sources</h2><ul>{"".join(f"<li>{t}</li>" for t in dict.fromkeys(map(_credit, credits)))}</ul>
-<details><summary>Every hour</summary>{hourly.to_html(index=False)}</details>
-"""
-    )
-
-
-def _money(money: Money, hours: int) -> str:
-    """The cheapest block of each day by cost (next to the best one by energy) and the monthly bill."""
-    if money.windows is None:
-        return ""
-    cur = html.escape(str(money.windows["currency"].iloc[0])) if len(money.windows) else ""
-    cheap = "".join(
-        f"<tr><td>{w['date']:%a %d %b %Y}</td><td>{w['start']:%H:%M} - {w['end']:%H:%M}</td>"
-        f"<td>{w['cost']:.2f}</td><td>{w['grid_kwh']:.1f}</td><td>{w['pv_kwh']:.1f}</td>"
-        f"<td>{html.escape(str(w['confidence']))}</td></tr>"
-        for _, w in money.windows.iterrows()
-    )
-    parts = [
-        f"<h2>Cheapest {hours} hours of each day for a {money.kw:g} kW load, by expected cost</h2>",
-        f"<p class=small>Price: {html.escape(money.tariff)}.</p>",
-        f"<table><tr><th>Day</th><th>Hours</th><th>Cost, {cur}</th><th>kWh from the grid</th>"
-        f"<th>kWh from your PV</th><th>Confidence</th></tr>{cheap}</table>",
-    ]
-    if money.monthly is not None and money.totals is not None:
-        m = money.monthly
-        rows = "".join(
-            f"<tr><td>{r['month']:%Y-%m}</td><td>{r['consumption']:.0f}</td><td>{r['total']:.2f}</td>"
-            f"<td>{r['coverage']:.0%}</td></tr>"
-            for _, r in m.iterrows()
-        )
-        t = money.totals.iloc[0]
-        expected = (
-            f"Expected monthly bill: <b>{t['mean_month']:.2f} {cur}</b> (mean of the "
-            f"{int(t['complete_months'])} complete month(s) of your data)."
-            if t["complete_months"] > 0
-            else "No month of your data is complete, so there is no expected monthly bill."
-        )
-        parts += [
-            "<h2>Your bill, month by month (from your data)</h2>",
-            f"<p>{expected}</p>",
-            f"<table><tr><th>Month</th><th>kWh</th><th>Bill, {cur}</th><th>Hours measured</th></tr>{rows}"
-            "</table>",
-        ]
-    return "\n".join(parts)
 
 
 def _credit(c: Provenance) -> str:

@@ -500,7 +500,8 @@ def _pricing(
     notes: list[str],
 ) -> econ.Pricing:
     """The request's price as a `Pricing`: `economics.Plan` (flat or time-of-use) or `brazil.Setup`."""
-    p = dict(price)
+    # as in `Request.from_dict`: an empty field (a web form's blank box) is "not given"
+    p = {k: v for k, v in price.items() if not (v is None or (isinstance(v, str) and not v.strip()))}
     kind = p.pop("kind")
     with_pv = "generation" in outlooks
 
@@ -520,7 +521,8 @@ def _pricing(
             raise ValueError(Note("ICMS and PIS/COFINS are fractions (0.19 for 19%)"))
         if icms + pis >= 1:
             raise ValueError(Note("ICMS + PIS/COFINS must be below 1, not {total:.4g}", total=icms + pis))
-        gd = p.pop("gd", None) if with_pv else None
+        gd = p.pop("gd", None)
+        gd = gd if with_pv else None  # the GD class only matters with a PV file
         if with_pv and gd not in GD_CLASSES:
             raise ValueError(
                 Note(
@@ -532,8 +534,7 @@ def _pricing(
         modality = str(p.pop("modality", brazil.CONVENTIONAL))
         peak_start = p.pop("peak_start", None)
         if peak_start is not None:
-            peak_start = str(peak_start).strip() or None
-        if peak_start is not None:
+            peak_start = str(peak_start).strip()
             brazil.branca_blocks(peak_start)  # its errors now, not after the downloads
         connection = _connection(p.pop("connection", "bifasico_3"))
         cosip = num("cosip", Note("the COSIP"), 0.0)

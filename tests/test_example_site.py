@@ -1,6 +1,7 @@
-"""The example site's backend (examples/site_local/app.py), without the network: consumption with the
-coordinates and the time zone typed needs neither geocoding nor a weather forecast; a Brazilian tariff comes
-from a fake ANEEL that answers with the fixture of 2026-10-12."""
+"""The example site (examples/site_local/app.py), a thin shell over `prosumer.app.run`, without the network:
+what the shell does itself (the form as a request, the page) is tested here; `run` has its own tests
+(`test_app`, `test_i18n`). Consumption with the coordinates and the time zone typed needs neither geocoding
+nor a weather forecast; a Brazilian tariff comes from a fake ANEEL with the fixture of 2026-10-12."""
 
 from __future__ import annotations
 
@@ -43,6 +44,7 @@ FORM = {
     "timezone": "America/Sao_Paulo",
     "days": "7",
     "load_hours": "2",
+    "models": "naive",  # the page's test, not the forecast check's: the fastest models
 }
 
 
@@ -87,7 +89,7 @@ def test_flat_price_adds_the_cheapest_hours_and_the_monthly_bill() -> None:
     assert cheap.count("<td>1.20</td>") == 7 and cheap.count("typical week") == 7
     assert "Expected monthly bill: <b>94.86 EUR</b> (mean of the 1 complete month(s)" in page
     assert "<td>2024-02</td>" in page  # the partial month is listed, not averaged
-    assert "your flat price" in page
+    assert "Price: flat" in page
 
 
 def test_time_of_use_price_keeps_the_load_out_of_the_peak() -> None:
@@ -126,47 +128,26 @@ def test_brazilian_tariff_from_aneel_with_typed_taxes(monkeypatch: pytest.Monkey
     assert "COSIP" in page  # not included unless typed
 
 
-def test_gd_ii_pv_page_in_march_gets_its_fio_b(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Review F1: a production outlook in March 2027. Copel's Fio B of 2026 starts on 24/6/2026, the 2027
-    file is not published (the fixture has 2026 only): steps 6 and 7's price must still be built, from the
-    previous year's file, with notes for what was assumed."""
-    from prosumer import Outlook, economics
-
-    app = _app()
-    monkeypatch.setattr(app, "ANEEL_GET", from_fixture())
-    ds = pd.date_range("2027-03-08", periods=3 * 24, freq="h", tz="America/Sao_Paulo")
-    sun = np.where(np.isin(ds.hour, [10, 11, 12]), 3.0, 0.0)
-    out = Outlook(
-        hourly=pd.DataFrame({"unique_id": "mine", "ds": ds, "y_hat": sun}),
-        daily=pd.DataFrame(
-            {"unique_id": "mine", "date": pd.date_range("2027-03-08", periods=3), "confidence": "high"}
-        ),
-        quantity="generation",
-    )
-    form = {"price": "brazil", "icms": "19", "pis_cofins": "9.25", "gd": "GD II"}
-    pricing = app._pricing(form, out, [])
-    assert any("2027" in n for n in pricing.book.notes)  # the 2027 components file is missing: a note
-    w = economics.windows_by_cost(pricing, generation=out, hours=3, kw=2.0, top=1)
-    assert len(w) == 3 and (w["start"].dt.hour == 10).all()
-    assert any("No bandeira published for 2027-03" in n for n in w.attrs["notes"])
-
-
-def test_form_numbers_take_a_decimal_comma_and_peak_hours_are_checked() -> None:
-    """Review F4."""
-    app = _app()
-    out = type("O", (), {"quantity": "consumption"})()
-    flat = app._pricing(
-        {"price": "flat", "flat_price": "0,30", "export_price": "0,05", "fixed": "7,5"}, out, []
-    )
-    assert flat.tariff.export_price == pytest.approx(0.05) and flat.tariff.fixed == pytest.approx(7.5)
-    tou = {"price": "tou", "peak_price": "0.5", "offpeak_price": "0.2"}
-    for bad in ("17:30-20:30", "18-18", "evening"):
-        with pytest.raises(ValueError, match="whole hours"):
-            app._pricing(tou | {"peak_hours": bad}, out, [])
-    night = app._pricing(tou | {"peak_hours": "22-6"}, out, [])  # wraps past midnight
-    assert night.tariff.weekday[23] == "peak" and night.tariff.weekday[6] == "off_peak"
-    with pytest.raises(ValueError, match="not a number"):
-        app._pricing({"price": "flat", "flat_price": "0.3", "fixed": "five"}, out, [])
+def test_the_form_becomes_the_request_of_app_run() -> None:
+    """Only the fields of the price's kind are sent, taxes typed in % become fractions, blank boxes stay
+    blank for `app.run` to ignore (a web form sends every box)."""
+    site = _app()
+    form = FORM | {"price": "brazil", "icms": "19", "pis_cofins": "9,25", "flat_price": "", "gd": "GD II"}
+    form |= {"currency": "", "distributor": "CEMIG-D", "cosip": ""}
+    request = site._request(form)
+    assert request["price"] == {
+        "kind": "brazil",
+        "distributor": "CEMIG-D",
+        "gd": "GD II",
+        "cosip": "",
+        "icms": pytest.approx(0.19),
+        "pis_cofins": pytest.approx(0.0925),
+    }
+    assert "quantity" not in request and request["days"] == "7"
+    assert "price" not in site._request(FORM | {"price": "none", "flat_price": "0.3"})
+    tou = site._request(FORM | {"price": "tou", "peak_hours": "22-6", "flat_price": "0.3", "icms": "19"})
+    assert tou["price"] == {"kind": "tou", "peak_hours": "22-6"}
+    assert site._request(FORM | {"price": "brazil", "icms": "dezenove"})["price"]["icms"] == "dezenove"
 
 
 def test_brazilian_tariff_needs_the_taxes_and_says_when_offline(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -180,5 +161,5 @@ def test_brazilian_tariff_needs_the_taxes_and_says_when_offline(monkeypatch: pyt
 
     monkeypatch.setattr(app, "ANEEL_GET", offline)
     form = FORM | {"price": "brazil", "icms": "19", "pis_cofins": "9.25"}
-    with pytest.raises(ValueError, match="Could not download Copel"):
+    with pytest.raises(ValueError, match="Could not download COPEL-DIS's tariffs"):
         app.forecast_page(form, _csv("2026-07-01", 92))

@@ -139,6 +139,18 @@ def test_a_pv_file_dead_through_the_test_days_skips_only_the_forecast_check() ->
     assert app.run({**SITE, "models": "naive"}, files, services=_services()).report.forecast is not None
 
 
+def test_blank_price_fields_are_not_given_and_gd_without_pv_is_ignored() -> None:
+    # regressions 2026-10-21: a web form sends every box, blank ones as "": `currency: ""` became the
+    # currency and `scheme: ""` an error; and `gd` with a consumption file only was an "Unknown price field"
+    files = {"consumption": (_consumption_csv("2026-07-01", 61), "conta.csv")}
+    flat = {"kind": "flat", "price": "0,8", "currency": "", "scheme": " ", "export_price": "", "fixed": None}
+    r = app.run({**SITE, "models": "naive", "price": flat}, files, services=_services())
+    assert r.report.economics is not None and r.report.economics.currency == "EUR"
+    price = {"kind": "brazil", "icms": 0.19, "pis_cofins": 0.0925, "gd": "GD II", "peak_start": ""}
+    r = app.run({**SITE, "models": "naive", "price": price}, files, services=_services())
+    assert r.report.economics is not None and "no GD class" in str(r.pricing)
+
+
 def test_failed_downloads_are_messages_for_the_person() -> None:
     def offline(*a: Any, **k: Any) -> Any:
         raise OSError("no route to host")

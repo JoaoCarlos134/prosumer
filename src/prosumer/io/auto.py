@@ -50,6 +50,7 @@ import numpy as np
 import pandas as pd
 
 from ..contracts import DstPolicy, EnergySeries, Quantity, Unit
+from ..i18n import Note
 from . import _tables, fronius, meter
 from ._tables import Label
 
@@ -156,7 +157,11 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
         scores = {c: _times_ok(head[c].iloc[1:]) for c in cols}
         time_column = next((c for c in cols if scores[c] >= 0.8), None)
         if time_column is None:
-            raise ValueError(f"No column of dates and times found among {cols}; give the time column's name")
+            raise ValueError(
+                Note(
+                    "No column of dates and times found among {cols}; give the time column's name", cols=cols
+                )
+            )
     first = head[time_column].iloc[0] if len(head) else None
     units_row = bool(
         len(head) > 1
@@ -178,11 +183,13 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
         cands.append({"column": c, "unit": unit or "", "status": "candidate"})
     if value_column is not None:
         if value_column not in cols:
-            raise ValueError(f"Column {value_column!r} not in the file; it has {cols}")
+            raise ValueError(
+                Note("Column {column!r} not in the file; it has {cols}", column=value_column, cols=cols)
+            )
         hit = next((d for d in cands if d["column"] == value_column), {"unit": ""})
         return Sniffed(
             "table",
-            f"column {value_column!r} as given",
+            Note("column {column!r} as given", column=value_column),
             time_column,
             value_column,
             hit["unit"] or None,
@@ -192,9 +199,9 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
         )
     pool = [d for d in cands if d["status"] == "candidate"]
     for rule, keep in (
-        ("an energy unit", lambda d: d["unit"] in _ENERGY_UNITS.values()),
-        ("a power unit", lambda d: d["unit"] in _POWER_UNITS.values()),
-        ("a name of energy", lambda d: bool(_ENERGY_NAME.search(fronius.normalise(d["column"])))),
+        (Note("an energy unit"), lambda d: d["unit"] in _ENERGY_UNITS.values()),
+        (Note("a power unit"), lambda d: d["unit"] in _POWER_UNITS.values()),
+        (Note("a name of energy"), lambda d: bool(_ENERGY_NAME.search(fronius.normalise(d["column"])))),
     ):
         hits = [d for d in pool if keep(d)]
         if len(hits) > 1:  # prefer the plain total over per-channel columns (MPP1, L2, string 3)
@@ -204,7 +211,7 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
             d = hits[0]
             return Sniffed(
                 "table",
-                f"column {d['column']!r}: the only one with {rule}",
+                Note("column {column!r}: the only one with {rule}", column=d["column"], rule=rule),
                 time_column,
                 d["column"],
                 d["unit"] or None,
@@ -215,14 +222,18 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
         if len(hits) > 1:
             names = [d["column"] for d in hits]
             raise ValueError(
-                f"Several columns could be the energy ({names}, all with {rule}); "
-                "give the energy column's name"
+                Note(
+                    "Several columns could be the energy ({names}, all with {rule}); give the energy "
+                    "column's name",
+                    names=names,
+                    rule=rule,
+                )
             )
     if len(others) == 1 and pool:
         d = pool[0]
         return Sniffed(
             "table",
-            f"column {d['column']!r}: the only value column",
+            Note("column {column!r}: the only value column", column=d["column"]),
             time_column,
             d["column"],
             d["unit"] or None,
@@ -231,8 +242,11 @@ def _sniff_table(frame: pd.DataFrame, *, time_column: str | None, value_column: 
             cands,
         )
     raise ValueError(
-        f"No energy column recognised among {others} (looked for an energy or power unit, or a name such as "
-        "energy, production, consumption); give the energy column's name"
+        Note(
+            "No energy column recognised among {others} (looked for an energy or power unit, or a name such "
+            "as energy, production, consumption); give the energy column's name",
+            others=others,
+        )
     )
 
 
@@ -251,7 +265,7 @@ def sniff(
     for name, detect in FORMATS:
         if time_column is None and value_column is None and detect(head):
             return Sniffed(
-                name, "recognised as a Fronius Solar.web export (two header rows, units in brackets)"
+                name, Note("recognised as a Fronius Solar.web export (two header rows, units in brackets)")
             )
     frame = pd.DataFrame(head.iloc[1:].to_numpy(), columns=[str(c).strip() for c in head.iloc[0]])
     return _sniff_table(frame, time_column=time_column, value_column=value_column)
@@ -310,11 +324,16 @@ def read_energy(
     except ValueError as e:
         if "shorter than the data's step" in str(e):
             native = pd.Timedelta(str(e).split("step (")[-1].split(")")[0])
-            every = "day" if native == pd.Timedelta(days=1) else f"{native}"
+            every = Note("day") if native == pd.Timedelta(days=1) else f"{native}"
             raise ValueError(
-                f"{path.name} has one value per {every}, coarser than the "
-                f"{freq!r} steps asked for: export the detailed data (5- or 15-minute or hourly; in Fronius "
-                "Solar.web, the 5-minute 'minuto' export) instead of the daily totals."
+                Note(
+                    "{file} has one value per {every}, coarser than the {freq!r} steps asked for: export the "
+                    "detailed data (5- or 15-minute or hourly; in Fronius Solar.web, the 5-minute 'minuto' "
+                    "export) instead of the daily totals.",
+                    file=path.name,
+                    every=every,
+                    freq=freq,
+                )
             ) from e
         raise
 
@@ -341,7 +360,7 @@ def _read(
     if found.format == "solarweb":
         if quantity != "generation":
             raise ValueError(
-                "A Fronius Solar.web export holds the inverter's production: quantity='generation'"
+                Note("A Fronius Solar.web export holds the inverter's production: quantity='generation'")
             )
         s = fronius.read_solarweb(
             path,
@@ -355,13 +374,16 @@ def _read(
             encoding=encoding,
             source_tz=source_tz,
         )
-        return _noted(s, f"format: {found.why}")
-    sniffed, note = unit or found.unit, ""
+        return _noted(s, Note("format: {why}", why=found.why))
+    sniffed, assumed = unit or found.unit, False
     if sniffed is None:
-        sniffed, note = "kWh", "; unit not stated in the file: kWh assumed"
+        sniffed, assumed = "kWh", True
     if sniffed not in ("kWh", "Wh", "kW", "W"):
         raise ValueError(
-            f"Unit {sniffed!r} is not read yet (kWh, Wh, kW or W); convert the column or give unit="
+            Note(
+                "Unit {unit!r} is not read yet (kWh, Wh, kW or W); convert the column or give unit=",
+                unit=sniffed,
+            )
         )
     u = cast(Unit, sniffed)
     frame, _ = meter._load(path, sep=sep, encoding=encoding, sheet=sheet, skiprows=0)
@@ -369,15 +391,15 @@ def _read(
     if found.units_row:
         frame = frame.iloc[1:].reset_index(drop=True)
     assert found.time_column is not None and found.value_column is not None
-    k, counter_note = kind, ""
+    k, extra = kind, []
     if u in _ENERGY_UNITS.values() and kind in (None, "cumulative"):
         counter = _counter_kind(frame[found.time_column], frame[found.value_column], decimal)
         if kind is None and counter is not None:
             k = "cumulative"
-            counter_note = (
-                "; its values only grow within each day and restart at midnight: read as a daily counter"
+            extra.append(
+                Note("its values only grow within each day and restart at midnight: read as a daily counter")
                 if counter == "daily"
-                else "; its values only grow: read as a register (counter)"
+                else Note("its values only grow: read as a register (counter)")
             )
         if resets is None:
             resets = "restart" if counter == "daily" else "invalid"
@@ -402,8 +424,12 @@ def _read(
         s = EnergySeries.from_dataframe(
             out, unit="kWh", quantity=quantity, tz=s.tz, freq=s.freq, provenance=s.provenance
         )
-    dropped = "; a units row under the header was dropped" if found.units_row else ""
-    return _noted(s, f"file {path.name}: {found.why}, unit {u}, kind {k}{counter_note}{dropped}{note}")
+    if found.units_row:
+        extra.append(Note("a units row under the header was dropped"))
+    if assumed:
+        extra.append(Note("unit not stated in the file: kWh assumed"))
+    how = Note("file {file}: {why}, unit {unit}, kind {kind}", file=path.name, why=found.why, unit=u, kind=k)
+    return _noted(s, Note.join([how, *extra]) if extra else how)
 
 
 COUNTER_MIN_READINGS = 6
@@ -442,9 +468,11 @@ def _counter_kind(times: pd.Series, values: pd.Series, decimal: str | None) -> s
     per_day = pd.Series(1, index=np.asarray(days)).groupby(level=0).size()
     if (per_day >= 2).sum() < 2 and not np.min(x) > np.max(x) - np.min(x):
         raise ValueError(
-            "The energy column only rises in this file: a counter (each step = the difference of two "
-            "readings) or the energy of each interval (one rising morning of PV) look alike in a single day. "
-            "Give kind='cumulative' or kind='interval'."
+            Note(
+                "The energy column only rises in this file: a counter (each step = the difference of two "
+                "readings) or the energy of each interval (one rising morning of PV) look alike in a single "
+                "day. Give kind='cumulative' or kind='interval'."
+            )
         )
     changes = ~same
     if changes.any() and np.mean(d[changes] < 0) >= 0.8:
@@ -453,13 +481,18 @@ def _counter_kind(times: pd.Series, values: pd.Series, decimal: str | None) -> s
 
 
 def _noted(s: EnergySeries, text: str) -> EnergySeries:
+    """`text` first in the provenance notes, each part kept apart (`Note.join`: the app shows the first)."""
     p = s.provenance
     if p is None:
         return s
-    new = replace(p, notes=f"{text}; {p.notes}" if p.notes else text)
+    new = replace(p, notes=Note.join([*_parts(text), *_parts(p.notes)]) if p.notes else text)
     return EnergySeries.from_dataframe(
         s.frame, unit=s.unit, quantity=s.quantity, tz=s.tz, freq=s.freq, provenance=new
     )
+
+
+def _parts(text: str) -> list[str]:
+    return text.parts if isinstance(text, Note) else [text]
 
 
 __all__ = ["FORMATS", "Sniffed", "read_energy", "sniff"]

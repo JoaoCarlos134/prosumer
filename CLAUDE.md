@@ -165,7 +165,9 @@ still point at the old URL (it redirects; `git remote set-url origin https://git
 FlowState, each with a card), `postprocessing`, `physics`, `quality` (clock vs sun and clouds), `diagnostics`,
 `outlook` (`forecast_ahead`, `best_windows`), `economics` (+ `brazil`: Lei 14.300, tarifa branca with PV),
 `embedded` (C headers), `io` (auto, meter, fronius, pvdaq, open_meteo, nasa_power, geocode, aneel),
-`provenance`, `data` (Dingle houses CC0, synthetic). User guide in `docs/library/` (mkdocs; every example runs
+`provenance`, `data` (Dingle houses CC0, synthetic), `i18n` (every note/log line/person-facing error is a `Note`:
+English text + template; `to_dict(lang="pt")`; the Portuguese catalog is `i18n/pt.py`, data only, and
+`tests/test_i18n.py` fails when a `Note("...")` in the code has no translation: add it there). User guide in `docs/library/` (mkdocs; every example runs
 in `tests/test_docs.py`), API reference generated from the docstrings. Example site: `examples/site_local/`.
 
 Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`):
@@ -177,7 +179,17 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-19, end of the day at Lactec)
+## Where to continue (2026-10-21, Lactec)
+
+Done on 21/10: **translations EN/PT** (`prosumer.i18n`, ~230 templates; `Report/Outlook/Diagnosis/Bill/
+app.Result.to_dict(lang="pt")`, `i18n.message(error, "pt")`; codes, names and licences stay untranslated by
+design). pandas 3 turns a text column into its string type and drops the `Note`: tables that carry notes are
+built with `i18n.frame`. Also: `app.run` turns failed weather/address/time-zone downloads into messages; fixed
+the bare `KeyError` of an unknown Brazilian `connection` (regression tests in `test_app`, `test_economics_brazil`).
+The user does not want the project doubled by the translations: keep Portuguese in the catalog only, never
+per-language code paths. Next: item 1 (review, now `9119619..HEAD`), then 3-7 below.
+
+### The list of 2026-10-19 (item 2 done on 21/10)
 
 Done on 19/10 (all pushed): review fixes F2/F4/F8/F9 and `analyze(bias_days=, calibration_days=)` (`3898067`);
 `app.run` runs LightGBM in the forecast check by default (`models`: lightgbm/naive/all), `Result.charts`

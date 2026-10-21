@@ -65,7 +65,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -83,6 +83,7 @@ from .diagnostics import (
     _index,
     _roof,
 )
+from .i18n import Note, translate
 
 MAX_DAYS = 35
 WEEKS = 4
@@ -160,8 +161,9 @@ class Outlook:
     method: dict[str, Any] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> dict[str, Any]:
-        """JSON-friendly version (timestamps as ISO text)."""
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """JSON-friendly version (timestamps as ISO text). `lang`: the language of the notes and of the
+        method's texts, "en" or "pt" (`prosumer.i18n`); None keeps each one a `Note`."""
 
         def records(df: pd.DataFrame) -> list[dict[str, Any]]:
             out = df.copy()
@@ -170,7 +172,7 @@ class Outlook:
                     out[c] = out[c].map(lambda t: t.isoformat())
             return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
 
-        return {
+        out = {
             "quantity": self.quantity,
             "unit": self.unit,
             "hourly": records(self.hourly),
@@ -178,6 +180,7 @@ class Outlook:
             "method": _plain(self.method),
             "notes": list(self.notes),
         }
+        return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
     def to_markdown(self) -> str:
         """Readable summary: the daily table and the notes."""
@@ -232,7 +235,7 @@ def forecast_ahead(
     `clear_ratio`, the clear-day rule.
     """
     if not 1 <= days <= MAX_DAYS:
-        raise ValueError(f"days must be in 1-{MAX_DAYS}")
+        raise ValueError(Note("days must be in 1-{max}", max=MAX_DAYS))
     tune = _Tuning(
         skill=tuple(skill),
         confidence=(float(confidence[0]), float(confidence[1])),
@@ -252,13 +255,16 @@ def forecast_ahead(
         raise ValueError("A generation forecast needs the site (latitude, longitude)")
     valid = s.frame.loc[s.frame["valid"]]
     if valid.empty:
-        raise ValueError("The series has no valid value")
+        raise ValueError(Note("The series has no valid value"))
     last = valid["ds"].max()
     w = None if weather is None else _wide(weather, s.tz)
     notes: list[str] = []
     if resampled:
         notes.append(
-            f"The series came in steps of {series.freq}: summed into hours (11/12 of an hour needed)."
+            Note(
+                "The series came in steps of {freq}: summed into hours (11/12 of an hour needed).",
+                freq=series.freq,
+            )
         )
     first = (last + pd.Timedelta(hours=1)).normalize() + (
         pd.Timedelta(days=1) if (last + pd.Timedelta(hours=1)).hour else pd.Timedelta(0)
@@ -268,14 +274,22 @@ def forecast_ahead(
         first = (t.tz_localize(s.tz) if t.tzinfo is None else t.tz_convert(s.tz)).normalize()
         if first <= last:
             notes.append(
-                f"The outlook starts on {first.date()}, before the data end ({last.date()}): those days are "
-                "already in the data, so they are not forecasts and say nothing about skill."
+                Note(
+                    "The outlook starts on {first}, before the data end ({last}): those days are already in "
+                    "the data, so they are not forecasts and say nothing about skill.",
+                    first=first.date(),
+                    last=last.date(),
+                )
             )
     elif w is not None and s.quantity == "generation" and _first_full_day(w["ds"]) > first:
         covered = _first_full_day(w["ds"])
         notes.append(
-            f"The data end on {last.date()}; the forecast starts on {covered.date()}, the first local day "
-            "the weather forecast covers in full. The days in between are not forecast."
+            Note(
+                "The data end on {last}; the forecast starts on {first}, the first local day the weather "
+                "forecast covers in full. The days in between are not forecast.",
+                last=last.date(),
+                first=covered.date(),
+            )
         )
         first = covered
     end = (first.tz_localize(None) + pd.Timedelta(days=days)).tz_localize(s.tz, nonexistent="shift_forward")
@@ -288,36 +302,51 @@ def forecast_ahead(
     else:
         hourly, method, more = _consumption(s, hours, lead, weeks)
         if w is not None:
-            more.append("The weather forecast is not used for consumption (the profile of recent weeks is).")
+            more.append(
+                Note("The weather forecast is not used for consumption (the profile of recent weeks is).")
+            )
         more.append(
-            "The consumption profile (weekdays and weekends apart, last 4 weeks) beat 'same as the last day' "
-            "at every lead 1-14 on 20 Dingle houses (autumn 2020); a holiday, a trip or a new appliance is "
-            "not in it."
+            Note(
+                "The consumption profile (weekdays and weekends apart, last 4 weeks) beat 'same as the last "
+                "day' at every lead 1-14 on 20 Dingle houses (autumn 2020); a holiday, a trip or a new "
+                "appliance is not in it."
+            )
         )
     notes += more
     if s.quantity == "generation" and w is not None:
         if (hourly["source"] == "weather").any():
             if tuple(trust) == TRUST or tune.skill == SKILL:
                 notes.append(
-                    "How much the weather forecast is trusted at each lead day, and the confidence labels, "
-                    "were measured on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they "
-                    "are an assumption (`trust=` and `skill=` change them)."
+                    Note(
+                        "How much the weather forecast is trusted at each lead day, and the confidence "
+                        "labels, were measured on two plants in Parana (Brazil), Aug/2025 to May/2026; "
+                        "elsewhere they are an assumption (`trust=` and `skill=` change them)."
+                    )
                 )
         else:
             notes.append(
-                "The weather forecast covers none of these hours: every day is the seasonal expectation."
+                Note(
+                    "The weather forecast covers none of these hours: every day is the seasonal expectation."
+                )
             )
     if lead.max() > len(trust) and s.quantity == "generation":
         notes.append(
-            f"Days beyond day {len(trust)} are the seasonal expectation (an average day of the month), not a "
-            "forecast of their weather: beyond a week the weather forecasts showed no skill in the pilot."
+            Note(
+                "Days beyond day {n} are the seasonal expectation (an average day of the month), not a "
+                "forecast of their weather: beyond a week the weather forecasts showed no skill in the "
+                "pilot.",
+                n=len(trust),
+            )
         )
     daily = _daily(hourly, tune.confidence)
     gaps = daily[daily["missing_hours"] > 0]
     if len(gaps):
         notes.append(
-            f"{int(gaps['missing_hours'].sum())} hours have no forecast (never seen in the recent data) and "
-            "are left out of the daily totals and of the load windows."
+            Note(
+                "{n} hours have no forecast (never seen in the recent data) and are left out of the daily "
+                "totals and of the load windows.",
+                n=int(gaps["missing_hours"].sum()),
+            )
         )
     return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
 
@@ -386,9 +415,13 @@ def _generation(
     ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs, tune.implausible)
     if dropped:
         notes.append(
-            "Weather models left out from the first day their GHI exceeds what the sun can give "
-            f"(> {tune.implausible[0]:g} x clear sky + {tune.implausible[1]:.0f} W/m2 in some hour): "
-            f"{', '.join(dropped)}."
+            Note(
+                "Weather models left out from the first day their GHI exceeds what the sun can give "
+                "(> {factor:g} x clear sky + {offset:.0f} W/m2 in some hour): {models}.",
+                factor=tune.implausible[0],
+                offset=tune.implausible[1],
+                models=dropped,
+            )
         )
     a = np.where(np.isfinite(ghi), a, 0.0)  # no model reaches the hour: seasonal only
     sk = np.where(a > 0, sk, 0.0)
@@ -406,15 +439,25 @@ def _generation(
             row = fitted[fitted["unique_id"] == uid].iloc[0]
             if bool(row["edge"]) or float(row["r2"]) < GOOD_FIT_R2:
                 notes.append(
-                    f"{uid}: the roof fitted from the data is unreliable (tilt {row['tilt']:.0f}, "
-                    f"R2 {row['r2']:.2f}; a tilt on the edge of the search or R2 < {GOOD_FIT_R2} means "
-                    "the data do not identify it). Give the tilt and azimuth if you know them."
+                    Note(
+                        "{uid}: the roof fitted from the data is unreliable (tilt {tilt:.0f}, R2 {r2:.2f}; a "
+                        "tilt on the edge of the search or R2 < {good} means the data do not identify it). "
+                        "Give the tilt and azimuth if you know them.",
+                        uid=uid,
+                        tilt=row["tilt"],
+                        r2=row["r2"],
+                        good=GOOD_FIT_R2,
+                    )
                 )
         if how == "default":
             notes.append(
-                f"{uid}: the orientation could not be fitted from the data; assumed tilt {t:.0f} facing "
-                f"{az:.0f}. "
-                "Give tilt and azimuth for a better forecast."
+                Note(
+                    "{uid}: the orientation could not be fitted from the data; assumed tilt {tilt:.0f} "
+                    "facing {azimuth:.0f}. Give tilt and azimuth for a better forecast.",
+                    uid=uid,
+                    tilt=t,
+                    azimuth=az,
+                )
             )
         idx = _index(f[f["unique_id"] == uid], causal, site, {}, (t, az))
         g = f[(f["unique_id"] == uid) & f["y"].notna()]
@@ -426,19 +469,29 @@ def _generation(
         if not np.isfinite(kw_eff):
             if kwp is None:
                 raise ValueError(
-                    f"{uid}: no clear day in the {tune.kw_eff_days[1]} days before the data end to learn "
-                    "the plant's power; give kwp"
+                    Note(
+                        "{uid}: no clear day in the {days} days before the data end to learn the plant's "
+                        "power; give kwp",
+                        uid=uid,
+                        days=tune.kw_eff_days[1],
+                    )
                 )
             share = tune.kwp_share
-            kw_eff, k_src = share * _per(kwp, uid), f"{share:g} x kwp (no recent clear day)"
-            notes.append(f"{uid}: no recent clear day to learn the plant; used {share:.0%} of the given kWp.")
+            kw_eff, k_src = share * _per(kwp, uid), Note("{share:g} x kwp (no recent clear day)", share=share)
+            notes.append(
+                Note(
+                    "{uid}: no recent clear day to learn the plant; used {share:.0%} of the given kWp.",
+                    uid=uid,
+                    share=share,
+                )
+            )
         clearness = _clearness(
             days[days["unique_id"] == uid], site, (t, az), (k_dates, k_vals), anchor, s.tz, hours, tune
         )
         cs_poa = physics.poa_isotropic(cs, sun, t, az) / 1000.0
         med, p10, p90 = clearness["median"], clearness["p10"], clearness["p90"]
         if clearness["note"]:
-            notes.append(f"{uid}: {clearness['note']}")
+            notes.append(Note("{uid}: {note}", uid=uid, note=clearness["note"]))
         seasonal = kw_eff * cs_poa * med
         y_w = _poa(ghi, sun, t, az) * kw_eff
         lo_w, hi_w = _poa(lo_ghi, sun, t, az) * kw_eff, _poa(hi_ghi, sun, t, az) * kw_eff
@@ -472,7 +525,7 @@ def _generation(
             "clearness": clearness["summary"],
         }
     if w is None:
-        notes.append("No weather forecast given: every day is the seasonal expectation.")
+        notes.append(Note("No weather forecast given: every day is the seasonal expectation."))
     return pd.concat(out, ignore_index=True), method, notes
 
 
@@ -542,8 +595,8 @@ def _window_count(
         lo = (anchor - pd.Timedelta(days=days)).to_datetime64()
         n = int(((dates >= lo) & (dates < anchor.to_datetime64())).sum())
         if n:
-            return n, f"median of the clear days of the {days} days before the data end"
-    return 0, "none"
+            return n, Note("median of the clear days of the {days} days before the data end", days=days)
+    return 0, Note("none")
 
 
 def _clearness(
@@ -563,8 +616,13 @@ def _clearness(
     before the data end."""
     nan = np.full(len(hours), np.nan)
     if days.empty:
-        note = "no complete day to learn the season"
-        return {"median": nan, "p10": nan, "p90": nan, "note": note, "summary": {}}
+        return {
+            "median": nan,
+            "p10": nan,
+            "p90": nan,
+            "note": Note("no complete day to learn the season"),
+            "summary": {},
+        }
     d = days.sort_values("date").copy()
     start = pd.Timestamp(d["date"].min()).tz_localize(tz)
     stop = (pd.Timestamp(d["date"].max()) + pd.Timedelta(days=1)).tz_localize(tz)
@@ -584,7 +642,7 @@ def _clearness(
         fallback = (np.nan, np.nan, np.nan)
     out = {"median": nan.copy(), "p10": nan.copy(), "p90": nan.copy()}
     summary: dict[str, Any] = {}
-    note = ""
+    note: str = ""
     local = hours.tz_localize(None)
     ym = local.year.to_numpy() * 100 + local.month.to_numpy()
     for code in np.unique(ym):
@@ -593,14 +651,14 @@ def _clearness(
         same = d.loc[(when.month == month) & (when.year < year), "r"]
         if len(same) >= tune.min_month_days:
             vals = (float(same.median()), float(same.quantile(0.1)), float(same.quantile(0.9)))
-            src = f"{len(same)} days of the same month in earlier years"
+            src = Note("{n} days of the same month in earlier years", n=len(same))
         else:
-            vals, src = fallback, f"the {len(last30)} days before the data end"
+            vals, src = fallback, Note("the {n} days before the data end", n=len(last30))
         for key, v in zip(("median", "p10", "p90"), vals, strict=True):
             out[key][pos] = v
         summary[f"{year}-{month:02d}"] = {"median": round(vals[0], 3), "from": src}
         if not np.isfinite(vals[0]):
-            note = "too little history to learn the season: some days have no seasonal expectation"
+            note = Note("too little history to learn the season: some days have no seasonal expectation")
     return {**out, "note": note, "summary": summary}
 
 
@@ -624,12 +682,14 @@ def _weather_at(
     m = x[models].to_numpy(dtype=float, copy=True)
     day = hours.tz_localize(None).normalize()
     bad = m > implausible[0] * cs[:, None] + implausible[1]
-    dropped = []
+    dropped: list[str] = []
     for j, name in enumerate(models):
         if bad[:, j].any():
             d0 = day[bad[:, j]].min()
             m[day >= d0, j] = np.nan
-            dropped.append(f"{name.removeprefix('ghi_')} from {pd.Timestamp(d0).date()}")
+            dropped.append(
+                Note("{model} from {day}", model=name.removeprefix("ghi_"), day=pd.Timestamp(d0).date())
+            )
     n = np.isfinite(m).sum(axis=1)
     ok = np.isfinite(m)
     mean = np.where(n > 0, np.where(ok, m, 0).sum(axis=1) / np.maximum(n, 1), np.nan)
@@ -670,7 +730,13 @@ def _consumption(
             for c in ("mean", "min", "max"):
                 p[c] = np.where(p[c].isna(), by_hour[c].to_numpy(), p[c].to_numpy())
         if int(prof["size"].min() if len(prof) else 0) < 2 * weeks:  # 2 weekend days a week
-            notes.append(f"{uid}: fewer than {weeks} weeks of valid data behind some hours of the profile.")
+            notes.append(
+                Note(
+                    "{uid}: fewer than {weeks} weeks of valid data behind some hours of the profile.",
+                    uid=uid,
+                    weeks=weeks,
+                )
+            )
         out.append(
             pd.DataFrame(
                 {
@@ -689,7 +755,9 @@ def _consumption(
             )
         )
     method = {
-        "rule": f"mean of the same hour over the last {weeks} weeks, weekdays and weekends apart",
+        "rule": Note(
+            "mean of the same hour over the last {weeks} weeks, weekdays and weekends apart", weeks=weeks
+        ),
         "weeks": weeks,
     }
     return pd.concat(out, ignore_index=True), method, notes

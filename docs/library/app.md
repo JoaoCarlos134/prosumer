@@ -62,6 +62,29 @@ PV against the household's use hour by hour and the report shows the savings.
 | `notes`, `log` | what the person should know; what each step did |
 | `credits` | the source and licence of every outside piece of data (the licences require showing them) |
 
+## In Portuguese
+
+Every note, log line and message for the person is a `prosumer.i18n.Note`: English text that also keeps its
+template and values, so the same result renders in Portuguese, numbers with a decimal comma and dates day
+first. Errors `run` raises for the person's files or answers work the same way.
+
+```python
+from prosumer import i18n
+
+pagina = result.to_dict(lang="pt")  # or result.to_json("pt")
+print(pagina["log"][0])  # Local digitado: -25,43; -49,27.
+try:
+    app.run({**request, "days": 99}, {"consumption": (data, "meter.csv")})
+except ValueError as e:
+    print(i18n.message(e, "pt"))  # days deve estar entre 1 e 35
+```
+
+Codes and names are not translated: table columns, forecast names, the `source` and `confidence` values,
+units, request fields, series and distributor names, and the licences and citations of `credits` (kept in
+their source's words). The page labels the codes itself. The Portuguese is one catalog of templates
+(`prosumer/i18n/pt.py`); a test checks that every template in the code has its translation with the same
+placeholders, and that the app's page in Portuguese has no untranslated note.
+
 How long it takes: seven years of hourly PV data (60,000 hours) took ~9 s with `models="naive"` and ~12 s
 with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB. The roof fit (twice: for the next days and
 for the diagnostics) and the clock check are most of it; a page should show that it is working.

@@ -36,6 +36,11 @@ The request is a plain mapping (`Request.from_dict`, unknown keys are an error):
   `{"kind": "brazil", "distributor": "COPEL-DIS", "icms", "pis_cofins" (fractions, as read on a bill),
   "connection", "gd", "cosip", "modality", "peak_start"}` (ANEEL's open data; GD only with a PV file).
 
+Languages: every note, log line and error message of `run` is a `prosumer.i18n.Note`:
+`Result.to_dict(lang="pt")` (or `to_json`) gives the page in Portuguese, `i18n.message(error, "pt")` an
+error's text. Codes and names (table columns, forecast names, `source`, `confidence`) stay as they are: the
+page labels them.
+
 Privacy: the files never leave the machine. Out go only the address (to Nominatim, if typed instead of the
 coordinates), the rounded coordinates (to Open-Meteo) and, for a Brazilian price, the distributor's name (to
 ANEEL); the free Open-Meteo API is for non-commercial use. `Services` replaces those calls (tests, a cache, an
@@ -62,6 +67,8 @@ from .analysis import Report, analyze
 from .contracts import EnergySeries, Quantity
 from .economics import brazil
 from .forecast import Chronos2, FlowState, Forecaster, LightGBM, TiRex2, Toto2
+from .i18n import Note, translate
+from .i18n import replace as replace_text
 from .io import geocode as geo
 from .io import open_meteo, read_energy
 from .outlook import MAX_DAYS, Outlook, best_windows, forecast_ahead
@@ -120,7 +127,13 @@ class Request:
         names = {f.name: f for f in fields(cls)}
         unknown = sorted(set(d) - set(names))
         if unknown:
-            raise ValueError(f"Unknown request fields {unknown}; the fields are {list(names)}")
+            raise ValueError(
+                Note(
+                    "Unknown request fields {unknown}; the fields are {names}",
+                    unknown=unknown,
+                    names=list(names),
+                )
+            )
         out: dict[str, Any] = {}
         for k, v in d.items():
             if v is None or (isinstance(v, str) and not v.strip()):
@@ -130,11 +143,11 @@ class Request:
             elif k in ("days", "load_hours", "test_days"):
                 x = _number(v, k)
                 if x != int(x):
-                    raise ValueError(f"{k} must be a whole number, not {v!r}")
+                    raise ValueError(Note("{field} must be a whole number, not {value!r}", field=k, value=v))
                 out[k] = int(x)
             elif k == "price":
                 if not isinstance(v, Mapping):
-                    raise ValueError("price must be an object, e.g. {'kind': 'flat', 'price': 0.8}")
+                    raise ValueError(Note("price must be an object, e.g. {{'kind': 'flat', 'price': 0.8}}"))
                 out[k] = dict(v)
             else:
                 out[k] = str(v).strip()
@@ -144,23 +157,23 @@ class Request:
 
     def check(self) -> None:
         if (self.latitude is None) != (self.longitude is None):
-            raise ValueError("Give both the latitude and the longitude, or an address")
+            raise ValueError(Note("Give both the latitude and the longitude, or an address"))
         if self.latitude is None and not self.address:
-            raise ValueError("Give an address or the latitude and longitude")
+            raise ValueError(Note("Give an address or the latitude and longitude"))
         if self.file_times not in ("local", "UTC"):
-            raise ValueError("file_times must be 'local' or 'UTC'")
+            raise ValueError(Note("file_times must be 'local' or 'UTC'"))
         if not 1 <= self.days <= MAX_DAYS:
-            raise ValueError(f"days must be in 1-{MAX_DAYS}")
+            raise ValueError(Note("days must be in 1-{max}", max=MAX_DAYS))
         if not 1 <= self.load_hours <= 24:
-            raise ValueError("load_hours must be in 1-24")
+            raise ValueError(Note("load_hours must be in 1-24"))
         if self.load_kw <= 0:
-            raise ValueError("load_kw must be positive")
+            raise ValueError(Note("load_kw must be positive"))
         if self.test_days < 2:
-            raise ValueError("test_days must be >= 2")
+            raise ValueError(Note("test_days must be >= 2"))
         if self.models not in MODEL_SETS:
-            raise ValueError(f"models must be one of {list(MODEL_SETS)}")
+            raise ValueError(Note("models must be one of {sets}", sets=list(MODEL_SETS)))
         if self.price is not None and self.price.get("kind") not in PRICE_KINDS:
-            raise ValueError(f"price.kind must be one of {list(PRICE_KINDS)}")
+            raise ValueError(Note("price.kind must be one of {kinds}", kinds=list(PRICE_KINDS)))
 
 
 @dataclass
@@ -182,27 +195,29 @@ class Result:
     log: list[str] = field(default_factory=list)
     credits: list[Provenance] = field(default_factory=list)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Strict-JSON-ready: NaN and infinities become None (a browser's JSON.parse rejects NaN)."""
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """Strict-JSON-ready: NaN and infinities become None (a browser's JSON.parse rejects NaN). `lang`: the
+        language of the notes, the log and the other texts for the person, "en" or "pt" (`prosumer.i18n`);
+        None keeps each one a `Note`, for a caller that translates later."""
         out = {
             "site": self.site,
             "read": self.read,
-            "outlooks": {k: o.to_dict() for k, o in self.outlooks.items()},
+            "outlooks": {k: o.to_dict(lang=None) for k, o in self.outlooks.items()},
             "windows": _records(self.windows),
             "windows_by_cost": None if self.windows_by_cost is None else _records(self.windows_by_cost),
             "pricing": self.pricing,
             "charts": {k: _records(v) for k, v in self.charts.items()},
-            "report": self.report.to_dict(),
+            "report": self.report.to_dict(lang=None),
             "notes": list(self.notes),
             "log": list(self.log),
             "credits": [c.to_dict() for c in self.credits],
         }
         result: dict[str, Any] = _json(out)
-        return result
+        return result if lang is None else cast(dict[str, Any], translate(result, lang))
 
-    def to_json(self, **kwargs: Any) -> str:
-        """`to_dict` as strict JSON text (`allow_nan=False`: it raises rather than write `NaN`)."""
-        return json.dumps(self.to_dict(), allow_nan=False, ensure_ascii=False, **kwargs)
+    def to_json(self, lang: str = "en", **kwargs: Any) -> str:
+        """`to_dict(lang)` as strict JSON text (`allow_nan=False`: it raises rather than write `NaN`)."""
+        return json.dumps(self.to_dict(lang), allow_nan=False, ensure_ascii=False, **kwargs)
 
 
 def run(
@@ -218,28 +233,52 @@ def run(
     svc = services or Services()
     unknown = sorted(set(files) - set(QUANTITIES))
     if unknown:
-        raise ValueError(f"Files are keyed by {list(QUANTITIES)}, not {unknown}")
+        raise ValueError(
+            Note("Files are keyed by {keys}, not {unknown}", keys=list(QUANTITIES), unknown=unknown)
+        )
     given = {q: files[q] for q in QUANTITIES if q in files and files[q][0]}
     if not given:
-        raise ValueError("No file was received: send the generation or the consumption file (or both).")
+        raise ValueError(Note("No file was received: send the generation or the consumption file (or both)."))
     log: list[str] = []
     credits: list[Provenance] = []
 
     # 1. Where. Typed coordinates win; otherwise the address is geocoded and the first match is used.
     if req.latitude is not None and req.longitude is not None:
         lat, lon, found_name = req.latitude, req.longitude, None
-        log.append(f"Site typed: {lat}, {lon}.")
+        log.append(Note("Site typed: {lat}, {lon}.", lat=lat, lon=lon))
     else:
-        found = svc.geocode(req.address, limit=1)
+        try:
+            found = svc.geocode(req.address, limit=1)
+        except (OSError, RuntimeError) as e:  # offline, or the geocoder down
+            raise ValueError(
+                Note(
+                    "Could not look the address up ({error}). Check the connection, or type the coordinates.",
+                    error=e,
+                )
+            ) from e
         if found.empty:
-            raise ValueError(f"Address not found: {req.address!r}. Type the coordinates instead.")
+            raise ValueError(
+                Note("Address not found: {address!r}. Type the coordinates instead.", address=req.address)
+            )
         lat, lon = float(found["latitude"].to_numpy()[0]), float(found["longitude"].to_numpy()[0])
         found_name = str(found["name"].to_numpy()[0])
-        log.append(f"Address found: {found_name}.")
+        log.append(Note("Address found: {name}.", name=found_name))
         _credit(credits, of(found))
     site = geo.round_site(lat, lon)
-    tz = req.timezone or svc.timezone_at(*site)
-    log.append(f"Site used (rounded): {site[0]}, {site[1]}; time zone {tz}.")
+    if req.timezone:
+        tz = req.timezone
+    else:
+        try:
+            tz = svc.timezone_at(*site)
+        except (OSError, RuntimeError) as e:
+            raise ValueError(
+                Note(
+                    "Could not find the site's time zone ({error}). Check the connection, or give the time "
+                    "zone (e.g. America/Sao_Paulo).",
+                    error=e,
+                )
+            ) from e
+    log.append(Note("Site used (rounded): {lat}, {lon}; time zone {tz}.", lat=site[0], lon=site[1], tz=tz))
 
     # 2. Read each file: layout recognised, energy column by name and unit, never by position.
     series: dict[str, EnergySeries] = {}
@@ -248,7 +287,7 @@ def run(
         s = _read(data, name, q, req, site, tz)
         series[q] = s
         span = s.frame["ds"]
-        how = s.provenance.notes.split("; ")[0] if s.provenance else ""
+        how = _first_part(s.provenance.notes) if s.provenance else ""
         read[q] = {
             "file": name,
             "how": how,
@@ -259,14 +298,29 @@ def run(
             "series": s.series,
         }
         log.append(
-            f"{q.capitalize()}: read {how}; {len(s.frame)} hours, {s.frame['valid'].mean():.0%} measured."
+            Note(
+                "{file}: read {how}; {hours} hours, {share:.0%} measured.",
+                file=_FILE_NAME[q],
+                how=how,
+                hours=len(s.frame),
+                share=s.frame["valid"].mean(),
+            )
         )
 
     # 3. The weather of the next days (generation only). Up to 16 days: the API's limit.
     weather = None
     if "generation" in series:
-        weather = svc.weather(*site, days=min(req.days, open_meteo.MAX_FORECAST_DAYS), tz=tz)
-        log.append(f"Weather forecast downloaded: {weather['model'].nunique()} models.")
+        try:
+            weather = svc.weather(*site, days=min(req.days, open_meteo.MAX_FORECAST_DAYS), tz=tz)
+        except (OSError, RuntimeError) as e:  # offline, or Open-Meteo down
+            raise ValueError(
+                Note(
+                    "Could not download the weather forecast from Open-Meteo ({error}). Check the connection "
+                    "and try again.",
+                    error=e,
+                )
+            ) from e
+        log.append(Note("Weather forecast downloaded: {n} models.", n=weather["model"].nunique()))
         _credit(credits, of(weather))
 
     # 4. The next days, for each file.
@@ -309,7 +363,12 @@ def run(
     models = _models(req.models, notes)
     report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, models=models, **kw)
     if models:
-        log.append(f"Forecast check with the naive rules and {', '.join(m.card.name for m in models)}.")
+        log.append(
+            Note(
+                "Forecast check with the naive rules and {names}.",
+                names=", ".join(m.card.name for m in models),
+            )
+        )
 
     # 7. What the pages plot.
     charts = {f"history_{q}": _daily(s) for q, s in series.items()}
@@ -333,6 +392,16 @@ def run(
 
 
 # ---------------------------------------------------------------------- pieces
+_FILE_NAME = {"generation": Note("Generation"), "consumption": Note("Consumption")}  # the log's names
+
+
+def _first_part(notes: str) -> str:
+    """What a reader's provenance notes say first: how the file was read (`io.auto`)."""
+    if isinstance(notes, Note):
+        return cast(str, notes.parts[0])
+    return notes.split("; ")[0]
+
+
 def _models(choice: str, notes: list[str]) -> list[Forecaster]:
     """The forecasters the forecast check adds to the naive rules (`Request.models`); a model whose extra is
     not installed is left out with a note."""
@@ -343,14 +412,19 @@ def _models(choice: str, notes: list[str]) -> list[Forecaster]:
         out.append(LightGBM())
     else:
         notes.append(
-            "LightGBM is not installed (`pip install prosumer[lightgbm]`): left out of the forecast check."
+            Note(
+                "LightGBM is not installed (`pip install prosumer[lightgbm]`): left out of the forecast "
+                "check."
+            )
         )
     if choice == "all":
         for name, module, make in FOUNDATION:
             if find_spec(module):
                 out.append(make())
             else:
-                notes.append(f"{name} is not installed (its extra, see the install notes): left out.")
+                notes.append(
+                    Note("{name} is not installed (its extra, see the install notes): left out.", name=name)
+                )
     return out
 
 
@@ -394,7 +468,7 @@ def _read(data: bytes, name: str, q: str, req: Request, site: tuple[float, float
             provenance=replace(
                 s.provenance,
                 source=s.provenance.source.replace(path.name, name),
-                notes=s.provenance.notes.replace(path.name, name),
+                notes=replace_text(s.provenance.notes, path.name, name),
             ),
         )
     return s
@@ -416,21 +490,21 @@ def _pricing(
         v = p.pop(key, None)
         if v is None or (isinstance(v, str) and not v.strip()):
             if default is None:
-                raise ValueError(f"Give {what}.")
+                raise ValueError(Note("Give {what}.", what=what))
             return default
         return _number(v, what)
 
     if kind == "brazil":
         agent = str(p.pop("distributor", "COPEL-DIS"))
-        icms = num("icms", "the ICMS rate of your bill (a fraction, e.g. 0.19)")
-        pis = num("pis_cofins", "the PIS/COFINS rate of your bill (a fraction, e.g. 0.0925)")
+        icms = num("icms", Note("the ICMS rate of your bill (a fraction, e.g. 0.19)"))
+        pis = num("pis_cofins", Note("the PIS/COFINS rate of your bill (a fraction, e.g. 0.0925)"))
         if icms >= 1 or pis >= 1:
-            raise ValueError("ICMS and PIS/COFINS are fractions (0.19 for 19%)")
+            raise ValueError(Note("ICMS and PIS/COFINS are fractions (0.19 for 19%)"))
         gd = p.pop("gd", None) if with_pv else None
         modality = str(p.pop("modality", brazil.CONVENTIONAL))
         peak_start = p.pop("peak_start", None)
-        connection = p.pop("connection", "bifasico_3")
-        cosip = num("cosip", "the COSIP", 0.0)
+        connection = _connection(p.pop("connection", "bifasico_3"))
+        cosip = num("cosip", Note("the COSIP"), 0.0)
         years: list[int] = []
         if with_pv and gd == "GD II":
             ds = outlooks["generation"].hourly["ds"]
@@ -440,8 +514,12 @@ def _pricing(
             book = svc.tariff_book(agent, icms=icms, pis_cofins=pis, fio_b_years=years, extend_last=True)
         except (OSError, RuntimeError) as e:  # offline, or ANEEL's API down
             raise ValueError(
-                f"Could not download {agent}'s tariffs from ANEEL's open data ({e}). Check the connection, "
-                "or give a flat or time-of-use price instead."
+                Note(
+                    "Could not download {agent}'s tariffs from ANEEL's open data ({error}). Check the "
+                    "connection, or give a flat or time-of-use price instead.",
+                    agent=agent,
+                    error=e,
+                )
             ) from e
         credits.extend(book.provenance)
         notes.extend(book.notes)
@@ -454,30 +532,49 @@ def _pricing(
             cosip=cosip,
         )
     currency = str(p.pop("currency", "EUR"))
-    export = num("export_price", "the export price", 0.0)
-    fixed = num("fixed", "the fixed charge", 0.0)
+    export = num("export_price", Note("the export price"), 0.0)
+    fixed = num("fixed", Note("the fixed charge"), 0.0)
     scheme = str(p.pop("scheme", "net_metering"))
     if kind == "flat":
         tariff = econ.Tariff.flat(
-            num("price", "the price per kWh"), export_price=export, fixed=fixed, currency=currency
+            num("price", Note("the price per kWh")), export_price=export, fixed=fixed, currency=currency
         )
     else:
         a, b = _peak_hours(str(p.pop("peak_hours", "17-21")))
         peak = {h for h in range(24) if (a <= h < b if a < b else h >= a or h < b)}
         tariff = econ.Tariff(
             prices={
-                "peak": num("peak_price", "the peak price"),
-                "off_peak": num("offpeak_price", "the off-peak price"),
+                "peak": num("peak_price", Note("the peak price")),
+                "off_peak": num("offpeak_price", Note("the off-peak price")),
             },
             weekday={h: "peak" if h in peak else "off_peak" for h in range(24)},
             weekend=dict.fromkeys(range(24), "off_peak"),
             export_price=export,
             fixed=fixed,
             currency=currency,
-            name=f"time-of-use (peak {a:02d}:00-{b:02d}:00 on weekdays)",
+            name=Note("time-of-use (peak {start:02d}:00-{end:02d}:00 on weekdays)", start=a, end=b),
         )
     _no_more(p, "price")
     return econ.Plan(tariff, scheme=scheme)  # type: ignore[arg-type]
+
+
+def _connection(v: Any) -> str | float:
+    """A key of `brazil.MINIMUM_KWH` ("bifasico_3"), or the minimum in kWh as a number (also as text)."""
+    if isinstance(v, str) and v.strip() in brazil.MINIMUM_KWH:
+        return v.strip()
+    try:
+        value = _number(v, "connection")
+    except ValueError:
+        value = math.nan
+    if not value >= 0:
+        raise ValueError(
+            Note(
+                "connection must be one of {names} or the minimum in kWh, not {value!r}",
+                names=list(brazil.MINIMUM_KWH),
+                value=v,
+            )
+        )
+    return value
 
 
 def _peak_hours(text: str) -> tuple[int, int]:
@@ -485,24 +582,26 @@ def _peak_hours(text: str) -> tuple[int, int]:
     m = re.fullmatch(r"\s*(\d{1,2})\s*-\s*(\d{1,2})\s*", text)
     a, b = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
     if not m or not (0 <= a <= 23 and 0 <= b <= 24) or a == b % 24:
-        raise ValueError(f"Peak hours {text!r}: give whole hours as start-end on a 24 h clock, e.g. 17-21")
+        raise ValueError(
+            Note("Peak hours {text!r}: give whole hours as start-end on a 24 h clock, e.g. 17-21", text=text)
+        )
     return a, b
 
 
 def _number(v: Any, what: str) -> float:
     if isinstance(v, bool):
-        raise ValueError(f"{what}: {v!r} is not a number")
+        raise ValueError(Note("{what}: {value!r} is not a number", what=what, value=v))
     if isinstance(v, int | float):
         return float(v)
     try:
         return float(str(v).strip().replace(",", "."))
     except ValueError:
-        raise ValueError(f"{what}: {v!r} is not a number") from None
+        raise ValueError(Note("{what}: {value!r} is not a number", what=what, value=v)) from None
 
 
 def _no_more(rest: Mapping[str, Any], what: str) -> None:
     if rest:
-        raise ValueError(f"Unknown {what} fields {sorted(rest)}")
+        raise ValueError(Note("Unknown {what} fields {fields}", what=what, fields=sorted(rest)))
 
 
 def _credit(credits: list[Provenance], p: Provenance | None) -> None:
@@ -516,8 +615,8 @@ def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 def _json(v: Any) -> Any:
     """Recursively JSON-ready: timestamps ISO, numpy scalars Python, NaN/inf/NaT None, tuples lists."""
-    if isinstance(v, Mapping):
-        return {str(k): _json(x) for k, x in v.items()}
+    if isinstance(v, Mapping):  # a `Note` key stays one (`Report.pending`), to be translated
+        return {k if isinstance(k, str) else str(k): _json(x) for k, x in v.items()}
     if isinstance(v, list | tuple):
         return [_json(x) for x in v]
     if isinstance(v, pd.Timestamp):

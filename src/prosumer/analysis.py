@@ -36,11 +36,12 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from . import diagnostics, metrics, physics
+from . import diagnostics, i18n, metrics, physics
 from .contracts import EnergySeries, step
 from .diagnostics import Diagnosis, diagnose
 from .economics.core import Pricing, Tariff, as_pricing
 from .forecast import EmpiricalQuantiles, Forecaster, Probabilistic, rolling_forecast, rolling_quantiles
+from .i18n import Note, translate
 from .postprocessing import conformal_quantiles, correct_bias
 from .protocol import DayAhead, H, Regime, Window
 from .provenance import Provenance
@@ -58,18 +59,28 @@ BIAS_DAYS = 14  # default `bias_days`: past days the consumption bias factor loo
 CALIBRATION_DAYS = 28  # default `calibration_days`: days before the test that recalibrate the bands
 MIN_PAST_DAYS = 7  # the fewest days of past errors either correction uses (`postprocessing`, `min_days`)
 # what the economics section does not do even when it is there (kept in `Report.pending`)
-ECONOMICS_LEFT = (
+ECONOMICS_LEFT = Note(
     "Not modelled: COSIP read from a bill (type it as "
     "`brazil.Setup(cosip=...)`), grupo A (demand charges), the tax reform of LC 214/2025."
 )
 
-PENDING = {
-    "weather (regimes B and C)": "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)",
-    "bands (quantiles)": "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`",
-    "diagnostics": "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes",
-    "economics": "pass `economics=` (an `economics.Tariff`, `economics.Plan` or `economics.brazil.Setup`) "
-    "with the consumption (the series, or `consumption=` next to a generation series): the monthly bill, "
-    f"and the savings with `generation=`. {ECONOMICS_LEFT}",
+# keys and values are `Note`s: `Report.to_dict(lang=)` translates both; the English keys still look them up
+PENDING: dict[str, str] = {
+    Note("weather (regimes B and C)"): Note(
+        "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)"
+    ),
+    Note("bands (quantiles)"): Note(
+        "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`"
+    ),
+    Note("diagnostics"): Note(
+        "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes"
+    ),
+    Note("economics"): Note(
+        "pass `economics=` (an `economics.Tariff`, `economics.Plan` or `economics.brazil.Setup`) "
+        "with the consumption (the series, or `consumption=` next to a generation series): the monthly bill, "
+        "and the savings with `generation=`. {left}",
+        left=ECONOMICS_LEFT,
+    ),
 }
 
 
@@ -95,8 +106,9 @@ class EconomicsSection:
     notes: list[str] = field(default_factory=list)
     provenance: pd.DataFrame | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """JSON-friendly version; `lang` as in `Report.to_dict`."""
+        out = {
             "tariff": self.tariff,
             "scheme": self.scheme,
             "currency": self.currency,
@@ -106,6 +118,7 @@ class EconomicsSection:
             "notes": list(self.notes),
             "provenance": _records(self.provenance),
         }
+        return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
     def to_markdown(self) -> str:
         m = self.monthly.copy()
@@ -174,10 +187,12 @@ class Report:
     # per forecast row; left out of `to_dict` (hundreds of rows per series), as `Diagnosis.index`
     hourly: pd.DataFrame | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        """JSON-friendly version (timestamps as ISO text, tables as lists of records)."""
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """JSON-friendly version (timestamps as ISO text, tables as lists of records). `lang`: the language
+        of the notes and the other texts for the person, "en" or "pt" (`prosumer.i18n`); None keeps each one
+        a `Note`, for a caller that translates later."""
         records = _records
-        return {
+        out = {
             "summary": {k: _plain(v) for k, v in self.summary.items()},
             "quality": records(self.quality),
             "notes": list(self.notes),
@@ -188,10 +203,11 @@ class Report:
             "clock": records(self.clock),
             "clock_weather": records(self.clock_weather),
             "provenance": records(self.provenance),
-            "diagnostics": None if self.diagnostics is None else self.diagnostics.to_dict(),
-            "economics": None if self.economics is None else self.economics.to_dict(),
+            "diagnostics": None if self.diagnostics is None else self.diagnostics.to_dict(lang=None),
+            "economics": None if self.economics is None else self.economics.to_dict(lang=None),
             "pending": dict(self.pending),
         }
+        return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
     def to_markdown(self) -> str:
         s = self.summary
@@ -416,7 +432,7 @@ def analyze(
         diag = diagnose(s, site, kwp=kwp, **dict(diagnostics_options or {}))
         notes.extend(diag.notes)
         notes.extend(_diagnostics_defaults_note(diag, knobs))
-        base_pending["diagnostics"] = (
+        base_pending["diagnostics"] = Note(
             "soiling vs shading and string faults need DC or 5-minute data (not yet)"
         )
     econ, econ_sources, econ_note = _economics(series, economics, consumption, generation)
@@ -425,15 +441,15 @@ def analyze(
     if econ is not None:
         base_pending["economics"] = ECONOMICS_LEFT
     elif econ_note and economics is not None:
-        base_pending["economics"] = f"{econ_note} {ECONOMICS_LEFT}"
+        base_pending["economics"] = Note.join([econ_note, ECONOMICS_LEFT], " ")
 
-    def skipped(reason: str) -> Report:
+    def skipped(reason: Note) -> Report:
         """The report without the forecast check: every other section is kept."""
         sources, source_notes = _provenance(s, None, (), econ_sources)
         return Report(
             summary=summary,
             quality=quality,
-            notes=[*notes, f"Forecast check skipped: {reason}", *source_notes],
+            notes=[*notes, Note("Forecast check skipped: {reason}", reason=reason), *source_notes],
             clock=clock,
             clock_weather=clock_weather,
             provenance=sources,
@@ -445,16 +461,22 @@ def analyze(
     first = frame["ds"].min().normalize()
     if not (frame.loc[frame["valid"], "y"] != 0).any():
         # nothing to forecast, and every reference has zero error (the skill would divide by zero)
-        return skipped("every value is zero (a dead meter or inverter, or the wrong column).")
+        return skipped(Note("every value is zero (a dead meter or inverter, or the wrong column)."))
     if test_start - first < pd.Timedelta(hours=CONTEXT):
-        return skipped(f"it needs {CONTEXT // 24} days of history before the {test_days} test days.")
+        return skipped(
+            Note(
+                "it needs {days} days of history before the {test_days} test days.",
+                days=CONTEXT // 24,
+                test_days=test_days,
+            )
+        )
 
     task = DayAhead(
         s, test_start=test_start, test_end=end, refit_days=test_days, context=CONTEXT, issue_hour=issue_hour
     )
     windows = task.windows()
     if not windows:
-        return skipped("no test day has all its target hours measured.")
+        return skipped(Note("no test day has all its target hours measured."))
 
     is_gen = s.quantity == "generation"
     reference = "clear_sky_persistence" if is_gen and site is not None else "persistence_24h"
@@ -478,7 +500,7 @@ def analyze(
             raise ValueError(f"Two forecasts named {name!r}")
         history_only = Regime.HISTORY in model.card.regimes
         if not history_only and w is None:
-            notes.append(f"{name} needs a weather forecast (`weather=`): left out.")
+            notes.append(Note("{name} needs a weather forecast (`weather=`): left out.", name=name))
             continue
         task_m = DayAhead(
             s,
@@ -518,11 +540,15 @@ def analyze(
     output = OUTPUT
     if len(in_median) == len(_NAIVE):
         notes.append(
-            f"The output (`{OUTPUT}`) is the median of the {len(_NAIVE)} naive forecasts only. In the "
-            "benchmark that median ranked 29th to 36th of ~53; with the library's five models added "
-            "(`models=[LightGBM(), Chronos2(), TiRex2(), Toto2(), FlowState()]`) it came within 0.01 of the "
-            "median of all 47 benchmark models in the three history-only tests, still short of the best "
-            "model in two of them (pilot of 2026-10-16)."
+            Note(
+                "The output (`{output}`) is the median of the {n} naive forecasts only. In the "
+                "benchmark that median ranked 29th to 36th of ~53; with the library's five models added "
+                "(`models=[LightGBM(), Chronos2(), TiRex2(), Toto2(), FlowState()]`) it came within 0.01 of "
+                "the median of all 47 benchmark models in the three history-only tests, still short of the "
+                "best model in two of them (pilot of 2026-10-16).",
+                output=OUTPUT,
+                n=len(_NAIVE),
+            )
         )
     if is_cons:
         fc = _corrected_median(fc, point_past, in_median, frame, test_start, bias_days)
@@ -540,11 +566,16 @@ def analyze(
         fc[WEATHER_OUTPUT] = fc[weather_rows].median(axis=1)
         regimes[WEATHER_OUTPUT] = "C"
         notes.append(
-            f"`{WEATHER_OUTPUT}` is the median of the {len(weather_rows)} forecasts that use the weather "
-            f"({', '.join(weather_rows)}). Measured on one test only, the benchmark's two plants (24 rows): "
-            "the medians of two to four of the library's weather rows ranked 1st to 11th and beat each of "
-            "their members in 10 of 11 compositions; the four together ranked 1st (+0.372), LightGBM with "
-            "the linear model 9th (+0.346; +0.330 and +0.312 alone) (2026-10-16 and 2026-10-19)."
+            Note(
+                "`{output}` is the median of the {n} forecasts that use the weather ({rows}). Measured on "
+                "one test only, the benchmark's two plants (24 rows): the medians of two to four of the "
+                "library's weather rows ranked 1st to 11th and beat each of their members in 10 of 11 "
+                "compositions; the four together ranked 1st (+0.372), LightGBM with the linear model 9th "
+                "(+0.346; +0.330 and +0.312 alone) (2026-10-16 and 2026-10-19).",
+                output=WEATHER_OUTPUT,
+                n=len(weather_rows),
+                rows=", ".join(weather_rows),
+            )
         )
     # common support: every row on the hours where every forecast exists (a gap in one drops the hour for all)
     missing = fc.loc[fc[list(regimes)].isna().any(axis=1), ["unique_id", "ds"]].assign(_drop=True)
@@ -552,15 +583,21 @@ def analyze(
     actual = actual.loc[~flagged]
     if flagged.any():
         notes.append(
-            f"{int(flagged.sum())} test hours without a forecast from every model left out of every row."
+            Note(
+                "{n} test hours without a forecast from every model left out of every row.",
+                n=int(flagged.sum()),
+            )
         )
     ref = fc[["unique_id", "ds", reference]].rename(columns={reference: "yhat"})
     _, r_ref = metrics.align(ref, actual, ref)
     if len(r_ref) and not (r_ref["yhat"].to_numpy() != r_ref["y"].to_numpy()).any():
         # every skill would divide by zero (`metrics.skill`): constant or exactly repeating data
         return skipped(
-            f"the series repeats exactly: the reference ({reference}) is perfect on every test hour, so "
-            "the skill is undefined. A stuck meter, a fixed estimate or synthetic data?"
+            Note(
+                "the series repeats exactly: the reference ({reference}) is perfect on every test hour, so "
+                "the skill is undefined. A stuck meter, a fixed estimate or synthetic data?",
+                reference=reference,
+            )
         )
     test_hours = frame.loc[frame["ds"] >= test_start, ["unique_id", "ds", "y", "valid"]]
     hourly = test_hours.merge(fc[["unique_id", "ds", *regimes]], on=["unique_id", "ds"], how="left")
@@ -633,8 +670,12 @@ def analyze(
             uncalibrated = cq.loc[~cq["conformal"], "ds"].dt.normalize().nunique()
             if uncalibrated:
                 notes.append(
-                    f"{name}+conformal: {uncalibrated} test days without 7 days of past errors were left "
-                    "as the model gave them."
+                    Note(
+                        "{name}+conformal: {n} test days without 7 days of past errors were left as the "
+                        "model gave them.",
+                        name=name,
+                        n=uncalibrated,
+                    )
                 )
             bands_raw[f"{name}+conformal"] = cq.drop(columns="conformal")
             band_regimes[f"{name}+conformal"] = regimes[name]
@@ -651,19 +692,23 @@ def analyze(
     }
     if is_gen and site is None:
         notes.append(
-            "Generation without a site: the reference is 'same as yesterday', weaker than the clear-sky "
-            "persistence of the benchmark. Pass site=(lat, lon) for the benchmark's reference."
+            Note(
+                "Generation without a site: the reference is 'same as yesterday', weaker than the clear-sky "
+                "persistence of the benchmark. Pass site=(lat, lon) for the benchmark's reference."
+            )
         )
     bias = float(table.loc[table["forecast"] == output, "MBE"].to_numpy(float)[0])
     if abs(bias) > 0.05:
         notes.append(
-            f"The output is biased by {bias:+.0%} of the mean (MBE)."
-            + (
-                f" `{CORRECTED}` removes it, but in the benchmark that raised the skill only for a median of "
-                "~40 models; with few models it lowered it."
-                if is_cons
-                else ""
+            Note(
+                "The output is biased by {bias:+.0%} of the mean (MBE). `{corrected}` removes it, but in the "
+                "benchmark that raised the skill only for a median of ~40 models; with few models it lowered "
+                "it.",
+                bias=bias,
+                corrected=CORRECTED,
             )
+            if is_cons
+            else Note("The output is biased by {bias:+.0%} of the mean (MBE).", bias=bias)
         )
     pending = dict(base_pending)
     if weather is not None:
@@ -695,14 +740,26 @@ def analyze(
 _NAIVE = ("persistence_24h", "seasonal_168h", "mean_7d")
 
 
+# the series `_to_hourly` names in its note
+_SERIES_NAME = {
+    "series": Note("series"),
+    "consumption": Note("consumption"),
+    "generation": Note("generation"),
+}
+
+
 def _to_hourly(x: EnergySeries, what: str, notes: list[str]) -> EnergySeries:
     """A sub-hourly series (15-minute meter, 1-minute logger) summed into hours, with a note; anything else
     as it is (an hourly one, or a coarser one that the hourly checks refuse with their own message)."""
     if x.freq == "h" or step(x.freq) >= pd.Timedelta(hours=1):
         return x
     notes.append(
-        f"The {what} came in steps of {x.freq}: summed into hours (an hour counts when at least 11/12 of it "
-        "was measured); everything here is hourly."
+        Note(
+            "The {what} came in steps of {freq}: summed into hours (an hour counts when at least 11/12 of it "
+            "was measured); everything here is hourly.",
+            what=_SERIES_NAME[what],
+            freq=x.freq,
+        )
     )
     return x.resample("h")
 
@@ -730,24 +787,36 @@ def _diagnostics_defaults_note(diag: Diagnosis, knobs: diagnostics._Knobs) -> li
     if diag.index.empty:  # no clear-day index: neither setting shaped a result
         return []
     default = diagnostics._DEFAULT
-    plants = "two plants in Parana (Brazil)"
-    used = []
-    if knobs.penalty == default.penalty:
-        used.append(
-            f"the change-point penalty ({default.penalty:g} x the BIC's) was chosen on {plants} and ten PV "
-            "houses in Ireland"
-        )
-        plants = "the same plants"
+    penalty = knobs.penalty == default.penalty
     clear = ("clear_window_days", "clear_quantile", "clear_ratio")
-    if all(getattr(knobs, c) == getattr(default, c) for c in clear):
-        used.append(f"the clear-day rule was set by hand on {plants}")
-    if not used:
-        return []
-    it = "they are assumptions" if len(used) > 1 else "it is an assumption"
-    return [
-        f"Diagnostics: {', and '.join(used)}; elsewhere {it} (`analyze(diagnostics_options=...)` changes "
-        f"{'them' if len(used) > 1 else 'it'})."
-    ]
+    rule = all(getattr(knobs, c) == getattr(default, c) for c in clear)
+    if penalty and rule:
+        return [
+            Note(
+                "Diagnostics: the change-point penalty ({penalty:g} x the BIC's) was chosen on two plants in "
+                "Parana (Brazil) and ten PV houses in Ireland, and the clear-day rule was set by hand on the "
+                "same plants; elsewhere they are assumptions (`analyze(diagnostics_options=...)` changes "
+                "them).",
+                penalty=default.penalty,
+            )
+        ]
+    if penalty:
+        return [
+            Note(
+                "Diagnostics: the change-point penalty ({penalty:g} x the BIC's) was chosen on two plants in "
+                "Parana (Brazil) and ten PV houses in Ireland; elsewhere it is an assumption "
+                "(`analyze(diagnostics_options=...)` changes it).",
+                penalty=default.penalty,
+            )
+        ]
+    if rule:
+        return [
+            Note(
+                "Diagnostics: the clear-day rule was set by hand on two plants in Parana (Brazil); elsewhere "
+                "it is an assumption (`analyze(diagnostics_options=...)` changes it)."
+            )
+        ]
+    return []
 
 
 _Entry = tuple[str, str, Provenance, bool]  # role, name, provenance, sends the data out
@@ -773,21 +842,50 @@ def _provenance(
         entries.append(("model", c.name, card, c.sends_data))
     entries += list(extra)
     rows = _provenance_rows(entries)
-    notes = []
-    unknown = [f"{role} ({name})" for role, name, p, _ in entries if not p.license_known]
+    notes: list[str] = []
+    unknown = [
+        Note("{role} ({name})", role=_ROLE[role], name=name)
+        for role, name, p, _ in entries
+        if not p.license_known
+    ]
     if unknown:
         notes.append(
-            f"Licence unknown for: {', '.join(unknown)}. Find it out before sharing or publishing these "
-            "results (`EnergySeries.from_dataframe(provenance=...)`; `prosumer.provenance.attach` for a "
-            "weather frame)."
+            Note(
+                "Licence unknown for: {inputs}. Find it out before sharing or publishing these results "
+                "(`EnergySeries.from_dataframe(provenance=...)`; `prosumer.provenance.attach` for a weather "
+                "frame).",
+                inputs=unknown,
+            )
         )
     for role, name, p, _ in entries:
         if p.non_commercial:
-            notes.append(f"The {role} {name!r} is for non-commercial use only ({p.license}; {p.notes}).")
+            notes.append(
+                Note(
+                    "The {role} {name!r} is for non-commercial use only ({license}; {conditions}).",
+                    role=_ROLE[role],
+                    name=name,
+                    license=p.license,
+                    conditions=p.notes,
+                )
+            )
     out = [name for _, name, _, sends in entries if sends]
     if out:
-        notes.append(f"These models send the series outside this machine: {', '.join(out)} (model card).")
-    return pd.DataFrame(rows), notes
+        notes.append(
+            Note(
+                "These models send the series outside this machine: {names} (model card).",
+                names=", ".join(out),
+            )
+        )
+    return i18n.frame(rows), notes
+
+
+# the roles of `_provenance` as its notes name them (the table keeps the codes)
+_ROLE = {
+    "series": Note("series"),
+    "weather": Note("weather"),
+    "model": Note("model"),
+    "tariff": Note("tariff"),
+}
 
 
 def _provenance_rows(entries: Sequence[_Entry]) -> list[dict[str, Any]]:
@@ -817,7 +915,11 @@ def _economics(
     was asked for but could not be made."""
     if pricing is None:
         if consumption is not None or generation is not None:
-            return None, [], "`consumption=` and `generation=` are used only with `economics=`: ignored."
+            return (
+                None,
+                [],
+                Note("`consumption=` and `generation=` are used only with `economics=`: ignored."),
+            )
         return None, [], None
     p = as_pricing(pricing)
     cons: EnergySeries | None
@@ -838,13 +940,15 @@ def _economics(
         return (
             None,
             [],
-            "Economics left out: the bill needs the household's consumption (`consumption=`); the "
-            "generation alone says what the PV made, not what the household paid.",
+            Note(
+                "Economics left out: the bill needs the household's consumption (`consumption=`); the "
+                "generation alone says what the PV made, not what the household paid."
+            ),
         )
     try:
         b = p.bill(cons, gen)
     except (ValueError, NotImplementedError) as e:
-        return None, [], f"Economics left out: {e}"
+        return None, [], Note("Economics left out: {error}", error=e)
     entries: list[_Entry] = []
     if other is not None:
         entries.append(
@@ -855,8 +959,10 @@ def _economics(
     totals = b.totals()
     if (totals["complete_months"] == 0).any():
         notes.append(
-            "No month with every hour measured for some site: its expected monthly bill "
-            "(`mean_month`) is not given."
+            Note(
+                "No month with every hour measured for some site: its expected monthly bill "
+                "(`mean_month`) is not given."
+            )
         )
     section = EconomicsSection(
         tariff=p.describe(),
@@ -866,7 +972,7 @@ def _economics(
         by_block=b.by_block,
         totals=totals,
         notes=notes,
-        provenance=pd.DataFrame(_provenance_rows([e for e in entries if e[0] == "tariff"])),
+        provenance=i18n.frame(_provenance_rows([e for e in entries if e[0] == "tariff"])),
     )
     return section, entries, None
 
@@ -1007,7 +1113,7 @@ def _bands(
         j = j.merge(q.rename(columns=renamed), on=["unique_id", "ds"])
     j = j.dropna()
     if j.empty:
-        return pd.DataFrame(), ["Bands left out: no evaluated hour where every band exists."]
+        return pd.DataFrame(), [Note("Bands left out: no evaluated hour where every band exists.")]
     y = j["y"].to_numpy()
     scores = {}
     for name in ["empirical_14d", *raw]:
@@ -1015,7 +1121,8 @@ def _bands(
         levels = [float(c.split("|q")[1]) for c in cols]
         scores[name] = metrics.band_scores(y, j[cols].clip(lower=0).to_numpy(), levels)
     base = scores["empirical_14d"]["CRPS"]
-    rows, notes = [], []
+    rows: list[dict[str, Any]] = []
+    notes: list[str] = []
     for name in [*raw, "empirical_14d"]:
         sc = scores[name]
         c80, c60 = sc.get("coverage_80", np.nan), sc.get("coverage_60", np.nan)
@@ -1040,10 +1147,19 @@ def _bands(
         if name == "empirical_14d" or r["calibrated"]:
             continue
         fixed = ok.get(f"{name}+conformal", False)
+        cover = {"name": name, "c80": r["coverage_80"], "c60": r["coverage_60"]}
         notes.append(
-            f"The band of {name} is not calibrated (80% band: {r['coverage_80']:.0%} of the hours, 60%: "
-            f"{r['coverage_60']:.0%}): "
-            + (f"use {name}+conformal, which is." if fixed else "do not read it as a probability.")
+            Note(
+                "The band of {name} is not calibrated (80% band: {c80:.0%} of the hours, 60%: {c60:.0%}): "
+                "use {name}+conformal, which is.",
+                **cover,
+            )
+            if fixed
+            else Note(
+                "The band of {name} is not calibrated (80% band: {c80:.0%} of the hours, 60%: {c60:.0%}): "
+                "do not read it as a probability.",
+                **cover,
+            )
         )
     return table, notes
 
@@ -1090,7 +1206,7 @@ def _weather_linear(
     """Regime C for generation: y = a + b x `ghi_mean`, per series, on the sun hours before the test."""
     x_col = "ghi_mean" if "ghi_mean" in w.columns else "ghi"
     if x_col not in w.columns:
-        return fc, "Weather forecast without GHI (`ghi_mean` or `ghi`): no regime C forecast."
+        return fc, Note("Weather forecast without GHI (`ghi_mean` or `ghi`): no regime C forecast.")
     data = s.frame.loc[s.frame["valid"], ["unique_id", "ds", "y"]].merge(
         w[["unique_id", "ds", x_col]], on=["unique_id", "ds"]
     )
@@ -1108,7 +1224,9 @@ def _weather_linear(
         # night (no sun) is 0; a sun hour without a forecast stays NaN: a gap is not a zero
         yhat[m] = np.where(target.loc[m, "_sun"], np.clip(a + b * x, 0.0, None), 0.0)
     if np.isnan(yhat).all():
-        return fc, "Too few sun hours with a weather forecast before the test (48 per series): no regime C."
+        return fc, Note(
+            "Too few sun hours with a weather forecast before the test (48 per series): no regime C."
+        )
     return fc.assign(weather_linear=yhat), None
 
 
@@ -1141,7 +1259,8 @@ def _evaluated(
 
 
 def _quality(s: EnergySeries) -> tuple[pd.DataFrame, list[str]]:
-    rows, notes = [], []
+    rows: list[dict[str, Any]] = []
+    notes: list[str] = []
     for uid, g in s.frame.groupby("unique_id", sort=True):
         valid = g["valid"].to_numpy(bool)
         gap_runs = _runs(~valid)
@@ -1159,11 +1278,13 @@ def _quality(s: EnergySeries) -> tuple[pd.DataFrame, list[str]]:
     q = pd.DataFrame(rows)
     low = q.loc[q["coverage"] < 0.95, "series"].tolist()
     if low:
-        notes.append(f"Coverage below 95% in {len(low)} series: {', '.join(low)}.")
+        notes.append(Note("Coverage below 95% in {n} series: {names}.", n=len(low), names=", ".join(low)))
     if not s.ends_together():
         notes.append(
-            "The series do not end together: any validation must cut by fold, or later folds re-emit "
-            "earlier days (see `DayAhead.check_support`)."
+            Note(
+                "The series do not end together: any validation must cut by fold, or later folds re-emit "
+                "earlier days (see `DayAhead.check_support`)."
+            )
         )
     return q, notes
 

@@ -59,6 +59,25 @@ Com a previsão do tempo ao vivo (`io.open_meteo.fetch_forecast`, até 16 dias, 
 cada hora = potência efetiva aprendida nos dias claros x irradiância no plano dos painéis. A confiança em cada
 dia de antecedência foi medida nas duas usinas do Paraná; fora delas é uma suposição, e o resultado diz isso.
 
+## As notas em português
+
+As notas, o registro do `app.run` e as mensagens de erro saem em inglês por padrão e em português com
+`lang="pt"` (números com vírgula decimal, datas em dia/mês/ano):
+
+```python
+from prosumer import i18n
+
+print(r.to_dict(lang="pt")["notes"][:2])
+print(o.to_dict(lang="pt")["notes"][0])
+try:
+    forecast_ahead(pv, days=99, site=(-25.43, -49.27))
+except ValueError as e:
+    print(i18n.message(e, "pt"))
+```
+
+Nomes e códigos (colunas, nomes das previsões, `source`, `confidence`, unidades) ficam como estão; o site os
+rotula. As traduções estão num só catálogo, `prosumer/i18n/pt.py`.
+
 ## A conta de luz (`economics.brazil`)
 
 ```python

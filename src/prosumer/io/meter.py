@@ -40,6 +40,7 @@ import numpy as np
 import pandas as pd
 
 from ..contracts import DstPolicy, EnergySeries, Quantity, Unit
+from ..i18n import Note
 from ..provenance import UNKNOWN, Provenance
 from . import _tables
 from ._tables import Label
@@ -107,10 +108,17 @@ def read_table(
     - `decimal`, `sep`, `dayfirst`: None guesses them; `sheet`, `skiprows`, `encoding`: where the table is.
     """
     if kind in ("interval", "cumulative") and unit not in _ENERGY:
-        hint = " (use kind='power' for W/kW)" if unit in _POWER else ""
-        raise ValueError(f"kind={kind!r} needs an energy unit (kWh, Wh), not {unit!r}{hint}")
+        raise ValueError(
+            Note(
+                "kind={kind!r} needs an energy unit (kWh, Wh), not {unit!r} (use kind='power' for W/kW)",
+                kind=kind,
+                unit=unit,
+            )
+            if unit in _POWER
+            else Note("kind={kind!r} needs an energy unit (kWh, Wh), not {unit!r}", kind=kind, unit=unit)
+        )
     if kind == "power" and unit not in _POWER:
-        raise ValueError(f"kind='power' needs a power unit (kW, W), not {unit!r}")
+        raise ValueError(Note("kind='power' needs a power unit (kW, W), not {unit!r}", unit=unit))
     if kind not in ("interval", "cumulative", "power"):
         raise ValueError("kind must be 'interval', 'cumulative' or 'power'")
     if resets not in ("invalid", "restart"):
@@ -120,7 +128,13 @@ def read_table(
     frame.columns = [str(c).strip() for c in frame.columns]
     missing = {time_column, *cols} - set(frame.columns)
     if missing:
-        raise ValueError(f"Columns {sorted(missing)} not in the table; it has {list(frame.columns)}")
+        raise ValueError(
+            Note(
+                "Columns {missing} not in the table; it has {cols}",
+                missing=sorted(missing),
+                cols=list(frame.columns),
+            )
+        )
     times = _tables.parse_times(frame[time_column], dayfirst=dayfirst)
     unparsed = int(times.isna().sum() - frame[time_column].map(_blank).sum())
     keep = times.notna()
@@ -161,23 +175,34 @@ def read_table(
     )
     rename = _tables.names_for(cols, names, "value columns")
     out["unique_id"] = out["unique_id"].map(rename)
-    notes = [
-        f"kind={kind}, unit={unit}"
-        + (f", timestamps read as the {label.upper()} of each interval" if kind != "cumulative" else ""),
-        f"native step {native}",
-        f"{n_dup} duplicate timestamp(s) dropped, first kept",
+    notes: list[str] = [
+        Note("kind={kind}, unit={unit}", kind=kind, unit=unit)
+        if kind == "cumulative"
+        else Note(
+            "kind={kind}, unit={unit}, timestamps read as the {label} of each interval",
+            kind=kind,
+            unit=unit,
+            label=_tables.LABEL_NAME[label],
+        ),
+        Note("native step {step}", step=native),
+        Note("{n} duplicate timestamp(s) dropped, first kept", n=n_dup),
     ]
     if kind == "cumulative":
-        done = "made invalid" if resets == "invalid" else "taken as a restart from zero"
         notes.append(
-            f"{n_resets} counter reset(s) {done}; {n_spikes} outlier reading(s) dropped; "
-            f"{n_dips} small decrease(s) kept"
+            Note(
+                "{resets} counter reset(s) {done}; {spikes} outlier reading(s) dropped; {dips} small "
+                "decrease(s) kept",
+                resets=n_resets,
+                done=Note("made invalid") if resets == "invalid" else Note("taken as a restart from zero"),
+                spikes=n_spikes,
+                dips=n_dips,
+            )
         )
     if unparsed:
-        notes.append(f"{unparsed} row(s) with an unreadable time left out")
+        notes.append(Note("{n} row(s) with an unreadable time left out", n=unparsed))
     if out_freq != _freq_alias(native):
-        notes.append(f"a step is valid with >= {min_coverage:.3g} of its native steps")
-    prov = Provenance(source=f"meter table: {origin}", license=UNKNOWN, notes="; ".join(notes))
+        notes.append(Note("a step is valid with >= {share:.3g} of its native steps", share=min_coverage))
+    prov = Provenance(source=f"meter table: {origin}", license=UNKNOWN, notes=Note.join(notes))
     return EnergySeries.from_dataframe(
         out, unit="kWh", quantity=quantity, tz=tz, freq=out_freq, provenance=prov
     )

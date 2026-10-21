@@ -49,6 +49,7 @@ import pandas as pd
 
 from . import physics
 from .contracts import EnergySeries, step
+from .i18n import Note
 
 By = Literal["month"] | None
 
@@ -138,18 +139,27 @@ def clock_offset(
 def clock_notes(table: pd.DataFrame) -> list[str]:
     """Plain-language notes from `clock_offset`: only for a confident non-zero offset or an offset that
     changes between confident months (daylight saving time)."""
-    notes = []
+    notes: list[str] = []
     for uid, g in table.groupby("unique_id", sort=True):
         months = g[(g["period"] != "all") & g["confident"]]
         found = sorted(set(months["offset_h"].tolist()))
         if len(found) > 1:
-            per = ", ".join(
-                f"{h:+g} h in {', '.join(months.loc[months['offset_h'] == h, 'period'])}" for h in found
-            )
+            per = [
+                Note(
+                    "{h:+g} h in {months}",
+                    h=h,
+                    months=", ".join(months.loc[months["offset_h"] == h, "period"]),
+                )
+                for h in found
+            ]
             notes.append(
-                f"Series {uid}: the clock offset against the sun changes over the year ({per}). A logger "
-                "that ignores daylight saving time (or a file in standard time read in a zone with it) does "
-                "this: check the time zone of the export."
+                Note(
+                    "Series {uid}: the clock offset against the sun changes over the year ({per}). A logger "
+                    "that ignores daylight saving time (or a file in standard time read in a zone with it) "
+                    "does this: check the time zone of the export.",
+                    uid=uid,
+                    per=per,
+                )
             )
             continue
         whole = g[g["period"] == "all"]
@@ -158,14 +168,22 @@ def clock_notes(table: pd.DataFrame) -> list[str]:
         r = whole.iloc[0]
         if r["confident"] and r["offset_h"] != 0:
             notes.append(
-                f"Series {uid}: production happens {abs(r['offset_h']):g} h "
-                f"{'later' if r['offset_h'] > 0 else 'earlier'} than the sun at the site "
-                f"({r['agreement']:.0%} of the days agree). Usually a file in UTC read as local time, "
-                "a wrong time zone or, for +1 h, values labelled by the END of the interval: shift the "
-                "timestamps by "
-                f"{-r['offset_h']:+g} h after checking the source."
+                Note(
+                    "Series {uid}: production happens {hours:g} h {side} than the sun at the site "
+                    "({agree:.0%} of the days agree). Usually a file in UTC read as local time, a wrong time "
+                    "zone or, for +1 h, values labelled by the END of the interval: shift the timestamps by "
+                    "{shift:+g} h after checking the source.",
+                    uid=uid,
+                    hours=abs(r["offset_h"]),
+                    side=_LATER if r["offset_h"] > 0 else _EARLIER,
+                    agree=r["agreement"],
+                    shift=-r["offset_h"],
+                )
             )
     return notes
+
+
+_LATER, _EARLIER = Note("later"), Note("earlier")
 
 
 def clock_offset_weather(
@@ -256,17 +274,23 @@ def clock_offset_weather(
 def clock_weather_notes(table: pd.DataFrame, min_offset_h: float = 0.25) -> list[str]:
     """A note per series whose whole-series offset against the weather is confident, at least `min_offset_h`
     and with an interval that excludes 0."""
-    notes = []
+    notes: list[str] = []
     for r in table[table["period"] == "all"].to_dict(orient="records"):
         off, low, high = float(r["offset_h"]), float(r["low_h"]), float(r["high_h"])
         if not r["confident"] or abs(off) < min_offset_h or low <= 0 <= high:
             continue
         notes.append(
-            f"Series {r['unique_id']}: the production follows the clouds {abs(off):.1f} h "
-            f"{'later' if off > 0 else 'earlier'} than the weather data (90% interval "
-            f"{low:+.1f} to {high:+.1f} h). A fraction of an hour usually means intervals "
-            "labelled by their end or a logger clock that drifted; check the source before using the "
-            "weather as an input."
+            Note(
+                "Series {uid}: the production follows the clouds {hours:.1f} h {side} than the weather data "
+                "(90% interval {low:+.1f} to {high:+.1f} h). A fraction of an hour usually means intervals "
+                "labelled by their end or a logger clock that drifted; check the source before using the "
+                "weather as an input.",
+                uid=r["unique_id"],
+                hours=abs(off),
+                side=_LATER if off > 0 else _EARLIER,
+                low=low,
+                high=high,
+            )
         )
     return notes
 

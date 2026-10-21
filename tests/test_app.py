@@ -105,6 +105,40 @@ def test_brazilian_price_from_aneel() -> None:
         app.run({**SITE, "price": {**price, "icms": 19}}, files, services=_services())
 
 
+def test_a_misspelt_connection_is_a_message_before_any_download() -> None:
+    # regression 2026-10-21: "bifasico" crashed `run` with a bare KeyError from the bill
+    files = {"consumption": (_consumption_csv("2026-08-01", 61), "conta.csv")}
+    price = {"kind": "brazil", "icms": "0,19", "pis_cofins": 0.0925, "connection": "bifasico"}
+
+    def no_download(*a: Any, **k: Any) -> Any:
+        raise AssertionError("ANEEL was called")
+
+    svc = app.Services(geocode=None, timezone_at=None, weather=None, tariff_book=no_download)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="connection must be one of"):
+        app.run({**SITE, "price": price}, files, services=svc)
+    r = app.run(
+        {**SITE, "models": "naive", "price": {**price, "connection": "40"}}, files, services=_services()
+    )
+    assert r.report.economics is not None and "40 kWh" in str(r.pricing)
+
+
+def test_failed_downloads_are_messages_for_the_person() -> None:
+    def offline(*a: Any, **k: Any) -> Any:
+        raise OSError("no route to host")
+
+    files = {"generation": (_pv_csv("2024-01-01", 30), "inverter.csv")}
+    base = _services()
+    cases = [
+        ({"address": "Curitiba"}, {"geocode": offline}, "Could not look the address up"),
+        (SITE | {"timezone": None}, {"timezone_at": offline}, "Could not find the site's time zone"),
+        (SITE, {"weather": offline}, "Could not download the weather forecast from Open-Meteo"),
+    ]
+    for request, broken, message in cases:
+        svc = app.Services(**{**base.__dict__, **broken})
+        with pytest.raises(ValueError, match=message):
+            app.run(request, files, services=svc)
+
+
 def test_address_is_geocoded_and_rounded() -> None:
     def geocode(query: str, limit: int = 5) -> pd.DataFrame:
         found = pd.DataFrame(

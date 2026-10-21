@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Literal
 
 import pandas as pd
 
+from .i18n import Note
 from .provenance import Provenance
 
 if TYPE_CHECKING:
@@ -113,7 +114,7 @@ class EnergySeries:
         missing). Operations that derive a series (`to_kwh`, ...) keep it.
         """
         if frame.empty:
-            raise ContractError("Empty series: nothing to infer or validate")
+            raise ContractError(Note("Empty series: nothing to infer or validate"))
         x = frame.rename(columns={value_column: "y"}).copy()
         missing = {"unique_id", "ds", "y"} - set(x.columns)
         if missing:
@@ -262,10 +263,15 @@ def _localize(ds: pd.Series, tz: str, source: str, ids: pd.Series, dst: DstPolic
         except ValueError as e:
             if dst != "drop":
                 raise ContractError(
-                    f"Series {uid!r}: timestamps impossible in time zone {source!r} because of daylight "
-                    f"saving time ({e}). If the file is in UTC, pass source_tz='UTC'. If it is in local "
-                    "time with the grid filled in (no gap at the missing hour, a single row at the "
-                    "repeated hour), pass dst='drop'."
+                    Note(
+                        "Series {uid!r}: timestamps impossible in time zone {zone!r} because of daylight "
+                        "saving time ({error}). If the file is in UTC, pass source_tz='UTC'. If it is in "
+                        "local time with the grid filled in (no gap at the missing hour, a single row at the "
+                        "repeated hour), pass dst='drop'.",
+                        uid=uid,
+                        zone=source,
+                        error=e,
+                    )
                 ) from e
         # repeated hour that appears only once: there is no way to know which of the two it is
         parts.append(g.dt.tz_localize(source, ambiguous="NaT", nonexistent="NaT"))

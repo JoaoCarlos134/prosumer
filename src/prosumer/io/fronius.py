@@ -40,6 +40,7 @@ import numpy as np
 import pandas as pd
 
 from ..contracts import DstPolicy, EnergySeries
+from ..i18n import Note
 from ..provenance import UNKNOWN, Provenance
 from . import _tables
 from ._tables import Label
@@ -185,8 +186,13 @@ def read_solarweb_raw(
             names = [canonical(b) if b else "" for b, _ in header]
             if "time" not in names:
                 raise ValueError(
-                    f"{path.name} {sheet}: no date/time column in the first row ({[b for b, _ in header]}); "
-                    "is this a Solar.web export with its two header rows?"
+                    Note(
+                        "{file} {sheet}: no date/time column in the first row ({header}); is this a "
+                        "Solar.web export with its two header rows?",
+                        file=path.name,
+                        sheet=sheet,
+                        header=[b for b, _ in header],
+                    )
                 )
             it = names.index("time")
             body = cells.iloc[2:].reset_index(drop=True)
@@ -214,7 +220,7 @@ def read_solarweb_raw(
                 frame["row"] = body.index.to_numpy() + 3
                 rows.append(frame)
     if not rows:
-        raise ValueError("No data rows found in the files given")
+        raise ValueError(Note("No data rows found in the files given"))
     out = pd.concat(rows, ignore_index=True)
     lead = ["time", "device"]
     tail = ["file", "sheet", "row"]
@@ -249,8 +255,12 @@ def _energy_columns(table: pd.DataFrame, energy_column: str | None) -> list[str]
         if not hit.empty:
             return hit["column"].tolist()
     raise ValueError(
-        f"No energy column recognised (looked for {ENERGY_NAMES} in Wh/kWh); pass energy_column=, "
-        f"one of {table['header'].tolist()}"
+        Note(
+            "No energy column recognised (looked for {names} in Wh/kWh); pass energy_column=, one of "
+            "{headers}",
+            names=ENERGY_NAMES,
+            headers=table["header"].tolist(),
+        )
     )
 
 
@@ -299,7 +309,11 @@ def read_solarweb(
     for key in keys:
         unit = str(table.loc[table["column"] == key, "unit"].iloc[0]).lower()
         if unit not in ENERGY_UNITS:
-            raise ValueError(f"Column {key!r} has unit {unit!r}, not an energy (Wh, kWh, MWh)")
+            raise ValueError(
+                Note(
+                    "Column {column!r} has unit {unit!r}, not an energy (Wh, kWh, MWh)", column=key, unit=unit
+                )
+            )
         energy = energy.fillna(raw[key] * ENERGY_UNITS[unit])
     x = pd.DataFrame({"unique_id": raw["device"], "time": raw["time"], "y": energy, "dup": raw["duplicate"]})
     kept = x[~x["dup"]]
@@ -307,7 +321,7 @@ def read_solarweb(
         d for d in dict.fromkeys(kept["unique_id"]) if kept.loc[kept["unique_id"] == d, "y"].notna().any()
     ]
     if not devices:
-        raise ValueError("The energy column has no value in any row")
+        raise ValueError(Note("The energy column has no value in any row"))
     # "" holds the columns without a device suffix: site totals (`Produção fotovoltaica`), not an inverter;
     # when the energy is read per device they are simply not used
     dropped = sorted(set(kept["unique_id"]) - set(devices) - {""})
@@ -332,21 +346,29 @@ def read_solarweb(
     rename = _tables.names_for(devices, names, "devices")
     out["unique_id"] = out["unique_id"].map(rename)
     files = list(dict.fromkeys(raw["file"]))
-    notes = [
-        "the owner's own data",
-        f"timestamps read as the {label.upper()} of each {native} interval (convention not confirmed: check "
-        "with prosumer.quality.clock_offset)",
-        f"{n_dup} duplicate timestamp(s) dropped, first kept ({conflicts} with a different energy)",
-        f"a step is valid with >= {min_coverage:.3g} of its records",
+    notes: list[str] = [
+        Note("the owner's own data"),
+        Note(
+            "timestamps read as the {label} of each {step} interval (convention not confirmed: check with "
+            "prosumer.quality.clock_offset)",
+            label=_tables.LABEL_NAME[label],
+            step=native,
+        ),
+        Note(
+            "{n} duplicate timestamp(s) dropped, first kept ({conflicts} with a different energy)",
+            n=n_dup,
+            conflicts=conflicts,
+        ),
+        Note("a step is valid with >= {share:.3g} of its records", share=min_coverage),
     ]
     if raw.attrs["unparsed_rows"]:
-        notes.append(f"{raw.attrs['unparsed_rows']} row(s) with an unreadable time left out")
+        notes.append(Note("{n} row(s) with an unreadable time left out", n=raw.attrs["unparsed_rows"]))
     if site is not None:
-        notes.append(f"{night} step(s) without sun set to zero")
+        notes.append(Note("{n} step(s) without sun set to zero", n=night))
     prov = Provenance(
         source=f"{SOURCE}: {', '.join(files)} (devices: {', '.join(rename[d] for d in devices)})",
         license=UNKNOWN,
-        notes="; ".join(notes),
+        notes=Note.join(notes),
     )
     return EnergySeries.from_dataframe(
         out, unit="kWh", quantity="generation", tz=tz, freq=freq, provenance=prov

@@ -20,8 +20,10 @@ import numpy as np
 import pandas as pd
 
 from ..contracts import DstPolicy, _localize, step
+from ..i18n import Note
 
 Label = Literal["start", "end"]
+LABEL_NAME = {"start": Note("START"), "end": Note("END")}  # as the readers' notes name the label
 
 NA_TOKENS = frozenset({"", "n/a", "na", "nan", "-", "--", "null", "none", "#n/a", "n.a."})
 _SEPARATORS = ("\t", ";", "|", ",")  # order of preference when several are consistent
@@ -187,7 +189,7 @@ def infer_step(frame: pd.DataFrame) -> pd.Timedelta:
     diffs = frame.sort_values(["unique_id", "ds"]).groupby("unique_id")["ds"].diff().dropna()
     diffs = diffs[diffs > pd.Timedelta(0)]
     if diffs.empty:
-        raise ValueError("Cannot infer the time step (fewer than two distinct timestamps); pass step=")
+        raise ValueError(Note("Cannot infer the time step (fewer than two distinct timestamps); pass step="))
     return pd.Timedelta(diffs.mode().iloc[0])
 
 
@@ -220,7 +222,13 @@ def aggregate(frame: pd.DataFrame, *, native: pd.Timedelta, freq: str, min_cover
         raise ValueError("min_coverage must be in (0, 1]")
     target = step(freq)
     if target < native:
-        raise ValueError(f"freq={freq!r} is shorter than the data's step ({native}): cannot split energy")
+        raise ValueError(
+            Note(
+                "freq={freq!r} is shorter than the data's step ({native}): cannot split energy",
+                freq=freq,
+                native=native,
+            )
+        )
     pad = math.ceil((target + pd.Timedelta(hours=1)) / native)
     parts = []
     for uid, g in frame.groupby("unique_id", sort=False):

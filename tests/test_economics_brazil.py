@@ -138,6 +138,18 @@ def test_no_generation_bill_is_energy_or_minimum() -> None:
     assert tri["energy_bill"] == pytest.approx(100 * P)
 
 
+def test_an_unknown_connection_is_a_message_not_a_key_error() -> None:
+    # regression 2026-10-21: "bifasico" (no _2/_3) raised a bare KeyError, which `analyze` does not catch,
+    # so `app.run` crashed instead of saying what to type
+    tiny, _ = _site(31, 0, load=0.05)
+    with pytest.raises(ValueError, match=r"connection must be one of .*'bifasico_3'"):
+        brazil.bill(tiny, book=_book(), connection="bifasico")
+    with pytest.raises(ValueError, match="minimum in kWh must be >= 0"):
+        brazil.bill(tiny, book=_book(), connection=-5.0)
+    m = brazil.bill(tiny, book=_book(), connection=40.0).monthly.iloc[0]
+    assert m["energy_bill"] == pytest.approx(40 * P)
+
+
 def test_gd_i_compensates_down_to_the_minimum_and_banks_the_rest() -> None:
     load, pv = _site(31, 10.0)  # import 620 kWh, export 1116 kWh
     b = brazil.bill(load, pv, book=_book(), connected="2019-07-01")

@@ -32,6 +32,7 @@ from typing import Any
 
 import pandas as pd
 
+from ..i18n import Note
 from ..provenance import Provenance, attach, today
 from . import _http
 
@@ -105,7 +106,12 @@ def fetch_tariffs(
     """
     recs = search(TARIFFS, {"SigAgente": distributor, "DscBaseTarifaria": base}, get=get)
     if not recs:
-        raise ValueError(f"No tariff records for {distributor!r} (check SigAgente, e.g. 'COPEL-DIS')")
+        raise ValueError(
+            Note(
+                "No tariff records for {distributor!r} (check SigAgente, e.g. 'COPEL-DIS')",
+                distributor=distributor,
+            )
+        )
     d = pd.DataFrame(recs)
     d = d[d["DscSubGrupo"].isin(list(subgroups)) & d["DscModalidadeTarifaria"].isin(list(modalities))]
     d = d[(d["DscDetalhe"] == detail) & d["DscSubClasse"].isin([subclass, "Não se aplica"])]

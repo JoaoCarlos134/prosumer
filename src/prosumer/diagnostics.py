@@ -56,13 +56,14 @@ from __future__ import annotations
 import itertools
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, fields
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
 from . import physics
 from .contracts import EnergySeries
+from .i18n import Note, translate
 
 # The defaults of the tuning arguments (see "Tuning" above for where each comes from).
 CLEAR_WINDOW_DAYS = 31  # set by hand on the two plants: days of the centred window of the clear-day rule
@@ -163,7 +164,10 @@ class Diagnosis:
     kwp: dict[str, float] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """JSON-friendly version (dates as text); `lang`: the language of the notes, "en" or "pt"
+        (`prosumer.i18n`), None keeps each one a `Note`."""
+
         def records(df: pd.DataFrame) -> list[dict[str, Any]]:
             out = df.copy()
             for c in out.columns:
@@ -171,13 +175,14 @@ class Diagnosis:
                     out[c] = out[c].dt.strftime("%Y-%m-%d")
             return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
 
-        return {
+        out = {
             "orientation": records(self.orientation),
             "segments": records(self.segments),
             "steps": records(self.steps),
             "kwp": dict(self.kwp),
             "notes": list(self.notes),
         }
+        return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
 
 def _check(series: EnergySeries) -> EnergySeries:
@@ -657,74 +662,111 @@ def _notes(
     given: bool,
     k: _Knobs = _DEFAULT,
 ) -> list[str]:
-    notes = []
+    notes: list[str] = []
     reliable: dict[str, bool] = {}
     for r in orientation.to_dict(orient="records"):
         uid = str(r["unique_id"])
         if not np.isfinite(r["tilt"]):
-            notes.append(f"Series {uid}: too few clear days to fit the roof; no diagnostics.")
+            notes.append(Note("Series {uid}: too few clear days to fit the roof; no diagnostics.", uid=uid))
             continue
         reliable[uid] = given or (r["r2"] >= k.good_fit_r2 and not r["edge"])
         if not given:
-            fit = (
-                f"Series {uid}: panels fitted at {r['tilt']:.0f} degrees tilt facing {r['azimuth']:.0f} "
-                f"degrees (compass; R2 {r['r2']:.2f} on clear days)."
+            fit = {"uid": uid, "tilt": r["tilt"], "azimuth": r["azimuth"], "r2": r["r2"]}
+            notes.append(
+                Note(
+                    "Series {uid}: panels fitted at {tilt:.0f} degrees tilt facing {azimuth:.0f} degrees "
+                    "(compass; R2 {r2:.2f} on clear days). The tilt is on the edge of the grid: it is not "
+                    "identified.",
+                    **fit,
+                )
+                if r["edge"]
+                else Note(
+                    "Series {uid}: panels fitted at {tilt:.0f} degrees tilt facing {azimuth:.0f} degrees "
+                    "(compass; R2 {r2:.2f} on clear days).",
+                    **fit,
+                )
             )
-            if r["edge"]:
-                fit += " The tilt is on the edge of the grid: it is not identified."
-            notes.append(fit)
             if not reliable[uid]:
                 notes.append(
-                    f"Series {uid}: a single plane does not describe this roof well (several planes, or not "
-                    "enough clear days to tell). The index keeps a seasonal swing: steps are uncertain, and "
-                    "no trend or loss is reported. Pass the known orientation to diagnose it."
+                    Note(
+                        "Series {uid}: a single plane does not describe this roof well (several planes, or "
+                        "not enough clear days to tell). The index keeps a seasonal swing: steps are "
+                        "uncertain, and no trend or loss is reported. Pass the known orientation to diagnose "
+                        "it.",
+                        uid=uid,
+                    )
                 )
         n_index = int((index["unique_id"] == uid).sum())
         if n_index and n_index < 2 * k.min_segment_days:
-            notes.append(f"Series {uid}: {n_index} clear days, too few to look for changes over time.")
+            notes.append(
+                Note(
+                    "Series {uid}: {n} clear days, too few to look for changes over time.", uid=uid, n=n_index
+                )
+            )
     for r in steps.to_dict(orient="records"):
         pct = float(r["step_pct"])
         if not np.isfinite(pct) or abs(pct) < k.step_note_pct:
             continue
         uid = str(r["unique_id"])
-        when = pd.Timestamp(r["date"]).strftime("%Y-%m-%d")
-        if pct > 0:
-            what = "a cleaning, a repair or a change to the array"
-        else:
-            what = "a fault, new shading or a change to the array"
-        extra = ""
+        what = _STEP_UP if pct > 0 else _STEP_DOWN
+        said: list[str] = [
+            Note(
+                "Series {uid}: clear-day production stepped {pct:+.0f}% around {when}: {what}.",
+                uid=uid,
+                pct=pct,
+                when=pd.Timestamp(r["date"]).date(),
+                what=what,
+            )
+        ]
         if _recurs(steps, r, step_pct=k.step_note_pct):
-            extra += " A step of the same sign comes back at this time of year: it may be seasonal."
+            said.append(Note("A step of the same sign comes back at this time of year: it may be seasonal."))
         if not reliable.get(uid, False):
-            extra += " Uncertain (roof fit, see above)."
-        notes.append(f"Series {uid}: clear-day production stepped {pct:+.0f}% around {when}: {what}.{extra}")
+            said.append(Note("Uncertain (roof fit, see above)."))
+        notes.append(Note.join(said, " ") if len(said) > 1 else said[0])
     for sid, g in segments.groupby("unique_id", sort=False):
         if not reliable.get(str(sid), False):
             continue
         last = g.iloc[-1]
         trend = float(last["trend_pct_per_year"])
-        since = pd.Timestamp(last["start"]).strftime("%Y-%m-%d")
+        since = pd.Timestamp(last["start"]).date()
         span = (pd.Timestamp(last["end"]) - pd.Timestamp(last["start"])).days
         # under a year the slope is mostly the season (a clear-sky model is never exact)
         if trend <= -k.trend_note_pct and span >= 365:
             notes.append(
-                f"Series {sid}: since {since} the clear-day production falls {-trend:.0f}% a year; soiling "
-                "builds up like this (a cleaning shows as a step up)."
+                Note(
+                    "Series {uid}: since {since} the clear-day production falls {pct:.0f}% a year; soiling "
+                    "builds up like this (a cleaning shows as a step up).",
+                    uid=sid,
+                    since=since,
+                    pct=-trend,
+                )
             )
         if float(last["lost_pct"]) >= k.step_note_pct:
             notes.append(
-                f"Series {sid}: the latest period is {last['lost_pct']:.0f}% below the best level seen on "
-                "clear days."
+                Note(
+                    "Series {uid}: the latest period is {pct:.0f}% below the best level seen on clear days.",
+                    uid=sid,
+                    pct=last["lost_pct"],
+                )
             )
     if kwp:
         for sid, g in index.groupby("unique_id", sort=False):
             pr = float(g["index"].median())
             if pr > 1.05:
                 notes.append(
-                    f"Series {sid}: clear-day production is {pr:.2f} x the stated peak power: the kWp is too "
-                    "low, or the clock or the site is wrong."
+                    Note(
+                        "Series {uid}: clear-day production is {pr:.2f} x the stated peak power: the kWp is "
+                        "too low, or the clock or the site is wrong.",
+                        uid=sid,
+                        pr=pr,
+                    )
                 )
     return notes
+
+
+# what a step of the clear-day production usually is, up or down
+_STEP_UP = Note("a cleaning, a repair or a change to the array")
+_STEP_DOWN = Note("a fault, new shading or a change to the array")
 
 
 def _recurs(steps: pd.DataFrame, r: dict[Any, Any], days: int = 45, step_pct: float = STEP_NOTE_PCT) -> bool:

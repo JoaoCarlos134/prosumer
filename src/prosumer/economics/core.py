@@ -27,12 +27,13 @@ from __future__ import annotations
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 import numpy as np
 import pandas as pd
 
 from ..contracts import EnergySeries
+from ..i18n import Note, translate
 from ..outlook import Outlook, _plain, _table
 from ..provenance import NOT_APPLICABLE, Provenance
 
@@ -223,8 +224,9 @@ class Bill:
     currency: str
     notes: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> dict[str, Any]:
-        """JSON-friendly version (months as ISO dates)."""
+    def to_dict(self, lang: str | None = "en") -> dict[str, Any]:
+        """JSON-friendly version (months as ISO dates); `lang`: the language of the notes, "en" or "pt"
+        (`prosumer.i18n`), None keeps each one a `Note`."""
 
         def records(df: pd.DataFrame) -> list[dict[str, Any]]:
             out = df.copy()
@@ -233,13 +235,14 @@ class Bill:
                     out[c] = out[c].map(lambda t: t.isoformat())
             return [{str(k): _plain(v) for k, v in r.items()} for r in out.to_dict(orient="records")]
 
-        return {
+        out = {
             "scheme": self.scheme,
             "currency": self.currency,
             "monthly": records(self.monthly),
             "by_block": records(self.by_block),
             "notes": list(self.notes),
         }
+        return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
     def totals(self) -> pd.DataFrame:
         """One row per site: `unique_id, months, complete_months, consumption, generation, grid_import,
@@ -335,9 +338,11 @@ def bill(
         grid_import=("grid_import", "sum"),
         export=("export", "sum"),
     )
-    notes = [
-        "Import and export are netted hour by hour; a real meter nets instant by instant, so within an hour "
-        "with both PV and load the real flows are larger than these."
+    notes: list[str] = [
+        Note(
+            "Import and export are netted hour by hour; a real meter nets instant by instant, so within an "
+            "hour with both PV and load the real flows are larger than these."
+        )
     ]
     rows = []
     order = np.argsort(-price, kind="stable")  # leftover export offsets the dearest blocks first
@@ -421,19 +426,24 @@ def bill(
     partial = monthly[monthly["coverage"] < 1.0]
     if len(partial):
         notes.append(
-            f"{len(partial)} site-month(s) have missing hours (coverage < 1): their sums cover only the "
-            "valid hours, so the bill of those months is too low."
+            Note(
+                "{n} site-month(s) have missing hours (coverage < 1): their sums cover only the valid hours, "
+                "so the bill of those months is too low.",
+                n=len(partial),
+            )
         )
     if monthly["credit_expired"].sum() > 0:
-        notes.append(f"{monthly['credit_expired'].sum():.1f} kWh of credits expired unused.")
+        notes.append(Note("{kwh:.1f} kWh of credits expired unused.", kwh=monthly["credit_expired"].sum()))
     if h["generation_missing"].any():
-        n = int(h["generation_missing"].sum())
         notes.append(
-            f"{n} hour(s) have consumption but no generation row (e.g. the PV series starts later): left "
-            "out as unknown. If the PV was not installed yet, pass zeros for that period."
+            Note(
+                "{n} hour(s) have consumption but no generation row (e.g. the PV series starts later): left "
+                "out as unknown. If the PV was not installed yet, pass zeros for that period.",
+                n=int(h["generation_missing"].sum()),
+            )
         )
     if scheme == "net_billing" and (monthly["total"] < 0).any():
-        notes.append("Some months have a negative total: the exports are worth more than the imports.")
+        notes.append(Note("Some months have a negative total: the exports are worth more than the imports."))
     by_block = _by_block(per_block, names)
     return Bill(
         monthly=monthly,
@@ -625,9 +635,13 @@ class Plan:
         return [(name, p)]
 
     def describe(self) -> str:
-        kind = "flat" if len(self.tariff.prices) == 1 else f"{len(self.tariff.prices)} time-of-use blocks"
-        name = f"{self.tariff.name}, " if self.tariff.name else ""
-        return f"{name}{kind}, {self.currency}"
+        n = len(self.tariff.prices)
+        kind = Note("flat") if n == 1 else Note("{n} time-of-use blocks", n=n)
+        if self.tariff.name:
+            return Note(
+                "{name}, {kind}, {currency}", name=self.tariff.name, kind=kind, currency=self.currency
+            )
+        return Note("{kind}, {currency}", kind=kind, currency=self.currency)
 
 
 def as_pricing(pricing: Tariff | Pricing) -> Pricing:
@@ -679,7 +693,8 @@ def windows_by_cost(
             unique_id=unique_id,
             top=top,
         )
-        parts.append(w.assign(currency=p.currency, tariff=tariff.name))
+        name = pd.Series([tariff.name] * len(w), index=w.index, dtype=object)  # a `Note` stays one
+        parts.append(w.assign(currency=p.currency, tariff=name))
     cols = ["unique_id", "date", "start", "end", "cost", "grid_kwh", "pv_kwh", "rank", "confidence"]
     nonempty = [x for x in parts if len(x)]
     out = (

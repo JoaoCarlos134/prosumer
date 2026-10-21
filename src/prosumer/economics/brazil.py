@@ -132,6 +132,7 @@ import numpy as np
 import pandas as pd
 
 from ..contracts import EnergySeries
+from ..i18n import Note, as_note
 from ..provenance import Provenance
 from .core import Bill, Scheme, Tariff, flows
 
@@ -231,7 +232,7 @@ def branca_blocks(peak_start: str = "18:00") -> dict[int, str | dict[str, float]
     hh, mm = (int(x) for x in peak_start.split(":"))
     p0 = hh * 60 + mm
     if not 60 <= p0 <= 20 * 60:
-        raise ValueError("peak_start must leave room for the intermediario hours (01:00-20:00)")
+        raise ValueError(Note("peak_start must leave room for the intermediario hours (01:00-20:00)"))
     spans = {"intermediario": [(p0 - 60, p0), (p0 + 180, p0 + 240)], "ponta": [(p0, p0 + 180)]}
     out: dict[int, str | dict[str, float]] = {}
     for h in range(24):
@@ -246,13 +247,28 @@ def branca_blocks(peak_start: str = "18:00") -> dict[int, str | dict[str, float]
 
 
 # ---------------------------------------------------------------------- Lei 14.300
+def _check_connection(connection: str | float) -> None:
+    """A key of `MINIMUM_KWH` or a minimum in kWh (>= 0)."""
+    if isinstance(connection, str):
+        if connection not in MINIMUM_KWH:
+            raise ValueError(
+                Note(
+                    "connection must be one of {names} or the minimum in kWh, not {value!r}",
+                    names=list(MINIMUM_KWH),
+                    value=connection,
+                )
+            )
+    elif isinstance(connection, bool) or not connection >= 0:
+        raise ValueError(Note("The minimum in kWh must be >= 0, not {value!r}", value=connection))
+
+
 def gd_class(connected: str | date | None = None, requested: str | date | None = None) -> GD:
     """GD I when the generation was connected or its access requested by 7/1/2023, else GD II ([L] art. 26;
     [R] arts. 655-O and 655-Q). Give `requested` (the date the access/connection budget was requested) when
     known: a plant connected after the cut-off may still be GD I. GD III is not modelled."""
     dates = [pd.Timestamp(x).date() for x in (connected, requested) if x is not None]
     if not dates:
-        raise ValueError("Give the connection date or the access request date")
+        raise ValueError(Note("Give the connection date or the access request date"))
     return "GD I" if min(dates) <= GD_I_REQUESTED_BY else "GD II"
 
 
@@ -268,7 +284,7 @@ def compensation_charge_share(
     if gd == "GD I":
         return (0.0, "fio_b") if year <= GD_I_UNTIL else art17
     if gd != "GD II":
-        raise ValueError("gd must be 'GD I' or 'GD II'")
+        raise ValueError(Note("gd must be 'GD I' or 'GD II'"))
     if year < 2023:
         return 0.0, "fio_b"
     if year in FIO_B_SHARE:
@@ -408,7 +424,12 @@ class TariffBook:
                 # early in a year ANEEL may not have published its components file yet
                 if y != years[-1] or "No components resource" not in str(e):
                     raise
-                notes.append(f"ANEEL has no tariff components file for {y} yet: Fio B from earlier years.")
+                notes.append(
+                    Note(
+                        "ANEEL has no tariff components file for {year} yet: Fio B from earlier years.",
+                        year=y,
+                    )
+                )
         if comps:
             frames += comps
             fio = pd.concat([aneel.fio_b(c) for c in comps], ignore_index=True)
@@ -421,8 +442,11 @@ class TariffBook:
             Provenance(
                 source="ICMS and PIS/COFINS rates typed by the user",
                 license="n/a",
-                notes=f"ICMS {_describe(icms)}, PIS/COFINS {_describe(pis_cofins)}; "
-                "not checked against a bill",
+                notes=Note(
+                    "ICMS {icms}, PIS/COFINS {pis_cofins}; not checked against a bill",
+                    icms=_describe(icms),
+                    pis_cofins=_describe(pis_cofins),
+                ),
             )
         )
         return cls(t, b, taxes, fio, distributor, prov, extend_last=extend_last, notes=notes)
@@ -441,17 +465,24 @@ class TariffBook:
         t = self.tariffs
         t = t[(t["subgroup"] == subgroup) & (t["modality"] == modality) & (t["posto"] == posto)]
         t = t[t["start"] <= d.normalize()]
+        which = {"subgroup": subgroup, "modality": modality, "posto": posto, "day": d.date()}
         if t.empty:
-            raise ValueError(f"No {subgroup} {modality} {posto} tariff in force on {d.date()}")
+            raise ValueError(Note("No {subgroup} {modality} {posto} tariff in force on {day}", **which))
         row = t[t["start"] == t["start"].max()].iloc[0]
         end = pd.Timestamp(row["end"])
         if pd.notna(end) and d.normalize() > end:
             if not self.extend_last:
                 raise ValueError(
-                    f"No {subgroup} {modality} {posto} tariff in force on {d.date()}: the last vigencia "
-                    f"ended on {end.date()} (download newer data, or set extend_last=True to keep using it)"
+                    Note(
+                        "No {subgroup} {modality} {posto} tariff in force on {day}: the last vigencia ended "
+                        "on {end} (download newer data, or set extend_last=True to keep using it)",
+                        end=end.date(),
+                        **which,
+                    )
                 )
-            self._note(f"Tariffs after {end.date()} reuse the last vigencia (extend_last=True).")
+            self._note(
+                Note("Tariffs after {end} reuse the last vigencia (extend_last=True).", end=end.date())
+            )
         return float(row["tusd"]), float(row["te"])
 
     def _note(self, msg: str) -> None:
@@ -474,7 +505,7 @@ class TariffBook:
         d = pd.Timestamp(day).tz_localize(None) if pd.Timestamp(day).tzinfo else pd.Timestamp(day)
         x = self.taxes[self.taxes["start"] <= d]
         if x.empty:
-            raise ValueError(f"No tax rate in force on {d.date()}")
+            raise ValueError(Note("No tax rate in force on {day}", day=d.date()))
         r = x.iloc[-1]
         return float(r["icms"]), float(r["pis_cofins"])
 
@@ -483,7 +514,7 @@ class TariffBook:
         unless `fio_b_backfill` (then the earliest value, recorded in `notes`)."""
         if self.fio_b is None or self.fio_b.empty:
             raise ValueError(
-                "This TariffBook has no Fio B values: needed for GD II (see io.aneel.fetch_components)"
+                Note("This TariffBook has no Fio B values: needed for GD II (see io.aneel.fetch_components)")
             )
         d = pd.Timestamp(day).tz_localize(None) if pd.Timestamp(day).tzinfo else pd.Timestamp(day)
         x = self.fio_b[self.fio_b["start"] <= d]
@@ -491,10 +522,19 @@ class TariffBook:
             first = pd.Timestamp(self.fio_b["start"].iloc[0])
             if not self.fio_b_backfill:
                 raise ValueError(
-                    f"No Fio B value on {d.date()} (the first starts on {first.date()}): fetch that year's "
-                    "components, or set fio_b_backfill=True to use the earliest value"
+                    Note(
+                        "No Fio B value on {day} (the first starts on {first}): fetch that year's "
+                        "components, or set fio_b_backfill=True to use the earliest value",
+                        day=d.date(),
+                        first=first.date(),
+                    )
                 )
-            self._note(f"Fio B before {first.date()} uses the value of {first.date()} (fio_b_backfill=True).")
+            self._note(
+                Note(
+                    "Fio B before {first} uses the value of {first} (fio_b_backfill=True).",
+                    first=first.date(),
+                )
+            )
             return float(self.fio_b["value"].iloc[0])
         return float(x["value"].iloc[-1])
 
@@ -518,7 +558,9 @@ class TariffBook:
             b = self.bandeira(d)
             if b is None:
                 if assume_bandeira is None:
-                    raise ValueError(f"No bandeira for {d:%Y-%m}; pass assume_bandeira (R$/MWh)")
+                    raise ValueError(
+                        Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=f"{d:%Y-%m}")
+                    )
                 b = ("assumed", float(assume_bandeira))
             icms, pis = self.tax(d)
             rows.append(
@@ -577,8 +619,13 @@ def _tax_table(icms: Rate, pis_cofins: Rate) -> pd.DataFrame:
 def _describe(rate: Rate) -> str:
     """`19.00% on every date`, or `29.00% from 2018-01-01, 18.00% from 2022-06-23`."""
     if not isinstance(rate, Mapping):
-        return f"{float(rate):.2%} on every date"
-    return ", ".join(f"{v:.2%} from {d:%Y-%m-%d}" for d, v in _schedule(rate).items())
+        return Note("{rate:.2%} on every date", rate=float(rate))
+    s = _schedule(rate)
+    days = pd.DatetimeIndex(s.index)
+    return Note.join(
+        [Note("{rate:.2%} from {day}", rate=float(v), day=t.date()) for t, v in zip(days, s, strict=True)],
+        ", ",
+    )
 
 
 def tariff(
@@ -619,7 +666,9 @@ def tariff(
     b = book.bandeira(m)
     if b is None:
         if assume_bandeira is None:
-            raise ValueError(f"No bandeira for {m:%Y-%m}; pass assume_bandeira (R$/MWh)")
+            raise ValueError(
+                Note("No bandeira for {month}; pass assume_bandeira (R$/MWh)", month=f"{m:%Y-%m}")
+            )
         b = ("assumed", float(assume_bandeira))
     icms, pis = book.tax(day)
     taxes = _CompensationTaxes(
@@ -640,9 +689,9 @@ def tariff(
         _warn_assumed(book)
         return Tariff.flat(p, export_price=export, currency=CURRENCY, name=f"{book.distributor} {m:%Y-%m}")
     if modality != BRANCA:
-        raise ValueError("modality must be 'Convencional' or 'Branca'")
+        raise ValueError(Note("modality must be 'Convencional' or 'Branca'"))
     if peak_start is None:
-        raise ValueError("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')")
+        raise ValueError(Note("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')"))
     prices, exports = {}, {}
     for data_name, name in _POSTO_DATA.items():
         tusd, te = book.base(day, modality=BRANCA, posto=data_name, subgroup=subgroup)
@@ -715,15 +764,16 @@ def bill(
     """
     book._call = []  # collect only what this bill has to assume
     if modality not in (CONVENTIONAL, BRANCA):
-        raise ValueError("modality must be 'Convencional' or 'Branca'")
+        raise ValueError(Note("modality must be 'Convencional' or 'Branca'"))
     if sorted(posto_order) != sorted(POSTOS):
         raise ValueError(f"posto_order must order the three postos {POSTOS}")
     if te_energy is not None and (set(te_energy) != set(POSTOS) or min(te_energy.values()) <= 0):
         raise ValueError(f"te_energy needs a positive R$/MWh for each posto {POSTOS}")
     if modality == BRANCA and peak_start is None:
-        raise ValueError("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')")
+        raise ValueError(Note("Tarifa branca needs the distributor's peak start (peak_start='HH:MM')"))
     if gd2_minimum not in ("ren_655I", "law_16_par1"):
         raise ValueError("gd2_minimum must be 'ren_655I' or 'law_16_par1'")
+    _check_connection(connection)
     taxes = _CompensationTaxes(
         icms_exempt_compensated, pis_cofins_exempt_compensated, icms_on_charge, pis_cofins_on_charge
     )
@@ -733,7 +783,7 @@ def bill(
         klass = gd or gd_class(connected, requested)
     h = flows(consumption, generation)
     if h.empty:
-        raise ValueError("No hours to bill")
+        raise ValueError(Note("No hours to bill"))
     local = h["ds"].dt.tz_localize(None)
     h["month"] = local.dt.to_period("M").dt.to_timestamp()
     h["date"] = local.dt.normalize()
@@ -773,9 +823,9 @@ def bill(
     cons = np.nan_to_num(h["consumption"].to_numpy())
     h["pay"] = imp * (h["base_energy"] + h["band"]) * h["gross"]  # what each imported kWh costs, full
     h["pay_nopv"] = cons * (h["base_energy"] + h["band"]) * h["gross"]
-    notes = [
-        "Import and export are netted hour by hour; a real meter nets instant by instant.",
-        "Months are calendar months; the bill follows the meter's reading cycle.",
+    notes: list[str] = [
+        Note("Import and export are netted hour by hour; a real meter nets instant by instant."),
+        Note("Months are calendar months; the bill follows the meter's reading cycle."),
     ]
     rows = []
     blocks: list[dict[str, Any]] = []  # tarifa branca: per posto and month
@@ -949,29 +999,41 @@ def bill(
             )
     monthly = pd.DataFrame(rows)
     if (monthly["coverage"] < 1).any():
-        notes.append("Some months have missing hours: their energy and bill cover only the valid hours.")
+        notes.append(
+            Note("Some months have missing hours: their energy and bill cover only the valid hours.")
+        )
     if monthly["credit_expired"].sum() > 0:
-        notes.append(f"{monthly['credit_expired'].sum():.1f} kWh of credits expired unused (60 months).")
+        notes.append(
+            Note("{kwh:.1f} kWh of credits expired unused (60 months).", kwh=monthly["credit_expired"].sum())
+        )
     if h["generation_missing"].any():
         notes.append(
-            f"{int(h['generation_missing'].sum())} hour(s) have consumption but no generation row (e.g. the "
-            "PV series starts later): left out as unknown. If the PV was not installed yet, pass zeros for "
-            "that period."
+            Note(
+                "{n} hour(s) have consumption but no generation row (e.g. the PV series starts later): left "
+                "out as unknown. If the PV was not installed yet, pass zeros for that period.",
+                n=int(h["generation_missing"].sum()),
+            )
         )
     notes.extend(book._call or [])  # only what THIS bill had to assume
     book._call = None
     if cosip == 0:
-        notes.append("COSIP/CIP (municipal street-lighting fee) not included: read it from a bill.")
+        notes.append(Note("COSIP/CIP (municipal street-lighting fee) not included: read it from a bill."))
     if klass == "GD II" and (monthly["month"].dt.year >= 2029).any():
         notes.append(
-            f"From 2029 the GD II charge is a reading of Lei 14.300 art. 17 ({after_2028!r}): "
-            "ANEEL's valuation of DG benefits is not modelled."
+            Note(
+                "From 2029 the GD II charge is a reading of Lei 14.300 art. 17 ({after_2028!r}): ANEEL's "
+                "valuation of DG benefits is not modelled.",
+                after_2028=after_2028,
+            )
         )
     if branca_scee:
         notes.append(
-            "Tarifa branca with generation: per-posto netting (REN 1.000 art. 655-G), the TE ratio between "
-            f"postos from {'the given TE Energia' if te_energy else 'the homologated TE (a reading)'}, the "
-            f"other postos served in the order {', '.join(posto_order)} (a reading)."
+            Note(
+                "Tarifa branca with generation: per-posto netting (REN 1.000 art. 655-G), the TE ratio "
+                "between postos from {te}, the other postos served in the order {order} (a reading).",
+                te=Note("the given TE Energia") if te_energy else Note("the homologated TE (a reading)"),
+                order=", ".join(posto_order),
+            )
         )
         by_block = pd.DataFrame(blocks)
     elif modality == BRANCA:
@@ -1164,9 +1226,13 @@ class Setup:
             return None, None
         got = self.book.bandeira(last)
         assert got is not None
-        return got[1], (
-            f"No bandeira published for {', '.join(missing)} yet: assumed the last one ({got[0]}, "
-            f"{got[1]:.2f} R$/MWh, {last})."
+        return got[1], Note(
+            "No bandeira published for {months} yet: assumed the last one ({flag}, {add:.2f} R$/MWh, "
+            "{last}).",
+            months=", ".join(missing),
+            flag=got[0],
+            add=got[1],
+            last=last,
         )
 
     def bill(self, consumption: EnergySeries, generation: EnergySeries | None = None) -> Bill:
@@ -1233,7 +1299,7 @@ class Setup:
                 icms_on_charge=self.icms_on_charge,
                 pis_cofins_on_charge=self.pis_cofins_on_charge,
             )
-        notes += [str(w.message) for w in caught]
+        notes += [as_note(w.message) for w in caught]
         return t, notes
 
     def sources(self) -> list[tuple[str, Provenance]]:
@@ -1244,9 +1310,14 @@ class Setup:
 
     def describe(self) -> str:
         minimum = self.connection if isinstance(self.connection, str) else f"{self.connection:g} kWh"
-        gd = self.gd or ("GD by date" if self.connected or self.requested else "no GD class")
-        return (
-            f"{self.book.distributor or 'distributor'} {self.subgroup} {self.modality}, {minimum}, {gd}, BRL"
+        gd = self.gd or (Note("GD by date") if self.connected or self.requested else Note("no GD class"))
+        return Note(
+            "{distributor} {subgroup} {modality}, {minimum}, {gd}, BRL",
+            distributor=self.book.distributor or Note("distributor"),
+            subgroup=self.subgroup,
+            modality=self.modality,
+            minimum=minimum,
+            gd=gd,
         )
 
 

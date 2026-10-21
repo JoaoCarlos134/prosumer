@@ -2,6 +2,17 @@
 
 ## Unreleased (after 0.1.0)
 
+**Languages**
+
+- `prosumer.i18n`: every note, log line and message for the person (reports, outlooks, bills, the readers,
+  `app.run`) is a `Note`, English text that renders in Portuguese too: `Report`, `Outlook`, `Diagnosis`,
+  `Bill` and `app.Result` take `to_dict(lang="pt")`, `i18n.message(error, "pt")` gives an error's text. One
+  catalog of ~230 templates (`i18n/pt.py`), checked against the code by a test.
+- `app.run`: a failed download of the weather, the address or the time zone is a message for the person
+  (it was the bare network error), as a tariff already was.
+- Fixed: a Brazilian price with an unknown `connection` (e.g. "bifasico") crashed `app.run` with a bare
+  `KeyError`; `brazil.bill` and the app now say which connections exist (or take the minimum in kWh).
+
 **Reading data**
 
 - `io.auto.read_energy` and `io.auto.sniff`: a file of unknown layout, the energy column chosen by name and

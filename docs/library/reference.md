@@ -12,6 +12,10 @@ Generated from the docstrings, which hold the rules, their sources and the readi
     options:
       members: [run, Request, Result, Services]
 
+::: prosumer.i18n
+    options:
+      members: [Note, translate, message, as_note, frame]
+
 ## Data contract and protocol
 
 ::: prosumer.contracts

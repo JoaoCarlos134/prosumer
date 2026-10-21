@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -11,8 +12,8 @@ import pytest
 
 from prosumer import EnergySeries, economics
 from prosumer.economics import brazil
+from series import TZ, hourly
 
-TZ = "Etc/GMT+3"
 LEGACY = Path(__file__).resolve().parents[1] / "legado" / "ia_solar" / "analise" / "tarifas" / "dados"
 GROSS = 1.0 / (1.0 - 0.19 - 0.0925)
 P = 0.8 * GROSS  # conventional full price of the made-up book, green flag
@@ -35,15 +36,7 @@ def _book() -> brazil.TariffBook:
     return brazil.TariffBook(tariffs, band, taxes, fio_b, distributor="TEST")
 
 
-def _series(values: np.ndarray, start: str, quantity: str) -> EnergySeries:
-    ds = pd.date_range(start, periods=len(values), freq="h", tz=TZ)
-    return EnergySeries.from_dataframe(
-        pd.DataFrame({"unique_id": "uc", "ds": ds, "y": values}),
-        unit="kWh",
-        quantity=quantity,  # type: ignore[arg-type]
-        tz=TZ,
-        freq="h",
-    )
+_series = partial(hourly, uid="uc")
 
 
 def _site(days: int, pv_kwh: float, start: str = "2026-01-01", load: float = 1.0) -> tuple[EnergySeries, ...]:

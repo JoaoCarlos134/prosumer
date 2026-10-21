@@ -31,6 +31,9 @@
   02/2026 in Portuguese; the connection minimum of a Brazilian price takes the decimal comma; a list that
   holds notes is joined in the page's language even when it mixes plain texts. `i18n.frame` takes a
   generator.
+- Fixed: `app.run` took a blank price field (`"currency": ""`, as a web form sends it) as its value, and
+  `gd` with a consumption file only was an unknown field; blank is "not given" and `gd` is ignored without PV.
+  The example site (`examples/site_local`) is now a thin shell over `app.run`.
 - Fixed: a PV or meter file whose evaluated test hours are all zero (an inverter dead in the last
   `test_days`) made `analyze`, and so `app.run`, raise from the metrics; the forecast check is now skipped
   with a note and the rest of the report is kept.

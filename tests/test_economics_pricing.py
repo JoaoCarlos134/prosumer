@@ -1,6 +1,7 @@
-"""Economics for the app: `analyze(economics=...)`, `Plan`, `brazil.Setup`, `TariffBook.from_aneel` and
-`windows_by_cost`, on synthetic sites whose bill can be worked out by hand (no network: ANEEL answers from the
-fixture of 2026-10-12)."""
+"""The pricings the app passes and the bill in the report: `analyze(economics=...)`, `Plan`, `brazil.Setup`,
+`TariffBook.from_aneel` and `windows_by_cost`, on synthetic sites whose bill can be worked out by hand (no
+network: ANEEL answers from the fixture of 2026-10-12). (Named `test_economics_app.py` until 2026-10-21: it
+never ran `app.run`, which `test_app.py` tests.)"""
 
 from __future__ import annotations
 
@@ -15,8 +16,8 @@ from aneel_fake import from_fixture
 from prosumer import EnergySeries, analysis, analyze, data, economics
 from prosumer.economics import Plan, Tariff, brazil
 from prosumer.outlook import Outlook
+from series import TZ, hourly
 
-TZ = "Etc/GMT+3"
 LEGACY = Path(__file__).resolve().parents[1] / "legado" / "ia_solar" / "analise" / "tarifas" / "dados"
 TOU = Tariff(
     prices={"peak": 0.40, "day": 0.20, "night": 0.10},
@@ -28,15 +29,7 @@ TOU = Tariff(
 GROSS = 1 / (1 - 0.19 - 0.0925)  # the typed ICMS and PIS/COFINS of the Brazilian tests
 
 
-def _series(values: np.ndarray, start: str, quantity: str) -> EnergySeries:
-    ds = pd.date_range(start, periods=len(values), freq="h", tz=TZ)
-    return EnergySeries.from_dataframe(
-        pd.DataFrame({"unique_id": "site", "ds": ds, "y": values}),
-        unit="kWh",
-        quantity=quantity,  # type: ignore[arg-type]
-        tz=TZ,
-        freq="h",
-    )
+_series = hourly
 
 
 def _site(days: int, start: str, pv_kwh: float = 3.0) -> tuple[EnergySeries, EnergySeries]:

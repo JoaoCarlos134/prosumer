@@ -56,10 +56,12 @@ jobs:
           activate-environment: true
           enable-cache: true
           cache-dependency-glob: pyproject.toml
+      # lightgbm: sem ele os testes do LightGBM e o caminho padrao do app.run (models="lightgbm") eram pulados
       - name: Instala
-        run: uv pip install -e ".[dev,plots]"
+        run: uv pip install -e ".[dev,plots,lightgbm]"
+      # -n auto: os runners tem 4 CPUs; em serie a suite passa de 20 min
       - name: pytest
-        run: pytest --cov --cov-report=term-missing --cov-report=xml
+        run: pytest -n auto --cov --cov-report=term-missing --cov-report=xml
       - name: Guarda a cobertura
         if: matrix.python == '3.12'
         uses: actions/upload-artifact@v6

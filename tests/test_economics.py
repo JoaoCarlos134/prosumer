@@ -12,19 +12,9 @@ import pytest
 from prosumer import EnergySeries, economics
 from prosumer.economics import Tariff
 from prosumer.outlook import Outlook
+from series import TZ, hourly
 
-TZ = "Etc/GMT+3"
-
-
-def _series(values: np.ndarray, start: str, quantity: str, uid: str = "site") -> EnergySeries:
-    ds = pd.date_range(start, periods=len(values), freq="h", tz=TZ)
-    return EnergySeries.from_dataframe(
-        pd.DataFrame({"unique_id": uid, "ds": ds, "y": values}),
-        unit="kWh",
-        quantity=quantity,  # type: ignore[arg-type]
-        tz=TZ,
-        freq="h",
-    )
+_series = hourly
 
 
 def _site(days: int, pv_kwh: float, start: str = "2025-01-01") -> tuple[EnergySeries, EnergySeries]:

@@ -2,6 +2,14 @@
 
 ## Unreleased (after 0.1.0)
 
+**Speed**
+
+- `app.run` on seven years of hourly PV: ~10 s -> ~6 s (`models="naive"`, same JSON byte for byte). The roof
+  fit computes the plane-independent part of the irradiance once per fit, not once per plane of the grid, and
+  is remembered by its inputs (`forecast_ahead` and `diagnose` on the same series fit it once); the clear sky
+  and the sun vectors of long spans are remembered too (`physics.MEMORY`); the complete days are counted
+  without a Python function per day.
+
 **Languages**
 
 - `prosumer.i18n`: every note, log line and message for the person (reports, outlooks, bills, the readers,

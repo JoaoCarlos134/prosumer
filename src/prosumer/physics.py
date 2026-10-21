@@ -19,6 +19,13 @@ Conventions
 
 from __future__ import annotations
 
+import hashlib
+import threading
+from collections import OrderedDict
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any, TypeVar
+
 import numpy as np
 import pandas as pd
 
@@ -81,6 +88,37 @@ def solar_position(times: pd.DatetimeIndex, lat: float, lon: float) -> pd.DataFr
     )
 
 
+# the last results of `clear_sky_ghi` and `mean_sun` on long time spans, by their inputs: one app run asks
+# for the same 60,000 hours from the reader, the next days and the diagnostics
+MEMORY = 6
+MEMORY_MIN_TIMES = 1000  # shorter spans are cheap to recompute (and would push the long ones out)
+_MEMORY: dict[str, OrderedDict[tuple[Any, ...], Any]] = {"clear_sky": OrderedDict(), "sun": OrderedDict()}
+_MEMORY_LOCK = threading.Lock()
+_T = TypeVar("_T", np.ndarray, pd.DataFrame)
+
+
+def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], compute: Callable[[], _T]) -> _T:
+    """`compute()`, or a copy of its remembered result for the same `times` (every instant and the zone) and
+    `key`."""
+    if len(times) < MEMORY_MIN_TIMES:
+        return compute()
+    ints = np.ascontiguousarray(times.asi8)  # type: ignore[attr-defined]
+    stamp = hashlib.blake2b(ints.tobytes(), digest_size=16).digest()
+    full = (len(times), str(times.dtype), stamp, *key)  # the dtype carries the zone and the unit
+    cache = _MEMORY[kind]
+    with _MEMORY_LOCK:
+        hit = cache.get(full)
+        if hit is not None:
+            cache.move_to_end(full)
+            return hit.copy()
+    out = compute()
+    with _MEMORY_LOCK:
+        cache[full] = out.copy()
+        while len(cache) > MEMORY:
+            cache.popitem(last=False)
+    return out
+
+
 def clear_sky_ghi(
     times: pd.DatetimeIndex, lat: float, lon: float, *, interval: str = "1h", samples: int = 12
 ) -> np.ndarray:
@@ -88,9 +126,16 @@ def clear_sky_ghi(
 
     Haurwitz needs only the zenith angle: GHI = 1098 cos z exp(-0.059 / cos z). It is the model the project
     used for the clear-sky persistence reference and for the clear-sky index of the weather forecast (regime
-    C).
+    C). The last results on long spans are remembered (`MEMORY`).
     """
     span = pd.Timedelta(interval)
+    key = (float(lat), float(lon), span, int(samples))
+    return _remembered("clear_sky", times, key, lambda: _clear_sky_ghi(times, lat, lon, span, samples))
+
+
+def _clear_sky_ghi(
+    times: pd.DatetimeIndex, lat: float, lon: float, span: pd.Timedelta, samples: int
+) -> np.ndarray:
     inst = _instants(times, span, samples)
     cz = solar_position(inst, lat, lon)["cos_zenith"].to_numpy()
     czp = np.clip(cz, 1e-3, None)
@@ -113,8 +158,16 @@ def mean_sun(
     `day_of_year`.
 
     The mean of `up` is the mean cos(zenith) counting the night as zero, which is what an hourly energy sees.
+    The last results on long spans are remembered (`MEMORY`).
     """
     span = pd.Timedelta(interval)
+    key = (float(lat), float(lon), span, int(samples))
+    return _remembered("sun", times, key, lambda: _mean_sun(times, lat, lon, span, samples))
+
+
+def _mean_sun(
+    times: pd.DatetimeIndex, lat: float, lon: float, span: pd.Timedelta, samples: int
+) -> pd.DataFrame:
     p = solar_position(_instants(times, span, samples), lat, lon)
     above = (p["up"].to_numpy() > 0)[:, None]
     v = (p[["east", "north", "up"]].to_numpy() * above).reshape(len(times), samples, 3).mean(axis=1)
@@ -142,21 +195,47 @@ def poa_isotropic(
     `sun` is the output of `mean_sun` for the same intervals. Tilt and azimuth in degrees (azimuth as a
     compass bearing). Simple on purpose: with one GHI channel there is nothing to feed a richer sky model.
     """
-    ghi = np.asarray(ghi, dtype=float)
+    return _poa_on(_PoaParts.of(ghi, sun, albedo), tilt, azimuth)
+
+
+@dataclass(frozen=True)
+class _PoaParts:
+    """What `poa_isotropic` computes whatever the plane: the sun vectors, the Erbs split of the GHI and the
+    ground term, so a grid search (`fit_orientation`) computes them once, not once per plane."""
+
+    vectors: np.ndarray  # east, north, up of the sun
+    sunny: np.ndarray  # cos zenith > 0.02: the beam counts
+    cos_zenith: np.ndarray  # where `sunny`, else 1 (the divisor of the beam's tilt factor)
+    beam: np.ndarray
+    diffuse: np.ndarray
+    ground: np.ndarray  # albedo x GHI
+
+    @classmethod
+    def of(cls, ghi: np.ndarray, sun: pd.DataFrame, albedo: float) -> _PoaParts:
+        ghi = np.asarray(ghi, dtype=float)
+        cz = np.clip(sun["up"].to_numpy(), 0, None)
+        doy = sun["day_of_year"].to_numpy()
+        i0 = SOLAR_CONSTANT * (1 + 0.033 * np.cos(2 * np.pi * doy / 365)) * cz
+        kt = np.where(i0 > 10, np.clip(ghi / np.where(i0 > 10, i0, 1), 0, 1), 0)
+        diffuse = ghi * erbs_diffuse_fraction(kt)
+        return cls(
+            vectors=sun[["east", "north", "up"]].to_numpy(),
+            sunny=cz > 0.02,
+            cos_zenith=np.where(cz > 0.02, cz, 1),
+            beam=np.clip(ghi - diffuse, 0, None),
+            diffuse=diffuse,
+            ground=albedo * ghi,
+        )
+
+
+def _poa_on(parts: _PoaParts, tilt: float, azimuth: float) -> np.ndarray:
+    """`poa_isotropic` on one plane from its plane-independent parts (the same arithmetic, in the same
+    order: bit-identical)."""
     b, g = np.radians(tilt), np.radians(azimuth)
     normal = np.array([np.sin(b) * np.sin(g), np.sin(b) * np.cos(g), np.cos(b)])
-    cz = np.clip(sun["up"].to_numpy(), 0, None)
-    ci = np.clip(sun[["east", "north", "up"]].to_numpy() @ normal, 0, None)
-    doy = sun["day_of_year"].to_numpy()
-    i0 = SOLAR_CONSTANT * (1 + 0.033 * np.cos(2 * np.pi * doy / 365)) * cz
-    kt = np.where(i0 > 10, np.clip(ghi / np.where(i0 > 10, i0, 1), 0, 1), 0)
-    diffuse = ghi * erbs_diffuse_fraction(kt)
-    rb = np.where(cz > 0.02, ci / np.where(cz > 0.02, cz, 1), 0)
-    return (
-        np.clip(ghi - diffuse, 0, None) * rb
-        + diffuse * (1 + np.cos(b)) / 2
-        + albedo * ghi * (1 - np.cos(b)) / 2
-    )
+    ci = np.clip(parts.vectors @ normal, 0, None)
+    rb = np.where(parts.sunny, ci / parts.cos_zenith, 0)
+    return parts.beam * rb + parts.diffuse * (1 + np.cos(b)) / 2 + parts.ground * (1 - np.cos(b)) / 2
 
 
 def fit_orientation(
@@ -183,10 +262,11 @@ def fit_orientation(
     y, ghi = np.asarray(y, dtype=float), np.asarray(ghi, dtype=float)
     ok = np.isfinite(y) & (ghi > min_ghi)
     s = sun.loc[ok] if isinstance(sun, pd.DataFrame) else sun
+    parts = _PoaParts.of(ghi[ok], s, 0.2)  # what does not depend on the plane, once
     best = (-1.0, 0.0, 180.0)
     for t in tilts:
         for a in azimuths if t > 0 else [180.0]:
-            p = poa_isotropic(ghi[ok], s, t, a)
+            p = _poa_on(parts, t, a)
             r2 = float(np.corrcoef(p, y[ok])[0, 1] ** 2)
             if r2 > best[0]:
                 best = (r2, float(t), float(a))

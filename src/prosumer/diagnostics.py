@@ -53,7 +53,10 @@ limit and so a possible answer. Widen the grid for panels that may be that steep
 
 from __future__ import annotations
 
+import hashlib
 import itertools
+import threading
+from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, fields
 from typing import Any, cast
@@ -210,8 +213,8 @@ def _hourly(s: EnergySeries, site: tuple[float, float]) -> pd.DataFrame:
 def _complete_days(f: pd.DataFrame) -> pd.DataFrame:
     """Per series and day: energy and clear-sky total over the days with every sun hour measured."""
     sun = f[f["cs"] > 0]
-    g = sun.groupby(["unique_id", "date"])
-    d = g.agg(energy=("y", "sum"), cs=("cs", "sum"), missing=("y", lambda v: int(v.isna().sum())))
+    g = sun.assign(_missing=sun["y"].isna()).groupby(["unique_id", "date"])
+    d = g.agg(energy=("y", "sum"), cs=("cs", "sum"), missing=("_missing", "sum"))
     return d[(d["missing"] == 0) & (d["cs"] > 0)].drop(columns="missing").reset_index()
 
 
@@ -319,7 +322,42 @@ def _orientation(
     return pd.DataFrame(rows, columns=["unique_id", "tilt", "azimuth", "r2", "edge"])
 
 
+ROOF_MEMORY = 4  # roof fits remembered by their inputs (`_roof`)
+_ROOFS: OrderedDict[tuple[Any, ...], pd.DataFrame] = OrderedDict()
+_ROOFS_LOCK = threading.Lock()
+
+
+def _fingerprint(frame: pd.DataFrame) -> tuple[int, tuple[str, ...], bytes]:
+    """Rows, columns and a 128-bit digest of every value: equal frames, equal fingerprints."""
+    rows = pd.util.hash_pandas_object(frame, index=False).to_numpy()
+    return (
+        len(frame),
+        tuple(map(str, frame.columns)),
+        hashlib.blake2b(rows.tobytes(), digest_size=16).digest(),
+    )
+
+
 def _roof(
+    f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float], k: _Knobs = _DEFAULT
+) -> pd.DataFrame:
+    """`_fit_roof`, remembered: the last `ROOF_MEMORY` fits are kept by a fingerprint of their inputs, so
+    `forecast_ahead` and `diagnose` on the same series (the app runs both) fit the roof once, ~2.5 s on seven
+    years of hourly data. A copy is returned: the remembered table cannot be changed by a caller."""
+    key = (_fingerprint(f), _fingerprint(clear), tuple(map(float, site)), k)
+    with _ROOFS_LOCK:
+        hit = _ROOFS.get(key)
+        if hit is not None:
+            _ROOFS.move_to_end(key)
+            return hit.copy()
+    table = _fit_roof(f, clear, site, k)
+    with _ROOFS_LOCK:
+        _ROOFS[key] = table.copy()
+        while len(_ROOFS) > ROOF_MEMORY:
+            _ROOFS.popitem(last=False)
+    return table
+
+
+def _fit_roof(
     f: pd.DataFrame, clear: pd.DataFrame, site: tuple[float, float], k: _Knobs = _DEFAULT
 ) -> pd.DataFrame:
     """Orientation in two passes: pooled, then again with the level of each segment divided out.

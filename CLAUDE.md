@@ -187,7 +187,20 @@ design). pandas 3 turns a text column into its string type and drops the `Note`:
 built with `i18n.frame`. Also: `app.run` turns failed weather/address/time-zone downloads into messages; fixed
 the bare `KeyError` of an unknown Brazilian `connection` (regression tests in `test_app`, `test_economics_brazil`).
 The user does not want the project doubled by the translations: keep Portuguese in the catalog only, never
-per-language code paths. Next: item 1 (review, now `9119619..HEAD`), then 3-7 below.
+per-language code paths.
+
+Speed (21/10, stopped by the user mid-way, committed after this note): `app.run` on Cascavel's 7 years
+~10 s -> ~6 s naive, JSON byte-identical to `24045e5` (checked with a scratch script that runs both trees).
+Done: `physics._PoaParts` (fit_orientation computes the plane-independent part once), `diagnostics._roof`
+remembered by a fingerprint of its inputs (`_fit_roof` does the work; LRU of 4, lock, returns copies),
+`physics.clear_sky_ghi`/`mean_sun` remembered on spans >= 1000 times (`MEMORY` = 6), `_complete_days` without a
+lambda per day. NOT done: tests of the memories (fitted once across `forecast_ahead` + `diagnose`; a changed
+value misses; the returned copy cannot alter the cache) - write them first. Still slow, if wanted:
+`diagnostics._segment` (change points, pure Python DP, ~0.85 s per call, 2 calls), `quality.clock_offset`
+(~2 s), reading the file (~2 s).
+
+Review: `work-reviewer` launched on `9119619..24045e5` (before the speed commit); its findings go below when
+it reports. Next in the cloud: act on the review findings, then the tests of the memories, then items 3-7.
 
 ### The list of 2026-10-19 (item 2 done on 21/10)
 

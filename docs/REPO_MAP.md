@@ -102,8 +102,8 @@ flowchart LR
 
 Three products, in order of importance (CLAUDE.md, "Library first"):
 1. the **library** `src/prosumer` (English, tested, the end product);
-2. the **app** on top of it: `prosumer.app.run` is its whole backend; `examples/site_local` is a crude page,
-   the TCC's TypeScript site is next;
+2. the **app** on top of it: `prosumer.app.run` is its whole backend; `webapp/` is the TCC's site (FastAPI +
+   React/ECharts, a standalone exe planned), `examples/site_local` a crude page;
 3. the **research** that chose and measured what the library does: the benchmark
    (`experimentos/testes_previsao`), the pilots, the papers (Portuguese).
 
@@ -114,6 +114,7 @@ Three products, in order of importance (CLAUDE.md, "Library first"):
 | `src/prosumer/` | the library (section 3) | English |
 | `tests/` | one file per module, flat, no conftest (section 4) | English |
 | `examples/site_local/` | local example page: `app.py` (stdlib HTTP server, a thin shell over `app.run`), `index.html`, `README.md` | English |
+| `webapp/` | the TCC's site: `server/` (FastAPI over `app.run`: `api.py`, `demo.py`, `launch.py`), `web/` (React + Vite + TS + Tailwind + ECharts, seven report pages), `tests/test_api.py`, `run.cmd`/`dev.cmd`/`run.sh`, `prosumer_site.spec` + `build_exe.cmd` (PyInstaller, one folder); `README.md` has its state | English |
 | `docs/library/` | the user guide (mkdocs, `mkdocs.yml` at the root); every example runs in `tests/test_docs.py` | English (+ `pt/guia.md`) |
 | `docs/proposta/` | the TCC proposal (E0-E8, PDF made by `gera_proposta_tcc.py`), `PROPOSTA_BIBLIOTECA.md` (the 8 planned modules, their sources, the old -> new name map), `Plano_TCC_simples` | Portuguese |
 | `docs/projeto/` | research records: `HISTORICO.md` (the diary 05-17/10), `PILOTOS_F1_F2.md` (every pilot's gate and result), `ESTUDO_ETAPA_A.md`, `ESTUDO_EMBARCADO.md`, `ia_solar/` (plant analyses, paper plan), network analyses | Portuguese |
@@ -122,7 +123,7 @@ Three products, in order of importance (CLAUDE.md, "Library first"):
 | `legado/` | the project's original scripts, reference only (section 7) | Portuguese |
 | `graphify-out/` | project graph (`docs/projeto/scripts/constroi_rede.py`) | — |
 | `pyproject.toml` | package (hatchling + hatch-vcs), lean core (numpy, pandas, pyarrow, scipy, pandera), one extra per optional dependency, ruff/mypy/pytest config | — |
-| `.github/workflows/ci.yml` | lint, mypy, tests (3.11/3.12, `dev,plots,lightgbm`, `-n auto`), build; only on `src/`, `tests/`, `pyproject.toml` changes | Portuguese comments |
+| `.github/workflows/ci.yml` | lint, mypy, tests (3.11/3.12, `dev,plots,lightgbm`, `-n auto`), the site (its tests, `npm run build`), build; only on `src/`, `tests/`, `examples/`, `docs/library/`, `webapp/`, `pyproject.toml` changes | Portuguese comments |
 | `.pre-commit-config.yaml` | ruff, ruff-format, mypy on `src/`, standard hooks (LF, 512 KB limit); skips `experimentos/`, `legado/`, `docs/` | — |
 | `.claude/agents/` | `library-builder` (library code in a worktree), `pilot-runner` (pilots with gate), `work-reviewer` (read-only review of a commit range) | English |
 | `CLAUDE.md` | rules, machines, current state, where to continue | English |
@@ -251,8 +252,9 @@ REAL format.
  browser form ──► examples/site_local/app.py: _request(form) ──► prosumer.app.run(...) ──► Result
                                                                       │
                   _render(Result) ◄────────────────────────────────────┘   (HTML tables, no JavaScript)
- TCC site (next, own private repo: React + Vite + TS + Tailwind, FastAPI serving the build):
-                  the same request JSON ──► app.run ──► Result.to_json(lang="pt" | "en") ──► the pages
+ webapp/ (the TCC site: FastAPI serving the React build, or the standalone prosumer.exe):
+   POST /api/run (request JSON + files) ──► server/api.py ──► app.run ──► Result.to_dict(lang) ──► the pages
+                  GET /api/result/{id}?lang= re-renders a kept result in the other language
 ```
 
 `Result` holds: `site`, `read` (how each file was read), `outlooks`, `windows`, `windows_by_cost`, `pricing`,

@@ -166,7 +166,7 @@ def test_standardization_is_identical(comum, caso, regime) -> None:  # type: ign
 def _ghi_ceu_claro_v2(serie, idx):  # type: ignore[no-untyped-def]
     lat, lon = {"Cascavel": (-24.83, -53.65), "Curitiba": (-25.4284, -49.2733)}[serie]
     t = pd.date_range(idx.min(), idx.max() + pd.Timedelta("55min"), freq="5min") + pd.Timedelta("150s")
-    n = t.dayofyear.to_numpy()
+    n = t.day_of_year.to_numpy()
     g = 2 * np.pi / 365 * (n - 1 + (t.hour.to_numpy() - 12) / 24)
     eot = 229.18 * (
         0.000075

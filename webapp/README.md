@@ -50,21 +50,29 @@ Control blocks unsigned, locally built exes: expect it not to run there (signing
 ## State (2026-10-23, cloud)
 
 Done: every page (Overview, Next days, History, Forecast check, PV system, Bill, Notes & sources), `npm run
-build` clean (tsc strict), `tests/test_api.py` (10 tests), the launchers, the PyInstaller spec, and a browser
+build` clean (tsc strict), `tests/test_api.py` (12 tests; CI job `site` runs them and the build), the launchers, the PyInstaller spec, and a browser
 check with Playwright (fake weather): every page in en/pt, light/dark, 1440 px and a 390 px phone; focus mode,
 show as a table, export CSV, the cross-filter by day (Overview -> Next days) and by month (Bill), the language
 switch on a kept result. Look (asked on 23/10): rounded tiles with layered shadows that lift on hover, KPI cards
 that tilt toward the pointer, a floating pill tab bar; legends one scrolling row clear of the axis names.
 
-Choices the page makes on its own (the library gives no flag for them):
-- PV page: a trend/loss is shown only when the library would report one: the roof given, or fitted with
-  `r2 >= diagnostics.GOOD_FIT_R2` (from `/api/info`) and not on the edge (`diagnostics.py`, `reliable`).
+The PV page shows a trend or a loss only where the library reports one (`diagnostics.orientation.reliable`,
+`segments.trend_reported` / `loss_reported`, added to the library for this; a typed tilt/azimuth now reaches
+the diagnostics too). Choices the page makes on its own:
 - Next days per day: the axis follows the bars; a range whisker past the top is cut with an arrow (the
   consumption profile's daily `high` is the sum of the hourly highs, up to ~13x the day on Dingle H1).
+- A file with several series (inverters, meters): a day or hour is the file's total only when every series
+  has a value (else a gap); hours measured are the mean over the series, complete against the hours of that
+  local day (23 or 25 on a clock change).
+- The Forecast check and Bill pages find "why it was skipped" by the start of the library's note, in both
+  languages (`Check.tsx` `SKIPPED`, `Bill.tsx` `LEFT_OUT`): a reworded note breaks the match (a
+  `skipped_reason` field in `Report.to_dict` would end that).
 
 Left:
 1. The Windows build and its test on the Lactec machine (`build_exe.cmd`, then double-click
    `dist/prosumer/prosumer.exe`; check the demo and a real Fronius file).
 2. A browser pass there with the live services (Open-Meteo, the Brazilian price with live ANEEL).
-3. Library: the consumption outlook's daily range (`outlook.forecast_ahead`, profile rule) sums the hourly
+3. The `work-reviewer`'s open minors (23/10): `report.pending` and some notes are written for library users
+   (code in backticks), `credits[].notes` stay English in pt (the bill's `flag` value "assumed" now has a label).
+4. Library: the consumption outlook's daily range (`outlook.forecast_ahead`, profile rule) sums the hourly
    lows/highs; a daily quantile of daily totals would be the honest range.

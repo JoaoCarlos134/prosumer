@@ -75,23 +75,31 @@ function add(a: number | null, b: number | null): number | null {
 
 export interface HistTotal {
   date: string;
+  /** The file's energy that day: null unless every series of the file has a value (one inverter off would
+   * otherwise show the others' energy as the file's). */
   energy: number | null;
+  /** Hours measured, the mean over the series (0 to the hours of the local day: 23 or 25 on a clock change). */
   measured_hours: number;
 }
 
 /** Each day of a file, summed over its series. */
 export function history(r: Result, q: Quantity): HistTotal[] {
   const rows = (q === "generation" ? r.charts.history_generation : r.charts.history_consumption) ?? [];
-  const by = new Map<string, HistTotal>();
+  const n = new Set(rows.map((d) => d.unique_id)).size || 1;
+  const by = new Map<string, { energy: number; valid: number; hours: number }>();
   for (const d of rows as HistoryDay[]) {
     const k = dayKey(d.date);
-    const x = by.get(k);
-    if (x) {
-      x.energy = add(x.energy, d.energy);
-      x.measured_hours = Math.max(x.measured_hours, d.measured_hours);
-    } else by.set(k, { date: k, energy: d.energy, measured_hours: d.measured_hours });
+    const x = by.get(k) ?? { energy: 0, valid: 0, hours: 0 };
+    if (d.energy != null) {
+      x.energy += d.energy;
+      x.valid += 1;
+    }
+    x.hours += d.measured_hours;
+    by.set(k, x);
   }
-  return [...by.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return [...by.entries()]
+    .map(([date, x]) => ({ date, energy: x.valid === n ? x.energy : null, measured_hours: x.hours / n }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function rolling(values: (number | null)[], n: number): (number | null)[] {

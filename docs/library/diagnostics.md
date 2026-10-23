@@ -34,9 +34,10 @@ from prosumer import data, diagnostics
 
 pv, _ = data.example_plant(n_series=1, days=400)
 d = diagnostics.diagnose(pv, (-25.43, -49.27), kwp=3.0)
-print(d.orientation)  # tilt, azimuth (compass bearing, 180 = south), fit R2, on the edge of the grid
+print(d.orientation)  # tilt, azimuth (compass bearing, 180 = south), fit R2, on the edge, reliable
 print(d.notes)
-assert {"tilt", "azimuth", "r2"} <= set(d.orientation.columns)
+assert {"tilt", "azimuth", "r2", "reliable"} <= set(d.orientation.columns)
+assert {"trend_reported", "loss_reported"} <= set(d.segments.columns)
 ```
 
 `diagnose` finds the clear days in the series itself, fits the roof's orientation on them, computes a
@@ -44,6 +45,11 @@ clear-day performance index (energy / clear-sky irradiation on the panel plane; 
 `kwp`), and splits it into straight segments with change points (dynamic programming, BIC penalty): a step
 up is usually a cleaning, a step down a fault or a lost string, a slope soiling or degradation. With a poor
 fit or a roof on the edge of the search grid, steps are reported as uncertain and no trend is drawn.
+The tables say what the notes report, for a page that shows numbers: `orientation.reliable` (given, or a
+good fit not on the edge) and, on a series' last segment, `trend_reported` (a fall of at least
+`trend_note_pct` a year over at least a year) and `loss_reported` (`step_note_pct` below the best level). A
+known roof goes in as `diagnose(orientation=(tilt, azimuth))`, `analyze(orientation=...)` or the app's
+`tilt`/`azimuth`.
 
 Every threshold is an argument (`analyze(diagnostics_options={...})` passes them by name); the change-point
 penalty and the clear-day rule were chosen on the project's own sites, and a note says so when their defaults

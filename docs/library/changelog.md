@@ -2,6 +2,14 @@
 
 ## Unreleased (after 0.1.0)
 
+**Diagnostics**
+
+- `Diagnosis.orientation.reliable` and `Diagnosis.segments.trend_reported` / `loss_reported`: what the notes
+  report, as columns, so a page that shows the numbers shows the same ones (the site showed a -86%/year trend
+  the notes withheld). `analyze(orientation=(tilt, azimuth))`, and `app.run` passes a typed `tilt`/`azimuth`
+  to the diagnostics too (they went to the next days only, so the note "pass the known orientation" could not
+  be acted on in the app).
+
 **Compatibility**
 
 - pandas 3.1: the library no longer uses `dayofweek` / `dayofyear` (deprecated there; `day_of_week` /

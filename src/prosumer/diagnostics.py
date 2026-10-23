@@ -158,11 +158,13 @@ class Diagnosis:
     and one at 90 (with a grid that reaches it) a vertical panel, both possible answers.
     """
 
-    orientation: pd.DataFrame  # unique_id, tilt, azimuth, r2, edge (orientation on the edge of the grid)
+    # unique_id, tilt, azimuth, r2, edge (orientation on the edge of the grid), reliable (good enough for the
+    # steps, a trend and a loss to be reported: given, or fitted with good_fit_r2 and not on the edge)
+    orientation: pd.DataFrame
     index: pd.DataFrame  # unique_id, date, energy, expected, index (clear days only)
-    segments: (
-        pd.DataFrame
-    )  # unique_id, start, end, days, level_start, level_end, trend_pct_per_year, lost_pct
+    # unique_id, start, end, days, level_start, level_end, trend_pct_per_year, lost_pct, trend_reported and
+    # loss_reported (True where the notes report them: a series' last period only)
+    segments: pd.DataFrame
     steps: pd.DataFrame  # unique_id, date, before, after, step_pct, event (|step| >= 5%)
     kwp: dict[str, float] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
@@ -693,7 +695,53 @@ def diagnose(
     index = _index(f, clear, site, kw, table)
     segments, steps = _changepoints(index, k)
     notes = _notes(table, index, segments, steps, kw, orientation is not None, k)
+    table, segments = _flag(table, segments, orientation is not None, k)
     return Diagnosis(orientation=table, index=index, segments=segments, steps=steps, kwp=kw, notes=notes)
+
+
+def _reported(
+    orientation: pd.DataFrame, segments: pd.DataFrame, given: bool, k: _Knobs = _DEFAULT
+) -> tuple[dict[str, bool], set[str], set[str]]:
+    """What the notes report, per series: whether the roof is known well enough for steps, a trend and a
+    loss to mean anything (`reliable`: given, or fitted with `good_fit_r2` and not on the edge), and the
+    series whose latest period has a trend worth a note (a fall of `trend_note_pct` a year over at least a
+    year: under a year the slope is mostly the season, a clear-sky model is never exact) and a loss worth one
+    (`step_note_pct` below the best level)."""
+    reliable = {
+        str(r["unique_id"]): bool(
+            np.isfinite(r["tilt"]) and (given or (r["r2"] >= k.good_fit_r2 and not r["edge"]))
+        )
+        for r in orientation.to_dict(orient="records")
+    }
+    trend: set[str] = set()
+    loss: set[str] = set()
+    for sid, g in segments.groupby("unique_id", sort=False):
+        if not reliable.get(str(sid), False):
+            continue
+        last = g.iloc[-1]
+        span = (pd.Timestamp(last["end"]) - pd.Timestamp(last["start"])).days
+        if float(last["trend_pct_per_year"]) <= -k.trend_note_pct and span >= 365:
+            trend.add(str(sid))
+        if float(last["lost_pct"]) >= k.step_note_pct:
+            loss.add(str(sid))
+    return reliable, trend, loss
+
+
+def _flag(
+    orientation: pd.DataFrame, segments: pd.DataFrame, given: bool, k: _Knobs
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The tables with what the notes report, for a page that shows numbers instead of the notes:
+    `orientation.reliable`, and `segments.trend_reported` / `loss_reported` (only ever on a series' last
+    period)."""
+    reliable, trend, loss = _reported(orientation, segments, given, k)
+    orientation = orientation.assign(reliable=[reliable.get(str(u), False) for u in orientation["unique_id"]])
+    last = ~segments["unique_id"].duplicated(keep="last")
+    uid = segments["unique_id"].astype(str)
+    segments = segments.assign(
+        trend_reported=(last & uid.isin(trend)).astype(bool),
+        loss_reported=(last & uid.isin(loss)).astype(bool),
+    )
+    return orientation, segments
 
 
 def _notes(
@@ -706,13 +754,12 @@ def _notes(
     k: _Knobs = _DEFAULT,
 ) -> list[str]:
     notes: list[str] = []
-    reliable: dict[str, bool] = {}
+    reliable, trend_noted, loss_noted = _reported(orientation, segments, given, k)
     for r in orientation.to_dict(orient="records"):
         uid = str(r["unique_id"])
         if not np.isfinite(r["tilt"]):
             notes.append(Note("Series {uid}: too few clear days to fit the roof; no diagnostics.", uid=uid))
             continue
-        reliable[uid] = given or (r["r2"] >= k.good_fit_r2 and not r["edge"])
         if not given:
             fit = {"uid": uid, "tilt": r["tilt"], "azimuth": r["azimuth"], "r2": r["r2"]}
             notes.append(
@@ -767,14 +814,10 @@ def _notes(
             said.append(Note("Uncertain (roof fit, see above)."))
         notes.append(Note.join(said, " ") if len(said) > 1 else said[0])
     for sid, g in segments.groupby("unique_id", sort=False):
-        if not reliable.get(str(sid), False):
-            continue
         last = g.iloc[-1]
         trend = float(last["trend_pct_per_year"])
         since = pd.Timestamp(last["start"]).date()
-        span = (pd.Timestamp(last["end"]) - pd.Timestamp(last["start"])).days
-        # under a year the slope is mostly the season (a clear-sky model is never exact)
-        if trend <= -k.trend_note_pct and span >= 365:
+        if str(sid) in trend_noted:
             notes.append(
                 Note(
                     "Series {uid}: since {since} the clear-day production falls {pct:.0f}% a year; soiling "
@@ -784,7 +827,7 @@ def _notes(
                     pct=-trend,
                 )
             )
-        if float(last["lost_pct"]) >= k.step_note_pct:
+        if str(sid) in loss_noted:
             notes.append(
                 Note(
                     "Series {uid}: the latest period is {pct:.0f}% below the best level seen on clear days.",

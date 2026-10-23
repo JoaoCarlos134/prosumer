@@ -8,8 +8,10 @@ the ANEEL fixture); `api.SERVICES` takes them.
 from __future__ import annotations
 
 import datetime as dt
+import importlib
 import io
 import json
+import socket
 import sys
 from pathlib import Path
 from typing import Any
@@ -23,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))  # server/
 sys.path.insert(0, str(HERE.parent.parent / "tests"))  # the library's tests: its fakes
 
-from server import api, demo  # noqa: E402
+from server import api, demo, launch  # noqa: E402
 
 from test_app import SITE, _consumption_csv, _services  # noqa: E402
 
@@ -50,7 +52,6 @@ def test_info_says_what_the_form_offers(client: TestClient) -> None:
     assert info["max_days"] >= 7
     assert "lightgbm" in info["models"]["sets"]
     assert "GD II" in info["brazil"]["gd"]
-    assert 0 < info["diagnostics"]["good_fit_r2"] < 1
     assert info["demo"]["license"] == "CC0-1.0"
 
 
@@ -116,8 +117,13 @@ def test_the_demo_files_read_back_as_the_frame() -> None:
 
 
 def test_the_demo_runs_with_its_price(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    today = pd.Timestamp.now(tz=demo.TZ).normalize().date().isoformat()
-    monkeypatch.setattr(api, "SERVICES", _services(today))
+    today = pd.Timestamp.now(tz=demo.TZ).date()
+    monkeypatch.setattr(
+        demo.pd.Timestamp, "now", classmethod(lambda cls, tz=None: pd.Timestamp(today, tz=tz))
+    )
+    monkeypatch.setattr(
+        api, "SERVICES", _services(today.isoformat())
+    )  # the same day for both (no midnight race)
     r = client.post("/api/demo", data={"lang": "en", "models": "naive"})
     assert r.status_code == 200, r.text
     p = r.json()
@@ -143,3 +149,28 @@ def test_the_page_is_a_503_until_it_is_built(
     (tmp_path / "index.html").write_text("<p>page</p>")
     r = client.get("/next-days")  # any path the page owns
     assert r.status_code == 200 and r.text == "<p>page</p>" and r.headers["cache-control"] == "no-store"
+
+
+def test_the_launcher_takes_the_next_port_when_one_is_taken() -> None:
+    first = launch.free_port(50100)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as held:
+        held.bind((launch.HOST, first))
+        held.listen()
+        assert launch.free_port(first) > first
+    assert launch.free_port(first) == first  # free again
+
+
+def test_the_standalone_folder_finds_the_page_and_the_demo_beside_the_code(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path), raising=False)  # as PyInstaller sets it
+    try:
+        importlib.reload(demo)
+        importlib.reload(api)
+        assert tmp_path / "web" / "dist" == api.DIST
+        assert tmp_path / "server" / "demo" / "dingle_H1_2020.csv" == demo.SOURCE
+    finally:
+        monkeypatch.undo()
+        importlib.reload(demo)
+        importlib.reload(api)
+    assert demo.SOURCE.is_file() and HERE.parent / "web" / "dist" == api.DIST

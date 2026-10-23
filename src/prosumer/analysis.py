@@ -324,6 +324,7 @@ def analyze(
     weather: pd.DataFrame | None = None,
     models: Sequence[Forecaster] = (),
     kwp: float | dict[str, float] | None = None,
+    orientation: tuple[float, float] | None = None,
     economics: Tariff | Pricing | None = None,
     consumption: EnergySeries | None = None,
     generation: EnergySeries | None = None,
@@ -356,7 +357,9 @@ def analyze(
 
     Generation with a `site` also gets the diagnostics (`diagnostics.diagnose`: clear days, roof orientation,
     clear-day performance index and its change points, `Report.diagnostics`); `kwp` (one value, or per
-    `unique_id`) turns the index into a performance ratio. `diagnostics_options`: the tuning keyword arguments
+    `unique_id`) turns the index into a performance ratio; `orientation`: the panels' (tilt, azimuth) when
+    known, used instead of the fitted roof (without it a poor fit leaves the steps uncertain and reports no
+    trend or loss). `diagnostics_options`: the tuning keyword arguments
     of `diagnose` by name (e.g. `{"tilts": np.arange(0, 91, 5.0)}` for facade panels, `{"penalty": 2.0}`);
     with the defaults of the penalty and of the clear-day rule, chosen on the project's own sites, a note says
     so. `clock_options` and `clock_weather_options`: keyword arguments of `quality.clock_offset` and
@@ -431,7 +434,7 @@ def analyze(
     diag = None
     base_pending = dict(PENDING)
     if s.quantity == "generation" and site is not None:
-        diag = diagnose(s, site, kwp=kwp, **dict(diagnostics_options or {}))
+        diag = diagnose(s, site, kwp=kwp, orientation=orientation, **dict(diagnostics_options or {}))
         notes.extend(diag.notes)
         notes.extend(_diagnostics_defaults_note(diag, knobs))
         base_pending["diagnostics"] = Note(

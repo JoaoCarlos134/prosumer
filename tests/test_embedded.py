@@ -175,7 +175,7 @@ def test_c_header_reproduces_python() -> None:
             "void run(const float *in, long n, float *out) {\n"
             f"    long rows = (n - {E.HISTORY}) / 11;\n"
             f"    for (long i = 0; i < rows; i++) out[i] = {name}_predict(in + {E.HISTORY} + 11 * i);\n"
-            f"    {name}_forecast_day(in, {day.dayofweek}, {day.dayofyear}, 3.0f, out + rows);\n"
+            f"    {name}_forecast_day(in, {day.day_of_week}, {day.day_of_year}, 3.0f, out + rows);\n"
             "}\n"
         )
         rows = x[:500]
@@ -403,7 +403,7 @@ def test_network_headers_reproduce_python() -> None:
         "        {0}_forecast_day(in + 169 * i, (int)in[169 * i + 168], 0, 0.0f, out + 24 * i);\n"
         "}}\n"
     )
-    inputs = np.c_[h, days.dayofweek.to_numpy()].ravel()
+    inputs = np.c_[h, days.day_of_week.to_numpy()].ravel()
     for period in (24, 168):
         sp, cy = _nets(seed=period, period=period)
         for name, m in (("sp", sp), ("cy", cy.fix(1))):

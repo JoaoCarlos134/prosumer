@@ -1,4 +1,4 @@
-import { animate, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { animate, motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { item } from "./Visual";
 
@@ -42,7 +42,9 @@ export function Kpi({ label, value, format = (v) => v.toFixed(1), text, unit, su
   const gx = useTransform(px, (v) => `${v * 100}%`);
   const gy = useTransform(py, (v) => `${v * 100}%`);
   const glare = useMotionTemplate`radial-gradient(220px circle at ${gx} ${gy}, rgba(255,255,255,.22), transparent 60%)`;
+  const still = useReducedMotion(); // the system asks for less motion: no tilt
   const move = (e: PointerEvent<HTMLElement>) => {
+    if (still) return;
     const r = e.currentTarget.getBoundingClientRect();
     px.set((e.clientX - r.left) / r.width);
     py.set((e.clientY - r.top) / r.height);
@@ -57,7 +59,7 @@ export function Kpi({ label, value, format = (v) => v.toFixed(1), text, unit, su
       variants={item}
       onPointerMove={move}
       onPointerLeave={leave}
-      whileHover={{ scale: 1.025, z: 20 }}
+      whileHover={still ? undefined : { scale: 1.025, z: 20 }}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       className="tile group relative flex h-full min-w-0 flex-col justify-between overflow-hidden px-4 py-3"
     >

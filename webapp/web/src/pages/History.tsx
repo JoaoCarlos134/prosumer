@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Chart } from "../components/Chart";
 import { Empty, Visual } from "../components/Visual";
 import { history, monthly, present, rolling } from "../derive";
-import { date, dayLabel, monthLabel, num, pct, wall } from "../format";
+import { date, dayLabel, hoursInDay, monthLabel, num, pct, wall } from "../format";
 import { useStore, useT } from "../store";
 import { alpha, BASE, C, LEGEND } from "../theme";
 import type { Payload, Quantity } from "../types";
@@ -18,6 +18,7 @@ export function HistoryPage({ payload }: { payload: Payload }) {
   const t = useT();
   const lang = useStore((s) => s.lang);
   const r = payload.result;
+  const tz = r.site.timezone;
   const qs = present(r).filter((q) => history(r, q).length > 0);
   const [chosen, setQ] = useState<Quantity | null>(null);
   const q: Quantity = chosen && qs.includes(chosen) ? chosen : (qs[0] ?? "generation");
@@ -177,7 +178,7 @@ export function HistoryPage({ payload }: { payload: Payload }) {
       grid: { ...BASE.grid, bottom: 44 },
       tooltip: { trigger: "axis", valueFormatter: (v: any) => `${num(lang, v, 0)} h` },
       xAxis: { type: "time" },
-      yAxis: { type: "value", min: 0, max: 24, interval: 6, name: t("hours") },
+      yAxis: { type: "value", min: 0, max: 25, interval: 6, name: t("hours") },
       dataZoom: [
         { type: "inside", startValue: end - 365 * DAY },
         { type: "slider", height: 18, bottom: 8, startValue: end - 365 * DAY },
@@ -190,13 +191,14 @@ export function HistoryPage({ payload }: { payload: Payload }) {
           barMaxWidth: 6,
           data: days.map((d) => ({
             value: [wall(d.date), d.measured_hours],
-            itemStyle: { color: d.measured_hours >= 24 ? alpha(C.teal, 0.75) : d.measured_hours === 0 ? C.warn : C.self },
+            // complete against the hours of that local day (23 or 25 on a clock change)
+            itemStyle: { color: d.measured_hours >= hoursInDay(tz, d.date) ? alpha(C.teal, 0.75) : d.measured_hours === 0 ? C.warn : C.self },
           })),
           markLine: day ? { silent: true, symbol: "none", lineStyle: { color: C.measured }, label: { show: false }, data: [{ xAxis: wall(day) }] } : undefined,
         },
       ],
     };
-  }, [days, last, q, day, lang, t]);
+  }, [days, last, q, day, tz, lang, t]);
 
   if (!qs.length)
     return (

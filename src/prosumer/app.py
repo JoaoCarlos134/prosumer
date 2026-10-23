@@ -381,6 +381,9 @@ def run(
         if main == "generation" and "consumption" in series:
             kw["consumption"] = series["consumption"]
     models = _models(req.models, notes)
+    # a roof the person typed is the roof the diagnostics use too, not only the next days
+    if main == "generation" and req.tilt is not None and req.azimuth is not None:
+        kw["orientation"] = (float(req.tilt), float(req.azimuth))
     report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, models=models, **kw)
     if models:
         log.append(

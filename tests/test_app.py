@@ -254,6 +254,22 @@ def test_forecast_check_runs_lightgbm_by_default_and_the_naive_rules_on_request(
         app.run({**SITE, "models": "best"}, files, services=_services())
 
 
+def test_a_typed_roof_is_the_roof_of_the_diagnostics_too() -> None:
+    # found 2026-10-23 by the review of the site: tilt and azimuth went to the next days only, so the
+    # diagnostics kept fitting the roof and their note "Pass the known orientation" could not be acted on
+    files = {"generation": (_pv_csv("2024-01-01", 120), "inverter.csv")}
+    r = app.run(
+        {**SITE, "models": "naive", "tilt": 10, "azimuth": 0}, files, services=_services("2024-04-30")
+    )
+    diag = r.report.diagnostics
+    assert diag is not None
+    assert diag.orientation[["tilt", "azimuth"]].to_numpy().tolist() == [[10.0, 0.0]]
+    assert diag.orientation["reliable"].all()
+    assert not [n for n in diag.notes if "panels fitted" in n]
+    fitted = app.run({**SITE, "models": "naive"}, files, services=_services("2024-04-30")).report.diagnostics
+    assert fitted is not None and any("panels fitted" in n for n in fitted.notes)
+
+
 def test_a_model_that_is_not_installed_is_left_out_with_a_note(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(app, "find_spec", lambda name: None)
     notes: list[str] = []

@@ -1,13 +1,13 @@
 name: CI
 
-# Roda so no que e da biblioteca. O benchmark em experimentos/ nao entra: ele precisa dos dados das usinas,
+# Roda so na biblioteca e no site (webapp/). O benchmark em experimentos/ nao entra: ele precisa dos dados das usinas,
 # que sao de terceiros (o arquivo esta no repositorio, que e privado, mas o CI nao o usa).
 on:
   push:
     branches: [main]
-    paths: ["src/**", "tests/**", "examples/**", "docs/library/**", "pyproject.toml", ".github/workflows/ci.yml"]
+    paths: ["src/**", "tests/**", "examples/**", "docs/library/**", "webapp/**", "pyproject.toml", ".github/workflows/ci.yml"]
   pull_request:
-    paths: ["src/**", "tests/**", "examples/**", "docs/library/**", "pyproject.toml", ".github/workflows/ci.yml"]
+    paths: ["src/**", "tests/**", "examples/**", "docs/library/**", "webapp/**", "pyproject.toml", ".github/workflows/ci.yml"]
   workflow_dispatch:
 
 concurrency:
@@ -72,6 +72,36 @@ jobs:
           name: cobertura
           path: coverage.xml
           retention-days: 3
+
+  # O site (webapp/): os testes do servidor (sem rede: usam as falsificacoes de tests/test_app.py), o ruff e a
+  # pagina compilada (tsc estrito + vite). O executavel do Windows nao: PyInstaller nao faz compilacao cruzada.
+  site:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+      - name: Instala
+        run: uv pip install -e ".[dev,lightgbm]" -r webapp/requirements.txt
+      - name: ruff
+        run: ruff check webapp/server webapp/tests && ruff format --check webapp/server webapp/tests
+      - name: pytest (servidor)
+        working-directory: webapp
+        run: python -m pytest tests
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: webapp/web/package-lock.json
+      - name: Compila a pagina
+        working-directory: webapp/web
+        run: npm ci && npm run build
 
   empacota:
     runs-on: ubuntu-24.04

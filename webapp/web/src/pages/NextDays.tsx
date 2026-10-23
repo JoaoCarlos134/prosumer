@@ -1,7 +1,7 @@
 import type { EChartsOption } from "echarts";
-import { motion } from "framer-motion";
+import { animate, motion } from "framer-motion";
 import { Home, Sun } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Chart } from "../components/Chart";
 import { Empty, Visual } from "../components/Visual";
 import { daily, hourly, present, type DayTotal } from "../derive";
@@ -406,6 +406,13 @@ export function Plant({ uid, m, many }: { uid: string; m: PlantMethod; many: boo
   const lang = useStore((s) => s.lang);
   const az = m.azimuth ?? 0;
   const tilt = m.tilt ?? 0;
+  // the panel rises to its tilt about its lower end (20, 70): an SVG rotate(a, cx, cy), animated by hand
+  // (CSS transform origins on SVG are not the same in every browser)
+  const panel = useRef<SVGGElement>(null);
+  useEffect(() => {
+    const c = animate(0, -tilt, { duration: 1.2, ease: "easeOut", onUpdate: (a) => panel.current?.setAttribute("transform", `rotate(${a} 20 70)`) });
+    return () => c.stop();
+  }, [tilt]);
   return (
     <div className="flex flex-wrap items-center gap-5">
       <svg width="120" height="120" viewBox="-60 -60 120 120" className="shrink-0">
@@ -426,9 +433,9 @@ export function Plant({ uid, m, many }: { uid: string; m: PlantMethod; many: boo
       </svg>
       <svg width="110" height="96" viewBox="0 0 110 96" className="shrink-0">
         <line x1="5" y1="70" x2="105" y2="70" stroke="var(--muted)" strokeWidth="1.5" />
-        <motion.g style={{ transformBox: "view-box", transformOrigin: "20px 70px" }} initial={{ rotate: 0 }} animate={{ rotate: -tilt }} transition={{ duration: 1.2, ease: "easeOut" }}>
+        <g ref={panel}>
           <rect x="20" y="64" width="78" height="6" rx="1" fill="#12239E" stroke="#118DFF" />
-        </motion.g>
+        </g>
         <path d={`M 60 70 A 40 40 0 0 0 ${20 + 40 * Math.cos((tilt * Math.PI) / 180)} ${70 - 40 * Math.sin((tilt * Math.PI) / 180)}`} fill="none" stroke={C.generation} strokeDasharray="3 3" />
         <text x="60" y="90" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--ink)">
           {num(lang, tilt, 0)}°

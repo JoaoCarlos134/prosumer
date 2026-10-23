@@ -277,6 +277,7 @@ const en = {
   agreement: "Agreement",
   centroid: "Shift of the day's centre (h)",
   trendNotReported: "not reported: the roof is not identified (see the notes)",
+  trendNone: "no fall worth a note in the latest period",
   perfSub: "measured / expected on clear days; lines: the periods between changes",
   perfSubUncertain: "measured / expected on clear days; the roof is uncertain: the periods are only a guide",
   clockSub: "hours to add to the file's clock so its production follows the sun",
@@ -292,6 +293,7 @@ const en = {
   citation: "Citation",
   conditions: "Conditions",
   credit: "Credit",
+  licenseUnknown: "unknown",
   billEmpty:
     "No bill yet: choose a price in the Inputs pane and send the consumption file (with the generation file too, the bill shows what your PV saves).",
   checkSkipped: "The forecast check was skipped.",
@@ -584,6 +586,7 @@ const pt: Record<Key, string> = {
   agreement: "Concordância",
   centroid: "Deslocamento do centro do dia (h)",
   trendNotReported: "não informada: o telhado não foi identificado (veja as notas)",
+  trendNone: "nenhuma queda que mereça nota no último período",
   perfSub: "medido / esperado nos dias de céu limpo; linhas: os períodos entre mudanças",
   perfSubUncertain: "medido / esperado nos dias de céu limpo; o telhado é incerto: os períodos são só uma indicação",
   clockSub: "horas a somar ao relógio do arquivo para a produção acompanhar o sol",
@@ -599,6 +602,7 @@ const pt: Record<Key, string> = {
   citation: "Citação",
   conditions: "Condições",
   credit: "Crédito",
+  licenseUnknown: "desconhecida",
   billEmpty:
     "Ainda sem conta: escolha um preço no painel Entradas e envie o arquivo de consumo (com o de geração também, a conta mostra quanto a sua FV economiza).",
   checkSkipped: "O teste da previsão foi pulado.",
@@ -660,6 +664,8 @@ const CODES: Record<Lang, Record<string, string>> = {
     consumption: "Consumption",
     fitted: "fitted from the data",
     all: "All hours",
+    // a month whose bandeira ANEEL has not published: the one the app assumes (economics.brazil)
+    assumed: "assumed (not published yet)",
     given: "given",
   },
   pt: {
@@ -692,6 +698,7 @@ const CODES: Record<Lang, Record<string, string>> = {
     consumption: "Consumo",
     fitted: "ajustada pelos dados",
     all: "Todas as horas",
+    assumed: "suposta (ainda não publicada)",
     given: "informada",
   },
 };

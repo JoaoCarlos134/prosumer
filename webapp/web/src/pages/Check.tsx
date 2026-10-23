@@ -264,7 +264,7 @@ export function Check({ payload }: { payload: Payload }) {
           file: "skill_by_resolution",
         }}
       >
-        {(big) => (resOption ? <Chart option={resOption} height={big ? "calc(100vh - 210px)" : Math.max(240, 34 * rows.length + 40)} /> : <Empty>{t("noData")}</Empty>)}
+        {(big) => (resOption ? <Chart option={resOption} height={big ? "calc(100vh - 210px)" : Math.max(240, 34 * res.length + 40)} /> : <Empty>{t("noData")}</Empty>)}
       </Visual>
       <Visual title={t("v_checkLine")} subtitle={t("checkLegend")} className="col-span-12" data={{ columns: hourCols, rows: hourRows, file: "test_hours" }}>
         {(big) => (lineOption ? <Chart option={lineOption} height={big ? "calc(100vh - 210px)" : 320} /> : <Empty>{t("noData")}</Empty>)}
@@ -325,15 +325,26 @@ interface HourSum {
   f: Record<string, number | null>;
 }
 
-/** The test hours summed over the series of the file (a file may carry several inverters or meters). */
+/** The test hours summed over the series of the file (a file may carry several inverters or meters); an hour
+ * that one series lacks is null, not the others' energy. */
 function sumByHour(rows: CheckHour[], names: string[]): HourSum[] {
-  const by = new Map<string, HourSum>();
-  const add = (a: number | null, b: unknown) => (typeof b !== "number" ? a : a == null ? b : a + b);
+  const n = new Set(rows.map((h) => h.unique_id)).size || 1;
+  const by = new Map<string, { ds: string; y: number; ny: number; f: Record<string, number>; nf: Record<string, number> }>();
   for (const h of rows) {
-    const x = by.get(h.ds) ?? { ds: h.ds, y: null, f: {} };
-    x.y = add(x.y, h.y);
-    for (const n of names) x.f[n] = add(x.f[n] ?? null, h[n]);
+    const x = by.get(h.ds) ?? { ds: h.ds, y: 0, ny: 0, f: {}, nf: {} };
+    if (typeof h.y === "number") {
+      x.y += h.y;
+      x.ny += 1;
+    }
+    for (const k of names) {
+      const v = h[k];
+      if (typeof v !== "number") continue;
+      x.f[k] = (x.f[k] ?? 0) + v;
+      x.nf[k] = (x.nf[k] ?? 0) + 1;
+    }
     by.set(h.ds, x);
   }
-  return [...by.values()].sort((a, b) => a.ds.localeCompare(b.ds));
+  return [...by.values()]
+    .map((x) => ({ ds: x.ds, y: x.ny === n ? x.y : null, f: Object.fromEntries(names.map((k) => [k, x.nf[k] === n ? x.f[k] : null])) }))
+    .sort((a, b) => a.ds.localeCompare(b.ds));
 }

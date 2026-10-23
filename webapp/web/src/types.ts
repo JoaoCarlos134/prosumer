@@ -158,7 +158,8 @@ export interface ProvenanceRow {
 }
 
 export interface Diagnostics {
-  orientation: { unique_id: string; tilt: Num; azimuth: Num; r2: Num; edge: boolean }[];
+  // reliable: the roof is good enough for steps, a trend and a loss to be reported (given, or a good fit)
+  orientation: { unique_id: string; tilt: Num; azimuth: Num; r2: Num; edge: boolean; reliable: boolean }[];
   segments: {
     unique_id: string;
     start: string;
@@ -168,6 +169,8 @@ export interface Diagnostics {
     level_end: Num;
     trend_pct_per_year: Num;
     lost_pct: Num;
+    trend_reported: boolean; // the library's notes report this period's trend (its last one only)
+    loss_reported: boolean;
   }[];
   steps: { unique_id: string; date: string; before: Num; after: Num; step_pct: Num; event: string }[];
   kwp: Record<string, number>;
@@ -264,7 +267,7 @@ export interface Credit {
   license: string;
   citation: string;
   url: string;
-  retrieved: string;
+  retrieved: string | null;
   notes: string;
 }
 
@@ -317,6 +320,5 @@ export interface Info {
   schemes: string[];
   brazil: { connections: string[]; gd: string[]; modalities: string[]; gd_i_requested_by: string };
   read_kinds: string[];
-  diagnostics: { good_fit_r2: number };
   demo: DemoInfo;
 }

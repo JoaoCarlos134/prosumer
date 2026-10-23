@@ -17,7 +17,6 @@ import { Plant } from "./NextDays";
 export function System({ payload }: { payload: Payload }) {
   const t = useT();
   const lang = useStore((s) => s.lang);
-  const info = useStore((s) => s.info);
   const r = payload.result;
   const diag = r.report.diagnostics;
   const plants = r.outlooks.generation?.method.series ?? {};
@@ -37,12 +36,14 @@ export function System({ payload }: { payload: Payload }) {
   const clockAll = clock.find((c) => c.period === "all");
   const clockMonths = clock.filter((c) => c.period !== "all");
 
-  // the library reports a trend or a loss only when the roof is known: given, or fitted well and not on the
-  // edge of the search (prosumer.diagnostics, `reliable`); the page says the same
-  const given = payload.meta.request.tilt != null && payload.meta.request.azimuth != null && payload.meta.request.tilt !== "" && payload.meta.request.azimuth !== "";
-  const goodFit = info?.diagnostics?.good_fit_r2;
-  const reliable = given || (roof != null && !roof.edge && roof.r2 != null && goodFit != null && roof.r2 >= goodFit);
+  // what the library reports (prosumer.diagnostics): the roof good enough for steps, a trend and a loss to
+  // mean anything (`reliable`), and on the last period whether its trend and its loss are worth a note; the
+  // page shows those numbers only, as the notes do. A typed roof has no fit (r2 null).
+  const reliable = roof?.reliable ?? false;
+  const given = roof != null && roof.r2 == null && reliable;
   const lastSeg = segments.at(-1);
+  const trendShown = !!lastSeg?.trend_reported;
+  const lossShown = !!lastSeg?.loss_reported;
 
   // ------------------------------------------------------------ clear-day performance index, segments, steps
   const perfOption = useMemo<EChartsOption | null>(() => {
@@ -167,11 +168,11 @@ export function System({ payload }: { payload: Payload }) {
       <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_trend")}
-          {...(reliable && lastSeg?.trend_pct_per_year != null
-            ? { value: lastSeg.trend_pct_per_year, format: (v: number) => `${v > 0 ? "+" : ""}${num(lang, v, 1)}`, unit: t("perYear") }
+          {...(trendShown && lastSeg?.trend_pct_per_year != null
+            ? { value: lastSeg.trend_pct_per_year, format: (v: number) => num(lang, v, 1), unit: t("perYear") }
             : { text: "–" })}
-          sub={reliable && lastSeg ? t("kpi_trendSub", { lost: num(lang, lastSeg.lost_pct, 0) }) : t("trendNotReported")}
-          color={reliable && (lastSeg?.trend_pct_per_year ?? 0) < 0 ? C.warn : C.export}
+          sub={!reliable ? t("trendNotReported") : lossShown ? t("kpi_trendSub", { lost: num(lang, lastSeg?.lost_pct, 0) }) : t("trendNone")}
+          color={trendShown || lossShown ? C.warn : reliable ? C.export : C.withoutPv}
           icon={<TrendingDown size={14} />}
         />
       </div>
@@ -240,8 +241,9 @@ export function System({ payload }: { payload: Payload }) {
               { key: "days", label: t("daysCol") },
               { key: "level_start", label: `${t("index")} (${t("start").toLowerCase()})`, format: (v: number) => num(lang, v, 2) },
               { key: "level_end", label: `${t("index")} (${t("end").toLowerCase()})`, format: (v: number) => num(lang, v, 2) },
-              { key: "trend_pct_per_year", label: t("perYear"), format: (v: number) => (reliable ? num(lang, v, 1) : "–") },
-              { key: "lost_pct", label: `% ${t("lostPct")}`, format: (v: number) => (reliable ? num(lang, v, 0) : "–") },
+              // the trend and the loss of a period only where the library reports them (its notes say why not)
+              { key: "trend_pct_per_year", label: t("perYear"), format: (v: number, row: Segment) => (row.trend_reported ? num(lang, v, 1) : "–") },
+              { key: "lost_pct", label: `% ${t("lostPct")}`, format: (v: number, row: Segment) => (row.loss_reported ? num(lang, v, 0) : "–") },
             ],
             rows: segments,
             file: "segments",
@@ -257,7 +259,9 @@ export function System({ payload }: { payload: Payload }) {
 const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** The periods between changes as a strip along time, each with its trend. */
-function SegmentStrip({ segments, reliable }: { segments: Diagnostics["segments"]; reliable: boolean }) {
+type Segment = Diagnostics["segments"][number];
+
+function SegmentStrip({ segments, reliable }: { segments: Segment[]; reliable: boolean }) {
   const t = useT();
   const lang = useStore((s) => s.lang);
   const t0 = wall(segments[0].start);
@@ -269,7 +273,7 @@ function SegmentStrip({ segments, reliable }: { segments: Diagnostics["segments"
         {segments.map((s, i) => {
           const w = ((wall(s.end) - wall(s.start)) / span) * 100;
           const tr = s.trend_pct_per_year ?? 0;
-          const color = !reliable ? C.withoutPv : tr < -2 ? C.warn : tr > 2 ? C.export : C.accent;
+          const color = !reliable ? C.withoutPv : s.trend_reported || s.loss_reported ? C.warn : C.accent;
           return (
             <div
               key={i}
@@ -277,7 +281,7 @@ function SegmentStrip({ segments, reliable }: { segments: Diagnostics["segments"
               className="flex items-center justify-center border-r border-surface text-[11px] font-semibold text-white transition-[flex-basis] duration-700 last:border-r-0"
               style={{ flexBasis: `${w}%`, background: color }}
             >
-              {w > 8 && (reliable ? `${tr > 0 ? "+" : ""}${num(lang, tr, 0)}${t("perYear")}` : `${num(lang, s.days, 0)} ${t("daysCol").toLowerCase()}`)}
+              {w > 8 && (s.trend_reported ? `${num(lang, tr, 0)}${t("perYear")}` : `${num(lang, s.days, 0)} ${t("daysCol").toLowerCase()}`)}
             </div>
           );
         })}

@@ -266,8 +266,53 @@ def _step(day: str, before: float, after: float) -> pd.Series:
     return pd.Series(np.where(dates < pd.Timestamp(day), before, after), index=dates)
 
 
+def test_the_tables_say_what_the_notes_report() -> None:
+    # found 2026-10-23 by the review of the site: the PV page showed a trend of -86%/year and a 31% loss that
+    # the notes withheld (a roof on the edge of the search), because the tables carried the numbers but not
+    # whether they are reported; the page had to re-derive the rule (and got it wrong)
+    orientation = pd.DataFrame([dict(unique_id="p1", tilt=20.0, azimuth=320.0, r2=0.79, edge=False)])
+    first = dict(unique_id="p1", start=pd.Timestamp("2022-01-01"), end=pd.Timestamp("2022-06-30"), days=180)
+    first |= dict(level_start=0.8, level_end=0.8, trend_pct_per_year=-20.0, lost_pct=0.0)
+    last = dict(unique_id="p1", start=pd.Timestamp("2022-07-01"), end=pd.Timestamp("2023-12-31"), days=220)
+    last |= dict(level_start=0.6, level_end=0.5, trend_pct_per_year=-12.0, lost_pct=30.0)
+    segments = pd.DataFrame([first, last])
+    k = diagnostics._DEFAULT
+
+    o, sg = diagnostics._flag(orientation, segments, False, k)  # a poor fit: nothing reported
+    assert not o["reliable"].any() and not sg["trend_reported"].any() and not sg["loss_reported"].any()
+    for given, r2, edge in ((True, 0.79, False), (False, 0.95, False)):
+        o, sg = diagnostics._flag(orientation.assign(r2=r2, edge=edge), segments, given, k)
+        assert o["reliable"].all()
+        assert sg["trend_reported"].tolist() == [False, True] and sg["loss_reported"].tolist() == [
+            False,
+            True,
+        ]
+    o, sg = diagnostics._flag(orientation.assign(r2=0.95, edge=True), segments, False, k)  # on the edge
+    assert not o["reliable"].any() and not sg["trend_reported"].any()
+    # a last period under a year, or a rise, is no trend; a loss under step_note_pct is no loss
+    short = segments.assign(end=[pd.Timestamp("2022-06-30"), pd.Timestamp("2023-03-01")])
+    rise = segments.assign(trend_pct_per_year=[0.0, 12.0], lost_pct=[0.0, k.step_note_pct / 2])
+    for case in (short, rise):
+        sg = diagnostics._flag(orientation.assign(r2=0.95), case, False, k)[1]
+        assert not sg["trend_reported"].any()
+    assert not diagnostics._flag(orientation.assign(r2=0.95), rise, False, k)[1]["loss_reported"].any()
+    # the flags and the notes agree
+    good = orientation.assign(r2=0.95)
+    index = pd.DataFrame({"unique_id": "p1", "date": pd.date_range("2022-01-01", periods=400), "index": 0.7})
+    no_steps = pd.DataFrame(columns=["unique_id", "date", "before", "after", "step_pct"])
+    text = " ".join(diagnostics._notes(good, index, short, no_steps, {}, given=False))
+    assert "a year" not in text and "below the best" in text
+
+
 def _fingerprint(d: diagnostics.Diagnosis) -> dict[str, Any]:
     out = d.to_dict()
+    # the flags of what the notes report came after the saved output (2026-10-23); the notes they mirror are
+    # compared, and `test_the_tables_say_what_the_notes_report` checks the flags
+    for r in out["orientation"]:
+        r.pop("reliable", None)
+    for r in out["segments"]:
+        r.pop("trend_reported", None)
+        r.pop("loss_reported", None)
     ix = d.index
     out["index_summary"] = {
         "rows": len(ix),

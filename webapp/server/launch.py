@@ -35,10 +35,12 @@ def free_port(first: int = FIRST_PORT, tries: int = 50) -> int:
 
 
 def _open_when_up(url: str, timeout: float = 60.0) -> None:
+    # no proxy: a system proxy (an office network's) would be asked for 127.0.0.1 and never answer it
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     t0 = time.monotonic()
     while time.monotonic() - t0 < timeout:
         try:
-            with urllib.request.urlopen(f"{url}/api/info", timeout=2):
+            with opener.open(f"{url}/api/info", timeout=2):
                 break
         except OSError:
             time.sleep(0.3)

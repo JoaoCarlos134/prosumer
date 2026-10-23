@@ -43,11 +43,21 @@ export function Notes({ payload }: { payload: Payload }) {
     { title: t("group_bill"), notes: once(r.report.economics?.notes ?? []), color: C.grid },
   ].filter((g) => g.notes.length);
 
-  const sources: Source[] = [
+  // the analysis and the bill both list the tariff: each source once
+  const sources: Source[] = [];
+  const listed = new Set<string>();
+  for (const s of [
+    ...(r.report.provenance ?? []),
+    ...(r.report.economics?.provenance ?? []),
     ...r.credits.map((c) => ({ role: "", name: c.source, license: c.license, sends_data: null, source: c.notes, citation: c.citation, url: c.url, conditions: "" })),
-    ...(r.report.provenance ?? []).map((p) => ({ ...p })),
-    ...(r.report.economics?.provenance ?? []).map((p) => ({ ...p })),
-  ];
+  ]) {
+    const key = [s.role || "", s.name, s.license, s.source].join("|");
+    const named = [s.name, s.license].join("|"); // a credit repeats a source already listed by its role
+    if (listed.has(key) || (!s.role && listed.has(named))) continue;
+    listed.add(key);
+    listed.add(named);
+    sources.push(s);
+  }
   const pending = Object.entries(r.report.pending ?? {});
 
   return (
@@ -198,7 +208,7 @@ function SourceTable({ rows }: { rows: Source[] }) {
                 <td className="whitespace-nowrap px-2 py-1">
                   <span className={`inline-flex items-center gap-1 ${unknown ? "text-[#D64550]" : "text-ink"}`}>
                     {unknown && <ShieldAlert size={12} />}
-                    {s.license || "unknown"}
+                    {unknown ? t("licenseUnknown") : s.license}
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-2 py-1 text-muted">{s.sends_data == null ? "–" : s.sends_data ? <span className="font-semibold text-[#D64550]">{t("yes")}</span> : t("no")}</td>

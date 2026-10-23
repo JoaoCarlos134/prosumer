@@ -98,7 +98,7 @@ def test_weather_that_starts_after_the_data_end() -> None:
 
 def test_consumption_repeats_the_recent_weeks() -> None:
     idx = pd.date_range("2020-08-10", periods=10 * 7 * 24, freq="h", tz="Europe/Dublin")
-    week = (idx.dayofweek.to_numpy() >= 5) * 0.5 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.2)
+    week = (idx.day_of_week.to_numpy() >= 5) * 0.5 + np.where((idx.hour >= 18) & (idx.hour < 21), 1.0, 0.2)
     s = EnergySeries.from_dataframe(
         pd.DataFrame({"unique_id": "H1", "ds": idx, "y": week}),
         unit="kWh",
@@ -108,7 +108,7 @@ def test_consumption_repeats_the_recent_weeks() -> None:
     )
     o = outlook.forecast_ahead(s, days=14)
     h = o.hourly
-    want = (h["ds"].dt.dayofweek >= 5) * 0.5 + np.where(
+    want = (h["ds"].dt.day_of_week >= 5) * 0.5 + np.where(
         (h["ds"].dt.hour >= 18) & (h["ds"].dt.hour < 21), 1.0, 0.2
     )
     np.testing.assert_allclose(h["y_hat"], want)

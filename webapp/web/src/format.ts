@@ -63,6 +63,30 @@ export const monthLabel = (lang: Lang, iso: string) => fmt(lang, wall(iso), { mo
 export const dateTime = (lang: Lang, iso: string) =>
   fmt(lang, wall(iso), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false });
 
+/** The offset of `tz` from UTC at `ms`, in minutes. */
+function offsetMinutes(tz: string, ms: number): number {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+      .formatToParts(new Date(ms))
+      .map((p) => [p.type, p.value]),
+  );
+  return (Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute) - Math.floor(ms / 6e4) * 6e4) / 6e4;
+}
+
+/** The hours of a local day in `tz` ("YYYY-MM-DD"): 24, or 23 / 25 on a clock change. */
+export function hoursInDay(tz: string, day: string): number {
+  const start = (d: number) => {
+    const guess = d - offsetMinutes(tz, d) * 6e4;
+    return d - offsetMinutes(tz, guess) * 6e4;
+  };
+  try {
+    const d = wall(day);
+    return Math.round((start(d + 864e5) - start(d)) / 36e5);
+  } catch {
+    return 24; // an unknown time zone: the plain day
+  }
+}
+
 /** A compass direction for an azimuth in degrees (0 north, 90 east). */
 export function compass(lang: Lang, deg: number): string {
   const en = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];

@@ -66,6 +66,11 @@ class ContractError(ValueError):
     """Data contract error: the series does not meet the schema or the required metadata."""
 
 
+class DaylightSavingError(ContractError):
+    """Local timestamps that cannot exist in the zone's clock (`_localize` with `dst='raise'`): the file is in
+    UTC, or its grid was filled in through the clock changes."""
+
+
 @dataclass(frozen=True, slots=True)
 class EnergySeries:
     """Time series with unit, time zone, frequency and validity mask.
@@ -262,7 +267,7 @@ def _localize(ds: pd.Series, tz: str, source: str, ids: pd.Series, dst: DstPolic
             continue
         except ValueError as e:
             if dst != "drop":
-                raise ContractError(
+                raise DaylightSavingError(
                     Note(
                         "Series {uid!r}: timestamps impossible in time zone {zone!r} because of daylight "
                         "saving time ({error}). If the file is in UTC, pass source_tz='UTC'. If it is in "

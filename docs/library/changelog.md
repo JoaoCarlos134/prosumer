@@ -37,6 +37,11 @@
   02/2026 in Portuguese; the connection minimum of a Brazilian price takes the decimal comma; a list that
   holds notes is joined in the page's language even when it mixes plain texts. `i18n.frame` takes a
   generator.
+- Fixed (2026-10-23): `app.run` refused a wall-clock file with every hour of the daylight-saving changes
+  (no gap in spring, one row for autumn's repeated hour, as the Dingle dataset and filled-in exports write
+  it) with "pass dst='drop'", an argument the app's person cannot give. It is read without those hours and
+  the log says so (and how to say the file is in UTC). The reader's error is now a `DaylightSavingError`, a
+  `ContractError`.
 - Fixed: `app.run` took a blank price field (`"currency": ""`, as a web form sends it) as its value, and
   `gd` with a consumption file only was an unknown field; blank is "not given" and `gd` is ignored without PV.
   The example site (`examples/site_local`) is now a thin shell over `app.run`.

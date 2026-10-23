@@ -264,6 +264,15 @@ PT: dict[str, str] = {
         "{file}: lido assim: {how}; {hours} horas, {share:.0%} medidas."
     ),
     (
+        "{file}: the file's clock has every hour of the daylight-saving changes (no gap in "
+        "spring, one row for autumn's repeated hour), as a filled-in export writes it: read "
+        "without those hours. If the file is in UTC, say so (file_times UTC)."
+    ): (
+        "{file}: o relógio do arquivo tem todas as horas das mudanças de horário de verão (sem buraco na "
+        "primavera, uma linha só para a hora repetida do outono), como uma exportação preenchida escreve: "
+        "lido sem essas horas. Se o arquivo estiver em UTC, diga isso (file_times UTC)."
+    ),
+    (
         "Could not download the weather forecast from Open-Meteo ({error}). Check the connection and try "
         "again."
     ): (

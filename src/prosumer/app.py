@@ -54,8 +54,10 @@ import json
 import math
 import re
 import tempfile
+import warnings
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, fields
+from functools import partial
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -66,7 +68,7 @@ import pandas as pd
 
 from . import economics as econ
 from .analysis import Report, analyze
-from .contracts import EnergySeries, Quantity
+from .contracts import DaylightSavingError, EnergySeries, Quantity
 from .economics import brazil
 from .forecast import Chronos2, FlowState, Forecaster, LightGBM, TiRex2, Toto2
 from .i18n import Note, translate
@@ -302,7 +304,7 @@ def run(
     series: dict[str, EnergySeries] = {}
     read: dict[str, dict[str, Any]] = {}
     for q, (data, name) in given.items():
-        s = _read(data, name, q, req, site, tz)
+        s = _read(data, name, q, req, site, tz, log)
         series[q] = s
         span = s.frame["ds"]
         how = _first_part(s.provenance.notes) if s.provenance else ""
@@ -456,13 +458,16 @@ def _daily(s: EnergySeries) -> pd.DataFrame:
     ).reset_index()
 
 
-def _read(data: bytes, name: str, q: str, req: Request, site: tuple[float, float], tz: str) -> EnergySeries:
+def _read(
+    data: bytes, name: str, q: str, req: Request, site: tuple[float, float], tz: str, log: list[str]
+) -> EnergySeries:
     suffix = Path(name).suffix.lower()
     suffix = suffix if suffix in (".csv", ".txt", ".xlsx") else ".csv"
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"{q}{suffix}"
         path.write_bytes(data)
-        s = read_energy(
+        read = partial(
+            read_energy,
             path,
             tz=tz,
             quantity=cast(Quantity, q),
@@ -474,6 +479,23 @@ def _read(data: bytes, name: str, q: str, req: Request, site: tuple[float, float
             site=site if q == "generation" else None,  # the inverter sleeps at night: zeros
             source_tz="UTC" if req.file_times == "UTC" else None,
         )
+        try:
+            s = read()
+        except DaylightSavingError:
+            # a wall clock with every hour of the changes (no gap in spring, one row for autumn's repeated
+            # hour) is a filled-in grid: the reader's `dst="drop"`, which the person cannot type, with a line
+            # in the log instead of the reader's warning
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                s = read(dst="drop")
+            log.append(
+                Note(
+                    "{file}: the file's clock has every hour of the daylight-saving changes (no gap in "
+                    "spring, one row for autumn's repeated hour), as a filled-in export writes it: read "
+                    "without those hours. If the file is in UTC, say so (file_times UTC).",
+                    file=_FILE_NAME[q],
+                )
+            )
     if s.provenance is not None:  # the temporary path means nothing to the person: their file name instead
         from dataclasses import replace
 

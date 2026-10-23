@@ -142,6 +142,23 @@ def test_a_pv_file_dead_through_the_test_days_skips_only_the_forecast_check() ->
         assert app.run({**SITE, "models": "naive"}, files, services=_services()).report.forecast is not None
 
 
+def test_a_local_file_with_every_hour_of_the_clock_changes_is_read_with_a_note() -> None:
+    # regression 2026-10-23: a wall-clock file with no gap at the spring change (29/03/2026 01:00 does not
+    # exist in Dublin), as the Dingle dataset and filled-in exports write it, raised "pass dst='drop'": an
+    # argument the app's person cannot give. It is read with those hours left out, and the log says so.
+    files = {"consumption": (_consumption_csv("2026-03-01", 42), "meter.csv")}
+    dublin = {"latitude": 52.14, "longitude": -10.27, "timezone": "Europe/Dublin", "models": "naive"}
+    r = app.run(dublin, files, services=_services())
+    assert r.read["consumption"]["hours"] == 42 * 24 - 1  # the hour that does not exist is left out
+    assert any("every hour of the daylight-saving changes" in line for line in r.log)
+    pt = r.to_dict(lang="pt")["log"]
+    assert any("mudanças de horário" in line for line in pt)
+    # its neighbour: the same clock in a zone without daylight saving reads as before, without the note
+    r = app.run({**SITE, "models": "naive"}, files, services=_services())
+    assert r.read["consumption"]["hours"] == 42 * 24
+    assert not any("daylight-saving" in line for line in r.log)
+
+
 def test_blank_price_fields_are_not_given_and_gd_without_pv_is_ignored() -> None:
     # regressions 2026-10-21: a web form sends every box, blank ones as "": `currency: ""` became the
     # currency and `scheme: ""` an error; and `gd` with a consumption file only was an "Unknown price field"

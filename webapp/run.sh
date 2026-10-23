@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# The prosumer site on Linux or macOS: as run.cmd (makes .venv, installs, builds the page, serves on :8080).
+set -e
+cd "$(dirname "$0")"
+if [ ! -x .venv/bin/python ]; then
+  python3 -m venv .venv
+  .venv/bin/python -m pip install --upgrade pip >/dev/null
+  .venv/bin/python -m pip install -e "..[lightgbm,net,fronius]" -r requirements.txt
+fi
+if command -v npm >/dev/null 2>&1; then
+  cd web
+  [ -d node_modules ] || npm install
+  npm run build
+  cd ..
+elif [ ! -f web/dist/index.html ]; then
+  echo "npm not found and the page is not built: install Node.js 20+ and run again." >&2
+  exit 1
+fi
+echo "Open http://127.0.0.1:8080 (Ctrl+C stops it)"
+exec .venv/bin/python -m uvicorn server.api:app --port 8080

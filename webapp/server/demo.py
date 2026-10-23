@@ -13,6 +13,7 @@ wall-clock hour of its 2020 day, as a logger in Dublin would record it.
 from __future__ import annotations
 
 import datetime as dt
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-HERE = Path(__file__).resolve().parent
+# in the standalone folder (PyInstaller) the demo file sits in sys._MEIPASS/server/demo
+HERE = Path(sys._MEIPASS) / "server" if hasattr(sys, "_MEIPASS") else Path(__file__).resolve().parent
 SOURCE = HERE / "demo" / "dingle_H1_2020.csv"
 TZ = "Europe/Dublin"
 WEEKS_52 = pd.Timedelta(days=364)

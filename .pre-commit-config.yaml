@@ -16,6 +16,7 @@ repos:
       - id: check-merge-conflict
       - id: mixed-line-ending
         args: [--fix=lf]
+        exclude: '\.cmd$'  # cmd.exe needs CRLF to find its labels (webapp/.gitattributes)
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.10

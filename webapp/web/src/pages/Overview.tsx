@@ -286,7 +286,7 @@ export function Overview({ payload }: { payload: Payload }) {
         className="col-span-12 lg:col-span-8"
         data={{ columns: dailyCols, rows: dailyRows, file: "next_days" }}
       >
-        {(big) => <Chart option={dailyOption} height={big ? "calc(100vh - 210px)" : 300} onClick={(p) => p.dataIndex != null && toggleDay(dates[p.dataIndex])} />}
+        {(big) => <Chart option={dailyOption} height={big ? "calc(100vh - 210px)" : 300} onColumnClick={(k) => dates[k] && toggleDay(dates[k])} />}
       </Visual>
       <Visual title={t("v_site")} subtitle={`${num(lang, r.site.latitude, 2)}, ${num(lang, r.site.longitude, 2)} · ${r.site.timezone}`} className="col-span-12 lg:col-span-4">
         {(big) => (

@@ -302,7 +302,7 @@ export function Bill({ payload }: { payload: Payload }) {
           ) : undefined
         }
       >
-        {(big) => <Chart option={billOption} height={big ? "calc(100vh - 210px)" : 300} onClick={(p) => p.dataIndex != null && months[p.dataIndex] && pick(months[p.dataIndex].month)} />}
+        {(big) => <Chart option={billOption} height={big ? "calc(100vh - 210px)" : 300} onColumnClick={(k) => months[k] && pick(months[k].month)} />}
       </Visual>
       <Visual title={blocks.length < 2 ? t("v_homeFrom") : t("v_blocks")} subtitle={label} className="col-span-12 lg:col-span-4">
         {(big) => <Chart option={donutOption} height={big ? "calc(100vh - 210px)" : 300} />}

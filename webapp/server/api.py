@@ -11,6 +11,7 @@ Run:  python -m uvicorn server.api:app --port 8080   (or run.cmd, which also bui
 from __future__ import annotations
 
 import json
+import sys
 import threading
 import time
 import traceback
@@ -33,7 +34,8 @@ from prosumer.outlook import MAX_DAYS
 
 from . import demo
 
-ROOT = Path(__file__).resolve().parent.parent
+# the standalone folder (PyInstaller, prosumer_site.spec) unpacks the page beside the code, in sys._MEIPASS
+ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
 DIST = ROOT / "web" / "dist"
 LANGS = ("en", "pt")
 KEEP = 8  # results kept for a language switch

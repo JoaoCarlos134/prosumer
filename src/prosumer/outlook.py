@@ -720,9 +720,9 @@ def _consumption(
         cut = g["ds"].max() - pd.Timedelta(weeks=weeks)
         g = g[g["ds"] > cut]
         # the horizon pilot's `perfil_dia_util`: that hour on the days of the same kind (weekday or weekend)
-        key = (g["ds"].dt.dayofweek >= 5).astype(int) * 24 + g["ds"].dt.hour
+        key = (g["ds"].dt.day_of_week >= 5).astype(int) * 24 + g["ds"].dt.hour
         prof = g.groupby(key)["y"].agg(["mean", "min", "max", "size"])
-        want = (hours.dayofweek >= 5).astype(int) * 24 + hours.hour
+        want = (hours.day_of_week >= 5).astype(int) * 24 + hours.hour
         p = prof.reindex(want)
         if p["mean"].isna().any():
             # an hour never seen on that kind of day in the window: fall back to the mean of that hour

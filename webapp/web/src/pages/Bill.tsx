@@ -285,7 +285,7 @@ export function Bill({ payload }: { payload: Payload }) {
   return (
     <PageGrid>
       {kpis.map((k, i) => (
-        <div key={i} className={`col-span-6 md:col-span-4 ${span} [&>section]:h-full`}>
+        <div key={i} className={`col-span-6 ${kpis.length > 2 ? "md:col-span-4" : ""} ${span}`}>
           {k}
         </div>
       ))}

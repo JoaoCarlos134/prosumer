@@ -147,8 +147,8 @@ class LightGBM:
         long.index.names = ["dia", "h"]
         t = long.reset_index()
         t["unique_id"], t["serie_cod"] = uid, self._codes.get(uid, -1)
-        t["dow"] = t["dia"].dt.dayofweek
-        doy = t["dia"].dt.dayofyear
+        t["dow"] = t["dia"].dt.day_of_week
+        doy = t["dia"].dt.day_of_year
         t["doy_sin"], t["doy_cos"] = np.sin(2 * np.pi * doy / 365.25), np.cos(2 * np.pi * doy / 365.25)
         return t
 

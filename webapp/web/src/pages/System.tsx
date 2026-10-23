@@ -144,7 +144,7 @@ export function System({ payload }: { payload: Payload }) {
   return (
     <PageGrid>
       {uids.length > 1 && <Chips value={uid} options={uids.map((u) => ({ value: u, label: u, color: C.generation }))} onChange={(v) => v && setUid(v)} />}
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_kwEff")}
           value={plant?.kw_eff}
@@ -155,7 +155,7 @@ export function System({ payload }: { payload: Payload }) {
           icon={<Zap size={14} />}
         />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("v_roof")}
           text={roofText}
@@ -164,7 +164,7 @@ export function System({ payload }: { payload: Payload }) {
           icon={<Compass size={14} />}
         />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_trend")}
           {...(reliable && lastSeg?.trend_pct_per_year != null
@@ -175,7 +175,7 @@ export function System({ payload }: { payload: Payload }) {
           icon={<TrendingDown size={14} />}
         />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_clock")}
           value={clockAll?.offset_h}

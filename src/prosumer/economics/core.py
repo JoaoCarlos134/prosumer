@@ -130,7 +130,7 @@ class Tariff:
     def off_days(self, ds: pd.DatetimeIndex | pd.Series) -> np.ndarray:
         """True for hours of Saturdays, Sundays and holidays (billed with the `weekend` blocks)."""
         t = pd.DatetimeIndex(ds)
-        off = np.asarray(t.dayofweek >= 5)
+        off = np.asarray(t.day_of_week >= 5)
         if self.holidays is None:
             return off
         if callable(self.holidays):

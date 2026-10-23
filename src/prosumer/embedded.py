@@ -62,10 +62,10 @@ def day_ahead_features(history: np.ndarray, day: pd.Timestamp, series_code: floa
     known = totals[np.isfinite(totals)]
     tot_mean7 = float(known.mean()) if len(known) >= 5 else np.nan
     day = pd.Timestamp(day)
-    doy = 2 * np.pi * day.dayofyear / 365.25
+    doy = 2 * np.pi * day.day_of_year / 365.25
     out = np.empty((H, len(FEATURES)))
     out[:, 0] = np.arange(H)
-    out[:, 1] = day.dayofweek
+    out[:, 1] = day.day_of_week
     out[:, 2], out[:, 3] = np.sin(doy), np.cos(doy)
     out[:, 4] = series_code
     out[:, 5], out[:, 6], out[:, 7] = days[0], days[1], days[6]
@@ -511,7 +511,7 @@ class CycleNet:
 
     def day_phase(self, day: Any) -> int:
         """Phase of the window of the day `day` (issued at its midnight)."""
-        return 0 if self.period == H else int(pd.Timestamp(day).dayofweek) * H
+        return 0 if self.period == H else int(pd.Timestamp(day).day_of_week) * H
 
     def predict(
         self, history: np.ndarray, phase: Any = 0, series: Any = 0, dtype: Any = np.float64

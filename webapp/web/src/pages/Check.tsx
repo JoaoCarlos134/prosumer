@@ -218,7 +218,7 @@ export function Check({ payload }: { payload: Payload }) {
 
   return (
     <PageGrid>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_skill")}
           value={median?.skill}
@@ -228,13 +228,13 @@ export function Check({ payload }: { payload: Payload }) {
           icon={<Gauge size={14} />}
         />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi label={t("kpi_nrmse")} value={median?.nRMSE} format={(v) => num(lang, v, 2)} sub={`${t("mbe")} ${num(lang, median?.MBE, 3)} kWh`} color={C.accent} icon={<Sigma size={14} />} />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi label={t("kpi_r2")} value={median?.R2} format={(v) => num(lang, v, 2)} sub={`R² ${code(lang, "day").toLowerCase()} ${num(lang, median?.R2_daily, 2)}`} color={C.teal} icon={<Target size={14} />} />
       </div>
-      <div className="col-span-6 md:col-span-3 [&>section]:h-full">
+      <div className="col-span-6 md:col-span-3">
         <Kpi
           label={t("kpi_testDays")}
           value={s.test_windows}

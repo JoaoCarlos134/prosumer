@@ -818,8 +818,8 @@ def _recurs(steps: pd.DataFrame, r: dict[Any, Any], days: int = 45, step_pct: fl
     same = same[(np.sign(same["step_pct"]) == np.sign(r["step_pct"])) & (same["step_pct"].abs() >= step_pct)]
     if same.empty:
         return False
-    doy = pd.DatetimeIndex(same["date"]).dayofyear.to_numpy()
-    d = abs(doy - pd.Timestamp(r["date"]).dayofyear)
+    doy = pd.DatetimeIndex(same["date"]).day_of_year.to_numpy()
+    d = abs(doy - pd.Timestamp(r["date"]).day_of_year)
     return bool((np.minimum(d, 365 - d) <= days).any())
 
 

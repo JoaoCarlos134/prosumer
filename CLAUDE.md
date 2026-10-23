@@ -182,7 +182,29 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-23, Lactec -> cloud)
+## Where to continue (2026-10-23, cloud -> Lactec)
+
+**On "continue": the site's Windows build and its test on the Lactec machine** (`webapp/README.md`, "Left"):
+`webapp/build_exe.cmd`, double-click `dist/prosumer/prosumer.exe`, run the demo and a real Fronius file; then a
+browser pass there with the live services (Open-Meteo; the Brazilian price with live ANEEL); then the
+`work-reviewer` over `941dae7..HEAD` if the cloud's review (below) left anything.
+
+Done in the cloud on 23/10 (branch `claude/optimistic-lamport-b8s8u1`): the five missing pages, `npm run build`
+clean, `webapp/tests/test_api.py` (10 tests, `python -m pytest tests` from `webapp/`), `run.cmd`/`dev.cmd`/
+`run.sh`/`requirements.txt`, `server/launch.py` + `prosumer_site.spec` + `build_exe.cmd` (built on Linux: 465 MB,
+answers, port fallback), a Playwright check of every page (en/pt, light/dark, 1440 px and a 390 px phone, focus,
+table, CSV, cross-filter by day and by month). The user asked mid-way (23/10) for livelier tiles ("3D rounded")
+and no overlaps: rounded tiles with layered shadows and a hover lift, KPI cards that tilt toward the pointer,
+a pill tab bar; legends one scrolling row clear of the axis names; range whiskers cut at the axis top.
+- Library fix found by the site's tests: pandas 3.1 deprecates `dayofweek`/`dayofyear` (12 uses; an error
+  under the suite's `filterwarnings`, so CI on the newest pandas would go red): now `day_of_week`/`day_of_year`,
+  regression test `tests/test_pandas_compat.py` (a source scan, red before).
+- Library issue left open (README "Left" 3): the consumption outlook's daily `low`/`high` is the SUM of the
+  hourly 4-week min/max (`outlook._daily`), up to ~13x the day on Dingle H1; a range of daily totals is honest.
+- Cloud sandbox note: its proxy drops some TLS connections to Open-Meteo (the library turns it into a message);
+  the browser checks used the test suite's fake weather.
+
+### 2026-10-23 morning, Lactec (kept for the record)
 
 **On "continue": build the site in `webapp/` following `webapp/README.md` "State ... and what is left", steps
 1-7 in order** (the five missing pages, `npm run build` and its type errors, `webapp/tests/test_api.py`,

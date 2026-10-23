@@ -2,6 +2,12 @@
 
 ## Unreleased (after 0.1.0)
 
+**Compatibility**
+
+- pandas 3.1: the library no longer uses `dayofweek` / `dayofyear` (deprecated there; `day_of_week` /
+  `day_of_year` exist since pandas 1.1), which warned from the outlook, LightGBM's features, the sun, the bill's
+  weekends, the embedded export and the diagnostics.
+
 **Speed**
 
 - `app.run` on seven years of hourly PV: ~10 s -> ~6 s (`models="naive"`, same JSON byte for byte). The roof

@@ -107,7 +107,7 @@ def example_house(
     idx = pd.date_range(start, periods=days * _steps_per_day(freq), freq=freq, tz=tz)
     h = idx.hour + idx.minute / 60.0
     shape = 0.5 + np.exp(-0.5 * ((h - 8) / 1.6) ** 2) + 1.4 * np.exp(-0.5 * ((h - 19) / 2.0) ** 2)
-    weekend = np.where(idx.dayofweek >= 5, 1.25, 1.0)
+    weekend = np.where(idx.day_of_week >= 5, 1.25, 1.0)
     frames = []
     for i in range(n_series):
         base = mean_kwh * (0.8 + 0.4 * i) * shape * weekend

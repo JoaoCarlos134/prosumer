@@ -47,7 +47,7 @@ def solar_position(times: pd.DatetimeIndex, lat: float, lon: float) -> pd.DataFr
     (radians), `cos_zenith` and the unit sun vector `east`, `north`, `up` (zero below the horizon is NOT
     applied here). `lon` is negative west of Greenwich."""
     local = times
-    n = local.dayofyear.to_numpy()
+    n = local.day_of_year.to_numpy()
     g = 2 * np.pi / 365 * (n - 1 + (local.hour.to_numpy() - 12) / 24)
     eot = 229.18 * (
         0.000075

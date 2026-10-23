@@ -186,8 +186,9 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
 
 **On "continue": the site's Windows build and its test on the Lactec machine** (`webapp/README.md`, "Left"):
 `webapp/build_exe.cmd`, double-click `dist/prosumer/prosumer.exe`, run the demo and a real Fronius file; then a
-browser pass there with the live services (Open-Meteo; the Brazilian price with live ANEEL); then the
-`work-reviewer` over `941dae7..HEAD` if the cloud's review (below) left anything.
+browser pass there with the live services (Open-Meteo; the Brazilian price with live ANEEL). The cloud's
+`work-reviewer` pass over `941dae7..f6fc344` (ready with fixes, 1 MAJOR) is fixed in `8676a80`; its open
+minors are in `webapp/README.md` "Left" 3.
 
 Done in the cloud on 23/10 (branch `claude/optimistic-lamport-b8s8u1`): the five missing pages, `npm run build`
 clean, `webapp/tests/test_api.py` (10 tests, `python -m pytest tests` from `webapp/`), `run.cmd`/`dev.cmd`/
@@ -201,6 +202,10 @@ a pill tab bar; legends one scrolling row clear of the axis names; range whisker
   regression test `tests/test_pandas_compat.py` (a source scan, red before).
 - Library issue left open (README "Left" 3): the consumption outlook's daily `low`/`high` is the SUM of the
   hourly 4-week min/max (`outlook._daily`), up to ~13x the day on Dingle H1; a range of daily totals is honest.
+- Library change from that review: `Diagnosis.orientation.reliable`, `segments.trend_reported`/`loss_reported`
+  (what the notes report, as columns), `analyze(orientation=)`, `app.run` passes a typed roof to the diagnostics.
+- In the cloud env (numpy 2.5.4, pandas 3.1.0) `test_benchmark_protocol::test_clear_sky_is_bit_identical` fails
+  by 1 ulp on the old code too (environment, not this work): CI on the newest numpy would show it.
 - Cloud sandbox note: its proxy drops some TLS connections to Open-Meteo (the library turns it into a message);
   the browser checks used the test suite's fake weather.
 

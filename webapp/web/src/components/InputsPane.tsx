@@ -172,7 +172,7 @@ export function InputsPane() {
           disabled={!ready || running}
           title={problem}
           onClick={() => start("run")}
-          className="flex w-full items-center justify-center gap-2 rounded-[3px] bg-[#118DFF] py-2 text-[13px] font-semibold text-white shadow-sm transition enabled:hover:bg-[#0d7ae0] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#118DFF] py-2 text-[13px] font-semibold text-white shadow-sm transition enabled:hover:bg-[#0d7ae0] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {running ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
           {running ? t("running") : t("run")}
@@ -182,7 +182,7 @@ export function InputsPane() {
           type="button"
           disabled={running}
           onClick={() => start("demo")}
-          className="flex w-full items-center justify-center gap-2 rounded-[3px] border border-line py-1.5 text-[12.5px] text-ink transition hover:bg-hover disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-line py-1.5 text-[12.5px] text-ink transition hover:bg-hover disabled:opacity-50"
         >
           <Sparkles size={14} className="text-[#F2B705]" />
           {t("tryDemo")}
@@ -323,7 +323,7 @@ function FileDrop({ quantity, label }: { quantity: Quantity; label: string }) {
         if (f) setFile(quantity, f);
       }}
       onClick={() => input.current?.click()}
-      className={`group relative cursor-pointer rounded-[3px] border border-dashed px-3 py-2.5 transition ${
+      className={`group relative cursor-pointer rounded-xl border border-dashed px-3 py-2.5 transition ${
         over ? "border-[#118DFF] bg-[#118DFF]/10" : "border-line hover:border-muted hover:bg-hover"
       }`}
     >
@@ -407,15 +407,15 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 function Seg({ value, options, onChange }: { value: string; options: [string, string][]; onChange: (v: string) => void }) {
   return (
-    <div className="flex rounded-[3px] border border-line bg-surface p-0.5">
+    <div className="flex rounded-xl border border-line bg-surface p-0.5">
       {options.map(([v, label]) => (
         <button
           key={v}
           type="button"
           onClick={() => onChange(v)}
-          className={`relative flex-1 rounded-[2px] px-1.5 py-1 text-[11.5px] transition-colors ${value === v ? "font-semibold text-white" : "text-muted hover:text-ink"}`}
+          className={`relative flex-1 rounded-md px-1.5 py-1 text-[11.5px] transition-colors ${value === v ? "font-semibold text-white" : "text-muted hover:text-ink"}`}
         >
-          {value === v && <motion.span layoutId={`seg-${options.map((o) => o[0]).join("-")}`} className="absolute inset-0 rounded-[2px] bg-[#118DFF]" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+          {value === v && <motion.span layoutId={`seg-${options.map((o) => o[0]).join("-")}`} className="absolute inset-0 rounded-md bg-[#118DFF]" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
           <span className="relative">{label}</span>
         </button>
       ))}

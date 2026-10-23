@@ -7,12 +7,12 @@ import { Kpi } from "../components/Kpi";
 import { SiteMap } from "../components/SiteMap";
 import { Visual } from "../components/Visual";
 import { daily, history, present, type DayTotal } from "../derive";
-import { compact, date, dayLabel, money, num, pct, time, wall } from "../format";
+import { compact, date, dayLabel, dayTick, money, num, pct, time, wall } from "../format";
 import { code } from "../i18n";
 import { useStore, useT } from "../store";
-import { alpha, BASE, C, CONFIDENCE } from "../theme";
+import { alpha, BASE, C, CONFIDENCE, LEGEND } from "../theme";
 import type { Payload, Quantity } from "../types";
-import { PageGrid } from "./common";
+import { niceCeil, PageGrid } from "./common";
 
 export const QCOLOR: Record<Quantity, string> = { generation: C.generation, consumption: C.consumption };
 
@@ -21,6 +21,7 @@ export function Overview({ payload }: { payload: Payload }) {
   const lang = useStore((s) => s.lang);
   const selected = useStore((s) => s.selectedDay);
   const toggleDay = useStore((s) => s.toggleDay);
+  const dark = useStore((s) => s.theme) === "dark";
   const r = payload.result;
   const qs = present(r);
   const days = useMemo(() => Object.fromEntries(qs.map((q) => [q, daily(r.outlooks[q])])) as Record<Quantity, DayTotal[]>, [r, qs]);
@@ -116,6 +117,10 @@ export function Overview({ payload }: { payload: Payload }) {
   const dailyOption = useMemo<EChartsOption>(() => {
     const two = qs.length > 1;
     const offset = (i: number) => (two ? (i === 0 ? -0.18 : 0.18) : 0);
+    // the axis follows the bars (and the ranges that stay near them); a range past the top is cut with an arrow
+    const totals = qs.flatMap((q) => days[q].map((d) => d.total));
+    const near = qs.flatMap((q) => days[q].map((d) => d.high)).filter((h) => h <= 1.8 * Math.max(...totals, 1e-9));
+    const top = niceCeil(Math.max(...totals, ...near, 1e-9) * 1.15);
     const series: any[] = [];
     qs.forEach((q, i) => {
       const by = new Map(days[q].map((d) => [d.date, d]));
@@ -125,6 +130,7 @@ export function Overview({ payload }: { payload: Payload }) {
         type: "bar",
         barWidth: two ? "30%" : "42%",
         barGap: "20%",
+        itemStyle: { color: QCOLOR[q] },
         data: dates.map((d) => {
           const x = by.get(d);
           return {
@@ -132,7 +138,6 @@ export function Overview({ payload }: { payload: Payload }) {
             itemStyle: { color: QCOLOR[q], opacity: selected && selected !== d ? 0.28 : 1, borderRadius: [2, 2, 0, 0] },
           };
         }),
-        label: { show: true, position: "top", fontSize: 10, formatter: (p: any) => (p.value == null ? "" : compact(lang, p.value)) },
         animationDelay: (k: number) => k * 60 + i * 120,
         emphasis: { focus: "none" },
       });
@@ -143,35 +148,58 @@ export function Overview({ payload }: { payload: Payload }) {
         z: 3,
         silent: true,
         tooltip: { show: false },
+        encode: { x: 0, y: 1 },
         data: dates.map((d, k) => {
           const x = by.get(d);
-          return x ? [k, x.low, x.high] : [k, null, null];
+          return x ? [k, x.low, x.high, x.total] : [k, null, null, null];
         }),
-        renderItem: (params: any, api: any) => {
+        renderItem: (_params: any, api: any) => {
           if (api.value(1) == null || Number.isNaN(api.value(1))) return null;
           const w = api.size([1, 0])[0];
           const [cx, lo] = api.coord([api.value(0), api.value(1)]);
-          const [, hi] = api.coord([api.value(0), api.value(2)]);
+          const cut = api.value(2) > top;
+          const [, hi] = api.coord([api.value(0), Math.min(api.value(2), top)]);
+          const [, bar] = api.coord([api.value(0), api.value(3)]);
           const x = cx + offset(i) * w;
           const cap = Math.min(8, w * 0.08);
-          const style = { stroke: alpha(C.measured, 0.55), lineWidth: 1.2 };
+          const ink = dark ? "rgba(243,242,241,.5)" : alpha(C.measured, 0.55);
+          const style = { stroke: ink, lineWidth: 1.2 };
           return {
             type: "group",
             children: [
               { type: "line", shape: { x1: x, y1: lo, x2: x, y2: hi }, style },
               { type: "line", shape: { x1: x - cap, y1: lo, x2: x + cap, y2: lo }, style },
-              { type: "line", shape: { x1: x - cap, y1: hi, x2: x + cap, y2: hi }, style },
+              cut
+                ? { type: "polygon", shape: { points: [[x - 4, hi + 6], [x + 4, hi + 6], [x, hi]] }, style: { fill: ink } }
+                : { type: "line", shape: { x1: x - cap, y1: hi, x2: x + cap, y2: hi }, style },
+              // the day's value on a chip at the bar's top, the whisker behind it; left out when the bars are
+              // too narrow for it (a phone), where it would touch the next one (the tooltip has it)
+              ...((two ? w / 2 : w) < 34 ? [] : [{
+                type: "text",
+                z2: 10,
+                style: {
+                  text: compact(lang, api.value(3)),
+                  x,
+                  y: bar - 4,
+                  align: "center",
+                  verticalAlign: "bottom",
+                  fill: dark ? "#F3F2F1" : "#252423",
+                  font: "600 10px Segoe UI, sans-serif",
+                  backgroundColor: dark ? "rgba(32,31,30,.92)" : "rgba(255,255,255,.92)",
+                  padding: [1, 4],
+                  borderRadius: 4,
+                },
+              }]),
             ],
             // grows in with the bars
             enterFrom: { style: { opacity: 0 } },
-            ...(params ? {} : {}),
           };
         },
       });
     });
     return {
       ...BASE,
-      legend: { top: 0, left: 0, data: qs.map((q) => t(q)) },
+      legend: { ...LEGEND, data: qs.map((q) => t(q)) },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "shadow" },
@@ -188,11 +216,12 @@ export function Overview({ payload }: { payload: Payload }) {
           return `<b>${dayLabel(lang, d)}</b>${lines}`;
         },
       },
-      xAxis: { type: "category", data: dates.map((d) => dayLabel(lang, d)) },
-      yAxis: { type: "value", name: "kWh" },
+      xAxis: { type: "category", data: dates.map((d) => dayLabel(lang, d)), axisLabel: { interval: 0, lineHeight: 13, formatter: (_: string, k: number) => dayTick(lang, dates[k]) } },
+      grid: { ...BASE.grid, top: 44 },
+      yAxis: { type: "value", name: "kWh", max: top },
       series,
     };
-  }, [qs, days, dates, selected, lang, t]);
+  }, [qs, days, dates, selected, dark, lang, t]);
 
   // ------------------------------------------------------------ history: each day of the file
   const hist = useMemo(() => Object.fromEntries(qs.map((q) => [q, history(r, q)])) as Record<Quantity, ReturnType<typeof history>>, [r, qs]);
@@ -201,7 +230,7 @@ export function Overview({ payload }: { payload: Payload }) {
     return {
       ...BASE,
       grid: { ...BASE.grid, bottom: 44 },
-      legend: { top: 0, left: 0 },
+      legend: { ...LEGEND },
       tooltip: { trigger: "axis", valueFormatter: (v: any) => (v == null ? "–" : `${num(lang, v, 1)} kWh`) },
       xAxis: { type: "time" },
       yAxis: { type: "value", name: "kWh" },
@@ -247,7 +276,7 @@ export function Overview({ payload }: { payload: Payload }) {
   return (
     <PageGrid>
       {kpis.slice(0, 6).map((k, i) => (
-        <div key={i} className="col-span-6 md:col-span-4 xl:col-span-2 [&>section]:h-full">
+        <div key={i} className="col-span-6 md:col-span-4 2xl:col-span-2">
           {k}
         </div>
       ))}
@@ -286,7 +315,7 @@ export function Overview({ payload }: { payload: Payload }) {
             const f = r.read[q];
             if (!f) return null;
             return (
-              <div key={q} className="rounded-[3px] border border-line p-3">
+              <div key={q} className="rounded-xl border border-line p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-[12.5px] font-semibold text-ink">{f.file}</span>
                   <span className="shrink-0 text-[11px] font-semibold" style={{ color: QCOLOR[q] }}>

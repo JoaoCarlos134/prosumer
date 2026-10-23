@@ -32,7 +32,7 @@ export function Landing() {
               type="button"
               disabled={running}
               onClick={() => start("demo")}
-              className="flex items-center gap-2 rounded-[3px] bg-[#118DFF] px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#0d7ae0] hover:shadow-lg disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[#118DFF] px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#0d7ae0] hover:shadow-lg disabled:opacity-50"
             >
               <Sparkles size={16} />
               {t("tryDemo")}
@@ -40,7 +40,7 @@ export function Landing() {
             <button
               type="button"
               onClick={() => set({ pane: true })}
-              className="flex items-center gap-2 rounded-[3px] border border-line bg-surface px-4 py-2.5 text-[13.5px] text-ink transition hover:bg-hover"
+              className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-[13.5px] text-ink transition hover:bg-hover"
             >
               <Upload size={16} />
               {t("orUpload")}
@@ -56,7 +56,7 @@ export function Landing() {
       </div>
       <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((f) => (
-          <motion.div key={f.text} variants={rise} className="rounded-[3px] border border-line bg-surface p-4 shadow-tile transition hover:-translate-y-0.5 hover:shadow-tile-hover">
+          <motion.div key={f.text} variants={rise} className="rounded-xl border border-line bg-surface p-4 shadow-tile transition hover:-translate-y-0.5 hover:shadow-tile-hover">
             <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: `${f.color}1f`, color: f.color }}>
               {f.icon}
             </span>
@@ -75,7 +75,7 @@ export function Landing() {
 function Illustration() {
   const flow = { strokeDasharray: "6 8", animate: { strokeDashoffset: [0, -28] }, transition: { duration: 1.2, repeat: Infinity, ease: "linear" as const } };
   return (
-    <div className="relative overflow-hidden rounded-[4px] border border-line bg-surface p-4 shadow-tile">
+    <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-tile">
       <svg viewBox="0 0 420 260" className="w-full">
         <defs>
           <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
@@ -89,7 +89,7 @@ function Illustration() {
             <rect key={i} x="84" y="18" width="4" height="14" rx="2" fill="#F2B705" transform={`rotate(${i * 30} 86 64)`} />
           ))}
         </motion.g>
-        <motion.circle cx="86" cy="64" r="22" fill="#F2B705" animate={{ r: [21, 24, 21] }} transition={{ duration: 3, repeat: Infinity }} />
+        <motion.circle cx="86" cy="64" r="22" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.96, 1.09, 0.96] }} transition={{ duration: 3, repeat: Infinity }} />
         {/* rays onto the panels */}
         <motion.path d="M110 80 L200 120" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />
         <motion.path d="M100 92 L180 140" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />

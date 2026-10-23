@@ -13,6 +13,11 @@
   --pane: #ffffff;
   --header: #1f1f1f;
   --tabs: #f3f2f1;
+  --surface-2: #f7f8fb;
+  --glow: rgba(255, 255, 255, 0.9);
+  --tile-shadow: 0 1px 1px rgba(16, 24, 40, 0.04), 0 3px 8px -2px rgba(16, 24, 40, 0.08), 0 14px 28px -14px rgba(16, 24, 40, 0.16);
+  --tile-shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 10px 20px -6px rgba(16, 24, 40, 0.14), 0 28px 48px -20px rgba(16, 24, 40, 0.3);
+  --canvas-glow: radial-gradient(1100px 520px at 0% -10%, #f6f8fc 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #eef2f8 0%, transparent 55%);
   color-scheme: light;
 }
 
@@ -27,6 +32,11 @@
   --pane: #1b1a19;
   --header: #0b0b0b;
   --tabs: #1b1a19;
+  --surface-2: #1a1918;
+  --glow: rgba(255, 255, 255, 0.06);
+  --tile-shadow: 0 1px 1px rgba(0, 0, 0, 0.3), 0 4px 10px -2px rgba(0, 0, 0, 0.4), 0 16px 30px -14px rgba(0, 0, 0, 0.6);
+  --tile-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 24px -6px rgba(0, 0, 0, 0.5), 0 30px 50px -20px rgba(0, 0, 0, 0.75);
+  --canvas-glow: radial-gradient(1100px 520px at 0% -10%, #1c1b1f 0%, transparent 60%), radial-gradient(900px 500px at 100% 0%, #18191d 0%, transparent 55%);
   color-scheme: dark;
 }
 
@@ -41,9 +51,10 @@
   --color-pane: var(--pane);
   --color-header: var(--header);
   --color-tabs: var(--tabs);
+  --color-surface-2: var(--surface-2);
   --color-accent: #118dff;
-  --shadow-tile: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
-  --shadow-tile-hover: 0 6px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-tile: inset 0 1px 0 var(--glow), var(--tile-shadow);
+  --shadow-tile-hover: inset 0 1px 0 var(--glow), var(--tile-shadow-hover);
   --font-sans: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
 }
 
@@ -55,7 +66,8 @@ body,
 
 body {
   margin: 0;
-  background: var(--canvas);
+  background: var(--canvas-glow), var(--canvas);
+  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -78,7 +90,7 @@ textarea {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink);
-  border-radius: 2px;
+  border-radius: 8px;
   padding: 5px 8px;
   font-size: 12.5px;
   outline: none;
@@ -169,4 +181,17 @@ textarea {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* a report tile: rounded, a light top edge and a soft shadow that deepens on hover */
+.tile {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 55%, var(--surface-2) 100%);
+  box-shadow: var(--shadow-tile);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.tile:hover {
+  box-shadow: var(--shadow-tile-hover);
+  border-color: color-mix(in srgb, #118dff 22%, var(--line));
 }

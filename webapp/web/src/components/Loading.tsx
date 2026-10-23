@@ -23,7 +23,7 @@ export function Loading() {
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="w-[min(420px,92vw)] rounded-[4px] border border-line bg-surface p-5 shadow-2xl"
+          className="w-[min(420px,92vw)] rounded-2xl border border-line bg-surface p-5 shadow-2xl"
         >
           <div className="flex items-center gap-3">
             <SunSpinner />
@@ -68,7 +68,7 @@ function SunSpinner() {
           <rect key={i} x="19" y="2" width="2" height="6" rx="1" fill="#F2B705" transform={`rotate(${i * 45} 20 20)`} opacity={0.4 + (i % 2) * 0.6} />
         ))}
       </motion.g>
-      <motion.circle cx="20" cy="20" r="7" fill="#F2B705" animate={{ r: [6.5, 8, 6.5] }} transition={{ duration: 1.6, repeat: Infinity }} />
+      <motion.circle cx="20" cy="20" r="7" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.93, 1.14, 0.93] }} transition={{ duration: 1.6, repeat: Infinity }} />
     </svg>
   );
 }
@@ -77,7 +77,7 @@ function Skeleton() {
   return (
     <div className="pointer-events-none grid grid-cols-12 gap-3 opacity-70">
       {[3, 3, 3, 3, 8, 4, 8, 4].map((span, i) => (
-        <div key={i} className="shimmer rounded-[3px] border border-line" style={{ gridColumn: `span ${span} / span ${span}`, height: i < 4 ? 104 : 280 }} />
+        <div key={i} className="shimmer rounded-xl border border-line" style={{ gridColumn: `span ${span} / span ${span}`, height: i < 4 ? 104 : 280 }} />
       ))}
     </div>
   );

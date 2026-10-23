@@ -1,5 +1,5 @@
-import { animate, motion } from "framer-motion";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { animate, motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { item } from "./Visual";
 
 /** A number that counts up to its value (and glides to a new one). */
@@ -34,18 +34,42 @@ interface Props {
 
 /** A card visual: the big number, its label and a line under it, with a sparkline when given. */
 export function Kpi({ label, value, format = (v) => v.toFixed(1), text, unit, sub, color = "#118DFF", icon, spark }: Props) {
+  // a card that leans toward the pointer, a soft glare where it points
+  const px = useMotionValue(0.5);
+  const py = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(py, [0, 1], [7, -7]), { stiffness: 220, damping: 18 });
+  const rotateY = useSpring(useTransform(px, [0, 1], [-9, 9]), { stiffness: 220, damping: 18 });
+  const gx = useTransform(px, (v) => `${v * 100}%`);
+  const gy = useTransform(py, (v) => `${v * 100}%`);
+  const glare = useMotionTemplate`radial-gradient(220px circle at ${gx} ${gy}, rgba(255,255,255,.22), transparent 60%)`;
+  const move = (e: PointerEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    px.set((e.clientX - r.left) / r.width);
+    py.set((e.clientY - r.top) / r.height);
+  };
+  const leave = () => {
+    px.set(0.5);
+    py.set(0.5);
+  };
   return (
+    <div style={{ perspective: 900 }} className="h-full">
     <motion.section
       variants={item}
-      className="relative flex min-w-0 flex-col justify-between overflow-hidden rounded-[3px] border border-line bg-surface px-4 py-3 shadow-tile transition-shadow hover:shadow-tile-hover"
+      onPointerMove={move}
+      onPointerLeave={leave}
+      whileHover={{ scale: 1.025, z: 20 }}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      className="tile group relative flex h-full min-w-0 flex-col justify-between overflow-hidden px-4 py-3"
     >
-      <div className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />
-      <div className="flex items-center gap-2 text-[12px] font-semibold text-muted">
-        {icon && <span style={{ color }}>{icon}</span>}
-        <span className="truncate">{label}</span>
+      <motion.div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" style={{ background: glare }} />
+      <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-[0.10] blur-2xl dark:opacity-[0.16]" style={{ background: color }} />
+      <div className="absolute inset-x-4 top-0 h-[3px] rounded-b-full" style={{ background: color }} />
+      <div className="flex items-start gap-2 text-[12px] font-semibold leading-tight text-muted" title={label}>
+        {icon && <span className="mt-px shrink-0" style={{ color }}>{icon}</span>}
+        <span className="line-clamp-2">{label}</span>
       </div>
       <div className="mt-1 flex items-baseline gap-1.5">
-        <span className="text-[30px] font-light leading-none tracking-tight text-ink tabular-nums">
+        <span className={`${text !== undefined && text.length > 7 ? "text-[19px] sm:text-[22px]" : "text-[22px] sm:text-[30px]"} font-light leading-none tracking-tight whitespace-nowrap text-ink tabular-nums`}>
           {text !== undefined ? (
             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
               {text}
@@ -57,10 +81,11 @@ export function Kpi({ label, value, format = (v) => v.toFixed(1), text, unit, su
         {unit && <span className="text-sm text-muted">{unit}</span>}
       </div>
       <div className="mt-1.5 flex items-end justify-between gap-2">
-        <div className="min-w-0 truncate text-[11px] text-muted">{sub}</div>
+        <div className="line-clamp-2 min-w-0 text-[11px] leading-snug text-muted">{sub}</div>
         {spark && spark.length > 1 && <Spark values={spark} color={color} />}
       </div>
     </motion.section>
+    </div>
   );
 }
 

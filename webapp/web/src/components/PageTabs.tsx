@@ -21,24 +21,34 @@ export function PageTabs() {
   const hasPv = !!payload?.result.outlooks.generation;
   const pages = PAGES.filter((p) => p.id !== "system" || hasPv);
   return (
-    <nav className="flex h-9 shrink-0 items-stretch overflow-x-auto border-t border-line bg-tabs px-2">
-      {pages.map((p) => {
-        const active = p.id === page;
-        return (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => set({ page: p.id })}
-            className={`relative flex shrink-0 items-center gap-1.5 px-3.5 text-[12.5px] transition-colors ${
-              active ? "bg-surface font-semibold text-ink" : "text-muted hover:bg-hover hover:text-ink"
-            }`}
-          >
-            {active && <motion.span layoutId="page-bar" className="absolute inset-x-0 bottom-0 h-[3px] bg-[#F2B705]" transition={{ type: "spring", stiffness: 520, damping: 40 }} />}
-            {p.icon}
-            {t(p.key)}
-          </button>
-        );
-      })}
-    </nav>
+    <div className="shrink-0 border-t border-line/60 bg-tabs/70 px-2 py-1.5 backdrop-blur">
+      <nav className="mx-auto flex w-fit max-w-full items-stretch gap-0.5 overflow-x-auto rounded-full border border-line/70 bg-surface p-1 shadow-tile">
+        {pages.map((p) => {
+          const active = p.id === page;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => set({ page: p.id })}
+              className={`relative flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12.5px] transition-colors ${
+                active ? "font-semibold text-white" : "text-muted hover:bg-hover hover:text-ink"
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="page-pill"
+                  className="absolute inset-0 rounded-full bg-gradient-to-b from-[#2a9bff] to-[#0b74d8] shadow-[0_4px_12px_-2px_rgba(17,141,255,.55),inset_0_1px_0_rgba(255,255,255,.35)]"
+                  transition={{ type: "spring", stiffness: 480, damping: 36 }}
+                />
+              )}
+              <span className="relative flex items-center gap-1.5">
+                {p.icon}
+                {t(p.key)}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

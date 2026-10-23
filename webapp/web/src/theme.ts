@@ -97,8 +97,11 @@ export function alpha(hex: string, a: number): string {
 export const BASE = {
   useUTC: true,
   animationDuration: 900,
-  animationEasing: "cubicOut",
+  animationEasing: "cubicOut" as const,
   animationDurationUpdate: 600,
-  animationEasingUpdate: "cubicInOut",
+  animationEasingUpdate: "cubicInOut" as const,
   grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
 };
+
+// every chart's legend: one row that scrolls, starting right of the y axis' name, so neither covers the other
+export const LEGEND = { type: "scroll" as const, top: 0, left: 44, right: 8, pageIconSize: 10 };

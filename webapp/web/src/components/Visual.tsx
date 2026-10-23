@@ -67,12 +67,13 @@ export function Visual({ title, subtitle, children, data, className = "", action
     <>
       <motion.section
         variants={item}
-        className={`group relative flex min-w-0 flex-col rounded-[3px] border border-line bg-surface p-3 shadow-tile transition-shadow hover:shadow-tile-hover ${className}`}
+        whileHover={{ y: -3, transition: { type: "spring", stiffness: 300, damping: 22 } }}
+        className={`tile group relative flex min-w-0 flex-col p-4 ${className}`}
       >
-        <header className="mb-1 flex items-start justify-between gap-2">
+        <header className="mb-2 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-[13px] font-semibold text-ink">{title}</h3>
-            {subtitle && <p className="truncate text-[11px] text-muted">{subtitle}</p>}
+            <h3 className="text-[13.5px] font-semibold leading-snug text-ink">{title}</h3>
+            {subtitle && <p className="text-[11px] leading-snug text-muted">{subtitle}</p>}
           </div>
           {tools(false)}
         </header>
@@ -93,7 +94,7 @@ export function Visual({ title, subtitle, children, data, className = "", action
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full flex-col rounded-[4px] border border-line bg-surface p-4 shadow-2xl"
+              className="tile flex w-full flex-col p-5 !shadow-2xl"
             >
               <header className="mb-2 flex items-start justify-between gap-2">
                 <div>
@@ -118,7 +119,7 @@ export function IconButton({ label, onClick, children }: { label: string; onClic
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="rounded-[2px] p-1 text-muted hover:bg-hover hover:text-ink"
+      className="rounded-lg p-1.5 text-muted transition hover:bg-hover hover:text-ink active:scale-90"
     >
       {children}
     </button>

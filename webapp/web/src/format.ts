@@ -54,6 +54,9 @@ function fmt(lang: Lang, ms: number, o: Intl.DateTimeFormatOptions): string {
 
 export const date = (lang: Lang, iso: string) => fmt(lang, wall(iso), { day: "2-digit", month: "short", year: "numeric" });
 export const dayLabel = (lang: Lang, iso: string) => fmt(lang, wall(iso), { weekday: "short", day: "2-digit", month: "short" });
+/** A day under a bar: the weekday over the day and month, narrow enough for a phone. */
+export const dayTick = (lang: Lang, iso: string) =>
+  `${fmt(lang, wall(iso), { weekday: "short" })}\n${fmt(lang, wall(iso), { day: "2-digit", month: "2-digit" })}`;
 export const weekday = (lang: Lang, iso: string) => fmt(lang, wall(iso), { weekday: "long" });
 export const time = (lang: Lang, iso: string) => fmt(lang, wall(iso), { hour: "2-digit", minute: "2-digit", hour12: false });
 export const monthLabel = (lang: Lang, iso: string) => fmt(lang, wall(iso), { month: "short", year: "numeric" });

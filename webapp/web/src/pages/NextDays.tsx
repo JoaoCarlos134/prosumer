@@ -8,7 +8,7 @@ import { daily, hourly, present, type DayTotal } from "../derive";
 import { compass, dateTime, dayKey, dayLabel, money, num, time, wall } from "../format";
 import { code } from "../i18n";
 import { useStore, useT } from "../store";
-import { alpha, BASE, C, CONFIDENCE } from "../theme";
+import { alpha, BASE, C, CONFIDENCE, LEGEND } from "../theme";
 import type { Payload, PlantMethod, Quantity } from "../types";
 import { Badge, Chips, NoteList, PageGrid } from "./common";
 import { QCOLOR } from "./Overview";
@@ -81,7 +81,7 @@ export function NextDays({ payload }: { payload: Payload }) {
     return {
       ...BASE,
       grid: { ...BASE.grid, bottom: 44 },
-      legend: { top: 0, left: 0, data: qs.map((q) => t(q)) },
+      legend: { ...LEGEND, data: qs.map((q) => t(q)) },
       tooltip: {
         trigger: "axis",
         formatter: (ps: any) => {
@@ -133,7 +133,7 @@ export function NextDays({ payload }: { payload: Payload }) {
     };
     return {
       ...BASE,
-      legend: { top: 0, left: 0, data: [t("generation") === "" ? "" : `${t("window")} · ${t("energy")}`, ...(costs.length ? [`${t("window")} · ${t("cost")}`] : [])] },
+      legend: { ...LEGEND, data: [`${t("window")} · ${t("energy")}`, ...(costs.length ? [`${t("window")} · ${t("cost")}`] : [])] },
       tooltip: {
         trigger: "item",
         formatter: (p: any) => {
@@ -187,7 +187,7 @@ export function NextDays({ payload }: { payload: Payload }) {
     const leads = gm.trust.map((_, i) => t("leadDay", { n: i + 1 }));
     return {
       ...BASE,
-      legend: { top: 0, left: 0 },
+      legend: { ...LEGEND },
       tooltip: { trigger: "axis", valueFormatter: (v: any) => num(lang, v, 2) },
       xAxis: { type: "category", data: leads, boundaryGap: false },
       yAxis: { type: "value", min: 0, max: 1 },
@@ -246,7 +246,7 @@ export function NextDays({ payload }: { payload: Payload }) {
         {(big) => <Chart option={hourlyOption} height={big ? "calc(100vh - 210px)" : 330} />}
       </Visual>
 
-      <div className="col-span-12 flex gap-2 overflow-x-auto pb-1">
+      <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
         {dates.map((d, i) => {
           const x = days[main].find((y) => y.date === d);
           const active = selected === d;
@@ -259,11 +259,11 @@ export function NextDays({ payload }: { payload: Payload }) {
               transition={{ delay: 0.04 * i }}
               whileHover={{ y: -2 }}
               onClick={() => toggleDay(d)}
-              className={`min-w-[150px] flex-1 rounded-[3px] border bg-surface p-3 text-left shadow-tile ${active ? "border-[#118DFF] ring-1 ring-[#118DFF]" : "border-line"}`}
+              className={`tile min-w-0 p-3 text-left ${active ? "!border-[#118DFF] ring-2 ring-[#118DFF]/50" : ""}`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[12.5px] font-semibold text-ink">{dayLabel(lang, d)}</span>
-                <span className="text-[10.5px] text-muted">{x?.lead_day === 0 ? t("today") : t("leadDay", { n: x?.lead_day ?? i + 1 })}</span>
+                <span className="truncate text-[12.5px] font-semibold text-ink">{dayLabel(lang, d)}</span>
+                <span className="shrink-0 text-[10.5px] text-muted">{x?.lead_day === 0 ? t("today") : t("leadDay", { n: x?.lead_day ?? i + 1 })}</span>
               </div>
               {qs.map((q) => {
                 const y = days[q].find((z) => z.date === d);
@@ -424,13 +424,13 @@ export function Plant({ uid, m, many }: { uid: string; m: PlantMethod; many: boo
         </motion.g>
         <circle r="4" fill="var(--surface)" stroke={C.generation} strokeWidth="2" />
       </svg>
-      <svg width="110" height="80" viewBox="0 0 110 80" className="shrink-0">
+      <svg width="110" height="96" viewBox="0 0 110 96" className="shrink-0">
         <line x1="5" y1="70" x2="105" y2="70" stroke="var(--muted)" strokeWidth="1.5" />
-        <motion.g style={{ originX: "20px", originY: "70px" }} initial={{ rotate: 0 }} animate={{ rotate: -tilt }} transition={{ duration: 1.2, ease: "easeOut" }}>
+        <motion.g style={{ transformBox: "view-box", transformOrigin: "20px 70px" }} initial={{ rotate: 0 }} animate={{ rotate: -tilt }} transition={{ duration: 1.2, ease: "easeOut" }}>
           <rect x="20" y="64" width="78" height="6" rx="1" fill="#12239E" stroke="#118DFF" />
         </motion.g>
         <path d={`M 60 70 A 40 40 0 0 0 ${20 + 40 * Math.cos((tilt * Math.PI) / 180)} ${70 - 40 * Math.sin((tilt * Math.PI) / 180)}`} fill="none" stroke={C.generation} strokeDasharray="3 3" />
-        <text x="66" y="58" fontSize="12" fontWeight="600" fill="var(--ink)">
+        <text x="60" y="90" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--ink)">
           {num(lang, tilt, 0)}°
         </text>
       </svg>

@@ -24,5 +24,5 @@ export function SiteMap({ lat, lon, label, height = 260 }: { lat: number; lon: n
       map.remove();
     };
   }, [lat, lon, label, theme]);
-  return <div ref={box} className="overflow-hidden rounded-[2px]" style={{ height, width: "100%" }} />;
+  return <div ref={box} className="isolate z-0 overflow-hidden rounded-xl" style={{ height, width: "100%" }} />;
 }

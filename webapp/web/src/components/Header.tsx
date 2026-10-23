@@ -10,7 +10,7 @@ export function Header() {
   const { lang, theme, payload, pane, set } = useStore();
   const files = payload ? Object.values(payload.meta.files).filter(Boolean).join(" · ") : "";
   return (
-    <header className="flex h-12 shrink-0 items-center gap-3 bg-header px-3 text-white shadow-[0_1px_0_rgba(255,255,255,.06)]">
+    <header className="flex h-12 shrink-0 items-center gap-2 bg-header px-3 sm:gap-3 text-white shadow-[0_1px_0_rgba(255,255,255,.06)]">
       <div className="flex items-center gap-2">
         <Logo />
         <div className="leading-tight">
@@ -19,11 +19,16 @@ export function Header() {
         </div>
       </div>
       <div className="mx-2 hidden h-6 w-px bg-white/15 md:block" />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-hidden">
         {payload && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex min-w-0 items-center gap-2 text-[12.5px]">
-            {payload.meta.demo && <span className="rounded-sm bg-[#F2B705] px-1.5 py-0.5 text-[10.5px] font-semibold text-black">{t("demoBadge")}</span>}
-            <span className="truncate text-white/90">{files}</span>
+            {payload.meta.demo && (
+              <span className="shrink-0 rounded-md bg-[#F2B705] px-1.5 py-0.5 text-[10.5px] font-semibold text-black">
+                <span className="sm:hidden">Demo</span>
+                <span className="hidden sm:inline">{t("demoBadge")}</span>
+              </span>
+            )}
+            <span className="hidden truncate text-white/90 sm:inline">{files}</span>
             <span className="hidden shrink-0 text-white/50 lg:inline">· {t("ranIn", { s: payload.meta.seconds.toLocaleString(lang === "pt" ? "pt-BR" : "en-GB") })}</span>
           </motion.div>
         )}
@@ -51,7 +56,7 @@ export function Header() {
 
 function HeaderButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" title={label} aria-label={label} onClick={onClick} className="rounded-[3px] p-1.5 text-white/80 transition hover:bg-white/10 hover:text-white">
+    <button type="button" title={label} aria-label={label} onClick={onClick} className="rounded-xl p-1.5 text-white/80 transition hover:bg-white/10 hover:text-white">
       {children}
     </button>
   );
@@ -59,10 +64,10 @@ function HeaderButton({ label, onClick, children }: { label: string; onClick: ()
 
 function Segmented({ value, options, onChange }: { value: string; options: string[]; onChange: (v: string) => void }) {
   return (
-    <div className="relative flex rounded-[3px] bg-white/10 p-0.5 text-[11px] font-semibold">
+    <div className="relative flex rounded-xl bg-white/10 p-0.5 text-[11px] font-semibold">
       {options.map((o) => (
         <button key={o} type="button" onClick={() => onChange(o)} className="relative z-10 px-2 py-0.5 uppercase">
-          {value === o && <motion.span layoutId="lang-pill" className="absolute inset-0 -z-10 rounded-[2px] bg-white" transition={{ type: "spring", stiffness: 500, damping: 35 }} />}
+          {value === o && <motion.span layoutId="lang-pill" className="absolute inset-0 -z-10 rounded-md bg-white" transition={{ type: "spring", stiffness: 500, damping: 35 }} />}
           <span className={value === o ? "text-black" : "text-white/75"}>{o}</span>
         </button>
       ))}

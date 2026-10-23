@@ -62,7 +62,7 @@ export default function App() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="sticky top-0 z-30 mx-3 mt-3 flex items-start gap-3 rounded-[3px] border border-[#D64550]/40 bg-[#FDE7E9] px-4 py-3 text-[13px] text-[#A4262C] shadow-md dark:bg-[#442726] dark:text-[#F1BBBC]"
+                className="sticky top-0 z-30 mx-3 mt-3 flex items-start gap-3 rounded-xl border border-[#D64550]/40 bg-[#FDE7E9] px-4 py-3 text-[13px] text-[#A4262C] shadow-md dark:bg-[#442726] dark:text-[#F1BBBC]"
               >
                 <AlertTriangle size={17} className="mt-0.5 shrink-0" />
                 <div className="min-w-0 flex-1">

@@ -78,3 +78,15 @@ export function Badge({ color, children }: { color: string; children: ReactNode 
     </span>
   );
 }
+
+/** The notes that start with one of `prefixes` (a note of the library, in either language). */
+export function startingWith(notes: string[], prefixes: string[]): string[] {
+  return notes.filter((n) => prefixes.some((p) => n.startsWith(p)));
+}
+
+/** A round number at or above `v` (1, 1.2, 1.5, 2, 2.5, ... x 10^n), for an axis top. */
+export function niceCeil(v: number): number {
+  const p = 10 ** Math.floor(Math.log10(v));
+  for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v - 1e-12) return m * p;
+  return 10 * p;
+}

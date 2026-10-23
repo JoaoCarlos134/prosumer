@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 
 import prosumer
 from prosumer import app as backend
-from prosumer import i18n
+from prosumer import diagnostics, i18n
 from prosumer.economics import SCHEMES, brazil
 from prosumer.outlook import MAX_DAYS
 
@@ -121,6 +121,8 @@ def info() -> dict[str, Any]:
             "gd_i_requested_by": brazil.GD_I_REQUESTED_BY.isoformat(),
         },
         "read_kinds": list(backend.READ_KINDS),
+        # below it (or on the edge of the search) the library reports no PV trend: the page says the same
+        "diagnostics": {"good_fit_r2": diagnostics.GOOD_FIT_R2},
         "demo": demo.INFO,
     }
 

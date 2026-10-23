@@ -317,5 +317,6 @@ export interface Info {
   schemes: string[];
   brazil: { connections: string[]; gd: string[]; modalities: string[]; gd_i_requested_by: string };
   read_kinds: string[];
+  diagnostics: { good_fit_r2: number };
   demo: DemoInfo;
 }

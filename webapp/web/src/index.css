@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #eaeaea;
+  --surface: #ffffff;
+  --line: #e1dfdd;
+  --ink: #252423;
+  --muted: #605e5c;
+  --hover: #f3f2f1;
+  --zebra: #faf9f8;
+  --pane: #ffffff;
+  --header: #1f1f1f;
+  --tabs: #f3f2f1;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #121110;
+  --surface: #201f1e;
+  --line: #3b3a39;
+  --ink: #f3f2f1;
+  --muted: #b3b0ad;
+  --hover: #2d2c2b;
+  --zebra: #252423;
+  --pane: #1b1a19;
+  --header: #0b0b0b;
+  --tabs: #1b1a19;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-hover: var(--hover);
+  --color-zebra: var(--zebra);
+  --color-pane: var(--pane);
+  --color-header: var(--header);
+  --color-tabs: var(--tabs);
+  --color-accent: #118dff;
+  --shadow-tile: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --shadow-tile-hover: 0 6px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --font-sans: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* thin report scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 2px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field:focus {
+  border-color: #118dff;
+  box-shadow: 0 0 0 1px #118dff;
+}
+.field::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* the map's marker: a dot and a ring that keeps growing */
+.site-pin {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+.site-pin::before,
+.site-pin span {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 9999px;
+  background: #e66c37;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+.site-pin span {
+  inset: 0;
+  background: rgba(230, 108, 55, 0.35);
+  border: none;
+  box-shadow: none;
+  animation: pin-pulse 1.8s ease-out infinite;
+}
+@keyframes pin-pulse {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.map-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}
+.leaflet-container {
+  background: var(--hover);
+  font-family: var(--font-sans);
+}
+
+/* skeleton tiles while the analysis runs */
+.shimmer {
+  background: linear-gradient(100deg, var(--hover) 30%, var(--zebra) 50%, var(--hover) 70%);
+  background-size: 300% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.spin-slow {
+  animation: spin 18s linear infinite;
+  transform-origin: center;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

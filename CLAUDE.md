@@ -63,6 +63,8 @@ look there for the history of anything below.
 - `experimentos/testes_previsao/` — the forecasting benchmark (details below). `LEIA-ME.md` there is the
   v2 write-up (rewritten 2026-10-06), with the protocol, the final numbers and the six defects fixed
   along the way; `ambientes/LEIA-ME.md` has the install deviations each of the six envs needs.
+- `webapp/` — the TCC's site (FastAPI over `prosumer.app.run` + React/ECharts page; standalone exe planned):
+  `webapp/README.md` has its layout, how to run it and what is left.
 - `legado/` — the project's original scripts (ia_solar analysis, modelling base, TFLite models, ANEEL
   tariffs, graph scripts). Reference only: raw 5-min data stayed at Lactec, so most won't run here.
   Some file names were changed by the anonymization (e.g. `*_curitiba*` scripts).
@@ -180,7 +182,35 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-21, Lactec)
+## Where to continue (2026-10-23, Lactec -> cloud)
+
+**On "continue": build the site in `webapp/` following `webapp/README.md` "State ... and what is left", steps
+1-7 in order** (the five missing pages, `npm run build` and its type errors, `webapp/tests/test_api.py`,
+`run.cmd`/`dev.cmd`/`requirements.txt`, the standalone exe, a browser check, the review). What the user
+asked on 23/10: the "full v1" of the site, looking like a Power BI report (KPI cards, white tiles on a grey
+canvas, page tabs at the bottom, a filter-like Inputs pane, focus mode / show as table / export on each
+visual, cross-filter by day) WITH animations, visual objects from open-source tools (no paid service needed:
+ECharts, Framer Motion, Leaflet + OpenStreetMap, lucide; the user offered to create an account / API key if
+one is ever needed); then the whole site must run from an exe in a standalone folder that carries the
+library and every dependency (PyInstaller one-folder; the Windows build and its test happen on the Lactec
+machine, see README step 5).
+
+- The site lives in `webapp/` of THIS repo (moved on 23/10 from a sibling folder `1Projects/prosumer_site` so
+  the cloud can continue; it can become its own private repo later). Not `site/`: that is the ignored mkdocs
+  build. Pre-commit runs ruff on `webapp/server/*.py` too (FastAPI's `File()` defaults carry `# noqa: B008`).
+- The server is a thin shell over `prosumer.app.run`; nothing of the analysis is re-implemented in the site.
+  The page labels the library's codes itself (`web/src/i18n.ts`, `code()`); its notes arrive translated.
+- Done on 23/10 besides: pulled the cloud branch (already merged into `main`); suite 694 passed / 23 skipped
+  (expected skips), ruff/mypy/`mkdocs build --strict` clean, CI green; `origin` set to the new URL; fix
+  `acc0abd` (`app.run` reads a wall-clock file with every hour of the DST changes, with a log note; found on
+  the Dingle files; `contracts.DaylightSavingError`). Not done: deleting the merged remote branches
+  `claude/cool-pascal-hxh4ol` and `correcoes-v2-gpu` (the auto-mode classifier refused; the user can run
+  `git push origin --delete claude/cool-pascal-hxh4ol correcoes-v2-gpu`).
+- Library review on 23/10 (quick, by hand): nothing left but the site; open items are optional (speed
+  leftovers below) or blocked (outlook trust/skill outside Parana, detailed bills, licence, the teacher's
+  written permission).
+
+### 2026-10-21 (kept for the record)
 
 Done on 21/10: **translations EN/PT** (`prosumer.i18n`, ~230 templates; `Report/Outlook/Diagnosis/Bill/
 app.Result.to_dict(lang="pt")`, `i18n.message(error, "pt")`; codes, names and licences stay untranslated by
@@ -230,10 +260,8 @@ cache index, quiet bootstrap NaN, CI paths for `examples/` and `docs/library/`, 
 notes). Left: nit 9 (example shows ANEEL codes, "Price: flat"); a nearly dead test period (one non-zero hour)
 still scores meaningless numbers without a note (a threshold would be a constant chosen on nothing).
 
-**The user's decision (21/10): after the work-reviewer has reviewed the branch `claude/cool-pascal-hxh4ol`
-(`24045e5..HEAD`) and its findings are dealt with, merge the branch into `main`.**
-
-Next: that review, its fixes, the merge into `main`; then the TypeScript site (item 7 below).
+The user's decision (21/10), done: the branch `claude/cool-pascal-hxh4ol` was reviewed, fixed and merged into
+`main` (fast-forward, `9be5078`).
 
 ### The list of 2026-10-19 (item 2 done on 21/10)
 
@@ -268,5 +296,5 @@ The user asked to do groups 1 and 2 of "is the library done" (library first, the
    (no LightGBM: its tests and the app's default path skip there) and runs pytest serially: add `lightgbm`
    and `-n auto`.
 6. PVDAQ + measured-roof pilots (gates `7bee35e`, `0b985d2`): only with memory to spare and the user's OK.
-7. Then the TypeScript site (own private repo, like `1Projects/Keyword_map`: React + Vite + TS + Tailwind,
-   FastAPI serving the build, `run.cmd`; to be confirmed with the user).
+7. Then the TypeScript site: STARTED 23/10 in `webapp/` (React + Vite + TS + Tailwind, FastAPI serving the
+   build, `run.cmd`, like `1Projects/Keyword_map`); see "Where to continue" and `webapp/README.md`.

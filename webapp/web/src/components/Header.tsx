@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { FileJson, Moon, PanelRightClose, PanelRightOpen, Plus, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { download } from "../format";
+import { Spin } from "./Spin";
 import { useStore, useT } from "../store";
 import type { Lang } from "../types";
 
@@ -79,15 +80,16 @@ export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
       <rect width="32" height="32" rx="6" fill="#2b2a29" />
-      <g className="spin-slow" style={{ transformBox: "fill-box" }}>
-        <g stroke="#F2B705" strokeWidth="2" strokeLinecap="round">
-          <path d="M16 3.5v2.5M7.5 13H5M27 13h-2.5M9.6 6.6l1.8 1.8M22.4 6.6l-1.8 1.8" />
-        </g>
-      </g>
-      <circle cx="16" cy="13" r="5" fill="#F2B705" />
-      <rect x="7" y="21" width="4" height="6" rx="1" fill="#118DFF" />
-      <rect x="14" y="19" width="4" height="8" rx="1" fill="#E66C37" />
-      <rect x="21" y="22" width="4" height="5" rx="1" fill="#1AAB40" />
+      {/* a full ring of rays turning about the sun's centre (16, 11) */}
+      <Spin cx={16} cy={11} seconds={18}>
+        {Array.from({ length: 8 }, (_, i) => (
+          <line key={i} x1="16" y1="3.2" x2="16" y2="4.9" stroke="#F2B705" strokeWidth="1.8" strokeLinecap="round" transform={`rotate(${i * 45} 16 11)`} />
+        ))}
+      </Spin>
+      <circle cx="16" cy="11" r="4.2" fill="#F2B705" />
+      <rect x="7" y="22" width="4" height="5" rx="1" fill="#118DFF" />
+      <rect x="14" y="20.5" width="4" height="6.5" rx="1" fill="#E66C37" />
+      <rect x="21" y="23" width="4" height="4" rx="1" fill="#1AAB40" />
     </svg>
   );
 }

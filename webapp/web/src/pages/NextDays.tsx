@@ -409,6 +409,11 @@ export function Plant({ uid, m, many }: { uid: string; m: PlantMethod; many: boo
   // the panel rises to its tilt about its lower end (20, 70): an SVG rotate(a, cx, cy), animated by hand
   // (CSS transform origins on SVG are not the same in every browser)
   const panel = useRef<SVGGElement>(null);
+  const needle = useRef<SVGGElement>(null); // swings to the azimuth about the compass centre (0, 0)
+  useEffect(() => {
+    const c = animate(az - 120, az, { type: "spring", stiffness: 60, damping: 9, onUpdate: (a) => needle.current?.setAttribute("transform", `rotate(${a})`) });
+    return () => c.stop();
+  }, [az]);
   useEffect(() => {
     const c = animate(0, -tilt, { duration: 1.2, ease: "easeOut", onUpdate: (a) => panel.current?.setAttribute("transform", `rotate(${a} 20 70)`) });
     return () => c.stop();
@@ -425,10 +430,10 @@ export function Plant({ uid, m, many }: { uid: string; m: PlantMethod; many: boo
             {l}
           </text>
         ))}
-        <motion.g initial={{ rotate: az - 120 }} animate={{ rotate: az }} transition={{ type: "spring", stiffness: 60, damping: 9 }}>
+        <g ref={needle}>
           <path d="M0 -44 L7 0 L0 6 L-7 0 Z" fill={C.generation} />
           <path d="M0 44 L7 0 L0 -6 L-7 0 Z" fill="var(--line)" />
-        </motion.g>
+        </g>
         <circle r="4" fill="var(--surface)" stroke={C.generation} strokeWidth="2" />
       </svg>
       <svg width="110" height="96" viewBox="0 0 110 96" className="shrink-0">

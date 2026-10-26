@@ -40,12 +40,30 @@ A plain JSON object; unknown fields are errors, empty strings mean "not given", 
 | `days` | 7 | days ahead (1-35; the weather reaches 16) |
 | `tilt`, `azimuth`, `kwp` | learnt from the data | the panels, when known |
 | `load_hours`, `load_kw` | 3, 2.0 | the flexible load to place |
+| `weeks` | 4 | recent weeks behind the consumption profile (1-52; 4 is the one measured on the Dingle houses, a note says so for another) |
 | `test_days` | 28 | days of the forecast check |
+| `issue_hour` | 0 | the hour each day's forecast of the check is made (12 = at noon the day before) |
 | `models` | "lightgbm" | the forecasts whose median the check scores: "lightgbm" (the three naive rules and LightGBM, seconds), "naive" (the naive rules only) or "all" (also the zero-shot foundation models installed, minutes and torch). On the benchmark the naive median ranked 29th-36th of ~50, with LightGBM 10th-19th, with the foundation models 4th-5th |
-| `price` | none | `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`, `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` or `{"kind": "brazil", "distributor", "icms", "pis_cofins", "connection", "gd", "cosip", "modality", "peak_start"}` (rates as fractions; `gd` "GD I" or "GD II" is required with a PV file; `peak_start` "HH:MM" for the branca) |
+| `price` | none | `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`, `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` or `{"kind": "brazil", "distributor", "icms", "pis_cofins", "connection", "gd", "cosip", "modality", "peak_start", "credit"}` (rates as fractions; `gd` "GD I" or "GD II" is required with a PV file; `peak_start` "HH:MM" for the branca; `credit`, the kWh of credit the last bill carried over) |
 
 Files: `{"generation": (bytes, name), "consumption": (bytes, name)}`, one or both. With both, the bill nets the
 PV against the household's use hour by hour and the report shows the savings.
+
+`app.peek(data, name, quantity, request)` reads one file as `run` would and says how (the column, unit and
+kind chosen, the hours, the span, the share measured), before anything is sent anywhere: a page can show it as
+soon as a file is dropped. It takes only the reading fields of the request (the rest is ignored) and raises the
+reader's message for a file it cannot read.
+
+```python
+from prosumer import app, data
+
+pv, _ = data.example_plant(n_series=1, days=3)
+text = pv.frame.assign(time=pv.frame["ds"].dt.strftime("%Y-%m-%d %H:%M"))[["time", "y"]]
+text = text.rename(columns={"y": "Energy (kWh)"}).to_csv(index=False).encode()
+p = app.peek(text, "inverter.csv", "generation", {"timezone": "America/Sao_Paulo"})
+print(p["how"], p["hours"])
+assert p["hours"] == 72 and "Energy (kWh)" in p["how"]
+```
 
 ## The result (`to_dict()`)
 

@@ -236,6 +236,8 @@ PT: dict[str, str] = {
     "load_hours must be in 1-24": "load_hours deve estar entre 1 e 24",
     "load_kw must be positive": "load_kw deve ser positivo",
     "test_days must be >= 2": "test_days deve ser >= 2",
+    "weeks must be in 1-52": "weeks deve estar entre 1 e 52",
+    "issue_hour must be in 0-23": "issue_hour deve estar entre 0 e 23",
     "models must be one of {sets}": "models deve ser um de {sets}",
     "price.kind must be one of {kinds}": "price.kind deve ser um de {kinds}",
     "Files are keyed by {keys}, not {unknown}": "Os arquivos são identificados por {keys}, não por {unknown}",
@@ -318,6 +320,10 @@ PT: dict[str, str] = {
         "{day}) ou 'GD II' (depois)"
     ),
     "the COSIP": "a COSIP",
+    "the credit carried over (kWh)": "o saldo de créditos (kWh)",
+    "The credit carried over is in kWh and cannot be negative": (
+        "O saldo de créditos é em kWh e não pode ser negativo"
+    ),
     (
         "Could not download {agent}'s tariffs from ANEEL's open data ({error}). Check the connection, or "
         "give a flat or time-of-use price instead."
@@ -697,6 +703,11 @@ PT: dict[str, str] = {
     ): (
         "Os dados terminam em {last}; a previsão começa em {first}, o primeiro dia local que a previsão do "
         "tempo cobre por inteiro. Os dias entre eles não são previstos."
+    ),
+    "This profile uses the last {weeks} weeks, not the {measured} that were measured: the comparison above "
+    "does not cover it.": (
+        "Este perfil usa as últimas {weeks} semanas, não as {measured} medidas: a comparação acima não "
+        "o cobre."
     ),
     "The weather forecast is not used for consumption (the profile of recent weeks is).": (
         "A previsão do tempo não é usada para o consumo (usa-se o perfil das últimas semanas)."

@@ -57,7 +57,7 @@ Control blocks unsigned, locally built exes: expect it not to run there (signing
 ## State (2026-10-23, cloud)
 
 Done: every page (Overview, Next days, History, Forecast check, PV system, Bill, Notes & sources), `npm run
-build` clean (tsc strict), `tests/test_api.py` (12 tests; CI job `site` runs them and the build), the launchers, the PyInstaller spec, and a browser
+build` clean (tsc strict), `tests/test_api.py` (13 tests; CI job `site` runs them and the build), the launchers, the PyInstaller spec, and a browser
 check with Playwright (fake weather): every page in en/pt, light/dark, 1440 px and a 390 px phone; focus mode,
 show as a table, export CSV, the cross-filter by day (Overview -> Next days) and by month (Bill), the language
 switch on a kept result. Look (asked on 23/10): rounded tiles with layered shadows that lift on hover, KPI cards
@@ -74,6 +74,29 @@ the diagnostics too). Choices the page makes on its own:
 - The Forecast check and Bill pages find "why it was skipped" by the start of the library's note, in both
   languages (`Check.tsx` `SKIPPED`, `Bill.tsx` `LEFT_OUT`): a reworded note breaks the match (a
   `skipped_reason` field in `Report.to_dict` would end that).
+
+### 2026-10-26 (cloud): the Inputs pane
+
+- Full screen: the pane's maximise button, or the landing page's "add your files", slides the Inputs over the
+  whole screen (below the header) with the sections as cards side by side; "Back to the side", the cross or Esc
+  return. It closes by itself when an analysis starts.
+- New there: a map to pick the site (a click or the dragged pin sets the coordinates, "Use my location" asks the
+  browser), the browser's IANA time zones as suggestions, a preview under each dropped file (`/api/peek` ->
+  `prosumer.app.peek`: the column, unit and kind chosen, hours, share measured, span; or the reader's message),
+  the weeks of the consumption profile, the hour the forecast check's forecast is made, and a Brazilian bill's
+  credit carried over (`weeks`, `issue_hour`, `price.credit`: new fields of `prosumer.app.Request`).
+- The suns turn about their centre (the rays orbited a point off the sun): `components/Spin.tsx` sets the SVG
+  `rotate(angle cx cy)` each frame; the compass needle the same way.
+
+What the library can do that the pane still does not offer (each needs a field in `app.Request` first):
+- uncertainty bands (`forecast.LightGBMQuantile`: `report.bands`, a band chart on the check page);
+- the forecast check against measured weather (regimes B/C: `io.nasa_power` / `io.open_meteo.wide`);
+- facade or balcony panels (`diagnostics_options={"tilts": 0-90}` and the same grid for the next days);
+- the rest of `brazil.Setup`: GD class from the connection or access-request date (`gd_class`), an assumed
+  bandeira for months ANEEL has not published, subgroup, credit expiry, the readings of the tax rules;
+- the clock checks' options (`clock_options`, `clock_weather_options`) and the bias/calibration days;
+- a demo house other than H1 (`data.dingle_houses`: 20 houses, 10 with PV; a download from figshare);
+- out of the page, on the result: the fitted model as a C header for a microcontroller (`embedded.to_c`).
 
 Left:
 1. The Windows build and its test on the Lactec machine: first pass on 26/10 (325 MB; up in 17 s cold; the demo

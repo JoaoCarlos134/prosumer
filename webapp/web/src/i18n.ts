@@ -120,7 +120,7 @@ const en = {
 
   errorTitle: "Could not analyse",
   close: "Close",
-  serverDown: "The server did not answer. Is it running (run.cmd)?",
+  serverDown: "The server did not answer. Is it running (prosumer_site.cmd)?",
 
   focus: "Focus mode",
   back: "Back to the report",
@@ -429,7 +429,7 @@ const pt: Record<Key, string> = {
 
   errorTitle: "Não foi possível analisar",
   close: "Fechar",
-  serverDown: "O servidor não respondeu. Ele está rodando (run.cmd)?",
+  serverDown: "O servidor não respondeu. Ele está rodando (prosumer_site.cmd)?",
 
   focus: "Modo foco",
   back: "Voltar ao relatório",

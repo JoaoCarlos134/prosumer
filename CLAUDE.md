@@ -182,13 +182,25 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-23, cloud -> Lactec)
+## Where to continue (2026-10-26, Lactec)
 
-**On "continue": the site's Windows build and its test on the Lactec machine** (`webapp/README.md`, "Left"):
-`webapp/build_exe.cmd`, double-click `dist/prosumer/prosumer.exe`, run the demo and a real Fronius file; then a
-browser pass there with the live services (Open-Meteo; the Brazilian price with live ANEEL). The cloud's
-`work-reviewer` pass over `941dae7..f6fc344` (ready with fixes, 1 MAJOR) is fixed in `8676a80`; its open
-minors are in `webapp/README.md` "Left" 3.
+**The user is reworking the site's pages (26/10: "the site is not 100%")**: keep `webapp/README.md`
+"Left" as the list; ask before redesigning pages. One launcher now: `webapp/prosumer_site.cmd` (builds
+`dist/prosumer/prosumer.exe` the first time and runs it; later runs start it without building; `rebuild` after
+changes; `dev` = API --reload with the library from `../src` + Vite on :5173); it replaced
+`run.cmd`/`dev.cmd`/`build_exe.cmd`/`run.sh`, one env `webapp/.venv` (`.venv-build` gone). The mkdocs user
+guide now builds into `build/docs` (was the confusing top-level `site/`).
+
+Done on 26/10 at Lactec: pulled the cloud branch (fast-forward, pushed), library suite 698 passed / 23 skipped,
+`webapp/tests` 12 passed (FastAPI etc. added to `~/.venvs/prosumer`); the Windows exe built and checked through
+its API: demo with live Open-Meteo, a real Cascavel Fronius 5-min year (read as Fronius Solar.web) with live
+ANEEL tariff and bandeira. Still left: a browser pass over the pages (after the user's changes) and
+`webapp/README.md` "Left" 3-4.
+
+### 2026-10-23, cloud -> Lactec (kept for the record)
+
+The cloud's `work-reviewer` pass over `941dae7..f6fc344` (ready with fixes, 1 MAJOR) is fixed in `8676a80`; its
+open minors are in `webapp/README.md` "Left" 3.
 
 Done in the cloud on 23/10 (branch `claude/optimistic-lamport-b8s8u1`): the five missing pages, `npm run build`
 clean, `webapp/tests/test_api.py` (10 tests, `python -m pytest tests` from `webapp/`), `run.cmd`/`dev.cmd`/
@@ -223,8 +235,8 @@ library and every dependency (PyInstaller one-folder; the Windows build and its 
 machine, see README step 5).
 
 - The site lives in `webapp/` of THIS repo (moved on 23/10 from a sibling folder `1Projects/prosumer_site` so
-  the cloud can continue; it can become its own private repo later). Not `site/`: that is the ignored mkdocs
-  build. Pre-commit runs ruff on `webapp/server/*.py` too (FastAPI's `File()` defaults carry `# noqa: B008`).
+  the cloud can continue; it can become its own private repo later). (The mkdocs build, once the ignored
+  top-level `site/`, goes to `build/docs` since 26/10.) Pre-commit runs ruff on `webapp/server/*.py` too (FastAPI's `File()` defaults carry `# noqa: B008`).
 - The server is a thin shell over `prosumer.app.run`; nothing of the analysis is re-implemented in the site.
   The page labels the library's codes itself (`web/src/i18n.ts`, `code()`); its notes arrive translated.
 - Done on 23/10 besides: pulled the cloud branch (already merged into `main`); suite 694 passed / 23 skipped

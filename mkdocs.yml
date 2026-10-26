@@ -3,7 +3,7 @@ site_description: Day-ahead forecasting and analysis of energy prosumers' genera
 repo_url: https://github.com/JoaoCarlos134/prosumer
 # the library's documentation only; docs/proposta, docs/projeto and docs/literatura are the thesis's records
 docs_dir: docs/library
-site_dir: site
+site_dir: build/docs  # the HTML of this user guide (mkdocs build); the web app is webapp/
 theme:
   name: material
   features:

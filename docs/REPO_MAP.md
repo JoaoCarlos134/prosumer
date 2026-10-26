@@ -114,7 +114,7 @@ Three products, in order of importance (CLAUDE.md, "Library first"):
 | `src/prosumer/` | the library (section 3) | English |
 | `tests/` | one file per module, flat, no conftest (section 4) | English |
 | `examples/site_local/` | local example page: `app.py` (stdlib HTTP server, a thin shell over `app.run`), `index.html`, `README.md` | English |
-| `webapp/` | the TCC's site: `server/` (FastAPI over `app.run`: `api.py`, `demo.py`, `launch.py`), `web/` (React + Vite + TS + Tailwind + ECharts, seven report pages), `tests/test_api.py`, `run.cmd`/`dev.cmd`/`run.sh`, `prosumer_site.spec` + `build_exe.cmd` (PyInstaller, one folder); `README.md` has its state | English |
+| `webapp/` | the TCC's site: `server/` (FastAPI over `app.run`: `api.py`, `demo.py`, `launch.py`), `web/` (React + Vite + TS + Tailwind + ECharts, seven report pages), `tests/test_api.py`, `prosumer_site.cmd` (the one launcher: builds the first time, then runs; `rebuild`, `dev`), `prosumer_site.spec` (PyInstaller, one folder); `README.md` has its state | English |
 | `docs/library/` | the user guide (mkdocs, `mkdocs.yml` at the root); every example runs in `tests/test_docs.py` | English (+ `pt/guia.md`) |
 | `docs/proposta/` | the TCC proposal (E0-E8, PDF made by `gera_proposta_tcc.py`), `PROPOSTA_BIBLIOTECA.md` (the 8 planned modules, their sources, the old -> new name map), `Plano_TCC_simples` | Portuguese |
 | `docs/projeto/` | research records: `HISTORICO.md` (the diary 05-17/10), `PILOTOS_F1_F2.md` (every pilot's gate and result), `ESTUDO_ETAPA_A.md`, `ESTUDO_EMBARCADO.md`, `ia_solar/` (plant analyses, paper plan), network analyses | Portuguese |

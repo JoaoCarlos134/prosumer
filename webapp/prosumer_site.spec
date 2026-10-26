@@ -1,6 +1,6 @@
 # PyInstaller spec of the standalone site: a folder `dist/prosumer/` that runs by itself (double-click
-# `prosumer.exe`), carrying Python, the library, the server and the built page. Build with build_exe.cmd
-# (Windows) or `pyinstaller --noconfirm prosumer_site.spec` from webapp/ after `npm run build` in web/.
+# `prosumer.exe`), carrying Python, the library, the server and the built page. Build with prosumer_site.cmd
+# (Windows: builds the first time, `rebuild` again) or `pyinstaller --noconfirm prosumer_site.spec` from webapp/ after `npm run build` in web/.
 # PyInstaller does not cross-compile: a Windows exe is built on Windows.
 # Left out on purpose: torch and the foundation models (gigabytes); `models: "all"` then notes them as not
 # installed, as the library does anywhere they are missing.

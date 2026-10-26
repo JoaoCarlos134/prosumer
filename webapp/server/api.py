@@ -5,7 +5,7 @@ analysis, the charts); this file only takes the page's form and files in and giv
 JSON, in English or Portuguese. Results are kept in memory (the last `KEEP`) so a language switch re-renders
 without running again. A local tool for one person: no accounts, no database, files never stored.
 
-Run:  python -m uvicorn server.api:app --port 8080   (or run.cmd, which also builds the page)
+Run:  python -m uvicorn server.api:app --port 8080   (or prosumer_site.cmd: builds once, then runs the site)
 """
 
 from __future__ import annotations
@@ -199,7 +199,7 @@ def page(path: str) -> Response:
     if not index.exists():
         return HTMLResponse(
             "<h1>The page is not built</h1><p>Run <code>npm run build</code> in <code>web/</code> "
-            "(or use <code>run.cmd</code>).</p>",
+            "(or use <code>prosumer_site.cmd</code>).</p>",
             status_code=503,
         )
     # no-store: index.html names hashed assets; a cached old index would keep the old page after a build

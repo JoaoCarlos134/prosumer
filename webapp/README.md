@@ -25,23 +25,30 @@ No licence file: the project is private (all rights reserved), like the library.
 
 ## Run it
 
-Windows: double-click `run.cmd` (first time: makes `.venv`, installs the library `..[lightgbm,net,fronius]`
-and `requirements.txt`, builds the page when `npm` is there; then opens http://127.0.0.1:8080). `dev.cmd`:
-the API with `--reload` and the page with hot reload on :5173. Linux/macOS: `./run.sh`. By hand:
+Windows: double-click `prosumer_site.cmd`, the one launcher. The first time it builds the site (Python 3.12
+and Node.js 20+ needed; a few minutes) and then starts it; every later run starts the built site at once,
+without building. The console window says the address and opens the browser; closing it stops the site.
+
+    prosumer_site.cmd             run (build first only if dist\prosumer\prosumer.exe is missing)
+    prosumer_site.cmd rebuild     build again after changing the page, the server or the library, then run
+    prosumer_site.cmd dev         development: the API with --reload (library from ../src) + the page with hot reload on :5173
+
+Any other argument goes to the site (`--no-browser`). Linux/macOS, or by hand on any system:
 
     # from webapp/, with the library installed in the environment (pip install -e ..[lightgbm,net,fronius])
     pip install -r requirements.txt
     cd web && npm install && npm run build && cd ..
-    python -m uvicorn server.api:app --port 8080      # then open http://127.0.0.1:8080
+    python -m server.launch                           # first free port from 8080, opens the browser
 
 Tests (no network; the library's fakes from `../tests/test_app.py`): `python -m pytest tests` from `webapp/`.
 
 ## The standalone folder (nothing installed)
 
-`build_exe.cmd` on Windows (Python 3.12 + Node.js 20+): `.venv-build`, the library and the server,
-`npm ci && npm run build`, `pyinstaller prosumer_site.spec` -> `dist/prosumer/prosumer.exe` (one folder: Python,
-the library, LightGBM, the page, the demo) and `dist/prosumer-site.zip`. Double-click `prosumer.exe`: a console
-window says the address and opens the browser; closing it stops the site. torch and the foundation models are
+The build (`prosumer_site.cmd` the first time, or `rebuild`): `.venv` with the library `..[lightgbm,net,fronius]`
+(installed again each build, so the exe carries the code as it is), `requirements.txt` and PyInstaller;
+`npm ci && npm run build` in `web/`; `pyinstaller prosumer_site.spec` (work files in `build/`) ->
+`dist/prosumer/prosumer.exe`, one folder with Python, the library, LightGBM, the page and the demo (~325 MB).
+That folder runs by itself on another Windows computer (copy or zip it). torch and the foundation models are
 left out (gigabytes): `models: "all"` notes them as not installed. PyInstaller does not cross-compile: the
 Windows exe is built and tested on the Windows machine. The cloud built the same spec on Linux on 2026-10-23
 (465 MB folder; `/api/info`, the page and the port fallback 8080 -> 8081 checked). The home machine's Smart App
@@ -69,8 +76,9 @@ the diagnostics too). Choices the page makes on its own:
   `skipped_reason` field in `Report.to_dict` would end that).
 
 Left:
-1. The Windows build and its test on the Lactec machine (`build_exe.cmd`, then double-click
-   `dist/prosumer/prosumer.exe`; check the demo and a real Fronius file).
+1. The Windows build and its test on the Lactec machine: first pass on 26/10 (325 MB; up in 17 s cold; the demo
+   in 16 s with live Open-Meteo; a real Fronius 5-min year read as Fronius Solar.web, live ANEEL tariff and
+   bandeira, 40 s). Redo after the page changes still planned (`prosumer_site.cmd rebuild`).
 2. A browser pass there with the live services (Open-Meteo, the Brazilian price with live ANEEL).
 3. The `work-reviewer`'s open minors (23/10): `report.pending` and some notes are written for library users
    (code in backticks), `credits[].notes` stay English in pt (the bill's `flag` value "assumed" now has a label).

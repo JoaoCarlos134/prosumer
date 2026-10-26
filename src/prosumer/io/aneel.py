@@ -215,7 +215,9 @@ def provenance(dataset: str, retrieved: str | None = None) -> Provenance:
         citation="Agência Nacional de Energia Elétrica (ANEEL), Dados Abertos, https://dadosabertos.aneel.gov.br/",
         url=f"https://dadosabertos.aneel.gov.br/dataset/{dataset}",
         retrieved=retrieved or today(),
-        notes="ODbL: attribute ANEEL; a redistributed derived database must stay under ODbL (share-alike)",
+        notes=Note(
+            "ODbL: attribute ANEEL; a redistributed derived database must stay under ODbL (share-alike)"
+        ),
     )
 
 

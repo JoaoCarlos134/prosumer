@@ -22,7 +22,9 @@ How (simple on purpose, every step can be explained to the person using it):
   appliance) is not in the data.
 
 The low/high columns are ranges, not calibrated intervals: across the weather models (generation, blended by
-the same trust with the seasonal 10-90% range of clearness) and across the days of the profile (consumption).
+the same trust with the seasonal 10-90% range of clearness) and across the days of the profile (consumption:
+per hour, that hour's lowest and highest value; per day, the lowest and highest daily total of the same kind
+of day, not the sum of the hourly extremes, which no single day reaches).
 
 Beyond lead 7 the generation is only the seasonal expectation (the pilot found no skill in the weather
 there): the average day of that month, not a forecast of that day's weather. It is labelled so
@@ -296,11 +298,12 @@ def forecast_ahead(
     hours = pd.date_range(first, end, freq="h", inclusive="left")
     issue = _issue_day(w, first)
     lead = (hours.tz_localize(None).normalize() - issue).days.to_numpy()
+    day_range = None
     if s.quantity == "generation":
         assert site is not None
         hourly, method, more = _generation(s, site, hours, lead, w, tilt, azimuth, kwp, trust, tune)
     else:
-        hourly, method, more = _consumption(s, hours, lead, weeks)
+        hourly, method, more, day_range = _consumption(s, hours, lead, weeks)
         if w is not None:
             more.append(
                 Note("The weather forecast is not used for consumption (the profile of recent weeks is).")
@@ -338,7 +341,7 @@ def forecast_ahead(
                 n=len(trust),
             )
         )
-    daily = _daily(hourly, tune.confidence)
+    daily = _daily(hourly, tune.confidence, day_range)
     gaps = daily[daily["missing_hours"] > 0]
     if len(gaps):
         notes.append(
@@ -709,11 +712,13 @@ def _poa(ghi: np.ndarray, sun: pd.DataFrame, tilt: float, azimuth: float) -> np.
 # ---------------------------------------------------------------------- consumption
 def _consumption(
     s: EnergySeries, hours: pd.DatetimeIndex, lead: np.ndarray, weeks: int
-) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
+) -> tuple[pd.DataFrame, dict[str, Any], list[str], pd.DataFrame]:
+    """The hourly profile, its method and notes, and the range of each forecast day (`_day_range`)."""
     if weeks < 1:
         raise ValueError("weeks must be >= 1")
     notes: list[str] = []
     out = []
+    ranges = []
     f = s.frame
     for uid in s.series:
         g = f[(f["unique_id"] == uid) & f["valid"]]
@@ -754,22 +759,54 @@ def _consumption(
                 }
             )
         )
+        ranges.append(_day_range(g, uid, hours))
     method = {
         "rule": Note(
             "mean of the same hour over the last {weeks} weeks, weekdays and weekends apart", weeks=weeks
         ),
         "weeks": weeks,
     }
-    return pd.concat(out, ignore_index=True), method, notes
+    return pd.concat(out, ignore_index=True), method, notes, pd.concat(ranges, ignore_index=True)
+
+
+def _day_range(g: pd.DataFrame, uid: str, hours: pd.DatetimeIndex) -> pd.DataFrame:
+    """Per forecast day: the lowest and highest daily total of the window's days of the same kind (weekday
+    or weekend), over the hours that forecast day has (a clock-change day against the same hours). Summing
+    the hourly min/max instead would assume every hour hits its extreme on the same day (up to ~13x the day
+    on Dingle H1). NaN when no past day of that kind has every one of those hours."""
+    local = g["ds"].dt.tz_localize(None)
+    past = pd.pivot_table(
+        pd.DataFrame({"date": local.dt.normalize(), "hour": local.dt.hour, "y": g["y"].to_numpy()}),
+        index="date",
+        columns="hour",
+        values="y",
+        aggfunc="sum",
+    )
+    weekend = pd.DatetimeIndex(past.index).day_of_week >= 5
+    wall = hours.tz_localize(None)
+    rows = []
+    for date in wall.normalize().unique():
+        want = sorted(set(wall[wall.normalize() == date].hour))
+        same = past.loc[weekend == (date.day_of_week >= 5)].reindex(columns=want)
+        totals = same.dropna().sum(axis=1)
+        low, high = (totals.min(), totals.max()) if len(totals) else (np.nan, np.nan)
+        rows.append({"unique_id": uid, "date": date, "low": low, "high": high})
+    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------- shared
-def _daily(hourly: pd.DataFrame, confidence: tuple[float, float] = (HIGH, MEDIUM)) -> pd.DataFrame:
+def _daily(
+    hourly: pd.DataFrame,
+    confidence: tuple[float, float] = (HIGH, MEDIUM),
+    day_range: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """Per series and day. Generation is labelled over its sun hours only (the night says nothing):
     `trust` and `skill` are their means (`skill`: the pilot's daily skill at that lead, 0 without weather),
     `n_models` the fewest models behind any of them, `source` "weather" when at least half of them have a
     weather forecast; the confidence follows the mean skill, so a day only partly covered by the weather is
-    not labelled by its best hour. `missing_hours`: hours with no forecast (not in the totals)."""
+    not labelled by its best hour. `missing_hours`: hours with no forecast (not in the totals). `low`/`high`:
+    the sums of the hourly ones, or `day_range` (`unique_id, date, low, high`: consumption, the range of
+    the past daily totals) widened to hold the total."""
     h = hourly.assign(
         date=hourly["ds"].dt.tz_localize(None).dt.normalize(),
         weather=(hourly["source"] == "weather").astype(float),
@@ -795,6 +832,10 @@ def _daily(hourly: pd.DataFrame, confidence: tuple[float, float] = (HIGH, MEDIUM
         weather=("weather", "mean"),
     )
     d = d.merge(by_sun.reset_index(), on=keys, how="left")
+    if day_range is not None:
+        r = d[keys].merge(day_range, on=keys, how="left")
+        d["low"] = np.minimum(r["low"].to_numpy(), d["total"].to_numpy())  # NaN (no past day) stays NaN
+        d["high"] = np.maximum(r["high"].to_numpy(), d["total"].to_numpy())
     profile = hourly.groupby(["unique_id"])["source"].first().eq("profile")
     is_profile = d["unique_id"].map(profile).fillna(False).astype(bool)
     d["source"] = np.where(is_profile, "profile", np.where(d["weather"] >= 0.5, "weather", "seasonal"))

@@ -185,6 +185,9 @@ class Report:
     # with `economics=` and a consumption: the monthly bill, its totals and the savings of the PV
     economics: EconomicsSection | None = None
     pending: dict[str, str] = field(default_factory=lambda: dict(PENDING))
+    # a section that could not be made, and why: "forecast" (the check), "economics" (asked for, no bill);
+    # the same note is in `notes`, this lets an app find it without reading the text
+    skipped: dict[str, str] = field(default_factory=dict)
     # the test hours for a chart: unique_id, ds, y (measured; NaN if not), evaluated (scored), then one column
     # per forecast row; left out of `to_dict` (hundreds of rows per series), as `Diagnosis.index`
     hourly: pd.DataFrame | None = None
@@ -208,6 +211,7 @@ class Report:
             "diagnostics": None if self.diagnostics is None else self.diagnostics.to_dict(lang=None),
             "economics": None if self.economics is None else self.economics.to_dict(lang=None),
             "pending": dict(self.pending),
+            "skipped": dict(self.skipped),
         }
         return out if lang is None else cast(dict[str, Any], translate(out, lang))
 
@@ -447,20 +451,24 @@ def analyze(
         base_pending["economics"] = ECONOMICS_LEFT
     elif econ_note and economics is not None:
         base_pending["economics"] = Note.join([econ_note, ECONOMICS_LEFT], " ")
+    asked = econ is None and econ_note and economics is not None
+    left_out: dict[str, str] = {"economics": econ_note} if asked and econ_note else {}
 
     def skipped(reason: Note) -> Report:
         """The report without the forecast check: every other section is kept."""
         sources, source_notes = _provenance(s, None, (), econ_sources)
+        why = Note("Forecast check skipped: {reason}", reason=reason)
         return Report(
             summary=summary,
             quality=quality,
-            notes=[*notes, Note("Forecast check skipped: {reason}", reason=reason), *source_notes],
+            notes=[*notes, why, *source_notes],
             clock=clock,
             clock_weather=clock_weather,
             provenance=sources,
             diagnostics=diag,
             economics=econ,
             pending=base_pending,
+            skipped={**left_out, "forecast": why},
         )
 
     first = frame["ds"].min().normalize()
@@ -748,6 +756,7 @@ def analyze(
         provenance=sources,
         diagnostics=diag,
         economics=econ,
+        skipped=left_out,
         hourly=hourly,
     )
 

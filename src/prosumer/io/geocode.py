@@ -66,7 +66,7 @@ def geocode(
             citation="Data (c) OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
             url="https://nominatim.org/",
             retrieved=today(),
-            notes="usage policy: identify the application, at most 1 request/s, no bulk geocoding",
+            notes=Note("usage policy: identify the application, at most 1 request/s, no bulk geocoding"),
         )
     elif provider == "open-meteo":
         params = {"name": query, "count": limit, "language": language, "format": "json"}
@@ -78,7 +78,7 @@ def geocode(
             citation="Geocoding by Open-Meteo.com, data from GeoNames (CC BY 4.0)",
             url="https://open-meteo.com/en/docs/geocoding-api",
             retrieved=today(),
-            notes="free API: non-commercial use only (https://open-meteo.com/en/terms)",
+            notes=Note("free API: non-commercial use only (https://open-meteo.com/en/terms)"),
         )
     else:
         raise ValueError(f"provider must be 'nominatim' or 'open-meteo', not {provider!r}")

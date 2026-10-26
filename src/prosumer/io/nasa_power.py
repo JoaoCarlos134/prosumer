@@ -34,6 +34,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ..i18n import Note
 from ..provenance import NASA_POWER_CITATION, Provenance, attach, today
 from . import _http
 
@@ -135,8 +136,10 @@ def provenance(community: str = "RE", retrieved: str | None = None) -> Provenanc
         citation=NASA_POWER_CITATION.format(date=date.replace("-", "/")),
         url="https://power.larc.nasa.gov/",
         retrieved=date,
-        notes="NASA asks to be cited and told of publications and redistribution "
-        "(larc-power-project@mail.nasa.gov); the weather of the day itself: regime B, not a forecast",
+        notes=Note(
+            "NASA asks to be cited and told of publications and redistribution "
+            "(larc-power-project@mail.nasa.gov); the weather of the day itself: regime B, not a forecast"
+        ),
     )
 
 

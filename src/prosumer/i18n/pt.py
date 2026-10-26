@@ -220,6 +220,75 @@ PT: dict[str, str] = {
         "repetem dias anteriores (veja `DayAhead.check_support`)."
     ),
     # ---- app
+    # app.FOR_PEOPLE: the library's notes said for a person using an app
+    "Licence unknown for: {inputs}. Find out the licence of your files before sharing or publishing these "
+    "results.": (
+        "Licença desconhecida para: {inputs}. Descubra a licença dos seus arquivos antes de compartilhar ou "
+        "publicar estes resultados."
+    ),
+    (
+        "Diagnostics: how large a change must be to count (the change-point penalty, {penalty:g} x the "
+        "BIC's) was chosen on two plants in Parana (Brazil) and ten PV houses in Ireland, and what counts as "
+        "a clear day was set by hand on the same plants; elsewhere they are assumptions."
+    ): (
+        "Diagnóstico: o tamanho que uma mudança precisa ter para contar (a penalidade dos pontos de mudança, "
+        "{penalty:g} x a do BIC) foi escolhido em duas usinas no Paraná (Brasil) e dez casas com FV na "
+        "Irlanda, e o que conta como dia de céu limpo foi ajustado à mão nas mesmas usinas; em outros "
+        "lugares, são suposições."
+    ),
+    (
+        "The forecast is the median of the {n} naive forecasts only (models: naive). In the benchmark that "
+        "median ranked 29th to 36th of ~53; with LightGBM and the four foundation models added (models: all) "
+        "it came within 0.01 of the median of all 47 benchmark models in the three history-only tests, still "
+        "short of the best model in two of them (pilot of 2026-10-16)."
+    ): (
+        "A previsão é a mediana só das {n} previsões ingênuas (modelos: ingênuos). No benchmark essa mediana "
+        "ficou entre a 29ª e a 36ª posição de ~53; com o LightGBM e os quatro modelos fundacionais (modelos: "
+        "todos) ela chegou a 0,01 da mediana de todos os 47 modelos do benchmark nos três testes só com "
+        "histórico, ainda abaixo do melhor modelo em dois deles (piloto de 16/10/2026)."
+    ),
+    (
+        "Economics left out: the bill needs the household's consumption (a consumption file next to the "
+        "generation file); the generation alone says what the PV made, not what the household paid."
+    ): (
+        "Conta deixada de fora: a conta precisa do consumo da casa (um arquivo de consumo junto ao de "
+        "geração); a geração sozinha diz o que o FV produziu, não o que a casa pagou."
+    ),
+    (
+        "Not modelled: COSIP read from a bill (type it in the price's COSIP), grupo A (demand charges), the "
+        "tax reform of LC 214/2025."
+    ): (
+        "Não modelado: a COSIP lida de uma conta (informe-a no campo COSIP do preço), o grupo A (cobrança de "
+        "demanda), a reforma tributária da LC 214/2025."
+    ),
+    (
+        "not in the app yet: the forecast check uses the history only (the weather forecast drives the next "
+        "days)"
+    ): (
+        "ainda não está no aplicativo: a conferência da previsão usa só o histórico (a previsão do tempo é "
+        "usada nos próximos dias)"
+    ),
+    "not in the app yet: the forecast check scores single values, not ranges": (
+        "ainda não está no aplicativo: a conferência da previsão avalia valores únicos, não faixas"
+    ),
+    "with a generation file: clear-day performance and its changes": (
+        "com um arquivo de geração: o desempenho em dias de céu limpo e suas mudanças"
+    ),
+    (
+        "give a price and a consumption file: the monthly bill, and the savings with a generation file too. "
+        "{left}"
+    ): (
+        "informe um preço e um arquivo de consumo: a conta mensal e, com um arquivo de geração também, a "
+        "economia. {left}"
+    ),
+    (
+        "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured "
+        "on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption."
+    ): (
+        "O quanto se confia na previsão do tempo em cada dia à frente, e os rótulos de confiança, foram "
+        "medidos em duas usinas no Paraná (Brasil), de ago/2025 a mai/2026; em outros lugares são uma "
+        "suposição."
+    ),
     "Unknown request fields {unknown}; the fields are {names}": (
         "Campos desconhecidos no pedido {unknown}; os campos são {names}"
     ),
@@ -542,6 +611,33 @@ PT: dict[str, str] = {
     "flat": "preço único",
     "{n} time-of-use blocks": "{n} blocos por horário",
     # ---- io
+    # conditions of use of the sources (`Provenance.notes`, the app's credits)
+    "ODbL: attribute ANEEL; a redistributed derived database must stay under ODbL (share-alike)": (
+        "ODbL: atribua à ANEEL; uma base derivada redistribuída tem de continuar sob ODbL (compartilha igual)"
+    ),
+    "usage policy: identify the application, at most 1 request/s, no bulk geocoding": (
+        "política de uso: identificar o aplicativo, no máximo 1 consulta/s, sem geocodificação em massa"
+    ),
+    "free API: non-commercial use only (https://open-meteo.com/en/terms)": (
+        "API gratuita: só uso não comercial (https://open-meteo.com/en/terms)"
+    ),
+    (
+        "free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs their "
+        "paid API"
+    ): (
+        "API gratuita: só uso não comercial (https://open-meteo.com/en/terms); o uso comercial precisa da "
+        "API paga deles"
+    ),
+    (
+        "NASA asks to be cited and told of publications and redistribution "
+        "(larc-power-project@mail.nasa.gov); the weather of the day itself: regime B, not a forecast"
+    ): (
+        "A NASA pede para ser citada e avisada de publicações e redistribuição "
+        "(larc-power-project@mail.nasa.gov); o tempo do próprio dia: regime B, não uma previsão"
+    ),
+    "tax rates: the project's own table (Parana ICMS, nominal PIS/COFINS)": (
+        "alíquotas: a tabela do próprio projeto (ICMS do Paraná, PIS/COFINS nominais)"
+    ),
     "No components resource for {year} ({file}) in ANEEL's open data": (
         "Não há recurso de componentes tarifárias de {year} ({file}) nos dados abertos da ANEEL"
     ),

@@ -58,7 +58,7 @@ PV against the household's use hour by hour and the report shows the savings.
 | `windows_by_cost` | with a price: the cheapest block of each day for `load_kw`, with its expected cost |
 | `pricing` | one line describing the tariff |
 | `charts` | what the pages plot: `history_generation` / `history_consumption` (each day of the file: `energy`, `measured_hours`), `check` (the test hours: measured `y`, `evaluated`, and each forecast row), `performance` (a PV file's clear days: `energy`, `expected`, `index`) |
-| `report` | `Report.to_dict()`: `summary`, `quality`, `clock`, `diagnostics`, `forecast`, `resolution`, `bands`, `economics` (with a price and the consumption), `provenance`, `notes`, `pending` |
+| `report` | `Report.to_dict()`: `summary`, `quality`, `clock`, `diagnostics`, `forecast`, `resolution`, `bands`, `economics` (with a price and the consumption), `provenance`, `notes`, `pending`, `skipped` (a section that could not be made, `forecast` or `economics`, and the note that says why) |
 | `notes`, `log` | what the person should know; what each step did |
 | `credits` | the source and licence of every outside piece of data (the licences require showing them) |
 
@@ -82,12 +82,18 @@ except ValueError as e:
 Codes and names are not translated: table columns, forecast names, the `confidence` values, units, request
 fields, series and distributor names, and the sources, licences and citations of the outside data in
 `credits` (kept in their source's words). What the library writes there itself is translated: the source
-of what the person typed (prices, ICMS and PIS/COFINS rates), its notes, and "not declared". The page labels
+of what the person typed (prices, ICMS and PIS/COFINS rates), the conditions of use in `notes` ("free API:
+non-commercial use only", ODbL, ...), and "not declared". The page labels
 the codes itself. The Portuguese is one catalog of templates (`prosumer/i18n/pt.py`); a test checks that
 every template in the code has its translation with the same placeholders, and two runs of the app
 (consumption with a time-of-use price; PV and consumption with a Brazilian price, both `models="naive"`)
-check that the notes, the log, how each file was read, the pending items, the bill's notes and tariff, and
-the pricing have no untranslated text.
+check that the notes, the log, how each file was read, the pending and skipped items, the bill's notes and
+tariff, the pricing and the credits' notes have no untranslated text and no code in backticks.
+
+The page speaks to a person, not a programmer: where a library note says which argument to pass ("pass
+weather=...", the licence note naming `EnergySeries.from_dataframe`), `run` says it the way the request
+answers it (`app.FOR_PEOPLE`, template for template, Portuguese included); `analyze` keeps the programmer's
+wording.
 
 How long it takes: seven years of hourly PV data (60,000 hours) took ~9 s with `models="naive"` and ~12 s
 with the default, on a laptop CPU (2026-10-19), the JSON ~0.65 MB; since the roof is fitted once for the

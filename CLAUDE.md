@@ -194,8 +194,10 @@ guide now builds into `build/docs` (was the confusing top-level `site/`).
 Done on 26/10 at Lactec: pulled the cloud branch (fast-forward, pushed), library suite 698 passed / 23 skipped,
 `webapp/tests` 12 passed (FastAPI etc. added to `~/.venvs/prosumer`); the Windows exe built and checked through
 its API: demo with live Open-Meteo, a real Cascavel Fronius 5-min year (read as Fronius Solar.web) with live
-ANEEL tariff and bandeira. Still left: a browser pass over the pages (after the user's changes) and
-`webapp/README.md` "Left" 3-4.
+ANEEL tariff and bandeira. Then the library fixes the site exposed (README "Left" 3-4): the consumption
+outlook's daily range = range of past daily totals (was the sum of hourly extremes), `Report.skipped` (the pages
+read it), `app.FOR_PEOPLE` rewords programmer notes on the app's pages, credits' notes translated. Still left: a
+browser pass over the pages (after the user's changes).
 
 ### 2026-10-23, cloud -> Lactec (kept for the record)
 

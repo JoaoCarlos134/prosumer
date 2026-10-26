@@ -246,6 +246,10 @@ def test_analyze_of_an_all_zero_series_says_so() -> None:
     r = analyze(_series(_plant(0.8, days=60).assign(y=0.0)), site=SITE, test_days=14)
     assert r.forecast is None
     assert any("every value is zero" in n for n in r.notes)
+    # the reason as a field too (site review 23/10: the page matched the note's first words, in each language)
+    assert r.skipped["forecast"] in r.notes and "every value is zero" in r.skipped["forecast"]
+    pt = r.to_dict(lang="pt")["skipped"]
+    assert set(pt) == {"forecast"} and pt["forecast"].startswith("Conferência da previsão não feita")
 
 
 # ---------------------------------------------------------------------- tuning arguments

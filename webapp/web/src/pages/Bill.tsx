@@ -10,10 +10,7 @@ import { code } from "../i18n";
 import { useStore, useT } from "../store";
 import { alpha, BASE, C, LEGEND } from "../theme";
 import type { BillMonth, Lang, Payload } from "../types";
-import { NoteList, PageGrid, startingWith } from "./common";
-
-// the report's note when the bill could not be made (prosumer.analysis, `Economics left out: ...`)
-const LEFT_OUT = ["Economics left out", "Conta deixada de fora"];
+import { NoteList, PageGrid } from "./common";
 
 const BLOCK_COLOR: Record<string, string> = {
   peak: C.warn,
@@ -223,7 +220,7 @@ export function Bill({ payload }: { payload: Payload }) {
   }, [months, withPv, lang, t]);
 
   if (!econ) {
-    const why = startingWith(r.report.notes, LEFT_OUT);
+    const why = r.report.skipped?.economics ? [r.report.skipped.economics] : []; // the library says why
     return (
       <PageGrid>
         <Visual title={t("page_bill")} className="col-span-12">

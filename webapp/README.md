@@ -66,21 +66,22 @@ that tilt toward the pointer, a floating pill tab bar; legends one scrolling row
 The PV page shows a trend or a loss only where the library reports one (`diagnostics.orientation.reliable`,
 `segments.trend_reported` / `loss_reported`, added to the library for this; a typed tilt/azimuth now reaches
 the diagnostics too). Choices the page makes on its own:
-- Next days per day: the axis follows the bars; a range whisker past the top is cut with an arrow (the
-  consumption profile's daily `high` is the sum of the hourly highs, up to ~13x the day on Dingle H1).
+- Next days per day: the axis follows the bars; a range whisker past the top is cut with an arrow (one
+  unusual day in the window can still make a wide range: Dingle H1 had a 15.9 kWh weekend day).
 - A file with several series (inverters, meters): a day or hour is the file's total only when every series
   has a value (else a gap); hours measured are the mean over the series, complete against the hours of that
   local day (23 or 25 on a clock change).
-- The Forecast check and Bill pages find "why it was skipped" by the start of the library's note, in both
-  languages (`Check.tsx` `SKIPPED`, `Bill.tsx` `LEFT_OUT`): a reworded note breaks the match (a
-  `skipped_reason` field in `Report.to_dict` would end that).
+- The Forecast check and Bill pages show "why it was skipped" from `report.skipped.forecast` / `.economics`
+  (the library's note, in the page's language).
 
 Left:
 1. The Windows build and its test on the Lactec machine: first pass on 26/10 (325 MB; up in 17 s cold; the demo
    in 16 s with live Open-Meteo; a real Fronius 5-min year read as Fronius Solar.web, live ANEEL tariff and
    bandeira, 40 s). Redo after the page changes still planned (`prosumer_site.cmd rebuild`).
 2. A browser pass there with the live services (Open-Meteo, the Brazilian price with live ANEEL).
-3. The `work-reviewer`'s open minors (23/10): `report.pending` and some notes are written for library users
-   (code in backticks), `credits[].notes` stay English in pt (the bill's `flag` value "assumed" now has a label).
-4. Library: the consumption outlook's daily range (`outlook.forecast_ahead`, profile rule) sums the hourly
-   lows/highs; a daily quantile of daily totals would be the honest range.
+3. ~~The `work-reviewer`'s open minors (23/10): pending/notes for library users, English credits in pt~~
+   done 26/10: `app.run` rewords them (`app.FOR_PEOPLE`), credits' notes translated; a test fails on code
+   in backticks on the tested pages.
+4. ~~Library: the consumption outlook's daily range summed the hourly lows/highs~~ done 26/10: the range of
+   the past daily totals. The page's cut whisker (Next days) can stay as a guard. Also done: `report.skipped`,
+   the Check and Bill pages read it instead of matching the note's first words.

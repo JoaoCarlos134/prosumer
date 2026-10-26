@@ -66,6 +66,11 @@ class Note(str):
             return str(self)
         return _render(self.template, self.params, lang, strict)
 
+    def reword(self, template: str | None = None, /, **params: Any) -> Note:
+        """The note in another template (same placeholders; None keeps this one), with `params` replacing
+        some of its values: `prosumer.app` says a library note the way a person using an app reads it."""
+        return Note(self.template if template is None else template, **{**self.params, **params})
+
     @classmethod
     def join(cls, items: Iterable[str], sep: str = "; ") -> Note:
         """The items one after the other, `sep` between them; each item that is a `Note` is translated."""

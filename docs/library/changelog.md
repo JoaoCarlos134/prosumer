@@ -2,6 +2,20 @@
 
 ## Unreleased (after 0.1.0)
 
+**Found by the site (review of 23/10), fixed 26/10**
+
+- The consumption outlook's daily `low`/`high` were the sums of the hourly 4-week min/max, as if every hour hit
+  its extreme on the same day (up to ~13x the day on Dingle H1). Now the lowest and highest daily total of the
+  window's days of the same kind (weekday or weekend), over the same hours, widened to hold the forecast total;
+  the hourly range is unchanged. Regression test in `test_outlook`.
+- `Report.skipped` (and `to_dict()["skipped"]`): `forecast` / `economics` -> the note that says why that section
+  could not be made, so an app finds it without matching the text (the site matched the first words, in each
+  language).
+- `app.run` rewords for a person the library notes that tell a programmer which argument to pass (`pending`,
+  the licence, the diagnostics' defaults, the naive-only median, the bill without consumption, the outlook's
+  trust): `app.FOR_PEOPLE`; `Note.reword`. The conditions of use in `Provenance.notes` (Open-Meteo, NASA POWER,
+  ANEEL, Nominatim, the project's tax table) are `Note`s now: the credits are Portuguese on a Portuguese page.
+
 **Diagnostics**
 
 - `Diagnosis.orientation.reliable` and `Diagnosis.segments.trend_reported` / `loss_reported`: what the notes

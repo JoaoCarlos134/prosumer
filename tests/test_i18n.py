@@ -148,6 +148,13 @@ def _templates() -> dict[str, str]:
 
 def test_every_template_in_the_code_is_in_the_catalog_with_the_same_placeholders() -> None:
     code = _templates()
+    # the app's wording of library notes (`app.FOR_PEOPLE`): each key a template of the library, so a reworded
+    # library note cannot silently lose its app wording; each value a template of its own, same placeholders
+    lost = [t for t in app.FOR_PEOPLE if t not in code]
+    assert not lost, "app.FOR_PEOPLE keys no longer in the library:\n" + "\n".join(lost)
+    for lib, people in app.FOR_PEOPLE.items():
+        assert i18n.placeholders(people) <= i18n.placeholders(lib), people
+        code.setdefault(people, "app.FOR_PEOPLE")
     missing = [f"{w}: {t!r}" for t, w in code.items() if t not in PT and not i18n._neutral(t)]
     assert not missing, "no Portuguese for:\n" + "\n".join(missing)
     stale = [t for t in PT if t not in code]
@@ -176,6 +183,8 @@ def _prose(d: dict[str, Any]) -> list[tuple[str, Any]]:
         out.append(("report.economics.tariff", rep["economics"]["tariff"]))
     if d["pricing"] is not None:
         out.append(("pricing", d["pricing"]))
+    out += [(f"report.skipped.{k}", v) for k, v in rep["skipped"].items()]
+    out += [(f"credits[{i}].notes", c["notes"]) for i, c in enumerate(d["credits"]) if c["notes"]]
     return out
 
 
@@ -184,6 +193,11 @@ def _check_page(r: app.Result) -> dict[str, Any]:
     plain = [w for w, v in _prose(raw) if not isinstance(v, Note)]
     assert not plain, f"texts that are not notes: {plain}"
     pt = i18n.translate(raw, "pt", strict=True)  # raises on a note without Portuguese
+    # written for a person, not a programmer: no argument or code in backticks (site review 23/10: `pending`
+    # said "pass `weather=...`" and the licence note named `EnergySeries.from_dataframe`)
+    for lang in ("en", "pt"):
+        code = [(w, v) for w, v in _prose(r.to_dict(lang)) if "`" in v]
+        assert not code, f"code on the {lang} page: {code}"
     assert json.loads(r.to_json("pt")) == json.loads(json.dumps(pt, allow_nan=False))
     assert r.to_dict() == json.loads(r.to_json())  # English by default, plain text
     return pt
@@ -205,7 +219,7 @@ def test_the_app_page_in_portuguese_consumption_with_a_flat_price() -> None:
     ), pt["report"]["provenance"]
     assert pt["report"]["pending"]["conta de energia"].startswith("Não modelado")  # the bill was made
     assert any(
-        n.startswith("A saída (`median`) é a mediana só das 3 previsões ingênuas")
+        n.startswith("A previsão é a mediana só das 3 previsões ingênuas (modelos: ingênuos)")
         for n in pt["report"]["notes"]
     )
 

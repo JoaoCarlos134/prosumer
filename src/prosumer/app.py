@@ -56,7 +56,7 @@ import re
 import tempfile
 import warnings
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from functools import partial
 from importlib.util import find_spec
 from pathlib import Path
@@ -91,6 +91,65 @@ FOUNDATION: tuple[tuple[str, str, Callable[[], Forecaster]], ...] = (
     ("FlowState", "tsfm_public", FlowState),
 )
 Files = Mapping[str, tuple[bytes, str]]
+# Library notes written for a programmer (an argument to pass, in backticks) and the same note for a person
+# using an app, which answers the request instead: library template -> app template, same placeholders.
+# `run` rewords them in the report and the outlooks; `tests/test_app.py` checks each key is still a template
+# of the library and that no text of the tested pages carries code.
+FOR_PEOPLE: dict[str, str] = {
+    "Licence unknown for: {inputs}. Find it out before sharing or publishing these results "
+    "(`EnergySeries.from_dataframe(provenance=...)`; `prosumer.provenance.attach` for a weather frame).": (
+        "Licence unknown for: {inputs}. Find out the licence of your files before sharing or publishing "
+        "these results."
+    ),
+    "Diagnostics: the change-point penalty ({penalty:g} x the BIC's) was chosen on two plants in Parana "
+    "(Brazil) and ten PV houses in Ireland, and the clear-day rule was set by hand on the same plants; "
+    "elsewhere they are assumptions (`analyze(diagnostics_options=...)` changes them).": (
+        "Diagnostics: how large a change must be to count (the change-point penalty, {penalty:g} x the "
+        "BIC's) was chosen on two plants in Parana (Brazil) and ten PV houses in Ireland, and what counts as "
+        "a clear day was set by hand on the same plants; elsewhere they are assumptions."
+    ),
+    "The output (`{output}`) is the median of the {n} naive forecasts only. In the benchmark that median "
+    "ranked 29th to 36th of ~53; with the library's five models added (`models=[LightGBM(), Chronos2(), "
+    "TiRex2(), Toto2(), FlowState()]`) it came within 0.01 of the median of all 47 benchmark models in the "
+    "three history-only tests, still short of the best model in two of them (pilot of 2026-10-16).": (
+        "The forecast is the median of the {n} naive forecasts only (models: naive). In the benchmark that "
+        "median ranked 29th to 36th of ~53; with LightGBM and the four foundation models added (models: all) "
+        "it came within 0.01 of the median of all 47 benchmark models in the three history-only tests, still "
+        "short of the best model in two of them (pilot of 2026-10-16)."
+    ),
+    "Economics left out: the bill needs the household's consumption (`consumption=`); the generation alone "
+    "says what the PV made, not what the household paid.": (
+        "Economics left out: the bill needs the household's consumption (a consumption file next to the "
+        "generation file); the generation alone says what the PV made, not what the household paid."
+    ),
+    "Not modelled: COSIP read from a bill (type it as `brazil.Setup(cosip=...)`), grupo A (demand charges), "
+    "the tax reform of LC 214/2025.": (
+        "Not modelled: COSIP read from a bill (type it in the price's COSIP), grupo A (demand charges), the "
+        "tax reform of LC 214/2025."
+    ),
+    "pass `weather=io.open_meteo.wide(...)` (Open-Meteo, several models)": (
+        "not in the app yet: the forecast check uses the history only (the weather forecast drives the next "
+        "days)"
+    ),
+    "pass a model with quantiles, e.g. `models=[forecast.LightGBMQuantile()]`": (
+        "not in the app yet: the forecast check scores single values, not ranges"
+    ),
+    "pass `site=(lat, lon)` with a generation series: clear-day performance and its changes": (
+        "with a generation file: clear-day performance and its changes"
+    ),
+    "pass `economics=` (an `economics.Tariff`, `economics.Plan` or `economics.brazil.Setup`) with the "
+    "consumption (the series, or `consumption=` next to a generation series): the monthly bill, and the "
+    "savings with `generation=`. {left}": (
+        "give a price and a consumption file: the monthly bill, and the savings with a generation file too. "
+        "{left}"
+    ),
+    "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured on "
+    "two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption (`trust=` and "
+    "`skill=` change them).": (
+        "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured "
+        "on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption."
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -356,6 +415,7 @@ def run(
         )
         for q, s in series.items()
     }
+    outlooks = {q: replace(o, notes=[_for_people(n) for n in o.notes]) for q, o in outlooks.items()}
     main = "generation" if "generation" in outlooks else "consumption"
 
     # 5. When to run a heavy load: the best block of each day (most sun, or least use without PV).
@@ -385,6 +445,12 @@ def run(
     if main == "generation" and req.tilt is not None and req.azimuth is not None:
         kw["orientation"] = (float(req.tilt), float(req.azimuth))
     report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, models=models, **kw)
+    report = replace(
+        report,
+        notes=[_for_people(n) for n in report.notes],
+        pending={k: _for_people(v) for k, v in report.pending.items()},
+        skipped={k: _for_people(v) for k, v in report.skipped.items()},
+    )
     if models:
         log.append(
             Note(
@@ -668,6 +734,17 @@ def _number(v: Any, what: str) -> float:
 def _no_more(rest: Mapping[str, Any], what: str) -> None:
     if rest:
         raise ValueError(Note("Unknown {what} fields {fields}", what=what, fields=sorted(rest)))
+
+
+def _for_people(v: Any) -> Any:
+    """A library note said for a person (`FOR_PEOPLE`), also inside a joined note; anything else as it is."""
+    if not isinstance(v, Note):
+        return v
+    params = {k: _for_people(x) for k, x in v.params.items()}
+    template = FOR_PEOPLE.get(v.template)
+    if template is None and all(params[k] is v.params[k] for k in params):
+        return v
+    return v.reword(template, **params)
 
 
 def _credit(credits: list[Provenance], p: Provenance | None) -> None:

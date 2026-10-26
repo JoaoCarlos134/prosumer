@@ -90,11 +90,15 @@ def test_generation_alone_cannot_be_billed() -> None:
     assert r.economics is None
     assert any("needs the household's consumption" in n for n in r.notes)
     assert r.pending["economics"].startswith("Economics left out")
+    # the reason as a field too (site review 23/10); 31 days are also too short for the forecast check
+    assert "needs the household's consumption" in r.skipped["economics"] and "forecast" in r.skipped
+    assert "economics" not in analyze(pv).skipped  # no bill asked: no bill skipped
     with pytest.raises(ValueError, match="consumption="):
         analyze(pv, economics=TOU, generation=pv)
     # without economics the extra series is ignored, and said so
     r0 = analyze(_site(31, "2025-01-01")[0], generation=pv)
     assert r0.economics is None and any("ignored" in n for n in r0.notes)
+    assert "economics" not in r0.skipped  # a note about the extra series, not a bill left out
 
 
 def test_months_with_gaps_and_partial_months_are_not_the_expected_bill() -> None:

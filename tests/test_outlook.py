@@ -121,6 +121,56 @@ def test_consumption_repeats_the_recent_weeks() -> None:
     assert len(b) == 14
 
 
+def test_consumption_daily_range_is_the_range_of_daily_totals() -> None:
+    """Site review (23/10): the daily low/high summed the hourly 4-week min/max, as if every hour hit its
+    extreme on the same day (up to ~13x the day on Dingle H1). A spike that moves to another hour each day
+    leaves every daily total the same: the range of the day must be that total, not 24 spikes."""
+    idx = pd.date_range("2020-08-10", periods=5 * 7 * 24, freq="h", tz="Europe/Dublin")
+    day = (idx.tz_localize(None).normalize() - pd.Timestamp("2020-08-10")).days.to_numpy()
+    y = 0.5 + 3.0 * (idx.hour.to_numpy() == day % 24)  # one 3 kWh spike a day, at a different hour each day
+    weekend = idx.day_of_week.to_numpy() >= 5
+    y = y + weekend * 0.25
+    s = EnergySeries.from_dataframe(
+        pd.DataFrame({"unique_id": "H1", "ds": idx, "y": y}),
+        unit="kWh",
+        quantity="consumption",
+        tz="Europe/Dublin",
+        freq="h",
+    )
+    o = outlook.forecast_ahead(s, days=7)
+    d = o.daily.set_index("date")
+    is_weekend = d.index.day_of_week >= 5
+    # every weekday totals 24 x 0.5 + 3 = 15 kWh, every weekend day 24 x 0.75 + 3 = 21 kWh
+    np.testing.assert_allclose(d.loc[~is_weekend, ["low", "total", "high"]], 15.0)
+    np.testing.assert_allclose(d.loc[is_weekend, ["low", "total", "high"]], 21.0)
+    # the hourly range stays the hour's own min/max over the window
+    h = o.hourly
+    assert h["high"].max() == pytest.approx(3.75) and h["low"].min() == pytest.approx(0.5)
+
+
+def test_consumption_daily_range_spans_the_days_and_holds_the_total() -> None:
+    """The neighbour: totals that differ from day to day give low = the lowest and high = the highest daily
+    total of that kind of day in the window, and the forecast total inside them."""
+    idx = pd.date_range("2020-08-10", periods=4 * 7 * 24, freq="h", tz="Europe/Dublin")
+    level = np.random.default_rng(3).uniform(0.3, 0.9, len(idx) // 24)  # each day its own level
+    y = np.repeat(level, 24)
+    s = EnergySeries.from_dataframe(
+        pd.DataFrame({"unique_id": "H1", "ds": idx, "y": y}),
+        unit="kWh",
+        quantity="consumption",
+        tz="Europe/Dublin",
+        freq="h",
+    )
+    o = outlook.forecast_ahead(s, days=7)
+    totals = pd.Series(y, index=idx).groupby(idx.tz_localize(None).normalize()).sum()
+    weekday = totals[totals.index.day_of_week < 5]
+    wd = o.daily[o.daily["date"].dt.day_of_week < 5]
+    np.testing.assert_allclose(wd["low"], weekday.min())
+    np.testing.assert_allclose(wd["high"], weekday.max())
+    d = o.daily
+    assert (d["low"] <= d["total"] + 1e-9).all() and (d["total"] <= d["high"] + 1e-9).all()
+
+
 def test_best_windows_for_generation_is_midday() -> None:
     o = outlook.forecast_ahead(_series(_plant(0.8)), days=3, site=SITE)
     b = outlook.best_windows(o, 3)

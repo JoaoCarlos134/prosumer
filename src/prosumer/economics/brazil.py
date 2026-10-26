@@ -379,7 +379,7 @@ class TariffBook:
             license="ODbL-1.0",
             citation="Agência Nacional de Energia Elétrica (ANEEL), Dados Abertos.",
             url="https://dadosabertos.aneel.gov.br/",
-            notes="tax rates: the project's own table (Parana ICMS, nominal PIS/COFINS)",
+            notes=Note("tax rates: the project's own table (Parana ICMS, nominal PIS/COFINS)"),
         )
         return cls(t, b, taxes, fio_b, distributor, [prov])
 

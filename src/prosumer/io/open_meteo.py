@@ -35,6 +35,7 @@ from typing import Any
 
 import pandas as pd
 
+from ..i18n import Note
 from ..provenance import OPEN_METEO_CITATION, Provenance, attach, today
 
 URL = "https://previous-runs-api.open-meteo.com/v1/forecast"
@@ -195,8 +196,10 @@ def forecast_provenance(models: Iterable[str], retrieved: str | None = None) -> 
         citation=OPEN_METEO_CITATION,
         url="https://open-meteo.com/en/docs",
         retrieved=retrieved or today(),
-        notes="free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
-        "their paid API",
+        notes=Note(
+            "free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
+            "their paid API"
+        ),
     )
 
 
@@ -211,8 +214,10 @@ def provenance(models: Iterable[str], lead_days: int = 1, retrieved: str | None 
         citation=OPEN_METEO_CITATION,
         url="https://open-meteo.com/en/docs/previous-runs-api",
         retrieved=retrieved or today(),
-        notes="free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
-        "their paid API",
+        notes=Note(
+            "free API: non-commercial use only (https://open-meteo.com/en/terms); commercial use needs "
+            "their paid API"
+        ),
     )
 
 

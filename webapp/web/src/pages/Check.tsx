@@ -9,10 +9,7 @@ import { code } from "../i18n";
 import { useStore, useT } from "../store";
 import { alpha, BASE, C, LEGEND, PALETTE } from "../theme";
 import type { CheckHour, Payload } from "../types";
-import { niceCeil, NoteList, PageGrid, startingWith } from "./common";
-
-// the report's note when the check could not run (prosumer.analysis, `Forecast check skipped: {reason}`)
-export const SKIPPED = ["Forecast check skipped", "Conferência da previsão não feita"];
+import { niceCeil, NoteList, PageGrid } from "./common";
 
 /** How well the forecast did on the last weeks of the file, against the reference and the other rules. */
 export function Check({ payload }: { payload: Payload }) {
@@ -186,7 +183,7 @@ export function Check({ payload }: { payload: Payload }) {
   }, [r.charts.check, out, lang, t]);
 
   if (!rows) {
-    const why = startingWith(r.report.notes, SKIPPED);
+    const why = r.report.skipped?.forecast ? [r.report.skipped.forecast] : []; // the library says why
     return (
       <PageGrid>
         <Visual title={t("page_check")} className="col-span-12">

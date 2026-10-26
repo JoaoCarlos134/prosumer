@@ -243,6 +243,8 @@ export interface Report {
   diagnostics: Diagnostics | null;
   economics: Economics | null;
   pending: Record<string, string>;
+  // a section that could not be made, and the library's note saying why
+  skipped?: Partial<Record<"forecast" | "economics", string>>;
 }
 
 export interface HistoryDay {

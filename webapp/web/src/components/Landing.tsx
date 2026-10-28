@@ -84,12 +84,17 @@ function Illustration() {
           </linearGradient>
         </defs>
         <rect width="420" height="260" fill="url(#sky)" />
-        <motion.g animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} style={{ originX: "86px", originY: "64px" }}>
+        {/* the sun: SVG's own animations, which turn and pulse about the sun's centre in every browser (CSS and
+            framer-motion transform origins on SVG are not: the rays drifted off the sun) */}
+        <g>
           {Array.from({ length: 12 }, (_, i) => (
             <rect key={i} x="84" y="18" width="4" height="14" rx="2" fill="#F2B705" transform={`rotate(${i * 30} 86 64)`} />
           ))}
-        </motion.g>
-        <motion.circle cx="86" cy="64" r="22" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.96, 1.09, 0.96] }} transition={{ duration: 3, repeat: Infinity }} />
+          <animateTransform attributeName="transform" type="rotate" from="0 86 64" to="360 86 64" dur="30s" repeatCount="indefinite" />
+        </g>
+        <circle cx="86" cy="64" r="22" fill="#F2B705">
+          <animate attributeName="r" values="21;24;21" dur="3s" repeatCount="indefinite" />
+        </circle>
         {/* rays onto the panels */}
         <motion.path d="M110 80 L200 120" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />
         <motion.path d="M100 92 L180 140" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />

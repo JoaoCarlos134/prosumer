@@ -79,10 +79,9 @@ export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
       <rect width="32" height="32" rx="6" fill="#2b2a29" />
-      <g className="spin-slow" style={{ transformBox: "fill-box" }}>
-        <g stroke="#F2B705" strokeWidth="2" strokeLinecap="round">
-          <path d="M16 3.5v2.5M7.5 13H5M27 13h-2.5M9.6 6.6l1.8 1.8M22.4 6.6l-1.8 1.8" />
-        </g>
+      {/* the rays stand still: they are only the upper half (the bars sit below), so a turn would swing them off */}
+      <g stroke="#F2B705" strokeWidth="2" strokeLinecap="round">
+        <path d="M16 3.5v2.5M7.5 13H5M27 13h-2.5M9.6 6.6l1.8 1.8M22.4 6.6l-1.8 1.8" />
       </g>
       <circle cx="16" cy="13" r="5" fill="#F2B705" />
       <rect x="7" y="21" width="4" height="6" rx="1" fill="#118DFF" />

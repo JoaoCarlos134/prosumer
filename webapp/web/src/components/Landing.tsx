@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { CalendarClock, PlugZap, Receipt, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { start } from "../run";
 import { useStore, useT } from "../store";
-import { Spin } from "./Spin";
+import { Sun } from "./Sun";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const rise = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -85,12 +85,7 @@ function Illustration() {
           </linearGradient>
         </defs>
         <rect width="420" height="260" fill="url(#sky)" />
-        <Spin cx={86} cy={64} seconds={30}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <rect key={i} x="84" y="18" width="4" height="14" rx="2" fill="#F2B705" transform={`rotate(${i * 30} 86 64)`} />
-          ))}
-        </Spin>
-        <motion.circle cx="86" cy="64" r="22" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.96, 1.09, 0.96] }} transition={{ duration: 3, repeat: Infinity }} />
+        <Sun cx={86} cy={64} r={22} rays={12} rayFrom={32} rayLength={14} rayWidth={4} turn={30} pulse={3} />
         {/* rays onto the panels */}
         <motion.path d="M110 80 L200 120" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />
         <motion.path d="M100 92 L180 140" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />

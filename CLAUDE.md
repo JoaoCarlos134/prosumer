@@ -182,11 +182,21 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-26, cloud)
+## Where to continue (2026-10-28, Lactec)
+
+On 28/10 at Lactec: merged both cloud branches into `main` (`claude/optimistic-lamport-b8s8u1` of 26/10 and
+`claude/quirky-thompson-4mgg6s` of 28/10, both from `4b8bc3a`, beside the unpushed `d8454a1`). Conflicts: `app.run`
+passes `issue_hour` and then rewords the notes for people (both kept); the suns: kept 28/10's
+`components/Sun.tsx` (disc pulse by hand; logo rays still), removed 26/10's `Spin.tsx` (its reduced-motion check
+moved into `Sun`). Library suite and `webapp/tests` green; exe rebuilt (`dist/prosumer`, 327 MB) and started.
+PyInstaller could not delete the old `dist/prosumer` (OneDrive lock): delete it by hand, then build again.
+Next: the user looks at the pane in the browser.
+
+### 2026-10-26, cloud (kept for the record)
 
 Done in the cloud on 26/10 (branch `claude/optimistic-lamport-b8s8u1`, restarted from `main` after the merge):
-the suns of the logo, the landing drawing and the loader turn about their centre (`webapp/web/src/components/
-Spin.tsx`; the rays orbited a point off the sun; SMIL barely moved in Chrome there); the Inputs pane opens over
+the suns of the logo, the landing drawing and the loader turn about their centre (`Spin.tsx`, replaced on 28/10
+by `Sun.tsx`; the rays orbited a point off the sun; SMIL barely moved in Chrome there); the Inputs pane opens over
 the whole screen with a slide (landing "add your files", the pane's maximise button), with a site map ("use my
 location"), time-zone suggestions, a preview of each dropped file (`/api/peek` -> new `prosumer.app.peek`) and
 the new request fields `weeks`, `issue_hour`, `price.credit` (library + tests + docs). What the library can do

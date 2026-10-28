@@ -84,8 +84,9 @@ the diagnostics too). Choices the page makes on its own:
   `prosumer.app.peek`: the column, unit and kind chosen, hours, share measured, span; or the reader's message),
   the weeks of the consumption profile, the hour the forecast check's forecast is made, and a Brazilian bill's
   credit carried over (`weeks`, `issue_hour`, `price.credit`: new fields of `prosumer.app.Request`).
-- The suns turn about their centre (the rays orbited a point off the sun): `components/Spin.tsx` sets the SVG
-  `rotate(angle cx cy)` each frame; the compass needle the same way.
+- The suns turn about their centre (the rays orbited a point off the sun): `components/Sun.tsx` (landing scene,
+  loader) sets the ring's SVG `rotate(angle cx cy)` and the disc's scale each frame (28/10; replaced 26/10's
+  `Spin.tsx`); the logo's rays stand still; the compass needle is turned the same way, by hand.
 
 What the library can do that the pane still does not offer (each needs a field in `app.Request` first):
 - uncertainty bands (`forecast.LightGBMQuantile`: `report.bands`, a band chart on the check page);

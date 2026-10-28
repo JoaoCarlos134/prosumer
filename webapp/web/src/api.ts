@@ -27,6 +27,28 @@ export function runDemo(lang: Lang, models: string) {
   return call<Payload>("/api/demo", { method: "POST", body });
 }
 
+/** How the analysis would read one file (`prosumer.app.peek`): the preview under a dropped file. */
+export interface Peek {
+  file: string;
+  how: string;
+  hours: number;
+  start: string;
+  end: string;
+  measured: number;
+  series: string[];
+  tz: string;
+  log: string[];
+}
+
+export function peekFile(quantity: Quantity, file: File, form: Form, lang: Lang, signal?: AbortSignal) {
+  const body = new FormData();
+  body.set("quantity", quantity);
+  body.set("request", JSON.stringify(toRequest(form)));
+  body.set("lang", lang);
+  body.set("file", file, file.name);
+  return call<Peek>("/api/peek", { method: "POST", body, signal });
+}
+
 export function runAnalysis(form: Form, files: Partial<Record<Quantity, File>>, lang: Lang) {
   const body = new FormData();
   body.set("request", JSON.stringify(toRequest(form)));
@@ -53,6 +75,8 @@ export function toRequest(f: Form): Record<string, unknown> {
     test_days: f.test_days,
     load_hours: f.load_hours,
     load_kw: f.load_kw,
+    weeks: f.weeks,
+    issue_hour: f.issue_hour,
     tilt: f.tilt,
     azimuth: f.azimuth,
     kwp: f.kwp,
@@ -77,6 +101,7 @@ export function toRequest(f: Form): Record<string, unknown> {
       cosip: b.cosip,
       modality: b.modality,
       peak_start: b.modality === "Branca" ? b.peak_start : "",
+      credit: b.credit,
     };
   }
   return r;

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { Key } from "../i18n";
 import { useStore, useT } from "../store";
+import { Spin } from "./Spin";
 
 const STEPS: Key[] = ["step1", "step2", "step3", "step4", "step5", "step6", "step7"];
 
@@ -63,11 +64,11 @@ export function Loading() {
 function SunSpinner() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden>
-      <motion.g animate={{ rotate: 360 }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} style={{ originX: "20px", originY: "20px" }}>
+      <Spin cx={20} cy={20} seconds={6}>
         {Array.from({ length: 8 }, (_, i) => (
           <rect key={i} x="19" y="2" width="2" height="6" rx="1" fill="#F2B705" transform={`rotate(${i * 45} 20 20)`} opacity={0.4 + (i % 2) * 0.6} />
         ))}
-      </motion.g>
+      </Spin>
       <motion.circle cx="20" cy="20" r="7" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.93, 1.14, 0.93] }} transition={{ duration: 1.6, repeat: Infinity }} />
     </svg>
   );

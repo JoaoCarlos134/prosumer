@@ -316,3 +316,56 @@ def test_requests_that_cannot_run_say_why() -> None:
             files,
             services=svc,
         )
+
+
+def test_weeks_of_the_profile_and_the_issue_hour_of_the_check_reach_the_library() -> None:
+    files = {"consumption": (_consumption_csv("2024-01-01", 60), "meter.csv")}
+    req = {**SITE, "models": "naive", "days": 2, "weeks": 2, "issue_hour": 12}
+    r = app.run(req, files, services=_services())
+    assert r.outlooks["consumption"].method["weeks"] == 2
+    assert any("last 2 weeks, not the 4" in n for n in r.outlooks["consumption"].notes)
+    assert r.report.summary["issue_hour"] == 12
+    plain = app.run({**SITE, "models": "naive", "days": 2}, files, services=_services())
+    assert not any("not the 4" in n for n in plain.outlooks["consumption"].notes)
+    for bad in ({"weeks": 0}, {"weeks": 53}, {"issue_hour": 24}, {"issue_hour": "1,5"}):
+        with pytest.raises(ValueError, match=r"weeks|issue_hour"):
+            app.Request.from_dict({**SITE, **bad})
+
+
+def test_a_brazilian_credit_carried_over_lowers_the_first_bill() -> None:
+    # a small PV (a fifth of the example plant): its own exports do not cover the imports, so credit is drawn
+    pv = pd.read_csv(io.BytesIO(_pv_csv("2026-08-01", 61)))
+    pv["Energy (kWh)"] = (pv["Energy (kWh)"] * 0.2).round(4)
+    files = {
+        "generation": (pv.to_csv(index=False).encode(), "inversor.csv"),
+        "consumption": (_consumption_csv("2026-08-01", 61), "medidor.csv"),
+    }
+    price = {"kind": "brazil", "icms": 0.19, "pis_cofins": 0.0925, "gd": "GD I"}
+
+    def first_month(credit: Any) -> pd.Series:
+        req = {**SITE, "models": "naive", "days": 2, "price": {**price, "credit": credit}}
+        econ = app.run(req, files, services=_services("2026-10-01")).report.economics
+        assert econ is not None
+        return econ.monthly.iloc[0]
+
+    none, some = first_month(""), first_month("150,5")
+    assert none["credit_used"] == 0 and 0 < some["credit_used"] <= 150.5
+    assert some["total"] < none["total"]
+    with pytest.raises(ValueError, match="cannot be negative"):
+        first_month(-1)
+
+
+def test_peek_says_how_a_file_is_read_before_any_run() -> None:
+    data = _consumption_csv("2024-01-01", 10)
+    p = app.peek(data, "conta.csv", "consumption", {"timezone": TZ, "days": 99, "price": {"kind": "x"}})
+    assert p["file"] == "conta.csv" and p["tz"] == TZ and p["hours"] == 240
+    assert "consumo (kWh)" in p["how"] and p["measured"] == 1.0
+    assert p["start"].startswith("2024-01-01T00:00:00-03:00")
+    utc = app.peek(data, "conta.csv", "consumption")
+    assert utc["tz"] == "UTC" and utc["start"].startswith("2024-01-01T00:00:00+00:00")
+    pt = app.peek(data, "conta.csv", "consumption", {"timezone": TZ}, lang="pt")
+    assert pt["how"] != p["how"]  # the reader's description, in Portuguese
+    with pytest.raises(ValueError, match="time column"):
+        app.peek(b"a;b\n1;2\n", "x.csv", "consumption")
+    with pytest.raises(ValueError, match="keyed by"):
+        app.peek(data, "conta.csv", "weather")

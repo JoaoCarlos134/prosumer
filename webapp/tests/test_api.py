@@ -174,3 +174,19 @@ def test_the_standalone_folder_finds_the_page_and_the_demo_beside_the_code(
         importlib.reload(demo)
         importlib.reload(api)
     assert demo.SOURCE.is_file() and HERE.parent / "web" / "dist" == api.DIST
+
+
+def test_peek_previews_a_dropped_file_and_says_why_one_cannot_be_read(client: TestClient) -> None:
+    def peek(data: bytes, lang: str = "en", **request: Any) -> Any:
+        return client.post(
+            "/api/peek",
+            data={"quantity": "consumption", "request": json.dumps(request), "lang": lang},
+            files={"file": ("conta.csv", data, "text/csv")},
+        )
+
+    r = peek(_consumption_csv("2026-08-01", 3), timezone=SITE["timezone"], days=7)
+    assert r.status_code == 200, r.text
+    p = r.json()
+    assert p["file"] == "conta.csv" and p["hours"] == 72 and "consumo (kWh)" in p["how"]
+    bad = peek(b"a;b\n1;2\n", "pt")
+    assert bad.status_code == 400 and "coluna" in bad.json()["error"].lower()

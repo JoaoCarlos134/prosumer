@@ -17,6 +17,8 @@ export interface Form {
   test_days: number;
   load_hours: number;
   load_kw: string;
+  weeks: number;
+  issue_hour: number;
   tilt: string;
   azimuth: string;
   kwp: string;
@@ -44,6 +46,7 @@ export interface Form {
     cosip: string;
     modality: string;
     peak_start: string;
+    credit: string;
   };
 }
 
@@ -59,6 +62,8 @@ export const DEFAULT_FORM: Form = {
   test_days: 28,
   load_hours: 3,
   load_kw: "2",
+  weeks: 4,
+  issue_hour: 0,
   tilt: "",
   azimuth: "",
   kwp: "",
@@ -78,8 +83,20 @@ export const DEFAULT_FORM: Form = {
     cosip: "",
     modality: "Convencional",
     peak_start: "18:00",
+    credit: "",
   },
 };
+
+/** A saved form over the defaults, the nested prices too: a form saved before a field existed gets its default. */
+function withDefaults(f: Partial<Form> | undefined): Form {
+  return {
+    ...DEFAULT_FORM,
+    ...(f ?? {}),
+    flat: { ...DEFAULT_FORM.flat, ...(f?.flat ?? {}) },
+    tou: { ...DEFAULT_FORM.tou, ...(f?.tou ?? {}) },
+    brazil: { ...DEFAULT_FORM.brazil, ...(f?.brazil ?? {}) },
+  };
+}
 
 const SAVED = "prosumer-site";
 
@@ -108,6 +125,8 @@ interface State {
   theme: "light" | "dark";
   page: PageId;
   pane: boolean;
+  /** the Inputs pane over the whole screen */
+  paneWide: boolean;
   info: Info | null;
   payload: Payload | null;
   running: boolean;
@@ -128,12 +147,13 @@ export const useStore = create<State>((set, get) => ({
   theme: saved.theme ?? browserTheme,
   page: "overview",
   pane: saved.pane ?? true,
+  paneWide: false,
   info: null,
   payload: null,
   running: false,
   startedAt: null,
   error: null,
-  form: { ...DEFAULT_FORM, ...(saved.form ?? {}) },
+  form: withDefaults(saved.form),
   files: {},
   selectedDay: null,
   t: (key, params) => translate(get().lang, key, params),

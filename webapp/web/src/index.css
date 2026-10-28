@@ -163,16 +163,6 @@ textarea {
   }
 }
 
-.spin-slow {
-  animation: spin 18s linear infinite;
-  transform-origin: center;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

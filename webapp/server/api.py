@@ -157,6 +157,35 @@ async def _in_thread(req: dict, files: dict, lang: str, meta: dict) -> dict[str,
     return await run_in_threadpool(_run, req, files, lang, meta)
 
 
+@app.post("/api/peek")
+async def peek(
+    quantity: str = Form(...),
+    request: str = Form("{}"),
+    lang: str = Form("en"),
+    file: UploadFile = File(...),  # noqa: B008 - FastAPI's way of declaring an upload
+) -> dict[str, Any]:
+    """How the analysis would read one file (`prosumer.app.peek`), shown as soon as it is dropped."""
+    from starlette.concurrency import run_in_threadpool
+
+    lang = _lang(lang)
+    try:
+        req = json.loads(request or "{}")
+    except json.JSONDecodeError as e:
+        raise PageError(400, f"The request is not JSON: {e}") from e
+    data = await file.read()
+    try:
+        return await run_in_threadpool(
+            backend.peek,
+            data,
+            file.filename or "file",
+            quantity,
+            req if isinstance(req, dict) else {},
+            lang=lang,
+        )
+    except ValueError as e:
+        raise PageError(400, i18n.message(e, lang)) from e
+
+
 @app.post("/api/demo")
 async def run_demo(lang: str = Form("en"), models: str = Form("lightgbm")) -> dict[str, Any]:
     """The demo house (`server/demo.py`), with the example price."""

@@ -315,6 +315,15 @@ def forecast_ahead(
                 "appliance is not in it."
             )
         )
+        if weeks != WEEKS:
+            more.append(
+                Note(
+                    "This profile uses the last {weeks} weeks, not the {measured} that were measured: the "
+                    "comparison above does not cover it.",
+                    weeks=weeks,
+                    measured=WEEKS,
+                )
+            )
     notes += more
     if s.quantity == "generation" and w is not None:
         if (hourly["source"] == "weather").any():

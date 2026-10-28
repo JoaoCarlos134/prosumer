@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CalendarClock, PlugZap, Receipt, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { start } from "../run";
 import { useStore, useT } from "../store";
+import { Spin } from "./Spin";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const rise = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -39,7 +40,7 @@ export function Landing() {
             </button>
             <button
               type="button"
-              onClick={() => set({ pane: true })}
+              onClick={() => set({ pane: true, paneWide: true })}
               className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-[13.5px] text-ink transition hover:bg-hover"
             >
               <Upload size={16} />
@@ -84,11 +85,11 @@ function Illustration() {
           </linearGradient>
         </defs>
         <rect width="420" height="260" fill="url(#sky)" />
-        <motion.g animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} style={{ originX: "86px", originY: "64px" }}>
+        <Spin cx={86} cy={64} seconds={30}>
           {Array.from({ length: 12 }, (_, i) => (
             <rect key={i} x="84" y="18" width="4" height="14" rx="2" fill="#F2B705" transform={`rotate(${i * 30} 86 64)`} />
           ))}
-        </motion.g>
+        </Spin>
         <motion.circle cx="86" cy="64" r="22" fill="#F2B705" style={{ transformBox: "fill-box", transformOrigin: "center" }} animate={{ scale: [0.96, 1.09, 0.96] }} transition={{ duration: 3, repeat: Infinity }} />
         {/* rays onto the panels */}
         <motion.path d="M110 80 L200 120" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />

@@ -182,7 +182,18 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
 
-## Where to continue (2026-10-26, Lactec)
+## Where to continue (2026-10-26, cloud)
+
+Done in the cloud on 26/10 (branch `claude/optimistic-lamport-b8s8u1`, restarted from `main` after the merge):
+the suns of the logo, the landing drawing and the loader turn about their centre (`webapp/web/src/components/
+Spin.tsx`; the rays orbited a point off the sun; SMIL barely moved in Chrome there); the Inputs pane opens over
+the whole screen with a slide (landing "add your files", the pane's maximise button), with a site map ("use my
+location"), time-zone suggestions, a preview of each dropped file (`/api/peek` -> new `prosumer.app.peek`) and
+the new request fields `weeks`, `issue_hour`, `price.credit` (library + tests + docs). What the library can do
+that the pane still does not offer: `webapp/README.md` "2026-10-26 (cloud)". Next: rebuild the exe at Lactec
+(`prosumer_site.cmd rebuild`) and look at the pane there.
+
+### 2026-10-26, Lactec (kept for the record)
 
 **The user is reworking the site's pages (26/10: "the site is not 100%")**: keep `webapp/README.md`
 "Left" as the list; ask before redesigning pages. One launcher now: `webapp/prosumer_site.cmd` (builds

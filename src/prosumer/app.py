@@ -24,18 +24,24 @@ The request is a plain mapping (`Request.from_dict`, unknown keys are an error):
 - reading: `time_column`, `value_column`, `unit`, `kind` (when the guess needs help; generation and
   consumption files are read with the same hints);
 - the next days: `days` (1-35; the weather reaches 16), `tilt`, `azimuth`, `kwp` (optional: learnt from the
-  data otherwise), `load_hours` (3), `load_kw` (2.0);
-- `test_days` of the forecast check (28); `models`, the forecasts its median takes: "lightgbm" (default: the
-  three naive rules and LightGBM, seconds on a CPU), "naive" (the naive rules only, the fastest) or "all"
-  (also the four zero-shot foundation models that are installed: minutes on a CPU, and torch). Measured on the
-  benchmark (pilot of 2026-10-16), the median of the naive rules alone ranked 29th to 36th of ~50; with
-  LightGBM, 10th to 19th; with the foundation models too, 4th or 5th. A model whose extra is not installed is
-  left out with a note;
+  data otherwise), `load_hours` (3), `load_kw` (2.0), `weeks` (4: the recent weeks behind the consumption
+  profile, 1-52; 4 is the measured one);
+- `test_days` of the forecast check (28) and its `issue_hour` (0, the hour each day's forecast is made, as
+  `analyze(issue_hour=)`: 12 = made at noon the day before); `models`, the forecasts its median takes:
+  "lightgbm" (default: the three naive rules and LightGBM, seconds on a CPU), "naive" (the naive rules only,
+  the fastest) or "all" (also the four zero-shot foundation models that are installed: minutes on a CPU, and
+  torch). Measured on the benchmark (pilot of 2026-10-16), the median of the naive rules alone ranked 29th to
+  36th of ~50; with LightGBM, 10th to 19th; with the foundation models too, 4th or 5th. A model whose extra is
+  not installed is left out with a note;
 - `price` (optional): `{"kind": "flat", "price", "export_price", "fixed", "currency", "scheme"}`,
   `{"kind": "tou", "peak_hours": "17-21", "peak_price", "offpeak_price", ...}` (weekends off-peak) or
   `{"kind": "brazil", "distributor": "COPEL-DIS", "icms", "pis_cofins" (fractions, as read on a bill),
-  "connection", "gd", "cosip", "modality", "peak_start"}` (ANEEL's open data; `gd`, "GD I" or "GD II", is
-  required with a PV file and ignored without; `peak_start` "HH:MM" for the tarifa branca).
+  "connection", "gd", "cosip", "modality", "peak_start", "credit"}` (ANEEL's open data; `gd`, "GD I" or
+  "GD II", is required with a PV file and ignored without; `peak_start` "HH:MM" for the tarifa branca;
+  `credit`, the kWh of credit the last bill carried over, "saldo de creditos", 0 by default).
+
+`peek(data, name, quantity, request)` reads one file as `run` would and says how (the page's preview of a
+dropped file, before anything is sent anywhere).
 
 Languages: every note, log line and error message of `run` is a `prosumer.i18n.Note`:
 `Result.to_dict(lang="pt")` (or `to_json`) gives the page in Portuguese, `i18n.message(error, "pt")` an
@@ -75,7 +81,7 @@ from .i18n import Note, translate
 from .i18n import replace as replace_text
 from .io import geocode as geo
 from .io import open_meteo, read_energy
-from .outlook import MAX_DAYS, Outlook, best_windows, forecast_ahead
+from .outlook import MAX_DAYS, WEEKS, Outlook, best_windows, forecast_ahead
 from .provenance import Provenance, of
 
 QUANTITIES: tuple[Quantity, ...] = ("generation", "consumption")
@@ -182,7 +188,9 @@ class Request:
     kwp: float | None = None
     load_hours: int = 3
     load_kw: float = 2.0
+    weeks: int = WEEKS
     test_days: int = 28
+    issue_hour: int = 0
     models: str = "lightgbm"
     price: Mapping[str, Any] | None = None
 
@@ -205,7 +213,7 @@ class Request:
                 continue
             if k in ("latitude", "longitude", "tilt", "azimuth", "kwp", "load_kw"):
                 out[k] = _number(v, k)
-            elif k in ("days", "load_hours", "test_days"):
+            elif k in ("days", "load_hours", "test_days", "weeks", "issue_hour"):
                 x = _number(v, k)
                 if x != int(x):
                     raise ValueError(Note("{field} must be a whole number, not {value!r}", field=k, value=v))
@@ -235,6 +243,10 @@ class Request:
             raise ValueError(Note("load_kw must be positive"))
         if self.test_days < 2:
             raise ValueError(Note("test_days must be >= 2"))
+        if not 1 <= self.weeks <= 52:
+            raise ValueError(Note("weeks must be in 1-52"))
+        if not 0 <= self.issue_hour <= 23:
+            raise ValueError(Note("issue_hour must be in 0-23"))
         if self.models not in MODEL_SETS:
             raise ValueError(Note("models must be one of {sets}", sets=list(MODEL_SETS)))
         if self.price is not None and self.price.get("kind") not in PRICE_KINDS:
@@ -412,6 +424,7 @@ def run(
             tilt=req.tilt,
             azimuth=req.azimuth,
             kwp=req.kwp,
+            weeks=req.weeks,
         )
         for q, s in series.items()
     }
@@ -444,7 +457,15 @@ def run(
     # a roof the person typed is the roof the diagnostics use too, not only the next days
     if main == "generation" and req.tilt is not None and req.azimuth is not None:
         kw["orientation"] = (float(req.tilt), float(req.azimuth))
-    report = analyze(series[main], site=site, kwp=req.kwp, test_days=req.test_days, models=models, **kw)
+    report = analyze(
+        series[main],
+        site=site,
+        kwp=req.kwp,
+        test_days=req.test_days,
+        issue_hour=req.issue_hour,
+        models=models,
+        **kw,
+    )
     report = replace(
         report,
         notes=[_for_people(n) for n in report.notes],
@@ -482,6 +503,50 @@ def run(
 
 # ---------------------------------------------------------------------- pieces
 _FILE_NAME = {"generation": Note("Generation"), "consumption": Note("Consumption")}  # the log's names
+
+READING = ("time_column", "value_column", "unit", "kind", "file_times", "timezone")  # what `peek` takes
+
+
+def peek(
+    data: bytes,
+    name: str,
+    quantity: str,
+    request: Mapping[str, Any] | None = None,
+    *,
+    lang: str | None = "en",
+) -> dict[str, Any]:
+    """How `run` would read one file, before anything is sent anywhere: the page's preview of a dropped file.
+
+    `request`: the reading fields of the request (`READING`: the hints, `file_times`, `timezone`; the others
+    are ignored, so the page can pass its whole form). Without a `timezone` the times are shown in UTC.
+    Returns `file`, `how` (the column, unit and kind the reader chose), `hours`, `start`, `end`, `measured`
+    (the share of hours with a value), `series`, `tz` and `log`; a file that cannot be read raises
+    `ValueError` with the reader's message, as `run` would. `lang` as in `Result.to_dict`."""
+    if quantity not in QUANTITIES:
+        raise ValueError(
+            Note("Files are keyed by {keys}, not {unknown}", keys=list(QUANTITIES), unknown=[quantity])
+        )
+    if not data:
+        raise ValueError(Note("No file was received: send the generation or the consumption file (or both)."))
+    given = {k: v for k, v in (request or {}).items() if k in READING}
+    req = Request.from_dict({**given, "latitude": 0.0, "longitude": 0.0})  # the site plays no part in reading
+    tz = req.timezone or "UTC"
+    log: list[str] = []
+    s = _read(data, name, quantity, req, None, tz, log)
+    span = s.frame["ds"]
+    out = {
+        "file": name,
+        "how": _first_part(s.provenance.notes) if s.provenance else "",
+        "hours": len(s.frame),
+        "start": span.min(),
+        "end": span.max(),
+        "measured": float(s.frame["valid"].mean()),
+        "series": s.series,
+        "tz": tz,
+        "log": log,
+    }
+    result: dict[str, Any] = _json(out)
+    return result if lang is None else cast(dict[str, Any], translate(result, lang))
 
 
 def _first_part(notes: str) -> str:
@@ -528,7 +593,7 @@ def _daily(s: EnergySeries) -> pd.DataFrame:
 
 
 def _read(
-    data: bytes, name: str, q: str, req: Request, site: tuple[float, float], tz: str, log: list[str]
+    data: bytes, name: str, q: str, req: Request, site: tuple[float, float] | None, tz: str, log: list[str]
 ) -> EnergySeries:
     suffix = Path(name).suffix.lower()
     suffix = suffix if suffix in (".csv", ".txt", ".xlsx") else ".csv"
@@ -629,6 +694,9 @@ def _pricing(
             brazil.branca_blocks(peak_start)  # its errors now, not after the downloads
         connection = _connection(p.pop("connection", "bifasico_3"))
         cosip = num("cosip", Note("the COSIP"), 0.0)
+        credit = num("credit", Note("the credit carried over (kWh)"), 0.0)
+        if credit < 0:
+            raise ValueError(Note("The credit carried over is in kWh and cannot be negative"))
         years: list[int] = []
         if with_pv and gd == "GD II":
             ds = outlooks["generation"].hourly["ds"]
@@ -654,6 +722,7 @@ def _pricing(
             modality=modality,
             peak_start=peak_start,
             cosip=cosip,
+            initial_credit=credit,
         )
     currency = str(p.pop("currency", "EUR"))
     export = num("export_price", Note("the export price"), 0.0)

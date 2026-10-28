@@ -16,6 +16,14 @@
   trust): `app.FOR_PEOPLE`; `Note.reword`. The conditions of use in `Provenance.notes` (Open-Meteo, NASA POWER,
   ANEEL, Nominatim, the project's tax table) are `Note`s now: the credits are Portuguese on a Portuguese page.
 
+**The app**
+
+- `app.peek(data, name, quantity, request)`: how `run` would read one file (column, unit, kind, hours, span,
+  share measured), before anything is sent anywhere; the site previews a dropped file with it.
+- New request fields: `weeks` (the recent weeks behind the consumption profile, `forecast_ahead(weeks=)`; a
+  note says when it is not the measured 4), `issue_hour` (`analyze(issue_hour=)`) and, in a Brazilian price,
+  `credit` (the kWh of credit the last bill carried over, `brazil.Setup.initial_credit`).
+
 **Diagnostics**
 
 - `Diagnosis.orientation.reliable` and `Diagnosis.segments.trend_reported` / `loss_reported`: what the notes

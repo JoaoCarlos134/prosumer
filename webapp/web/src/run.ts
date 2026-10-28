@@ -6,7 +6,7 @@ import { useStore } from "./store";
 export async function start(kind: "run" | "demo") {
   const s = useStore.getState();
   if (s.running) return;
-  s.set({ running: true, startedAt: Date.now(), error: null });
+  s.set({ running: true, startedAt: Date.now(), error: null, paneWide: false });
   try {
     const p = kind === "demo" ? await runDemo(s.lang, s.form.models) : await runAnalysis(s.form, s.files, s.lang);
     useStore.getState().set({ payload: p, page: "overview", selectedDay: null });

@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { Key } from "../i18n";
 import { useStore, useT } from "../store";
+import { Sun } from "./Sun";
 
 const STEPS: Key[] = ["step1", "step2", "step3", "step4", "step5", "step6", "step7"];
 
@@ -63,16 +64,7 @@ export function Loading() {
 function SunSpinner() {
   return (
     <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden>
-      {/* SVG's own animations: they turn and pulse about the sun's centre in every browser */}
-      <g>
-        {Array.from({ length: 8 }, (_, i) => (
-          <rect key={i} x="19" y="2" width="2" height="6" rx="1" fill="#F2B705" transform={`rotate(${i * 45} 20 20)`} opacity={0.4 + (i % 2) * 0.6} />
-        ))}
-        <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="6s" repeatCount="indefinite" />
-      </g>
-      <circle cx="20" cy="20" r="7" fill="#F2B705">
-        <animate attributeName="r" values="6.5;8;6.5" dur="1.6s" repeatCount="indefinite" />
-      </circle>
+      <Sun cx={20} cy={20} r={7} rays={8} rayFrom={12} rayLength={6} rayWidth={2} turn={6} pulse={1.6} scale={[0.93, 1.14]} rayOpacity={(i) => 0.4 + (i % 2) * 0.6} />
     </svg>
   );
 }

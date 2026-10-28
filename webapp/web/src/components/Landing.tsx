@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CalendarClock, PlugZap, Receipt, ShieldCheck, Sparkles, Upload } from "lucide-react";
 import { start } from "../run";
 import { useStore, useT } from "../store";
+import { Sun } from "./Sun";
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const rise = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -84,17 +85,7 @@ function Illustration() {
           </linearGradient>
         </defs>
         <rect width="420" height="260" fill="url(#sky)" />
-        {/* the sun: SVG's own animations, which turn and pulse about the sun's centre in every browser (CSS and
-            framer-motion transform origins on SVG are not: the rays drifted off the sun) */}
-        <g>
-          {Array.from({ length: 12 }, (_, i) => (
-            <rect key={i} x="84" y="18" width="4" height="14" rx="2" fill="#F2B705" transform={`rotate(${i * 30} 86 64)`} />
-          ))}
-          <animateTransform attributeName="transform" type="rotate" from="0 86 64" to="360 86 64" dur="30s" repeatCount="indefinite" />
-        </g>
-        <circle cx="86" cy="64" r="22" fill="#F2B705">
-          <animate attributeName="r" values="21;24;21" dur="3s" repeatCount="indefinite" />
-        </circle>
+        <Sun cx={86} cy={64} r={22} rays={12} rayFrom={32} rayLength={14} rayWidth={4} turn={30} pulse={3} />
         {/* rays onto the panels */}
         <motion.path d="M110 80 L200 120" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />
         <motion.path d="M100 92 L180 140" stroke="#F2B705" strokeWidth="2.5" fill="none" {...flow} />

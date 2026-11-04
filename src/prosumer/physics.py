@@ -102,7 +102,7 @@ def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], comput
     `key`; a remembered frame takes the caller's `times` as its index (its name and freq may differ)."""
     if len(times) < MEMORY_MIN_TIMES:
         return compute()
-    ints = np.ascontiguousarray(times.asi8)  # type: ignore[attr-defined]
+    ints = np.ascontiguousarray(times.asi8)  # type: ignore[attr-defined, unused-ignore]  # stubs gained asi8 in 2026
     stamp = hashlib.blake2b(ints.tobytes(), digest_size=16).digest()
     full = (len(times), str(times.dtype), stamp, *key)  # the dtype carries the zone and the unit
     cache = _MEMORY[kind]

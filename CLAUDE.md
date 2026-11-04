@@ -14,15 +14,26 @@ look there for the history of anything below.
 
 ## Ground rules
 
-- **Private repo; plant data needs the teacher's permission.** The plant series came to the user through his
-  teacher, who is responsible for them; publishing needs only the teacher's permission (he is open to it, but
-  until he gives it explicitly — in writing — they stay private). Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba"); Cascavel coordinates rounded to
-  2 decimals (-24.83, -53.65). Never reintroduce names or exact coordinates. The name map exists only on the
-  Lactec machine (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here).
-- **Licence is the author's decision (updated 2026-10-09).** Lactec is involved ONLY if the user formally
-  ties the project to a Lactec project; otherwise licence and publication are the user's call (with the
-  teacher's permission for the plant data). There is still **no LICENSE file**: don't add one until the user
-  picks a licence (due before E6).
+- **Plant data is NOT in this repo (since 2026-11-04) and must never come back.** The plant series came to the
+  user through his teacher, who is responsible for them; publishing needs his explicit written permission. To
+  make the repo public, every per-hour plant file was removed from the WHOLE history with `git filter-repo`
+  (173 paths: `dados/usinas_horario.parquet`, every `*__usinas__*` / `horizonte_usina_*` forecast and pilot,
+  `Emb-redes__usinas.npz`, both `dias_exemplo_cascavel.png`); `.gitignore` now blocks them, so a Lactec
+  re-sync cannot re-add them. Kept on purpose: aggregate metrics, ranking figures, legacy metric CSVs, the
+  `.tflite` models, and the public Open-Meteo forecasts at the rounded sites. The full original history,
+  plant data included, is in the PRIVATE repo `JoaoCarlos134/prosumer-private` and in
+  `projects/prosumer-plant-data-backup/` (bundle + files) on the home machine. Tests and scripts that need
+  the plant files skip without them. Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba");
+  Cascavel coordinates rounded to 2 decimals (-24.83, -53.65); Curitiba's are the city's. Never reintroduce
+  names or exact coordinates. The name map exists only on the Lactec machine
+  (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here). **Every clone made before
+  2026-11-04 (the Lactec one) has the old history: re-clone it, never pull or push from it.**
+- **Licence: AGPL-3.0-only (decided 2026-11-04).** The path recorded on 19/10 (AGPL-3.0 + dual licensing,
+  product layer closed, an exception for `embedded` output) was followed; "-only" rather than "-or-later" so
+  the author, as sole copyright holder, keeps control of future terms for dual licensing. Rejected: MIT and
+  Apache-2.0 (would let anyone close a fork, which dual licensing needs to prevent). Still open from 19/10,
+  before PyPI: Lactec ownership (Lei 9.609 art. 4), the university's IP rules. Lactec is involved ONLY if
+  the user formally ties the project to a Lactec project.
 - **Audience (decided 2026-10-09): international core + Brazilian layer.** English code and main docs (power
   sector worldwide + research/dev community), plus a Brazilian economics module (ANEEL, bandeiras, tarifa
   branca, Lei 14.300) and a Portuguese guide. The user wants the option of a master's/doctorate abroad. The
@@ -156,8 +167,8 @@ still point at the old URL (it redirects; `git remote set-url origin https://git
 - **Before each commit**: `ruff check src tests`, `ruff format --check src tests`, mypy (all in the library
   env); the pre-commit hook runs them. On Windows, Python writes CRLF: the `mixed-line-ending` hook fixes it and
   fails the commit once, just add again. Commit messages end with the Co-Authored-By line.
-- **Licence**: the author's decision, not taken yet (no LICENSE file); publication (PyPI, public repo) waits
-  for it. Plant data stay private until the teacher's written permission.
+- **Licence**: AGPL-3.0-only (2026-11-04, see Ground rules). Plant data stay out of the repo until the
+  teacher's written permission.
 - At 90% of the plan's token use: stop, update "Where to continue" below, commit and push.
 
 ## The library today (2026-10-17)

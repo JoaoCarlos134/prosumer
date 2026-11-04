@@ -1,7 +1,7 @@
 name: CI
 
 # Roda so na biblioteca e no site (webapp/). O benchmark em experimentos/ nao entra: ele precisa dos dados das usinas,
-# que sao de terceiros (o arquivo esta no repositorio, que e privado, mas o CI nao o usa).
+# que sao de terceiros e nao estao no repositorio (removidos do historico em 04/11/2026); os testes que os usam pulam.
 on:
   push:
     branches: [main]

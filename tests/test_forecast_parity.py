@@ -35,8 +35,22 @@ from prosumer.forecast import LightGBM, rolling_forecast
 BENCH = Path(__file__).resolve().parents[1] / "experimentos" / "testes_previsao"
 SCRIPTS = BENCH / "scripts"
 pytestmark = pytest.mark.skipif(
-    not (BENCH / "dados" / "usinas_horario.parquet").exists(), reason="benchmark data missing"
+    not (BENCH / "dados" / "casas_horario.parquet").exists(), reason="benchmark data missing"
 )
+
+
+@pytest.fixture(autouse=True)
+def _needs_plants(request):  # type: ignore[no-untyped-def]
+    """Plant series are third-party, not in the public repo: their cases skip, the houses' (CC0) run."""
+    callspec = getattr(request.node, "callspec", None)
+    if (
+        callspec
+        and callspec.params.get("case") == "usinas"
+        and not (BENCH / "dados" / "usinas_horario.parquet").exists()
+    ):
+        pytest.skip("plant series not present (third-party data, not in the public repo)")
+
+
 QUICK = {("casas_prod", "A"), ("usinas", "C")}
 ALL = [
     *[("usinas", r) for r in ("A", "B", "C", "B-curto", "C-gfs")],

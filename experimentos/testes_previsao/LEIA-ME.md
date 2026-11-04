@@ -76,6 +76,10 @@ NeuralForecast não aceita covariáveis futuras, então não usaria a previsão 
 | **FV das casas** | `H*_Wh.csv` | só `Production(Wh)`, somado por hora |
 | **Consumo das casas** | `H*_Wh.csv` | só `Consumption(Wh)`, somado por hora |
 
+> **Desde 04/11/2026 os dados das usinas nao estao no repositorio** (`dados/usinas_horario.parquet` e todas
+> as previsoes e pilotos `*__usinas__*`): sao de terceiros e sem permissao de publicar. Os numeros agregados
+> abaixo continuam valendo; refazer o caso `usinas` exige os arquivos do repositorio privado `prosumer-private`.
+
 Tudo cabe em 5 MB: `dados/usinas_horario.parquet`, `casas_horario.parquet`,
 `previsao_tempo.parquet` (o arquivo de previsões do regime C) e, desde 07/10/2026,
 `clima_casas_horario.parquet` (clima medido das casas, de `scripts/09_clima_casas.py`; abre o regime B

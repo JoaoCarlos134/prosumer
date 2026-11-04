@@ -8,7 +8,9 @@ description = "Day-ahead forecasting of energy prosumers' generation and consump
 readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["version"]
-authors = [{ name = "Joao Carlos Jachenski Junior" }]
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "João Carlos Jachenski Junior" }]
 keywords = ["photovoltaic", "forecasting", "time series", "prosumer", "energy", "edge ai"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -16,6 +18,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering",
+  "Operating System :: OS Independent",
 ]
 # Deliberately lean core (PROPOSTA_BIBLIOTECA.md section 6): only what everyone uses.
 # Each foundation model is an isolated extra, with a pinned version.

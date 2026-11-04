@@ -155,9 +155,11 @@ The 20 houses are the public CC0 dataset of Khadem et al. (2024), "Comprehensive
 Profiles for Energy Community in Ireland", Scientific Data, doi:10.1038/s41597-024-03454-2 — cite it when
 you use `data.dingle_houses`. Open-Meteo data are CC BY 4.0, but its free API is for non-commercial use only.
 
-**Private repository.** The plant series came from third parties and are not cleared for publication.
-Owner names were replaced by the plant's city, and coordinates were rounded to ~1 km. Do not reintroduce
-any of this.
+**The two PV plants' series are not in this repository.** They came from third parties and are not cleared
+for publication, so they were removed from the whole history. The benchmark's scripts and its aggregate
+results (metrics, rankings, figures) for the plants stay, so the method can be read; the tests that
+recompute plant numbers skip without the data. Plants are named by city, and coordinates are rounded to
+~1 km.
 
 | Folder | What it is |
 |---|---|
@@ -171,3 +173,9 @@ any of this.
 
 The package was called `prossumidor` until 2026-10-09. To pick up the work with Claude Code, start with
 `CLAUDE.md`.
+
+## License
+
+[GNU AGPL-3.0-only](LICENSE). If you need other terms (for example, to ship it inside a closed product),
+contact the author. Third-party data and model weights keep their own licences; `Report.provenance` lists
+them for every analysis.

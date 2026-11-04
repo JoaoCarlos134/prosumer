@@ -42,3 +42,12 @@ experimentos/testes_previsao/dados/_cache/
 experimentos/testes_previsao/scripts/logs/
 /.claude/worktrees/
 /build/
+
+# Dados das usinas: de terceiros, sem permissao de publicar. Removidos de todo o historico em 04/11/2026
+# (copia completa no repositorio privado prosumer-private). Nunca reintroduzir; o exportador do Lactec
+# copia por cima, e estas linhas impedem que um `git add -A` os traga de volta.
+experimentos/testes_previsao/dados/usinas_horario.parquet
+experimentos/testes_previsao/resultados/**/*__usinas__*
+experimentos/testes_previsao/resultados/**/*__usinas.*
+experimentos/testes_previsao/resultados/**/horizonte_usina_*
+experimentos/testes_previsao/resultados*/figuras/dias_exemplo_cascavel.png

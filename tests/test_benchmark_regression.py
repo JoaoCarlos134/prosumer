@@ -29,10 +29,20 @@ BENCH = Path(__file__).resolve().parents[1] / "experimentos" / "testes_previsao"
 DATA, RES = BENCH / "dados", BENCH / "resultados"
 FORECASTS = RES / "previsoes"
 
-pytestmark = pytest.mark.skipif(
-    not (RES / "metricas.csv").exists() or not (DATA / "usinas_horario.parquet").exists(),
-    reason="benchmark data missing (it lives only in the private repository)",
-)
+pytestmark = pytest.mark.skipif(not (RES / "metricas.csv").exists(), reason="benchmark results missing")
+
+
+@pytest.fixture(autouse=True)
+def _needs_plants(request):  # type: ignore[no-untyped-def]
+    """Plant series are third-party and not in the public repo: their rows skip, the houses' (CC0) run."""
+    callspec = getattr(request.node, "callspec", None)
+    if (
+        callspec
+        and callspec.params.get("case") == "usinas"
+        and not (DATA / "usinas_horario.parquet").exists()
+    ):
+        pytest.skip("plant series not present (third-party data, not in the public repo)")
+
 
 # Frozen copy of comum.CASOS and 05_avalia.REF.
 CASES = {

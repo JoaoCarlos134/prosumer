@@ -19,6 +19,16 @@ import pytest
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "experimentos" / "testes_previsao" / "scripts"
 pytestmark = pytest.mark.skipif(not (SCRIPTS.parent / "dados").exists(), reason="benchmark data not present")
+# The plant series are third-party and not in the public repo: their cases skip, the houses' (CC0) still run.
+USINAS = SCRIPTS.parent / "dados" / "usinas_horario.parquet"
+
+
+@pytest.fixture(autouse=True)
+def _needs_plants(request):  # type: ignore[no-untyped-def]
+    callspec = getattr(request.node, "callspec", None)
+    params = callspec.params.values() if callspec else ()
+    if not USINAS.exists() and any(p in ("usinas", "Cascavel", "Curitiba") for p in params):
+        pytest.skip("plant series not present (third-party data, not in the public repo)")
 
 
 @pytest.fixture(scope="module")

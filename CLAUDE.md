@@ -22,7 +22,9 @@ look there for the history of anything below.
   re-sync cannot re-add them. Kept on purpose: aggregate metrics, ranking figures, legacy metric CSVs, the
   `.tflite` models, and the public Open-Meteo forecasts at the rounded sites. The full original history,
   plant data included, is in the PRIVATE repo `JoaoCarlos134/prosumer-private` and in
-  `projects/prosumer-plant-data-backup/` (bundle + files) on the home machine. Tests and scripts that need
+  `projects/prosumer-plant-data-backup/` (bundle + files) on the home machine. GitHub kept the rewritten-away commits
+  reachable by SHA, so the GitHub repo itself was recreated the same day: the old one is `prosumer-old`
+  (private; never make it public), the current `prosumer` has only the clean history. Tests and scripts that need
   the plant files skip without them. Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba");
   Cascavel coordinates rounded to 2 decimals (-24.83, -53.65); Curitiba's are the city's. Never reintroduce
   names or exact coordinates. The name map exists only on the Lactec machine

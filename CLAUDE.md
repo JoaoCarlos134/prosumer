@@ -2,7 +2,8 @@
 
 The `prosumer` library (`src/prosumer/`: day-ahead forecasting, diagnostics and economics of PV generation and
 household consumption) and the research around it: the TCC, the forecasting benchmark, the future master's.
-GitHub `JoaoCarlos134/prosumer` (private; was `prossumidor` until 2026-10-09/11, the old URL redirects). The
+GitHub `JoaoCarlos134/prosumer` (PUBLIC since 2026-11-04, AGPL-3.0-only; the pre-rewrite repo is the private
+`prosumer-old`). The
 user (João Carlos Jachenski Junior) works in English with Claude. The LIBRARY (`src/prosumer/`, `tests/`,
 README, pyproject, `docs/library/`) is in English; project docs (`docs/projeto`, `docs/proposta`), benchmark
 scripts and their comments stay in Portuguese (code comments without accents): keep that convention there.

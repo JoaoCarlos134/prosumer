@@ -1,5 +1,9 @@
 # prosumer
 
+[![CI](https://github.com/JoaoCarlos134/prosumer/actions/workflows/ci.yml/badge.svg)](https://github.com/JoaoCarlos134/prosumer/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+
 Day-ahead forecasting of energy prosumers' generation and consumption (PV plants, houses with PV), from
 meter data to a complete, honest analysis. It is the basis of João Carlos Jachenski Junior's undergraduate
 thesis (TCC), whose app is a thin layer over `prosumer.analyze`, and grew out of the Edge AI R&D project at
@@ -10,6 +14,13 @@ on real plants and houses (`experimentos/testes_previsao/`), with a pilot and a 
 the library, and the library re-does that benchmark's forecasts exactly (checked model by model). It never
 picks "the best model" for you (the benchmark showed that choice is unstable); the output is the median of
 the forecasts, scored against a fair reference, at several resolutions, with notes in plain language.
+
+<p align="center"><img src="experimentos/testes_previsao/resultados/figuras/regimes_usinas.png" alt="Benchmark result: skill of each model on the two PV plants with history only, with the real weather forecast, and with perfect weather" width="560"></p>
+
+*One result of the benchmark, on the two PV plants: the real day-ahead weather forecast (blue) closes 75% of
+the gap between history only (open circle) and perfect weather of the day (black) for the median model.
+Skill is over clear-sky persistence. Like the rest of the benchmark, its labels are in Portuguese; the write-up is
+`experimentos/testes_previsao/LEIA-ME.md`.*
 
 **Status: version 0.1 (step E2 of the thesis plan).** CPU only by design: the best model of every benchmark
 test runs on a CPU.

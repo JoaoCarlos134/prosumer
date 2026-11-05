@@ -9,6 +9,10 @@ meter data to a complete, honest analysis. It is the basis of João Carlos Jache
 thesis (TCC), whose app is a thin layer over `prosumer.analyze`, and grew out of the Edge AI R&D project at
 Lactec.
 
+![The prosumer app's Overview page: next-7-days generation and consumption, forecast skill, expected bill, PV savings and the site](docs/screenshots/app-overview.png)
+
+*The app (`webapp/`, a thin layer over the library) on its demo: house H1 of the public Dingle dataset (CC0).*
+
 What makes it different from a forecasting toolkit: every default was decided by a benchmark of 57 models
 on real plants and houses (`experimentos/testes_previsao/`), with a pilot and a gate before anything entered
 the library, and the library re-does that benchmark's forecasts exactly (checked model by model). It never

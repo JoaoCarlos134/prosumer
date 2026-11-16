@@ -55,6 +55,16 @@ def _weather(first_day: str) -> Any:
     return fetch
 
 
+def _past_weather(lat: float, lon: float, *, start: Any, end: Any, tz: str) -> pd.DataFrame:
+    """A fake `open_meteo.fetch_previous_runs`: the day-ahead forecasts of `start`..`end`, clear sky x 0.6."""
+    ds = pd.date_range(
+        pd.Timestamp(start, tz=tz), pd.Timestamp(end, tz=tz) + pd.Timedelta(hours=23), freq="h"
+    )
+    ghi = physics.clear_sky_ghi(ds, lat, lon) * 0.6
+    w = pd.concat([pd.DataFrame({"model": m, "ds": ds, "ghi": ghi}) for m in ("a", "b")], ignore_index=True)
+    return attach(w, Provenance(source="fake archive", license="CC-BY-4.0"))
+
+
 def _services(first_day: str = "2024-03-01") -> app.Services:
     def no_network(*a: Any, **k: Any) -> Any:
         raise AssertionError("the network was called")
@@ -63,6 +73,7 @@ def _services(first_day: str = "2024-03-01") -> app.Services:
         geocode=no_network,
         timezone_at=no_network,
         weather=_weather(first_day),
+        past_weather=_past_weather,
         tariff_book=partial(brazil.TariffBook.from_aneel, get=from_fixture()),
     )
 
@@ -115,7 +126,9 @@ def test_a_misspelt_connection_is_a_message_before_any_download() -> None:
     def no_download(*a: Any, **k: Any) -> Any:
         raise AssertionError("ANEEL was called")
 
-    svc = app.Services(geocode=None, timezone_at=None, weather=None, tariff_book=no_download)  # type: ignore[arg-type]
+    svc = app.Services(
+        geocode=None, timezone_at=None, weather=None, past_weather=None, tariff_book=no_download
+    )  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="connection must be one of"):
         app.run({**SITE, "price": price}, files, services=svc)
     r = app.run(
@@ -227,6 +240,7 @@ def test_address_is_geocoded_and_rounded() -> None:
         geocode=geocode,
         timezone_at=lambda lat, lon: TZ,
         weather=_weather("2024-03-01"),
+        past_weather=_past_weather,
         tariff_book=_services().tariff_book,
     )
     files = {"consumption": (_consumption_csv("2024-01-01", 42), "m.csv")}
@@ -369,3 +383,32 @@ def test_peek_says_how_a_file_is_read_before_any_run() -> None:
         app.peek(b"a;b\n1;2\n", "x.csv", "consumption")
     with pytest.raises(ValueError, match="keyed by"):
         app.peek(data, "conta.csv", "weather")
+
+
+def test_the_last_days_next_to_what_the_method_would_have_said() -> None:
+    """2026-11-16: `Result.past`, the last 7 complete days forecast as the outlook would have the day before
+    (the archived weather for PV), next to what was measured; offline it still runs, seasonal, with a note."""
+    files = {
+        "generation": (_pv_csv("2024-01-01", 60), "inverter.csv"),
+        "consumption": (_consumption_csv("2024-01-01", 60), "meter.csv"),
+    }
+    r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=_services())
+    assert set(r.past) == {"generation", "consumption"}
+    g = r.past["generation"].daily
+    assert len(g) == app.PAST_DAYS and g["date"].max() == pd.Timestamp("2024-02-29")
+    assert (g["source"] == "weather").all() and g["actual"].notna().all()
+    # the roof is the outlook's, not fitted again
+    roof = r.outlooks["generation"].method["series"]
+    h = r.past["generation"].hourly
+    assert set(h["unique_id"]) == set(roof) and {"y", "y_hat", "low", "high"} <= set(h.columns)
+    d = json.loads(r.to_json(lang="pt"))
+    assert d["past"]["generation"]["daily"][0]["actual"] is not None
+    assert any("errou o total do dia" in n for n in d["past"]["generation"]["notes"])
+
+    def offline(*a: Any, **k: Any) -> Any:
+        raise OSError("no connection")
+
+    svc = app.Services(**{**_services().__dict__, "past_weather": offline})
+    r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=svc)
+    assert (r.past["generation"].daily["source"] == "seasonal").all()
+    assert any("could not be downloaded" in str(line) for line in r.log)

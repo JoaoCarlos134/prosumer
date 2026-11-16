@@ -1,6 +1,6 @@
 // Small computations several pages share (sums over the series of a file, months, rolling means).
 import { dayKey } from "./format";
-import type { HistoryDay, Outlook, OutlookDay, Quantity, Result } from "./types";
+import type { HistoryDay, Outlook, OutlookDay, PastOutlook, Quantity, Result } from "./types";
 
 export const QUANTITIES: Quantity[] = ["generation", "consumption"];
 
@@ -45,6 +45,59 @@ export function daily(o: Outlook | undefined): DayTotal[] {
     }
   }
   return [...by.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export interface PastHour {
+  ds: string;
+  y: number | null; // measured
+  f: number | null; // forecast made the day before
+  low: number | null;
+  high: number | null;
+}
+
+export interface PastDay {
+  date: string;
+  forecast: number;
+  low: number;
+  high: number;
+  actual: number | null; // null when an hour of the day was not measured
+  error: number | null;
+  source: string;
+}
+
+/** `Result.past` of a file, summed over its series, by hour. */
+export function pastHourly(o: PastOutlook | undefined): PastHour[] {
+  if (!o) return [];
+  const by = new Map<string, PastHour>();
+  for (const h of o.hourly) {
+    const x = by.get(h.ds);
+    if (x) {
+      x.y = add(x.y, h.y);
+      x.f = add(x.f, h.y_hat);
+      x.low = add(x.low, h.low);
+      x.high = add(x.high, h.high);
+    } else by.set(h.ds, { ds: h.ds, y: h.y, f: h.y_hat, low: h.low, high: h.high });
+  }
+  return [...by.values()].sort((a, b) => a.ds.localeCompare(b.ds));
+}
+
+/** `Result.past` of a file, summed over its series, by day; a day with an unmeasured series has no actual. */
+export function pastDaily(o: PastOutlook | undefined): PastDay[] {
+  if (!o) return [];
+  const by = new Map<string, PastDay>();
+  for (const d of o.daily) {
+    const k = dayKey(d.date);
+    const x = by.get(k);
+    if (x) {
+      x.forecast += d.total ?? 0;
+      x.low += d.low ?? 0;
+      x.high += d.high ?? 0;
+      x.actual = x.actual == null || d.actual == null ? null : x.actual + d.actual;
+    } else by.set(k, { date: k, forecast: d.total ?? 0, low: d.low ?? 0, high: d.high ?? 0, actual: d.actual, error: null, source: d.source });
+  }
+  const out = [...by.values()].sort((a, b) => a.date.localeCompare(b.date));
+  for (const d of out) d.error = d.actual == null ? null : d.forecast - d.actual;
+  return out;
 }
 
 export interface HourTotal {

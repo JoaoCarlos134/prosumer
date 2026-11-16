@@ -72,6 +72,7 @@ assert p["hours"] == 72 and "Energy (kWh)" in p["how"]
 | `site` | `latitude`, `longitude` (rounded), `timezone`, `address_found` |
 | `read` | per file: `file`, `how` (what the reader recognised), `hours`, `start`, `end`, `measured`, `series` |
 | `outlooks` | per file: `Outlook.to_dict()` (`hourly`, `daily` with the confidence labels, `method`, `notes`) |
+| `past` | per file: the last 7 complete days as the outlook's method would have forecast each one at 00:00 of that day, next to what was measured (`outlook.look_back`: `hourly` with `y`, `daily` with `actual` and `error`) |
 | `windows` | the best block of `load_hours` of each day |
 | `windows_by_cost` | with a price: the cheapest block of each day for `load_kw`, with its expected cost |
 | `pricing` | one line describing the tariff |

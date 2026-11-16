@@ -4,7 +4,7 @@ import { Home, Sun } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { Chart } from "../components/Chart";
 import { Empty, Visual } from "../components/Visual";
-import { daily, hourly, present, type DayTotal } from "../derive";
+import { daily, hourly, pastDaily, pastHourly, present, type DayTotal, type PastHour } from "../derive";
 import { compass, dateTime, dayKey, dayLabel, money, num, time, wall } from "../format";
 import { code } from "../i18n";
 import { useStore, useT } from "../store";
@@ -216,6 +216,105 @@ export function NextDays({ payload }: { payload: Payload }) {
     };
   }, [gm, lang, t]);
 
+  // ------------------------------------------------------------ the last days: forecast the day before vs measured
+  const pastQs = QUANTITIES_ORDER.filter((q) => r.past?.[q]?.hourly.length);
+  const pastMain: Quantity | undefined = pastQs.includes(main) ? main : pastQs[0];
+  const pastHours = useMemo(() => Object.fromEntries(pastQs.map((q) => [q, pastHourly(r.past?.[q])])) as Record<Quantity, PastHour[]>, [r, pastQs.join()]);
+  const pastDays = useMemo(() => (pastMain ? pastDaily(r.past?.[pastMain]) : []), [r, pastMain]);
+  const pastN = pastDays.length;
+  const misses = pastDays.filter((d) => d.error != null).map((d) => Math.abs(d.error as number));
+  const pastMeanError = misses.length ? misses.reduce((a, b) => a + b, 0) / misses.length : null;
+  const pastSeasonalOnly = pastMain === "generation" && pastDays.every((d) => d.source === "seasonal");
+
+  const pastHourlyOption = useMemo<EChartsOption>(() => {
+    const series: any[] = [];
+    for (const q of pastQs) {
+      const h = pastHours[q];
+      series.push(
+        { id: `plo-${q}`, type: "line", stack: `pband-${q}`, symbol: "none", lineStyle: { opacity: 0 }, tooltip: { show: false }, silent: true, data: h.map((x) => [wall(x.ds), x.low]) },
+        {
+          id: `pband-${q}`,
+          name: `${t(q)} · ${t("range")}`,
+          type: "line",
+          stack: `pband-${q}`,
+          symbol: "none",
+          lineStyle: { opacity: 0 },
+          areaStyle: { color: alpha(QCOLOR[q], 0.14) },
+          tooltip: { show: false },
+          silent: true,
+          data: h.map((x) => [wall(x.ds), x.high == null || x.low == null ? null : x.high - x.low]),
+        },
+        {
+          id: `pf-${q}`,
+          name: `${t(q)} · ${t("forecastBefore")}`,
+          type: "line",
+          symbol: "none",
+          smooth: 0.25,
+          lineStyle: { width: 2, type: "dashed", color: QCOLOR[q] },
+          itemStyle: { color: QCOLOR[q] },
+          data: h.map((x) => [wall(x.ds), x.f]),
+        },
+        {
+          id: `py-${q}`,
+          name: `${t(q)} · ${t("measured")}`,
+          type: "line",
+          symbol: "none",
+          lineStyle: { width: 1.6, color: q === pastMain ? C.measured : alpha(C.measured, 0.55) },
+          itemStyle: { color: C.measured },
+          data: h.map((x) => [wall(x.ds), x.y]),
+        },
+      );
+    }
+    return {
+      ...BASE,
+      grid: { ...BASE.grid, bottom: 44 },
+      legend: { ...LEGEND, data: pastQs.flatMap((q) => [`${t(q)} · ${t("forecastBefore")}`, `${t(q)} · ${t("measured")}`]) },
+      tooltip: {
+        trigger: "axis",
+        formatter: (ps: any) => {
+          const x = ps[0]?.value?.[0];
+          const iso = new Date(x).toISOString();
+          const rows = pastQs
+            .map((q) => {
+              const h = pastHours[q].find((y) => wall(y.ds) === x);
+              if (!h) return "";
+              const err = h.f == null || h.y == null ? "" : ` · ${t("error")} ${num(lang, h.f - h.y, 2)}`;
+              return `<div><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${QCOLOR[q]};margin-right:6px"></span>${t(q)}: ${t("forecast")} <b>${num(lang, h.f, 2)}</b> · ${t("measured")} <b>${num(lang, h.y, 2)}</b> kWh${err}</div>`;
+            })
+            .join("");
+          return `<b>${dateTime(lang, iso)}</b>${rows}`;
+        },
+      },
+      xAxis: { type: "time" },
+      yAxis: { type: "value", name: "kWh" },
+      dataZoom: [{ type: "inside" }, { type: "slider", height: 18, bottom: 8 }],
+      series,
+    };
+  }, [pastQs.join(), pastHours, pastMain, lang, t]);
+
+  const pastDailyOption = useMemo<EChartsOption>(() => {
+    const color = pastMain ? QCOLOR[pastMain] : C.forecast;
+    return {
+      ...BASE,
+      legend: { ...LEGEND, data: [t("forecastBefore"), t("measured")] },
+      tooltip: {
+        trigger: "axis",
+        formatter: (ps: any) => {
+          const d = pastDays[ps[0]?.dataIndex ?? 0];
+          if (!d) return "";
+          const err = d.error == null ? "" : `<br/>${t("error")}: <b>${num(lang, d.error, 1)}</b> kWh`;
+          return `<b>${dayLabel(lang, d.date)}</b><br/>${t("forecastBefore")}: ${num(lang, d.forecast, 1)} kWh <span style="color:#888">(${num(lang, d.low, 1)}–${num(lang, d.high, 1)})</span><br/>${t("measured")}: ${num(lang, d.actual, 1)} kWh${err}`;
+        },
+      },
+      xAxis: { type: "category", data: pastDays.map((d) => dayLabel(lang, d.date)) },
+      yAxis: { type: "value", name: "kWh" },
+      series: [
+        { id: "pd-f", name: t("forecastBefore"), type: "bar", barGap: "10%", itemStyle: { color: alpha(color, 0.45), borderColor: color, borderWidth: 1, borderRadius: [4, 4, 0, 0] }, data: pastDays.map((d) => d.forecast) },
+        { id: "pd-y", name: t("measured"), type: "bar", itemStyle: { color: C.measured, borderRadius: [4, 4, 0, 0] }, data: pastDays.map((d) => d.actual) },
+      ],
+    };
+  }, [pastDays, pastMain, lang, t]);
+
   const notes = qs.flatMap((q) => r.outlooks[q]?.notes ?? []);
   const plants = Object.entries(gm?.series ?? {});
 
@@ -245,6 +344,46 @@ export function NextDays({ payload }: { payload: Payload }) {
       >
         {(big) => <Chart option={hourlyOption} height={big ? "calc(100vh - 210px)" : 330} />}
       </Visual>
+
+      {pastQs.length > 0 && (
+        <>
+          <Visual
+            title={t("v_pastHourly", { n: pastN })}
+            subtitle={pastSeasonalOnly ? t("pastSeasonal") : t("pastSub")}
+            className="col-span-12 lg:col-span-8"
+            data={{
+              columns: [
+                { key: "ds", label: t("hour"), format: (v: string) => dateTime(lang, v) },
+                ...pastQs.flatMap((q) => [
+                  { key: `${q}_f`, label: `${t(q)} · ${t("forecastBefore")}` },
+                  { key: `${q}_y`, label: `${t(q)} · ${t("measured")}` },
+                ]),
+              ],
+              rows: pastRows(pastQs, pastHours),
+              file: "last_days_hourly",
+            }}
+          >
+            {(big) => <Chart option={pastHourlyOption} height={big ? "calc(100vh - 210px)" : 300} />}
+          </Visual>
+          <Visual
+            title={t("v_pastDaily", { n: pastN })}
+            subtitle={pastMeanError == null ? undefined : t("meanError", { e: num(lang, pastMeanError, 1) })}
+            className="col-span-12 lg:col-span-4"
+            data={{
+              columns: [
+                { key: "date", label: t("date"), format: (v: string) => dayLabel(lang, v) },
+                { key: "forecast", label: t("forecastBefore"), format: (v: number) => num(lang, v, 2) },
+                { key: "actual", label: t("measured"), format: (v: number) => num(lang, v, 2) },
+                { key: "error", label: t("error"), format: (v: number) => num(lang, v, 2) },
+              ],
+              rows: pastDays,
+              file: "last_days_daily",
+            }}
+          >
+            {(big) => <Chart option={pastDailyOption} height={big ? "calc(100vh - 210px)" : 300} />}
+          </Visual>
+        </>
+      )}
 
       <div className="col-span-12 grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-2">
         {dates.map((d, i) => {
@@ -354,6 +493,20 @@ export function NextDays({ payload }: { payload: Payload }) {
       )}
     </PageGrid>
   );
+}
+
+const QUANTITIES_ORDER: Quantity[] = ["generation", "consumption"];
+
+function pastRows(qs: Quantity[], hours: Record<Quantity, PastHour[]>) {
+  const by = new Map<string, Record<string, unknown>>();
+  for (const q of qs)
+    for (const h of hours[q]) {
+      const row = by.get(h.ds) ?? { ds: h.ds };
+      row[`${q}_f`] = h.f == null ? null : +h.f.toFixed(3);
+      row[`${q}_y`] = h.y == null ? null : +h.y.toFixed(3);
+      by.set(h.ds, row);
+    }
+  return [...by.values()].sort((a, b) => String(a.ds).localeCompare(String(b.ds)));
 }
 
 function hourRows(qs: Quantity[], hours: Record<Quantity, ReturnType<typeof hourly>>, selected: string | null) {

@@ -2,6 +2,18 @@
 
 ## Unreleased (after 0.1.0)
 
+**The last days next to the next ones (asked by the user, 16/11)**
+
+- `outlook.look_back(series, days=7, site=, weather=)`: each of the last complete days forecast as
+  `forecast_ahead` would have at 00:00 of that day (only the data before it; for PV the archived day-ahead
+  weather of `io.open_meteo.fetch_previous_runs`), next to what was measured (`hourly.y`, `daily.actual`,
+  `daily.error`). The window of error of day 1 of the outlook, shown beside it. Tests in `test_outlook`
+  (equal to `forecast_ahead` on the cut data; never sees the day it forecasts; partial or no weather says so).
+- `app.run` returns it as `Result.past` (`to_dict()["past"]`); `Services.past_weather`; offline, the past days
+  are the seasonal expectation with a log line. The site's Next days page plots it (hourly and per day).
+- `physics` memory: a span that is a contiguous run of a remembered one is served as its slice (bit-identical:
+  each row depends on its own instant only). `look_back` on 7 years of hourly PV: 7.1 s -> 2.3 s.
+
 **Found by the site (review of 23/10), fixed 26/10**
 
 - The consumption outlook's daily `low`/`high` were the sums of the hourly 4-week min/max, as if every hour hit

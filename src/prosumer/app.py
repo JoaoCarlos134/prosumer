@@ -7,7 +7,9 @@ JSON-ready. The steps, each one library call:
     1. where is it                  -> io.geocode.geocode / round_site / timezone_at (or the typed site)
     2. read each file               -> io.read_energy (layout recognised; energy by name and unit)
     3. the weather of the next days -> io.open_meteo.fetch_forecast (generation only)
-    4. the next days                -> forecast_ahead, for each file
+    4. the next days                -> forecast_ahead, for each file; and the last days as the same method
+                                       would have forecast them, next to what happened -> look_back (the
+                                       archived day-ahead weather: io.open_meteo.fetch_previous_runs)
     5. when to run a heavy load     -> best_windows (and economics.windows_by_cost with a price)
     6. the analysis of the data     -> analyze (quality, clock, diagnostics, forecast check; with a price and
                                        the consumption, the bill with and without the PV)
@@ -81,7 +83,7 @@ from .i18n import Note, translate
 from .i18n import replace as replace_text
 from .io import geocode as geo
 from .io import open_meteo, read_energy
-from .outlook import MAX_DAYS, WEEKS, Outlook, best_windows, forecast_ahead
+from .outlook import MAX_DAYS, WEEKS, Outlook, best_windows, forecast_ahead, look_back
 from .provenance import Provenance, of
 
 QUANTITIES: tuple[Quantity, ...] = ("generation", "consumption")
@@ -166,6 +168,7 @@ class Services:
     geocode: Callable[..., pd.DataFrame] = geo.geocode
     timezone_at: Callable[..., str] = geo.timezone_at
     weather: Callable[..., pd.DataFrame] = open_meteo.fetch_forecast
+    past_weather: Callable[..., pd.DataFrame] = open_meteo.fetch_previous_runs
     tariff_book: Callable[..., brazil.TariffBook] = brazil.TariffBook.from_aneel
 
 
@@ -282,6 +285,9 @@ class Result:
     # "check" (`Report.hourly`: the test hours, measured and forecast), "performance" (`Diagnosis.index`: the
     # clear days of a PV file, energy, expected and their ratio)
     charts: dict[str, pd.DataFrame] = field(default_factory=dict)
+    # per file, the last `PAST_DAYS` complete days as the outlook's method would have forecast each one the
+    # day before, next to what was measured (`outlook.look_back`): the window of error of the next days
+    past: dict[str, Outlook] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     log: list[str] = field(default_factory=list)
     credits: list[Provenance] = field(default_factory=list)
@@ -294,6 +300,7 @@ class Result:
             "site": self.site,
             "read": self.read,
             "outlooks": {k: o.to_dict(lang=None) for k, o in self.outlooks.items()},
+            "past": {k: o.to_dict(lang=None) for k, o in self.past.items()},
             "windows": _records(self.windows),
             "windows_by_cost": None if self.windows_by_cost is None else _records(self.windows_by_cost),
             "pricing": self.pricing,
@@ -430,6 +437,7 @@ def run(
     }
     outlooks = {q: replace(o, notes=[_for_people(n) for n in o.notes]) for q, o in outlooks.items()}
     main = "generation" if "generation" in outlooks else "consumption"
+    past = _past(series, outlooks, site, tz, svc, req, log)
 
     # 5. When to run a heavy load: the best block of each day (most sun, or least use without PV).
     windows = best_windows(outlooks[main], req.load_hours)
@@ -495,6 +503,7 @@ def run(
         windows_by_cost=by_cost,
         pricing=None if pricing is None else pricing.describe(),
         charts=charts,
+        past=past,
         notes=notes,
         log=log,
         credits=credits,
@@ -547,6 +556,51 @@ def peek(
     }
     result: dict[str, Any] = _json(out)
     return result if lang is None else cast(dict[str, Any], translate(result, lang))
+
+
+PAST_DAYS = 7  # the days `run` checks backwards (`Result.past`)
+
+
+def _past(
+    series: Mapping[str, EnergySeries],
+    outlooks: Mapping[str, Outlook],
+    site: tuple[float, float],
+    tz: str,
+    svc: Services,
+    req: Request,
+    log: list[str],
+) -> dict[str, Outlook]:
+    """`look_back` of each file over its last `PAST_DAYS` complete days, with the roof the outlook used. The
+    archived weather is optional: offline, the past days are the seasonal expectation and a note says so; a
+    file too short to check is left out with a log line."""
+    out: dict[str, Outlook] = {}
+    for q, s in series.items():
+        kw: dict[str, Any] = {}
+        weather = None
+        if q == "generation":
+            roof = outlooks[q].method.get("series", {})
+            kw["tilt"] = {uid: m["tilt"] for uid, m in roof.items()}
+            kw["azimuth"] = {uid: m["azimuth"] for uid, m in roof.items()}
+            last = s.frame.loc[s.frame["valid"], "ds"].max()
+            end = (last + pd.Timedelta(hours=1)).tz_convert(tz).tz_localize(None).normalize()
+            try:
+                weather = svc.past_weather(
+                    *site, start=end - pd.Timedelta(days=PAST_DAYS), end=end - pd.Timedelta(days=1), tz=tz
+                )
+            except (OSError, RuntimeError, ValueError, KeyError) as e:
+                log.append(
+                    Note(
+                        "The archived weather forecasts of the last days could not be downloaded ({error}).",
+                        error=e,
+                    )
+                )
+        try:
+            o = look_back(s, days=PAST_DAYS, site=site, weather=weather, kwp=req.kwp, weeks=req.weeks, **kw)
+        except ValueError as e:
+            log.append(Note("{file}: the last days were not checked ({error}).", file=_FILE_NAME[q], error=e))
+            continue
+        out[q] = replace(o, notes=[_for_people(n) for n in o.notes])
+    return out
 
 
 def _first_part(notes: str) -> str:

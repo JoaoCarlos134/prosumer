@@ -99,7 +99,11 @@ _T = TypeVar("_T", np.ndarray, pd.DataFrame)
 
 def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], compute: Callable[[], _T]) -> _T:
     """`compute()`, or a copy of its remembered result for the same `times` (every instant and the zone) and
-    `key`; a remembered frame takes the caller's `times` as its index (its name and freq may differ)."""
+    `key`; a remembered frame takes the caller's `times` as its index (its name and freq may differ).
+
+    A span that is a contiguous run of a remembered one (the same data cut a few days earlier, as
+    `outlook.look_back` asks seven times) is served as that slice: every row is computed from its own instant
+    alone, so the slice is bit-identical to computing it."""
     if len(times) < MEMORY_MIN_TIMES:
         return compute()
     ints = np.ascontiguousarray(times.asi8)  # type: ignore[attr-defined, unused-ignore]  # stubs gained asi8 in 2026
@@ -110,13 +114,23 @@ def _remembered(kind: str, times: pd.DatetimeIndex, key: tuple[Any, ...], comput
         hit = cache.get(full)
         if hit is not None:
             cache.move_to_end(full)
-            out = hit.copy()
+            out = hit[1].copy()
             if isinstance(out, pd.DataFrame):
                 out.index = times
             return out
+        for k, (stored, value) in reversed(cache.items()):
+            if k[1] != full[1] or k[3:] != full[3:] or len(stored) < len(ints):
+                continue
+            i = int(np.searchsorted(stored, ints[0]))
+            if i + len(ints) <= len(stored) and np.array_equal(stored[i : i + len(ints)], ints):
+                cache.move_to_end(k)
+                out = value[i : i + len(ints)].copy()
+                if isinstance(out, pd.DataFrame):
+                    out.index = times
+                return out
     out = compute()
     with _MEMORY_LOCK:
-        cache[full] = out.copy()
+        cache[full] = (ints, out.copy())
         while len(cache) > MEMORY:
             cache.popitem(last=False)
     return out

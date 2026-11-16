@@ -353,3 +353,80 @@ def test_a_15_minute_logger_is_summed_into_hours() -> None:
     o1 = outlook.forecast_ahead(_series(f), days=3, site=SITE, tilt=15, azimuth=20)
     pd.testing.assert_frame_equal(o15.daily, o1.daily)
     assert any("steps of 15min: summed into hours" in n for n in o15.notes)
+
+
+# ---------------------------------------------------------------------- look_back (2026-11-16)
+def _past_weather(days: int, kc: float = 0.7) -> pd.DataFrame:
+    """Archived day-ahead forecasts (no `issued`) of the last `days` days of `_plant` (ends 2023-12-31)."""
+    hours = pd.date_range(
+        pd.Timestamp("2024-01-01", tz=TZ) - pd.Timedelta(days=days), periods=days * 24, freq="h"
+    )
+    ghi = physics.clear_sky_ghi(hours, *SITE) * kc
+    return pd.concat(
+        [pd.DataFrame({"model": m, "ds": hours, "ghi": ghi}) for m in ("a", "b")], ignore_index=True
+    )
+
+
+def test_look_back_is_the_outlook_issued_the_day_before() -> None:
+    s = _series(_plant(0.8))
+    w = _past_weather(3)
+    o = outlook.look_back(s, days=3, site=SITE, weather=w, tilt=15, azimuth=20)
+    assert o.daily["date"].tolist() == list(pd.date_range("2023-12-29", periods=3, freq="D"))
+    assert (o.daily["lead_day"] == 1).all() and (o.daily["source"] == "weather").all()
+    # each day equals forecast_ahead run at 00:00 of that day with only the data before it
+    day = pd.Timestamp("2023-12-30", tz=TZ)
+    cut = EnergySeries.from_dataframe(
+        s.frame[s.frame["ds"] < day], unit="kWh", quantity="generation", tz=TZ, freq="h"
+    )
+    wd = w[(w["ds"] >= day) & (w["ds"] < day + pd.Timedelta(days=1))]
+    one = outlook.forecast_ahead(cut, days=1, site=SITE, weather=wd, start=day, tilt=15, azimuth=20)
+    got = o.hourly[o.hourly["ds"].dt.normalize() == day]
+    np.testing.assert_allclose(got["y_hat"].to_numpy(), one.hourly["y_hat"].to_numpy())
+    # what happened is next to it, and the error is total - actual
+    truth = s.frame[(s.frame["ds"] >= day) & (s.frame["ds"] < day + pd.Timedelta(days=1))]["y"].sum()
+    row = o.daily[o.daily["date"] == day.tz_localize(None)].iloc[0]
+    assert row["actual"] == pytest.approx(truth) and row["error"] == pytest.approx(row["total"] - truth)
+    assert any("missed the day's total" in n for n in o.notes)
+
+
+def test_look_back_never_sees_the_day_it_forecasts() -> None:
+    """Changing what happened on the checked days changes `actual`, never the forecast of those days."""
+    s = _series(_plant(0.8))
+    f = s.frame.copy()
+    late = f["ds"] >= pd.Timestamp("2023-12-29", tz=TZ)
+    f.loc[late, "y"] = f.loc[late, "y"] * 0.1
+    s2 = EnergySeries.from_dataframe(f, unit="kWh", quantity="generation", tz=TZ, freq="h")
+    a = outlook.look_back(s, days=3, site=SITE, tilt=15, azimuth=20)
+    b = outlook.look_back(s2, days=3, site=SITE, tilt=15, azimuth=20)
+    # day 1 sees none of the change; the later days see the earlier changed days, as a real day would
+    np.testing.assert_allclose(a.daily["total"].iloc[0], b.daily["total"].iloc[0])
+    assert b.daily["actual"].iloc[0] == pytest.approx(0.1 * a.daily["actual"].iloc[0])
+
+
+def test_look_back_without_or_with_partial_weather_says_so() -> None:
+    s = _series(_plant(0.8))
+    o = outlook.look_back(s, days=3, site=SITE, tilt=15, azimuth=20)
+    assert (o.daily["source"] == "seasonal").all()
+    assert any("without the weather forecasts" in n for n in o.notes)
+    o = outlook.look_back(s, days=3, site=SITE, weather=_past_weather(1), tilt=15, azimuth=20)
+    assert o.daily["source"].tolist() == ["seasonal", "seasonal", "weather"]
+    assert any("2 of the 3 past days had no archived weather" in n for n in o.notes)
+    o = outlook.look_back(s, days=3, site=SITE)  # roof fitted once when not given
+    assert len(o.daily) == 3
+    with pytest.raises(ValueError, match="site"):
+        outlook.look_back(s, days=3)
+    with pytest.raises(ValueError, match="Too little data"):
+        outlook.look_back(_series(_plant(0.8, days=20)), days=7, site=SITE)
+
+
+def test_look_back_consumption_and_an_unmeasured_hour() -> None:
+    idx = pd.date_range("2020-08-10", periods=6 * 7 * 24, freq="h", tz="Europe/Dublin")
+    y = 0.3 + 0.5 * ((idx.hour >= 18) & (idx.hour < 21))
+    f = pd.DataFrame({"unique_id": "h", "ds": idx, "y": y})
+    f.loc[f.index[-5], "y"] = np.nan  # the last day has a gap: its actual is unknown, not a smaller number
+    s = EnergySeries.from_dataframe(f, unit="kWh", quantity="consumption", tz="Europe/Dublin", freq="h")
+    o = outlook.look_back(s, days=7)
+    assert len(o.daily) == 7 and (o.daily["source"] == "profile").all()
+    assert np.isnan(o.daily["actual"].iloc[-1]) and np.isnan(o.daily["error"].iloc[-1])
+    np.testing.assert_allclose(o.daily["error"].iloc[:-1], 0.0, atol=1e-9)  # a perfectly regular week
+    json.loads(json.dumps(o.to_dict()))

@@ -401,6 +401,142 @@ def best_windows(
     return pd.DataFrame(rows, columns=["unique_id", "date", "start", "end", "energy", "confidence"])
 
 
+def look_back(
+    series: EnergySeries,
+    *,
+    days: int = 7,
+    site: tuple[float, float] | None = None,
+    weather: pd.DataFrame | None = None,
+    tilt: float | Mapping[str, float] | None = None,
+    azimuth: float | Mapping[str, float] | None = None,
+    kwp: float | Mapping[str, float] | None = None,
+    weeks: int = WEEKS,
+    **tuning: Any,
+) -> Outlook:
+    """What the outlook would have said for each of the last `days` complete days of the data, next to what
+    happened: the window of error of the same method `forecast_ahead` uses for the coming days.
+
+    Each day D is forecast as `forecast_ahead` would have forecast it at 00:00 of D (lead day 1): with only
+    the data before D and, for generation, the weather forecast that existed the day before. `weather`: the
+    archived day-ahead forecasts of those days (`io.open_meteo.fetch_previous_runs(..., lead_days=1)`; the
+    archive starts in 2024); without it, or on a day it does not cover, the day is the seasonal expectation
+    and the notes say so. The roof (tilt, azimuth), when not given, is fitted once on all the data, the
+    checked days included: a roof does not change from one day to the next, and fitting it seven times would
+    take seconds each. `tuning`: the other arguments of `forecast_ahead`.
+
+    Returns an `Outlook` whose `hourly` has `y` (what was measured; NaN where invalid) next to `y_hat`,
+    `low`, `high`, and whose `daily` has `actual` and `error` (= total - actual; NaN when a day has an
+    unmeasured hour) next to the totals. Only lead day 1 is checked: the error of the later days of a week
+    ahead is larger (`SKILL` falls with the lead), and the notes say so.
+    """
+    if not 1 <= days <= 31:
+        raise ValueError(Note("days must be in 1-{max}", max=31))
+    resampled = series.freq != "h" and step(series.freq) < pd.Timedelta(hours=1)
+    s = series.resample("h") if resampled else series.to_kwh()
+    if s.freq != "h":
+        raise ValueError(f"The look back needs hourly data or finer, not freq={s.freq!r}")
+    if s.quantity == "generation" and site is None:
+        raise ValueError("A generation look back needs the site (latitude, longitude)")
+    valid = s.frame.loc[s.frame["valid"]]
+    if valid.empty:
+        raise ValueError(Note("The series has no valid value"))
+    after = valid["ds"].max() + pd.Timedelta(hours=1)
+    end = after.tz_localize(None).normalize()  # the first day not complete in the data
+    targets = [
+        (end - pd.Timedelta(days=k)).tz_localize(s.tz, nonexistent="shift_forward")
+        for k in range(days, 0, -1)
+    ]
+    if targets[0] <= valid["ds"].min() + pd.Timedelta(days=28):
+        raise ValueError(
+            Note("Too little data before the last {days} days to check the forecast.", days=days)
+        )
+    if s.quantity == "generation" and (tilt is None or azimuth is None):
+        assert site is not None
+        f = _hourly(s, site)
+        clear = _clear(
+            _complete_days(f),
+            tuning.get("clear_window_days", CLEAR_WINDOW_DAYS),
+            tuning.get("clear_quantile", CLEAR_QUANTILE),
+            tuning.get("clear_ratio", CLEAR_RATIO),
+        )
+        fitted = _roof(f, clear, site)
+        roof = {uid: _orientation(uid, tilt, azimuth, fitted, site) for uid in s.series}
+        tilt = {uid: r[0] for uid, r in roof.items()}
+        azimuth = {uid: r[1] for uid, r in roof.items()}
+    w = None if weather is None else _wide(weather, s.tz)
+    parts: list[pd.DataFrame] = []
+    per_day: list[pd.DataFrame] = []
+    notes: list[str] = []
+    covered = 0
+    # latest day first: its data are the longest, and the earlier cuts reuse its sun (`physics` memory)
+    for day in reversed(targets):
+        past = replace(s, frame=s.frame.loc[s.frame["ds"] < day])
+        w_day = None
+        if w is not None and s.quantity == "generation":
+            w_day = w.loc[(w["ds"] >= day) & (w["ds"] < day + pd.Timedelta(days=1))].copy()
+            w_day.attrs = {}  # issued the day before: lead day 1
+            if w_day.drop(columns="ds").notna().to_numpy().any():
+                covered += 1
+            else:
+                w_day = None
+        o = forecast_ahead(
+            past,
+            days=1,
+            site=site,
+            weather=w_day,
+            start=day,
+            tilt=tilt,
+            azimuth=azimuth,
+            kwp=kwp,
+            weeks=weeks,
+            **tuning,
+        )
+        parts.append(o.hourly)
+        per_day.append(o.daily)
+        notes += [n for n in o.notes if n not in notes]
+    hourly = pd.concat(parts[::-1], ignore_index=True)
+    measured = s.frame[["unique_id", "ds", "y", "valid"]].copy()
+    measured["y"] = measured["y"].where(measured["valid"])
+    hourly = hourly.merge(measured.drop(columns="valid"), on=["unique_id", "ds"], how="left")
+    daily = pd.concat(per_day[::-1], ignore_index=True)
+    day = hourly["ds"].dt.tz_localize(None).dt.normalize()
+    sums = hourly.assign(date=day).groupby(["unique_id", "date"], sort=True)["y"]
+    actual = sums.sum(min_count=1).where(sums.count() == sums.size())
+    keys = pd.MultiIndex.from_frame(daily[["unique_id", "date"]])
+    daily["actual"] = actual.reindex(keys).to_numpy(dtype=float)
+    daily["error"] = daily["total"] - daily["actual"]
+    if s.quantity == "generation":
+        if w is None:
+            notes.append(
+                Note(
+                    "The past days were checked without the weather forecasts of those days: each is the "
+                    "seasonal expectation, so the error shown is larger than that of the coming days."
+                )
+            )
+        elif covered < len(targets):
+            notes.append(
+                Note(
+                    "{n} of the {days} past days had no archived weather forecast (the archive starts in "
+                    "2024): those days are the seasonal expectation.",
+                    n=len(targets) - covered,
+                    days=len(targets),
+                )
+            )
+    mean_abs = float(daily["error"].abs().mean())
+    if np.isfinite(mean_abs):
+        notes.append(
+            Note(
+                "Over the last {days} days the forecast of each day, made at 00:00 with only the data before "
+                "it, missed the day's total by {err:.1f} kWh on average; the days further ahead in the "
+                "outlook miss by more.",
+                days=len(targets),
+                err=mean_abs,
+            )
+        )
+    method = {"days": len(targets), "weather_days": covered, "lead_day": 1}
+    return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
+
+
 # ---------------------------------------------------------------------- generation
 def _generation(
     s: EnergySeries,
@@ -917,4 +1053,4 @@ def _table(df: pd.DataFrame) -> str:
     return "\n".join([head, sep, *body])
 
 
-__all__ = ["MAX_DAYS", "SKILL", "TRUST", "Outlook", "best_windows", "forecast_ahead"]
+__all__ = ["MAX_DAYS", "SKILL", "TRUST", "Outlook", "best_windows", "forecast_ahead", "look_back"]

@@ -109,3 +109,20 @@ assert len(o.daily) == 3 and (o.daily["source"] == "seasonal").all()
 - The live forecast: `io.open_meteo.fetch_forecast(lat, lon, days=16)` (up to 16 days, several models; a model
   whose GHI is physically impossible is dropped from that day on).
 - `economics.windows_by_cost(pricing, generation=o, hours=3, kw=2)` ranks the windows by what they cost.
+
+### How wrong the coming days may be: `look_back`
+
+```python
+from prosumer import data
+from prosumer.outlook import look_back
+
+pv, _ = data.example_plant(n_series=1, days=200)
+past = look_back(pv, days=7, site=(-25.43, -49.27))  # each day forecast at 00:00 of that day
+print(past.daily[["date", "total", "actual", "error", "source"]])
+assert len(past.daily) == 7 and past.daily["actual"].notna().all()
+```
+
+Each of the last complete days is forecast by the same method as the coming days, with only the data before
+it and, for PV, the weather forecast that existed the day before (`weather=io.open_meteo.fetch_previous_runs(...,
+lead_days=1)`; the archive starts in 2024). Without it the past days are the seasonal expectation and the notes
+say so. It shows the error of day 1; the later days of the outlook miss by more (`skill` by lead day).

@@ -77,6 +77,16 @@ export interface Outlook {
   notes: string[];
 }
 
+/** `Result.past`: the last days as the outlook's method would have forecast each one the day before. */
+export interface PastOutlook {
+  quantity: Quantity;
+  unit: string;
+  hourly: (OutlookHour & { y: Num })[];
+  daily: (OutlookDay & { actual: Num; error: Num })[];
+  method: { days?: number; weather_days?: number; lead_day?: number };
+  notes: string[];
+}
+
 export interface Window {
   unique_id: string;
   date: string;
@@ -277,6 +287,7 @@ export interface Result {
   site: Site;
   read: Partial<Record<Quantity, ReadInfo>>;
   outlooks: Partial<Record<Quantity, Outlook>>;
+  past?: Partial<Record<Quantity, PastOutlook>>;
   windows: Window[];
   windows_by_cost: CostWindow[] | null;
   pricing: string | null;

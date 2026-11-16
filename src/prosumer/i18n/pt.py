@@ -826,6 +826,37 @@ PT: dict[str, str] = {
         "medidos em duas usinas no Paraná (Brasil), de ago/2025 a mai/2026; em outros lugares são uma "
         "suposição (`trust=` e `skill=` os alteram)."
     ),
+    "Too little data before the last {days} days to check the forecast.": (
+        "Poucos dados antes dos últimos {days} dias para conferir a previsão."
+    ),
+    (
+        "Over the last {days} days the forecast of each day, made at 00:00 with only the data before it, "
+        "missed the day's total by {err:.1f} kWh on average; the days further ahead in the outlook miss by "
+        "more."
+    ): (
+        "Nos últimos {days} dias, a previsão de cada dia, feita às 00:00 só com os dados anteriores a ele, "
+        "errou o total do dia em {err:.1f} kWh em média; os dias mais adiante na previsão erram mais."
+    ),
+    (
+        "The past days were checked without the weather forecasts of those days: each is the seasonal "
+        "expectation, so the error shown is larger than that of the coming days."
+    ): (
+        "Os dias passados foram conferidos sem a previsão do tempo daqueles dias: cada um é a expectativa "
+        "sazonal, então o erro mostrado é maior que o dos próximos dias."
+    ),
+    (
+        "{n} of the {days} past days had no archived weather forecast (the archive starts in 2024): those "
+        "days are the seasonal expectation."
+    ): (
+        "{n} dos {days} dias passados não têm previsão do tempo arquivada (o arquivo começa em 2024): esses "
+        "dias são a expectativa sazonal."
+    ),
+    "The archived weather forecasts of the last days could not be downloaded ({error}).": (
+        "Não foi possível baixar as previsões do tempo arquivadas dos últimos dias ({error})."
+    ),
+    "{file}: the last days were not checked ({error}).": (
+        "{file}: os últimos dias não foram conferidos ({error})."
+    ),
     "The weather forecast covers none of these hours: every day is the seasonal expectation.": (
         "A previsão do tempo não cobre nenhuma destas horas: todos os dias são a expectativa sazonal."
     ),

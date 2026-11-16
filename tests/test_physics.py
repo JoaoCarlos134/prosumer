@@ -118,3 +118,36 @@ def test_long_spans_are_remembered_by_their_instants_and_inputs(
     if name == "mean_sun":  # regression 2026-10-21: a hit returned the first caller's index (name, freq)
         named = fn(times.rename("ds"), LAT, LON)
         assert len(calls) == 6 and named.index.name == "ds" and named.index.equals(times)
+
+
+@pytest.mark.parametrize("name", ["clear_sky_ghi", "mean_sun"])
+def test_a_contiguous_run_of_a_remembered_span_is_its_slice(
+    name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """2026-11-16 (`outlook.look_back` cuts the same data seven times): a shorter span inside a remembered one
+    is served as its slice, bit-identical to computing it; a span that is not a contiguous run is computed."""
+    from collections import OrderedDict
+
+    calls: list[int] = []
+    real = getattr(physics, f"_{name}")
+
+    def counted(*a: object, **k: object) -> object:
+        calls.append(1)
+        return real(*a, **k)
+
+    fn = getattr(physics, name)
+    times = _hours("2024-01-01", 90)
+    short = times[: 60 * 24]
+    expected = np.asarray(real(short, LAT, LON, pd.Timedelta("1h"), 12))
+    monkeypatch.setattr(physics, f"_{name}", counted)
+    monkeypatch.setattr(physics, "_MEMORY", {"clear_sky": OrderedDict(), "sun": OrderedDict()})
+    fn(times, LAT, LON)
+    got = fn(short, LAT, LON)
+    assert len(calls) == 1 and np.array_equal(np.asarray(got), expected)
+    if isinstance(got, pd.DataFrame):
+        assert got.index.equals(short)
+    fn(times[24 * 10 : 24 * 70], LAT, LON)  # a run from the middle
+    assert len(calls) == 1
+    fn(times[::2], LAT, LON)  # every other hour: not contiguous
+    fn(short, LAT + 0.01, LON)  # another site
+    assert len(calls) == 3

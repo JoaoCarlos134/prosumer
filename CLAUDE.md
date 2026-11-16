@@ -2,8 +2,8 @@
 
 The `prosumer` library (`src/prosumer/`: day-ahead forecasting, diagnostics and economics of PV generation and
 household consumption) and the research around it: the TCC, the forecasting benchmark, the future master's.
-GitHub `JoaoCarlos134/prosumer` (PUBLIC since 2026-11-04, AGPL-3.0-only; the pre-rewrite repo is the private
-`prosumer-old`). The
+GitHub `JoaoCarlos134/prosumer` (PUBLIC since 2026-11-04, AGPL-3.0-only; the full original history, plant data
+included, is the private `prosumer-private`; the private `prosumer-old` is the scrubbed pre-recreate copy). The
 user (João Carlos Jachenski Junior) works in English with Claude. The LIBRARY (`src/prosumer/`, `tests/`,
 README, pyproject, `docs/library/`) is in English; project docs (`docs/projeto`, `docs/proposta`), benchmark
 scripts and their comments stay in Portuguese (code comments without accents): keep that convention there.
@@ -30,7 +30,11 @@ look there for the history of anything below.
   Cascavel coordinates rounded to 2 decimals (-24.83, -53.65); Curitiba's are the city's. Never reintroduce
   names or exact coordinates. The name map exists only on the Lactec machine
   (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here). **Every clone made before
-  2026-11-04 (the Lactec one) has the old history: re-clone it, never pull or push from it.**
+  2026-11-04 has the old history: re-clone it, or purge it as the Lactec clone was on 2026-11-16 (`reset --hard`
+  to the new `origin/main`, delete every old branch/worktree/remote and the old `v0.1.0` tag, refetch tags,
+  `reflog expire` + `gc --prune=now`; restore the plant files from the old history into the ignored paths first
+  if still needed). Old work lives only in `prosumer-private`; never fetch it into a working clone. The Lactec
+  clone has a local `.git/hooks/pre-push` that refuses any push whose history ever touched `usinas_horario.parquet`.**
 - **Licence: AGPL-3.0-only (decided 2026-11-04).** The path recorded on 19/10 (AGPL-3.0 + dual licensing,
   product layer closed, an exception for `embedded` output) was followed; "-only" rather than "-or-later" so
   the author, as sole copyright holder, keeps control of future terms for dual licensing. Rejected: MIT and
@@ -195,6 +199,63 @@ Known open points (details in `docs/projeto/HISTORICO.md` and `PILOTOS_F1_F2.md`
 - Benchmark: AutoARIMA (F1 d) does not fit in memory on either machine with exogenous weather; TimeGPT waits
   for the author's decision (paid API, sends data: houses only, never the plants).
 - The Curitiba NASA GHI of the benchmark is 1 h late (declared in LEIA-ME section 7; decided not to redo).
+
+## UI plan from the product review (2026-11-16)
+
+An outside review of the running app (the 28/10 Windows build: demo, every page, light/dark, Portuguese) produced
+this list. It is the to-do for the pages; `webapp/README.md` "Left" stays the list of older open items. The user
+asked on 26/10 to be consulted before any redesign of the pages: confirm the order below before starting.
+Not checked by the review: phone layouts (the README records a 390 px pass on 23/10), alerts of any kind.
+
+**Bugs on screen (fix first)**
+1. Overview: every consumption bar carries a range whisker that leaves the top of the chart with an arrow (the
+   card reads 4.8 to 203 kWh for the week); looks broken to a newcomer. Show a 10th-90th percentile band on the
+   overview and keep the extremes for the detail page. (Library side: `outlook` daily `low`/`high`; the 26/10 fix
+   made it the range of past daily totals, the percentile band is the next step.)
+2. Next days, hour by hour: the consumption band reaches 6 kWh while the forecast lines stay under 1, flattening
+   them into the bottom fifth of the plot. Same cure (percentile band, or a scale of its own for the band).
+
+**Polish (first-run experience; a stranger decides here)**
+3. Demo takes ~30 s behind a seven-step list that never ticks, only the seconds counter moves. Serve a saved demo
+   result at once; stream real step progress for uploads (`app.run` needs a progress callback; a `Note` per step).
+4. First screen speaks statistics ("forecast skill (median) 13% vs clear-sky persistence, 95% CI -23% to 38%").
+   Say it in plain words and put skill / persistence / intervals behind a details link; the whole Forecast check
+   page goes under an "advanced" switch.
+5. PV system page when the roof fit is unreliable (`Diagnosis.orientation.reliable` is false): a dash, "not
+   identified", and a performance index between 2 and 6 where 1 is normal. Hide the chart and ask for tilt and
+   direction in one sentence instead.
+6. Inputs pane stays open after a run (a fifth of the width) and its fields still show Curitiba placeholders while
+   the result is for Dingle. Collapse it after a run, or fill the fields with what was analysed.
+7. The page has no description tag and the title is the bare word "prosumer": a public site needs both (and a
+   preview image for shared links).
+
+**Functions worth adding (none started; each is a user decision)**
+- First: connect to the inverter's cloud instead of asking for an export (the export is the biggest step a
+  homeowner takes today). Brand code stays a thin adapter returning an `EnergySeries` (ground rule).
+- Alerts ("tomorrow is sunny 10-13, run the heavy load then"; "three clear days produced 30% under expectation").
+- Read the bill from a PDF or photo, so tariff, taxes and credits fill themselves in.
+- What-if: tarifa branca vs conventional, a battery, more panels (the library can already price each). This is
+  METHODOLOGY under the project's rules: pilot with a committed gate first, nothing tuned to our data; a wrong
+  result is wrong money advice. Same for the percentile bands of item 1 where they change a number.
+- A report to keep: a PDF health check with payback so far.
+- Later: a Home Assistant integration; the library as a hosted API.
+
+**Before the app goes public as a hosted beta**
+- Settle the two open questions already listed (Lactec ownership, Lei 9.609 art. 4; the university's IP rules)
+  before money changes hands.
+- Open-Meteo's free API is non-commercial: a paid product needs one of its commercial plans (check the price on
+  their site). Keep the hosted beta free and framed as the thesis's user evaluation.
+- AGPL-3.0: a hosted version must offer its source to its users; as sole copyright holder the user can still sell
+  other terms (the dual-licence path chosen on 04/11).
+- A free hosted beta needs a small CPU server only (the analysis runs in seconds); uploaded files are processed in
+  memory and kept nowhere, and the upload page must say so in one sentence.
+- The review ranked this the second public launch (after the keyword-map project) and suggested a one-off paid
+  report for Brazilian owners (is the system under-performing, is tarifa branca worth it, next twelve bills) with
+  payment by Pix; not decided.
+
+**What the review found that already exists (do not rebuild)**: any brand from a file, roof and effective power
+learnt from the data, the clock checked against the sun, a forecast with a confidence label, the Brazilian bill
+by Lei 14.300 with tarifa branca and bandeiras from ANEEL's open data, everything computed on the user's side.
 
 ## Where to continue (2026-10-28, Lactec)
 

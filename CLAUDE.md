@@ -263,9 +263,20 @@ The user got access to a Lactec VM (shared Slurm server: 48 threads, 2 x ~96 GB 
 practice while another user's job holds the rest; one GPU free). The review of every test so far and the ordered
 plan of heavy runs for it: `docs/projeto/REVISAO_TESTES_2026-11-16.md`. Main finding: no number has been checked on
 a test period that did not help choose something (all post-v2 choices used the same test), so the most valuable
-run is V1 (a fresh plant test period 06-11/2026, needs a new Solar.web export). Five decisions for the user at its
-end (new export; plant data on the shared VM; v3 replaces v2; Curitiba redo; TimeGPT). Never put the VM's host or
-user names in this public repo. Before any run on the VM: gate committed first, as always.
+run is V1 (a fresh plant test period 06-11/2026). Never put the VM's host or user names in this public repo. Before
+any run on the VM: gate committed first, as always.
+
+Later on 16/11: the 5-min Solar.web exports of both plants for 01/01-15/11/2026 arrived and are stored with the
+older exports in the private Lactec folder `2026/Projeto_IA/ia_solar/dados_brutos/<plant>/exportacoes/` (file names
+carry the owners' names: never in the repo); the owners allowed all data on the VM. V1 is unblocked (extend
+`usinas_horario.parquet` with `01_prepara_dados.py` first). Added to the plan (sections 7-9): a local database
+(SQLite: measurements, every issued forecast, per-site parameters, events the person marks, load plans) so a
+long-term user gets site-learnt trust/skill, calibrated bands and bias correction, shrunk to the defaults while data
+are few; V11, a causal replay that simulates months of use and measures the learning curve (gate drafted); and the
+public data found (BR-PVGen: 51 Brazilian plants with POA, the best one; Ausgrid 300 PV homes, CC BY; GoiEner;
+EDS-lab PV collection with tilt/azimuth; ERA5 and the Historical Forecast API; INMET/SONDA). Feature done the same
+day: `outlook.look_back` / `Result.past` and the Next days page's "last 7 days" charts (`2f28e32`); the exe needs
+`prosumer_site.cmd rebuild`, and the pages were not checked in a browser yet.
 
 ## Where to continue (2026-10-28, Lactec)
 

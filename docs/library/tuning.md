@@ -54,6 +54,7 @@ default chosen on the project's sites shaped a result. Origins:
 | `kwp_share` | 0.8 | generic performance ratio |
 | `weeks` (consumption) | 4 | set by hand; the rule was measured on the Dingle houses (beat "same as the last day" at every lead 1-14) |
 | clear-day rule | as in diagnostics | set by hand on the two Parana plants |
+| `min_history_days` (`look_back`, `past_days`) | 28 | set by hand: the four weeks of the consumption profile |
 
 ## The forecast check (`analyze`)
 

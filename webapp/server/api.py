@@ -17,6 +17,7 @@ import time
 import traceback
 import uuid
 from collections import OrderedDict
+from dataclasses import replace
 from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
@@ -77,7 +78,10 @@ def _run(
     a bug shown as it is (500: a local tool)."""
     t0 = time.perf_counter()
     try:
-        result = backend.run(request, files, services=SERVICES)
+        services = SERVICES
+        if meta.get("demo"):  # 2020 data moved in time: today's archived weather is not theirs
+            services = replace(SERVICES or backend.Services(), past_weather=demo.no_archive)
+        result = backend.run(request, files, services=services)
     except ValueError as e:
         raise PageError(400, i18n.message(e, lang)) from e
     except Exception as e:

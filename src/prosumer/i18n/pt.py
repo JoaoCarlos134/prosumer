@@ -851,11 +851,18 @@ PT: dict[str, str] = {
         "{n} dos {days} dias passados não têm previsão do tempo arquivada (o arquivo começa em 2024): esses "
         "dias são a expectativa sazonal."
     ),
-    "The archived weather forecasts of the last days could not be downloaded ({error}).": (
-        "Não foi possível baixar as previsões do tempo arquivadas dos últimos dias ({error})."
+    "The archived weather forecasts of the last days could not be downloaded: {error}": (
+        "Não foi possível baixar as previsões do tempo arquivadas dos últimos dias: {error}"
     ),
-    "{file}: the last days were not checked ({error}).": (
-        "{file}: os últimos dias não foram conferidos ({error})."
+    "{file}: the last days were not checked: {error}": (
+        "{file}: os últimos dias não foram conferidos: {error}"
+    ),
+    (
+        "Over the last {days} days the profile of recent weeks, as it stood the night before each day, "
+        "missed the day's total by {err:.1f} kWh on average."
+    ): (
+        "Nos últimos {days} dias, o perfil das semanas recentes, como estava na noite anterior a cada dia, "
+        "errou o total do dia em {err:.1f} kWh em média."
     ),
     "The weather forecast covers none of these hours: every day is the seasonal expectation.": (
         "A previsão do tempo não cobre nenhuma destas horas: todos os dias são a expectativa sazonal."

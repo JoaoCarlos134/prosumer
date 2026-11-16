@@ -5,10 +5,18 @@
 **The last days next to the next ones (asked by the user, 16/11)**
 
 - `outlook.look_back(series, days=7, site=, weather=)`: each of the last complete days forecast as
-  `forecast_ahead` would have at 00:00 of that day (only the data before it; for PV the archived day-ahead
-  weather of `io.open_meteo.fetch_previous_runs`), next to what was measured (`hourly.y`, `daily.actual`,
-  `daily.error`). The window of error of day 1 of the outlook, shown beside it. Tests in `test_outlook`
-  (equal to `forecast_ahead` on the cut data; never sees the day it forecasts; partial or no weather says so).
+  `forecast_ahead` would have at 00:00 of that day (only the data before it, the roof fitted once on the data
+  before the first checked day; for PV the archived day-ahead weather of `io.open_meteo.fetch_previous_runs`,
+  whose `previous_day1` is the regime-C convention), next to what was measured (`hourly.y`, `daily.actual`,
+  `daily.error`; for PV a sun-down hour without a value counts as 0). `past_days`: the days it checks. The
+  window of error of day 1 of the outlook, shown beside it. Tests in `test_outlook`.
+- Review of `2f28e32` (work-reviewer, 16/11, "ready with fixes"), fixed the same day, each with a test red on
+  the old code: the site's demo (2020 data moved in time) compared them with the real last days' archived
+  weather (now no archive for the demo: seasonal); the fitted roof saw the checked days; a logger with no night
+  rows had no actuals and lost its last day; the archive was downloaded before finding a file too short, and
+  was not credited. Also: one inverter's gap no longer reads as a smaller hourly production on the page, the
+  page shows the past notes and a partial-weather subtitle, `min_history_days` declared, the archive call
+  pauses 0.2 s between models (was 1 s: ~5 s added to every PV run).
 - `app.run` returns it as `Result.past` (`to_dict()["past"]`); `Services.past_weather`; offline, the past days
   are the seasonal expectation with a log line. The site's Next days page plots it (hourly and per day).
 - `physics` memory: a span that is a contiguous run of a remembered one is served as its slice (bit-identical:

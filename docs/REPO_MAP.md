@@ -198,7 +198,7 @@ apart: it needs only `forecast.lightgbm` and `protocol`.
 | `forecast.lightgbm` | `LightGBM`, `LightGBMQuantile` | parity with the benchmark's saved forecasts (`test_forecast_parity.py`) |
 | `forecast.foundation` | `Chronos2`, `TiRex2`, `Toto2`, `FlowState` | zero-shot, opt-in extras (heavy) |
 | `postprocessing` | `correct_bias` (consumption), `conformal_quantiles` (bands) | after the model, no retraining |
-| `outlook` | `forecast_ahead` -> `Outlook` (hourly + daily, 1-35 days, confidence labels), `best_windows`; `TRUST`/`SKILL` (measured in Paraná, declared) | the next days for the person: PV = learnt kW x POA of the weather forecast, trusted less with the lead; consumption = the same hour on the same kind of day of the last weeks |
+| `outlook` | `forecast_ahead` -> `Outlook` (hourly + daily, 1-35 days, confidence labels), `best_windows`, `look_back` / `past_days` (the last days as the method would have forecast them the day before, next to what was measured); `TRUST`/`SKILL` (measured in Paraná, declared) | the next days for the person: PV = learnt kW x POA of the weather forecast, trusted less with the lead; consumption = the same hour on the same kind of day of the last weeks |
 | `embedded` | `to_c` (a fitted Linear/Trees/SparseTSF/CycleNet with its preprocessing as one C header), `day_ahead_features`, `footprint` | for an ESP32 (study: `docs/projeto/ESTUDO_EMBARCADO.md`) |
 
 **Money: `economics`**
@@ -213,7 +213,7 @@ apart: it needs only `forecast.lightgbm` and `protocol`.
 | Module | Main names | What it does |
 |---|---|---|
 | `analysis` | `analyze(series, site=, weather=, models=, economics=, ...)` -> `Report` (`summary`, `quality`, `clock`, `forecast` table, `hourly`, `resolution`, `bands`, `diagnostics`, `economics`, `provenance`, `notes`, `pending`; `to_dict(lang)`, `to_markdown`) | quality -> clock (sun, weather) -> diagnostics (PV with site) -> bill (with a price) -> the forecast check: the last `test_days` forecast day-ahead by the naive rules + the given models, scored against the reference; the output is their median (`median`, and `median_weather` for regime C) |
-| `app` | `run(request, files, services=)` -> `Result` (`to_dict(lang)`, `to_json`); `Request.from_dict` (checks the answers that can crash a run, with a `Note`; a negative price or COSIP is not refused), `Services` (replaceable outside calls) | the app's whole backend: 1 where (geocode, round, tz) -> 2 read each file -> 3 weather (PV) -> 4 `forecast_ahead` -> 5 `best_windows` (+ `windows_by_cost` with a price) -> 6 `analyze` (with the bill and the PV savings) -> 7 `charts` |
+| `app` | `run(request, files, services=)` -> `Result` (`to_dict(lang)`, `to_json`); `Request.from_dict` (checks the answers that can crash a run, with a `Note`; a negative price or COSIP is not refused), `Services` (replaceable outside calls) | the app's whole backend: 1 where (geocode, round, tz) -> 2 read each file -> 3 weather (PV) -> 4 `forecast_ahead` (+ `look_back` of the last 7 days: `Result.past`, archived weather from `Services.past_weather`) -> 5 `best_windows` (+ `windows_by_cost` with a price) -> 6 `analyze` (with the bill and the PV savings) -> 7 `charts` |
 
 ### 3.3 What leaves the machine
 

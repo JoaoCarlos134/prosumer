@@ -83,7 +83,7 @@ from .i18n import Note, translate
 from .i18n import replace as replace_text
 from .io import geocode as geo
 from .io import open_meteo, read_energy
-from .outlook import MAX_DAYS, WEEKS, Outlook, best_windows, forecast_ahead, look_back
+from .outlook import MAX_DAYS, WEEKS, Outlook, best_windows, forecast_ahead, look_back, past_days
 from .provenance import Provenance, of
 
 QUANTITIES: tuple[Quantity, ...] = ("generation", "consumption")
@@ -160,6 +160,12 @@ FOR_PEOPLE: dict[str, str] = {
 }
 
 
+def _past_runs(lat: float, lon: float, **kwargs: Any) -> pd.DataFrame:
+    """`open_meteo.fetch_previous_runs` (lead 1) with a short pause between its models: seven days, six
+    models, one request each; the free API's limit is per minute."""
+    return open_meteo.fetch_previous_runs(lat, lon, pause_s=0.2, **kwargs)
+
+
 @dataclass(frozen=True)
 class Services:
     """The outside calls of `run`, replaceable: geocoding, the site's time zone, the live weather forecast and
@@ -168,7 +174,8 @@ class Services:
     geocode: Callable[..., pd.DataFrame] = geo.geocode
     timezone_at: Callable[..., str] = geo.timezone_at
     weather: Callable[..., pd.DataFrame] = open_meteo.fetch_forecast
-    past_weather: Callable[..., pd.DataFrame] = open_meteo.fetch_previous_runs
+    # the archived day-ahead forecasts of the last days (`_past_runs`)
+    past_weather: Callable[..., pd.DataFrame | None] = _past_runs
     tariff_book: Callable[..., brazil.TariffBook] = brazil.TariffBook.from_aneel
 
 
@@ -437,7 +444,7 @@ def run(
     }
     outlooks = {q: replace(o, notes=[_for_people(n) for n in o.notes]) for q, o in outlooks.items()}
     main = "generation" if "generation" in outlooks else "consumption"
-    past = _past(series, outlooks, site, tz, svc, req, log)
+    past = _past(series, site, svc, req, log, credits)
 
     # 5. When to run a heavy load: the best block of each day (most sun, or least use without PV).
     windows = best_windows(outlooks[main], req.load_hours)
@@ -563,42 +570,43 @@ PAST_DAYS = 7  # the days `run` checks backwards (`Result.past`)
 
 def _past(
     series: Mapping[str, EnergySeries],
-    outlooks: Mapping[str, Outlook],
     site: tuple[float, float],
-    tz: str,
     svc: Services,
     req: Request,
     log: list[str],
+    credits: list[Provenance],
 ) -> dict[str, Outlook]:
-    """`look_back` of each file over its last `PAST_DAYS` complete days, with the roof the outlook used. The
-    archived weather is optional: offline, the past days are the seasonal expectation and a note says so; a
-    file too short to check is left out with a log line."""
+    """`look_back` of each file over its last `PAST_DAYS` complete days (`past_days`, found BEFORE any
+    download, so a file too short to check costs nothing). The roof is the one the person typed, or fitted by
+    `look_back` on the data before those days. The archived weather is optional: offline (or a service that
+    returns None, as the site's demo does: its data are from another year), the past days are the seasonal
+    expectation and a note says so."""
     out: dict[str, Outlook] = {}
     for q, s in series.items():
+        try:
+            days = past_days(s, PAST_DAYS, site=site)
+        except ValueError as e:
+            log.append(Note("{file}: the last days were not checked: {error}", file=_FILE_NAME[q], error=e))
+            continue
         kw: dict[str, Any] = {}
         weather = None
         if q == "generation":
-            roof = outlooks[q].method.get("series", {})
-            kw["tilt"] = {uid: m["tilt"] for uid, m in roof.items()}
-            kw["azimuth"] = {uid: m["azimuth"] for uid, m in roof.items()}
-            last = s.frame.loc[s.frame["valid"], "ds"].max()
-            end = (last + pd.Timedelta(hours=1)).tz_convert(tz).tz_localize(None).normalize()
+            if req.tilt is not None and req.azimuth is not None:
+                kw["tilt"], kw["azimuth"] = float(req.tilt), float(req.azimuth)
             try:
                 weather = svc.past_weather(
-                    *site, start=end - pd.Timedelta(days=PAST_DAYS), end=end - pd.Timedelta(days=1), tz=tz
+                    *site, start=days[0].tz_localize(None), end=days[-1].tz_localize(None), tz=s.tz
                 )
             except (OSError, RuntimeError, ValueError, KeyError) as e:
                 log.append(
                     Note(
-                        "The archived weather forecasts of the last days could not be downloaded ({error}).",
+                        "The archived weather forecasts of the last days could not be downloaded: {error}",
                         error=e,
                     )
                 )
-        try:
-            o = look_back(s, days=PAST_DAYS, site=site, weather=weather, kwp=req.kwp, weeks=req.weeks, **kw)
-        except ValueError as e:
-            log.append(Note("{file}: the last days were not checked ({error}).", file=_FILE_NAME[q], error=e))
-            continue
+            if weather is not None:
+                _credit(credits, of(weather))
+        o = look_back(s, days=PAST_DAYS, site=site, weather=weather, kwp=req.kwp, weeks=req.weeks, **kw)
         out[q] = replace(o, notes=[_for_people(n) for n in o.notes])
     return out
 

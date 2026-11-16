@@ -146,8 +146,10 @@ def test_a_contiguous_run_of_a_remembered_span_is_its_slice(
     assert len(calls) == 1 and np.array_equal(np.asarray(got), expected)
     if isinstance(got, pd.DataFrame):
         assert got.index.equals(short)
-    fn(times[24 * 10 : 24 * 70], LAT, LON)  # a run from the middle
+    middle = times[24 * 10 : 24 * 70]
+    got = fn(middle, LAT, LON)  # a run from the middle, bit-identical to computing it
     assert len(calls) == 1
+    assert np.array_equal(np.asarray(got), np.asarray(real(middle, LAT, LON, pd.Timedelta("1h"), 12)))
     fn(times[::2], LAT, LON)  # every other hour: not contiguous
     fn(short, LAT + 0.01, LON)  # another site
     assert len(calls) == 3

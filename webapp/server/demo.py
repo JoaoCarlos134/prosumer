@@ -84,6 +84,13 @@ def frame(today: dt.date | None = None) -> pd.DataFrame:
     )
 
 
+def no_archive(*args: Any, **kwargs: Any) -> None:
+    """The demo's `Services.past_weather`: no archived weather. Its data are from 2020 moved to the last 365
+    days, so the archived forecasts of those calendar days belong to another year: the last days are checked
+    against the seasonal expectation instead, which is fair for any year."""
+    return None
+
+
 def csv(quantity: str, today: dt.date | None = None) -> bytes:
     """One of the demo's two files, as a logger would export it: `time (UTC)` and the energy column."""
     f = frame(today)

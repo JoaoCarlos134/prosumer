@@ -430,3 +430,31 @@ def test_look_back_consumption_and_an_unmeasured_hour() -> None:
     assert np.isnan(o.daily["actual"].iloc[-1]) and np.isnan(o.daily["error"].iloc[-1])
     np.testing.assert_allclose(o.daily["error"].iloc[:-1], 0.0, atol=1e-9)  # a perfectly regular week
     json.loads(json.dumps(o.to_dict()))
+
+
+def test_look_back_fits_the_roof_only_on_the_data_before_the_checked_days() -> None:
+    """Review of 2f28e32 (16/11): the fitted roof used the checked days too. Whatever happens on them, the
+    forecast of the first checked day (which sees none of them) must not move."""
+    s = _series(_plant(0.8, days=150))
+    f = s.frame.copy()
+    other = _plant(1.2, days=150, azimuth=300.0)  # the checked days from a bigger plant facing north-west
+    late = f["ds"] >= f["ds"].max().normalize() - pd.Timedelta(days=30)
+    f.loc[late, "y"] = other.loc[late.to_numpy(), "y"].to_numpy()
+    s2 = EnergySeries.from_dataframe(f, unit="kWh", quantity="generation", tz=TZ, freq="h")
+    a = outlook.look_back(s, days=31, site=SITE)
+    b = outlook.look_back(s2, days=31, site=SITE)
+    assert a.daily["total"].iloc[0] == b.daily["total"].iloc[0]
+
+
+def test_look_back_on_a_logger_that_records_nothing_at_night() -> None:
+    """Review of 2f28e32 (16/11): with the night rows absent, every day lacked an hour (no actual at all) and
+    the last day, ending at sunset, was dropped. Sun-down hours without a value count as 0 (as `analyze`)."""
+    s = _series(_plant(0.8))
+    f = s.frame
+    sun = physics.clear_sky_ghi(pd.DatetimeIndex(f["ds"]), *SITE) > 0
+    day_only = EnergySeries.from_dataframe(f.loc[sun], unit="kWh", quantity="generation", tz=TZ, freq="h")
+    a = outlook.look_back(s, days=3, site=SITE, tilt=15, azimuth=20)
+    b = outlook.look_back(day_only, days=3, site=SITE, tilt=15, azimuth=20)
+    assert b.daily["date"].tolist() == a.daily["date"].tolist()  # the last day, ending at sunset, is kept
+    np.testing.assert_allclose(b.daily["actual"], a.daily["actual"])
+    assert outlook.past_days(day_only, 3, site=SITE)[-1] == pd.Timestamp("2023-12-31", tz=TZ)

@@ -65,14 +65,15 @@ export interface PastDay {
   source: string;
 }
 
-/** `Result.past` of a file, summed over its series, by hour. */
+/** `Result.past` of a file, summed over its series, by hour; the measured value is null unless every series of
+ * the file has one in that hour (one inverter's gap is not a smaller production). */
 export function pastHourly(o: PastOutlook | undefined): PastHour[] {
   if (!o) return [];
   const by = new Map<string, PastHour>();
   for (const h of o.hourly) {
     const x = by.get(h.ds);
     if (x) {
-      x.y = add(x.y, h.y);
+      x.y = x.y == null || h.y == null ? null : x.y + h.y;
       x.f = add(x.f, h.y_hat);
       x.low = add(x.low, h.low);
       x.high = add(x.high, h.high);
@@ -93,6 +94,7 @@ export function pastDaily(o: PastOutlook | undefined): PastDay[] {
       x.low += d.low ?? 0;
       x.high += d.high ?? 0;
       x.actual = x.actual == null || d.actual == null ? null : x.actual + d.actual;
+      if (d.source === "weather") x.source = "weather";
     } else by.set(k, { date: k, forecast: d.total ?? 0, low: d.low ?? 0, high: d.high ?? 0, actual: d.actual, error: null, source: d.source });
   }
   const out = [...by.values()].sort((a, b) => a.date.localeCompare(b.date));

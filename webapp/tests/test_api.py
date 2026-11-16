@@ -190,3 +190,25 @@ def test_peek_previews_a_dropped_file_and_says_why_one_cannot_be_read(client: Te
     assert p["file"] == "conta.csv" and p["hours"] == 72 and "consumo (kWh)" in p["how"]
     bad = peek(b"a;b\n1;2\n", "pt")
     assert bad.status_code == 400 and "coluna" in bad.json()["error"].lower()
+
+
+def test_the_demo_never_compares_its_2020_data_with_todays_archived_weather(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Review of 2f28e32 (16/11): the demo's data are from 2020 moved in time, so the archived forecasts of
+    the last calendar days are another year's weather; its past days must be the seasonal expectation."""
+    today = pd.Timestamp.now(tz=demo.TZ).date()
+    monkeypatch.setattr(
+        demo.pd.Timestamp, "now", classmethod(lambda cls, tz=None: pd.Timestamp(today, tz=tz))
+    )
+
+    def archive(*a: Any, **k: Any) -> Any:
+        raise AssertionError("the demo asked for the archived weather of the real last days")
+
+    svc = _services(today.isoformat())
+    monkeypatch.setattr(api, "SERVICES", api.replace(svc, past_weather=archive))
+    r = client.post("/api/demo", data={"lang": "en", "models": "naive"})
+    assert r.status_code == 200, r.text
+    past = r.json()["result"]["past"]["generation"]
+    assert {d["source"] for d in past["daily"]} == {"seasonal"}
+    assert any("without the weather forecasts" in n for n in past["notes"])

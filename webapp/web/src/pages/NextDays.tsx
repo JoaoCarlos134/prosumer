@@ -225,6 +225,8 @@ export function NextDays({ payload }: { payload: Payload }) {
   const misses = pastDays.filter((d) => d.error != null).map((d) => Math.abs(d.error as number));
   const pastMeanError = misses.length ? misses.reduce((a, b) => a + b, 0) / misses.length : null;
   const pastSeasonalOnly = pastMain === "generation" && pastDays.every((d) => d.source === "seasonal");
+  const pastNoWeather = pastMain === "generation" ? pastDays.filter((d) => d.source === "seasonal").length : 0;
+  const pastSubtitle = pastSeasonalOnly ? t("pastSeasonal") : pastNoWeather > 0 ? `${t("pastSub")} ${t("pastPartial", { n: pastNoWeather, days: pastN })}` : t("pastSub");
 
   const pastHourlyOption = useMemo<EChartsOption>(() => {
     const series: any[] = [];
@@ -315,7 +317,7 @@ export function NextDays({ payload }: { payload: Payload }) {
     };
   }, [pastDays, pastMain, lang, t]);
 
-  const notes = qs.flatMap((q) => r.outlooks[q]?.notes ?? []);
+  const notes = [...new Set(qs.flatMap((q) => [...(r.outlooks[q]?.notes ?? []), ...(r.past?.[q]?.notes ?? [])]))];
   const plants = Object.entries(gm?.series ?? {});
 
   return (
@@ -349,7 +351,7 @@ export function NextDays({ payload }: { payload: Payload }) {
         <>
           <Visual
             title={t("v_pastHourly", { n: pastN })}
-            subtitle={pastSeasonalOnly ? t("pastSeasonal") : t("pastSub")}
+            subtitle={pastSubtitle}
             className="col-span-12 lg:col-span-8"
             data={{
               columns: [
@@ -366,7 +368,7 @@ export function NextDays({ payload }: { payload: Payload }) {
             {(big) => <Chart option={pastHourlyOption} height={big ? "calc(100vh - 210px)" : 300} />}
           </Visual>
           <Visual
-            title={t("v_pastDaily", { n: pastN })}
+            title={`${t("v_pastDaily", { n: pastN })}${pastQs.length > 1 && pastMain ? ` · ${t(pastMain)}` : ""}`}
             subtitle={pastMeanError == null ? undefined : t("meanError", { e: num(lang, pastMeanError, 1) })}
             className="col-span-12 lg:col-span-4"
             data={{

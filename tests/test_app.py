@@ -397,10 +397,9 @@ def test_the_last_days_next_to_what_the_method_would_have_said() -> None:
     g = r.past["generation"].daily
     assert len(g) == app.PAST_DAYS and g["date"].max() == pd.Timestamp("2024-02-29")
     assert (g["source"] == "weather").all() and g["actual"].notna().all()
-    # the roof is the outlook's, not fitted again
-    roof = r.outlooks["generation"].method["series"]
     h = r.past["generation"].hourly
-    assert set(h["unique_id"]) == set(roof) and {"y", "y_hat", "low", "high"} <= set(h.columns)
+    assert {"y", "y_hat", "low", "high"} <= set(h.columns)
+    assert any(c.source == "fake archive" for c in r.credits)  # review of 2f28e32: the archive is credited
     d = json.loads(r.to_json(lang="pt"))
     assert d["past"]["generation"]["daily"][0]["actual"] is not None
     assert any("errou o total do dia" in n for n in d["past"]["generation"]["notes"])
@@ -412,3 +411,37 @@ def test_the_last_days_next_to_what_the_method_would_have_said() -> None:
     r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=svc)
     assert (r.past["generation"].daily["source"] == "seasonal").all()
     assert any("could not be downloaded" in str(line) for line in r.log)
+
+
+def test_the_archived_weather_of_each_past_day_drives_that_day() -> None:
+    """Review of 2f28e32 (16/11): a fake archive equal on every day could not catch a misaligned window. Here
+    each day's clouds differ; the cloudier the archived day, the smaller that day's forecast."""
+
+    def archive(lat: float, lon: float, *, start: Any, end: Any, tz: str) -> pd.DataFrame:
+        ds = pd.date_range(
+            pd.Timestamp(start, tz=tz), pd.Timestamp(end, tz=tz) + pd.Timedelta(hours=23), freq="h"
+        )
+        day = (ds.tz_localize(None).normalize() - pd.Timestamp(start)).days.to_numpy()
+        ghi = physics.clear_sky_ghi(ds, lat, lon) * (0.2 + 0.12 * day)  # day 0 cloudiest, day 6 clearest
+        w = pd.concat(
+            [pd.DataFrame({"model": m, "ds": ds, "ghi": ghi}) for m in ("a", "b")], ignore_index=True
+        )
+        return attach(w, Provenance(source="fake archive", license="CC-BY-4.0"))
+
+    files = {"generation": (_pv_csv("2024-01-01", 60), "inverter.csv")}
+    svc = app.Services(**{**_services().__dict__, "past_weather": archive})
+    r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=svc)
+    totals = r.past["generation"].daily["total"].to_numpy()
+    assert (np.diff(totals) > 0).all()
+
+
+def test_a_file_too_short_to_check_downloads_nothing() -> None:
+    """Review of 2f28e32 (16/11): the archive was downloaded before finding the file too short."""
+
+    def archive(*a: Any, **k: Any) -> Any:
+        raise AssertionError("downloaded for a file too short to check")
+
+    files = {"generation": (_pv_csv("2024-01-01", 30), "inverter.csv")}
+    svc = app.Services(**{**_services().__dict__, "past_weather": archive})
+    r = app.run({**SITE, "days": 3, "models": "naive"}, files, services=svc)
+    assert "generation" not in r.past and any("were not checked" in str(x) for x in r.log)

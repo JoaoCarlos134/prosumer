@@ -401,6 +401,48 @@ def best_windows(
     return pd.DataFrame(rows, columns=["unique_id", "date", "start", "end", "energy", "confidence"])
 
 
+MIN_HISTORY_DAYS = (
+    28  # data needed before the first checked day: four weeks, the consumption profile's (by hand)
+)
+
+
+def past_days(
+    series: EnergySeries,
+    days: int = 7,
+    *,
+    site: tuple[float, float] | None = None,
+    min_history_days: int = MIN_HISTORY_DAYS,
+) -> list[pd.Timestamp]:
+    """The last `days` complete local days of the data, as aware midnights, oldest first: the days `look_back`
+    checks (an app asks for their archived weather with it before calling `look_back`).
+
+    A day is complete when the data reach its end; for generation (with `site`) also when only night follows
+    its last measured hour, so a logger that records nothing at night does not lose its last day. Raises a
+    `ValueError` with a message when there are not `min_history_days` of data before the first of them."""
+    if not 1 <= days <= 31:
+        raise ValueError(Note("days must be in 1-{max}", max=31))
+    s = _as_hourly(series)
+    valid = s.frame.loc[s.frame["valid"]]
+    if valid.empty:
+        raise ValueError(Note("The series has no valid value"))
+    after = valid["ds"].max() + pd.Timedelta(hours=1)
+    end = after.tz_localize(None).normalize()  # the first day not complete in the data
+    if after.tz_localize(None) != end and s.quantity == "generation" and site is not None:
+        midnight = (end + pd.Timedelta(days=1)).tz_localize(s.tz, nonexistent="shift_forward")
+        rest = pd.date_range(after, midnight, freq="h", inclusive="left")
+        if len(rest) == 0 or not (physics.clear_sky_ghi(rest, *site) > 0).any():
+            end += pd.Timedelta(days=1)  # only night is missing
+    targets = [
+        (end - pd.Timedelta(days=k)).tz_localize(s.tz, nonexistent="shift_forward")
+        for k in range(days, 0, -1)
+    ]
+    if targets[0] <= valid["ds"].min() + pd.Timedelta(days=min_history_days):
+        raise ValueError(
+            Note("Too little data before the last {days} days to check the forecast.", days=days)
+        )
+    return targets
+
+
 def look_back(
     series: EnergySeries,
     *,
@@ -411,48 +453,35 @@ def look_back(
     azimuth: float | Mapping[str, float] | None = None,
     kwp: float | Mapping[str, float] | None = None,
     weeks: int = WEEKS,
+    min_history_days: int = MIN_HISTORY_DAYS,
     **tuning: Any,
 ) -> Outlook:
-    """What the outlook would have said for each of the last `days` complete days of the data, next to what
-    happened: the window of error of the same method `forecast_ahead` uses for the coming days.
+    """What the outlook would have said for each of the last `days` complete days of the data (`past_days`),
+    next to what happened: the window of error of the same method `forecast_ahead` uses for the coming days.
 
-    Each day D is forecast as `forecast_ahead` would have forecast it at 00:00 of D (lead day 1): with only
-    the data before D and, for generation, the weather forecast that existed the day before. `weather`: the
-    archived day-ahead forecasts of those days (`io.open_meteo.fetch_previous_runs(..., lead_days=1)`; the
-    archive starts in 2024); without it, or on a day it does not cover, the day is the seasonal expectation
-    and the notes say so. The roof (tilt, azimuth), when not given, is fitted once on all the data, the
-    checked days included: a roof does not change from one day to the next, and fitting it seven times would
-    take seconds each. `tuning`: the other arguments of `forecast_ahead`.
+    Each day D is forecast as `forecast_ahead` would have forecast it at 00:00 of D (lead day 1), with only
+    the data before D. The roof (tilt, azimuth), when not given, is fitted ONCE on the data before the first
+    checked day (a roof does not change from one day to the next; one fit, not seven). `weather`: the archived
+    day-ahead forecasts of those days, `io.open_meteo.fetch_previous_runs(..., lead_days=1)` (the archive
+    starts in 2024). Its `previous_day1` is the run about 24 h before each hour, the convention of the
+    benchmark's regime C: for the evening hours that run may have come out after 00:00 of the day before, so
+    "the forecast that existed the day before" holds to within a few hours. Without it, or on a day it does
+    not cover, the day is the seasonal expectation and the notes say so. `tuning`: the other arguments of
+    `forecast_ahead`.
 
-    Returns an `Outlook` whose `hourly` has `y` (what was measured; NaN where invalid) next to `y_hat`,
-    `low`, `high`, and whose `daily` has `actual` and `error` (= total - actual; NaN when a day has an
-    unmeasured hour) next to the totals. Only lead day 1 is checked: the error of the later days of a week
-    ahead is larger (`SKILL` falls with the lead), and the notes say so.
+    Returns an `Outlook` whose `hourly` has `y` (what was measured; NaN where invalid; for generation, an hour
+    with the sun down and no value counts as 0, as in `analyze`) next to `y_hat`, `low`, `high`, and whose
+    `daily` has `actual` and `error` (= total - actual; NaN when a day has an unmeasured hour) next to the
+    totals. Only lead day 1 is checked.
     """
-    if not 1 <= days <= 31:
-        raise ValueError(Note("days must be in 1-{max}", max=31))
-    resampled = series.freq != "h" and step(series.freq) < pd.Timedelta(hours=1)
-    s = series.resample("h") if resampled else series.to_kwh()
-    if s.freq != "h":
-        raise ValueError(f"The look back needs hourly data or finer, not freq={s.freq!r}")
+    s = _as_hourly(series)
     if s.quantity == "generation" and site is None:
         raise ValueError("A generation look back needs the site (latitude, longitude)")
-    valid = s.frame.loc[s.frame["valid"]]
-    if valid.empty:
-        raise ValueError(Note("The series has no valid value"))
-    after = valid["ds"].max() + pd.Timedelta(hours=1)
-    end = after.tz_localize(None).normalize()  # the first day not complete in the data
-    targets = [
-        (end - pd.Timedelta(days=k)).tz_localize(s.tz, nonexistent="shift_forward")
-        for k in range(days, 0, -1)
-    ]
-    if targets[0] <= valid["ds"].min() + pd.Timedelta(days=28):
-        raise ValueError(
-            Note("Too little data before the last {days} days to check the forecast.", days=days)
-        )
+    targets = past_days(s, days, site=site, min_history_days=min_history_days)
     if s.quantity == "generation" and (tilt is None or azimuth is None):
         assert site is not None
-        f = _hourly(s, site)
+        before = replace(s, frame=s.frame.loc[s.frame["ds"] < targets[0]])
+        f = _hourly(before, site)
         clear = _clear(
             _complete_days(f),
             tuning.get("clear_window_days", CLEAR_WINDOW_DAYS),
@@ -471,9 +500,12 @@ def look_back(
     # latest day first: its data are the longest, and the earlier cuts reuse its sun (`physics` memory)
     for day in reversed(targets):
         past = replace(s, frame=s.frame.loc[s.frame["ds"] < day])
+        next_day = (day.tz_localize(None) + pd.Timedelta(days=1)).tz_localize(
+            s.tz, nonexistent="shift_forward"
+        )
         w_day = None
         if w is not None and s.quantity == "generation":
-            w_day = w.loc[(w["ds"] >= day) & (w["ds"] < day + pd.Timedelta(days=1))].copy()
+            w_day = w.loc[(w["ds"] >= day) & (w["ds"] < next_day)].copy()
             w_day.attrs = {}  # issued the day before: lead day 1
             if w_day.drop(columns="ds").notna().to_numpy().any():
                 covered += 1
@@ -498,6 +530,8 @@ def look_back(
     measured = s.frame[["unique_id", "ds", "y", "valid"]].copy()
     measured["y"] = measured["y"].where(measured["valid"])
     hourly = hourly.merge(measured.drop(columns="valid"), on=["unique_id", "ds"], how="left")
+    if s.quantity == "generation":  # no value with the sun down is a dark hour, not a missing one
+        hourly["y"] = hourly["y"].where(hourly["y"].notna() | hourly["sun"], 0.0)
     daily = pd.concat(per_day[::-1], ignore_index=True)
     day = hourly["ds"].dt.tz_localize(None).dt.normalize()
     sums = hourly.assign(date=day).groupby(["unique_id", "date"], sort=True)["y"]
@@ -524,17 +558,36 @@ def look_back(
             )
     mean_abs = float(daily["error"].abs().mean())
     if np.isfinite(mean_abs):
-        notes.append(
-            Note(
-                "Over the last {days} days the forecast of each day, made at 00:00 with only the data before "
-                "it, missed the day's total by {err:.1f} kWh on average; the days further ahead in the "
-                "outlook miss by more.",
-                days=len(targets),
-                err=mean_abs,
+        if s.quantity == "generation":
+            notes.append(
+                Note(
+                    "Over the last {days} days the forecast of each day, made at 00:00 with only the "
+                    "data before it, missed the day's total by {err:.1f} kWh on average; the days further "
+                    "ahead in the outlook miss by more.",
+                    days=len(targets),
+                    err=mean_abs,
+                )
             )
-        )
+        else:
+            notes.append(
+                Note(
+                    "Over the last {days} days the profile of recent weeks, as it stood the night before "
+                    "each day, missed the day's total by {err:.1f} kWh on average.",
+                    days=len(targets),
+                    err=mean_abs,
+                )
+            )
     method = {"days": len(targets), "weather_days": covered, "lead_day": 1}
     return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
+
+
+def _as_hourly(series: EnergySeries) -> EnergySeries:
+    """The series in hourly kWh (finer steps summed), as `forecast_ahead` reads it."""
+    resampled = series.freq != "h" and step(series.freq) < pd.Timedelta(hours=1)
+    s = series.resample("h") if resampled else series.to_kwh()
+    if s.freq != "h":
+        raise ValueError(f"The look back needs hourly data or finer, not freq={s.freq!r}")
+    return s
 
 
 # ---------------------------------------------------------------------- generation
@@ -1053,4 +1106,13 @@ def _table(df: pd.DataFrame) -> str:
     return "\n".join([head, sep, *body])
 
 
-__all__ = ["MAX_DAYS", "SKILL", "TRUST", "Outlook", "best_windows", "forecast_ahead", "look_back"]
+__all__ = [
+    "MAX_DAYS",
+    "SKILL",
+    "TRUST",
+    "Outlook",
+    "best_windows",
+    "forecast_ahead",
+    "look_back",
+    "past_days",
+]

@@ -84,3 +84,18 @@ rodam em CPU e são rápidos.
   `CUDA_VISIBLE_DEVICES=-1`; string vazia não serve, o torch ignora.
 - **Time-MoE-50M em lotes de 8.** Com 32 e contexto de 1024 h a RAM vai de 0,7 para 13,1 GB e a
   rodada morre por falta de memória. Já está no `03c_fundacionais_lote2.py`.
+
+## Linux / VM (16/11/2026): os seis ambientes montados com `vm/slurm/00_ambientes.sh`
+
+Todos os `.txt` montam em Linux (CPU de 48 threads, GPUs Blackwell), em ~3 min no total, com o `uv` 0.13 e os mesmos
+pins. Desvios da receita do Windows (nenhum pin de versao mudou):
+
+- **`torch`/`torchvision` entram primeiro, COM dependencias** (os wheels Linux trazem as bibliotecas `nvidia-*`, que o
+  freeze do Windows nao lista); o resto do `.txt` entra com `--no-deps`, como na receita original.
+- **Indice por ambiente**: `previsao` e `lote2` `whl/cu130` (torch 2.14.1+cu130); `previsao_gpu` `whl/cu128`
+  (2.9.1+cu128); `lote2_hf` (2.8.0) e `moirai` (2.4.1) `whl/cpu`, de proposito em CPU. Blackwell exige CUDA >= 12.8.
+- **Fora dos `.txt`**: `pywinpty` e `triton-windows` (so Windows). `colorama` fica (inofensivo).
+- Python: 3.12 (3.11 no `moirai`) baixado pelo `uv`; nao ha Smart App Control, entao o 3.12 do `uv` serve para todos.
+- `granite-tsfm` e `tirex-2` (dependencias git) instalam com `--no-deps --no-build-isolation`; a nota do item 2 acima
+  (granite incompleto) continua valendo e nao foi reconferida.
+- Biblioteca: ambiente `~/.venvs/prosumer` (`uv pip install -e ".[dev,plots,lightgbm,fronius,net,docs]"`).

@@ -9,3 +9,4 @@ web/dist/
 .venv-build/
 build/
 dist/
+web/tsconfig.tsbuildinfo

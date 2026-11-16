@@ -257,6 +257,16 @@ Not checked by the review: phone layouts (the README records a 390 px pass on 23
 learnt from the data, the clock checked against the sun, a forecast with a confidence label, the Brazilian bill
 by Lei 14.300 with tarifa branca and bandeiras from ANEEL's open data, everything computed on the user's side.
 
+## Where to continue (2026-11-16, Lactec)
+
+The user got access to a Lactec VM (shared Slurm server: 48 threads, 2 x ~96 GB GPU, but only ~20 GB RAM free in
+practice while another user's job holds the rest; one GPU free). The review of every test so far and the ordered
+plan of heavy runs for it: `docs/projeto/REVISAO_TESTES_2026-11-16.md`. Main finding: no number has been checked on
+a test period that did not help choose something (all post-v2 choices used the same test), so the most valuable
+run is V1 (a fresh plant test period 06-11/2026, needs a new Solar.web export). Five decisions for the user at its
+end (new export; plant data on the shared VM; v3 replaces v2; Curitiba redo; TimeGPT). Never put the VM's host or
+user names in this public repo. Before any run on the VM: gate committed first, as always.
+
 ## Where to continue (2026-10-28, Lactec)
 
 On 28/10 at Lactec: merged both cloud branches into `main` (`claude/optimistic-lamport-b8s8u1` of 26/10 and

@@ -627,3 +627,27 @@ Consequencia (a do portao): os padroes ficam; o V11 completo (BR-PVGen + periodo
 decide para sitios novos, agora com a pergunta afiada: (a) a_k/vies num sitio que NAO escolheu o `TRUST`;
 (b) a faixa conformal por sitio, com a correcao de amostra finita escrita no portao antes de rodar. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
 `vitrine_local/`) mostra estes resultados com as curvas das usinas, so para a apresentacao.
+## V6: CRPS e cobertura das faixas de todo modelo que as entrega, sem e com conformal (16/11/2026, CPU) — PORTÃO (rodada ainda não feita)
+
+**Pergunta.** O benchmark (`05_avalia.py`) avalia só o ponto. As faixas existem em 17 arquivos
+`resultados/pilotos/*-quantis__*.parquet` (as 260 previsões de `resultados/previsoes/` guardam só `yhat`): LightGBM,
+Chronos-2, TimesFM-3 e FlowState (14 combinações, as do piloto F2(c') `piloto_conformal.py`) e BuildingsBench S/M/L nas
+casas (3 combinações, novas). A calibração conformal causal de 28 dias da biblioteca
+(`postprocessing.conformal_quantiles`, forma "nivel_28d" do piloto) conserta a cobertura em todas?
+
+**Método (`scripts/05c_faixas.py`, sem treino).** Reusa o `avalia` do `piloto_conformal.py`: mesmas horas avaliadas,
+mesma referência dos 14 dias, mesmos escores (`prosumer.metrics.band_scores`: cobertura de 80% e 60%, largura, CRPS), só
+nos dias em que a calibração já está ativa. Faixa bruta × calibrada, por combinação.
+
+**Portão (fixado antes de rodar).**
+- G1: a calibrada tem cobertura de 80% e de 60% dentro de ±5 pontos do nominal e skill de CRPS > 0 contra a
+  referência (e, onde a bruta já era calibrada, CRPS não pior que 1%) em **>= 80% das 17 combinações** (13 de 17).
+- G2: o número de combinações calibradas sobe (calibradas depois > calibradas antes).
+- Relatado sem portão: as 3 combinações novas separadas (BuildingsBench), cobertura e CRPS por modelo.
+- PASSA = G1 e G2.
+
+**Cuidado declarado.** As 14 combinações já passaram pelo piloto F2(c') no MESMO período de teste; para elas esta
+rodada reconfere e não é evidência independente. Só as 3 do BuildingsBench são combinações que não escolheram a forma.
+O teste intocado das usinas é o V1 (01/06 a 15/11/2026), fora desta rodada.
+
+**Saídas.** `resultados/pilotos/faixas_v6.json` e `faixas_v6.csv` (agregados; nada por hora de usina).

@@ -3,7 +3,7 @@
 
 Pergunta: a biblioteca (e o aplicativo) pode dar uma faixa confiavel, do tipo "amanha entre 8 e 12 kWh"?
 Fontes (cada uma grava `<fonte>-quantis__<caso>__<regime>.parquet` em resultados/pilotos/):
-- FlowState: 9 quantis sem treino, regime A (so no Lactec: granite-tsfm);
+- FlowState: 9 quantis sem treino, regime A (so na maquina de CPU: granite-tsfm);
 - TimesFM-3: 9 quantis sem treino, regime A (gerados pelo piloto_timesfm3.py);
 - Chronos-2: quantis sem treino (os 9 de 10% a 90% estao entre os seus 21), regime A e, nas usinas, C (clima
   previsto como covariavel, como no 03_fundacionais);
@@ -17,7 +17,7 @@ Quantis cruzados (q20 < q10) sao ordenados por linha antes de avaliar, como se f
 Portao: cobertura dentro de +-5 pontos do nominal e CRPS melhor que a referencia.
 
 Uso:  python piloto_quantis.py gera <FlowState|Chronos-2|LightGBM> [caso] [regime] [teste]   (previsao_gpu: o torch do previsao
-      esta bloqueado nesta maquina; FlowState so no Lactec, ambiente previsao)
+      esta bloqueado nesta maquina; FlowState so na maquina de CPU, ambiente previsao)
       python piloto_quantis.py avalia <fonte> [caso] [regime]     (qualquer ambiente do benchmark)
       padrao: usinas, regime A; `teste`: 1 dobra (LightGBM) ou 64 janelas (fundacionais), arquivo `-teste`
 """

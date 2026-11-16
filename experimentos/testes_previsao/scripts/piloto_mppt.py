@@ -48,7 +48,7 @@ from prosumer.io import fronius, pvdaq
 
 CURITIBA = os.environ.get(
     "CURITIBA_5MIN",
-    r"C:\Users\L08741\OneDrive - Lactec\Documentos\2026\Projeto_IA\ia_solar\dados_brutos\curitiba\serie_5min",
+    str(Path(os.environ.get("PROSUMER_RAW_DATA", ".")) / "curitiba" / "serie_5min"),
 )
 SITIO_CURITIBA = comum.SITIOS["Curitiba"]
 EVENTOS = {"falha string 1": ("2022-12-15", -1), "volta": ("2023-07-15", +1), "reconfiguracao": ("2025-06-15", 0)}

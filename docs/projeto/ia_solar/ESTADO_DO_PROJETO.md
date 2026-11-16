@@ -170,7 +170,7 @@ módulos remanejados entre as entradas, potência CC subiu 15%.
 ## Ambiente
 
 Instalados nesta máquina durante o trabalho: `truststore` (obrigatório — o proxy
-da Lactec quebra a verificação TLS; usar `truststore.inject_into_ssl()` antes de
+local quebra a verificação TLS; usar `truststore.inject_into_ssl()` antes de
 qualquer `requests`), `pyarrow`, `xgboost 3.4.1`.
 
 Comandos que precisam de rede rodam com o sandbox desligado.

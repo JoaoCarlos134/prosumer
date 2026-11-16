@@ -12,4 +12,4 @@ como cada rodada foi feita (09/10/2026). Não rodam desta pasta (importam `comum
 | `teste_correcao_B.py` | teste rápido da correção do regime B (GRU, 150 passos) |
 
 Para refazer o que deriva das previsões, use `../atualiza.py`. Para treinar, chame os scripts numerados
-diretamente, um processo por lote (a memória é o gargalo da máquina de casa).
+diretamente, um processo por lote (a memória é o gargalo da máquina com GPU).

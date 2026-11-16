@@ -71,4 +71,4 @@ memory index if referenced. Then `git log --stat` and `git diff` for the scope.
    what is wrong, evidence (command + output or the lines), and the smallest fix.
 3. **Claims checked**: table of claim -> verified / not reproduced / unsupported, with how.
 4. **Checks run**: ruff, format, mypy, pytest results (counts), probes you wrote and what they showed.
-5. **Not checked**: what you could not verify and why (data only at Lactec, too slow, needs GPU).
+5. **Not checked**: what you could not verify and why (private data, too slow, needs GPU).

@@ -2,13 +2,13 @@
 
 > **Nota de atualização — 06/10/2026.** O texto abaixo preserva a análise histórica de
 > 30/09–02/10/2026 e seus números (1.342 nós, 2.570 arestas), referentes ao projeto completo
-> no Lactec. A rede reconstruída deste repositório exportado está em
+> na máquina de CPU. A rede reconstruída deste repositório exportado está em
 > [`../../graphify-out/graph.html`](../../graphify-out/graph.html); o estado atual está no
 > [`CLAUDE.md`](../../CLAUDE.md). Os caminhos antigos abaixo
 > pertencem à estrutura original. Os 32 TFLite já foram recarregados e verificados em
 > 05/10/2026, com pré-processamento salvo; ainda falta medir em hardware embarcado.
 > `frame5.parquet` e `frame5h.parquet` são intermediários regeneráveis pelos scripts;
-> os dados brutos necessários ficaram no Lactec. Sua ausência nesta exportação não prova
+> os dados brutos necessários são privados. Sua ausência nesta exportação não prova
 > que o pipeline original esteja quebrado. O uso acadêmico foi autorizado em 05/10/2026;
 > os dados continuam privados, conforme [`CLAUDE.md`](../../CLAUDE.md).
 

@@ -92,7 +92,7 @@ T = [  # modelo, tipo, familia, no levantamento, implementacao, parametros, trei
      "Roda em CPU em segundos; candidato ao embarcado."),
     ("FlowState", "Fundacional", "Fundacional (zero-shot)", "FlowState", "granite-tsfm (IBM)", "≈ 9,1 milhões", "Não", "Não",
      "Codificador S5 + base funcional; entrou em 09/10/2026 depois do piloto. Melhor que o TTM na geração solar; "
-     "devolve quantis. Só no Lactec (granite-tsfm completo)."),
+     "devolve quantis. Só na maquina de CPU (granite-tsfm completo)."),
     ("VisionTS++", "Fundacional", "Fundacional (zero-shot)", "VisionTS", "visionts (pacote), ambiente previsao_gpu", "≈ 115 milhões", "Não", "Não",
      "Série dobrada em imagem (24 h x dias) e reconstruída por um MAE de imagens; entrou em 09/10/2026 depois do piloto "
      "(empatou na FV das casas). O VisionTS original foi pilotado e não passou. Devolve quantis."),
@@ -306,7 +306,7 @@ def grava_tabela(ws, df, nome, larguras, linha0=1):
 ws = wb.active; ws.title = "Leia-me"
 leia = [
     ("Visão geral dos modelos de previsão de geração solar e consumo", True),
-    (f"Projeto Edge AI (GRD-ACS-2026-1-21-1). Gerada em {date.today():%d/%m/%Y} por docs/literatura/scripts/gera_visao_geral_modelos.py.", False),
+    (f"Projeto Edge AI. Gerada em {date.today():%d/%m/%Y} por docs/literatura/scripts/gera_visao_geral_modelos.py.", False),
     ("", False),
     ("Esta planilha diz o que existe, o que foi testado e por que o resto ficou de fora. Só a aba Testáveis traz resultados (posição e skill).", True),
     ("Os resultados completos (erros, IC, testes estatísticos) estão em experimentos/testes_previsao/resultados/ e em experimentos/testes_previsao/LEIA-ME.md.", False),
@@ -320,7 +320,7 @@ leia = [
      "e tira-se a média. Assim quem só rodou com clima (TFT, TSMixerx, linear físico) se compara com quem rodou em tudo. "
      "O 'Ranking médio (regime A, 3 casos)' é o mesmo número do LEIA-ME dos testes.", False),
     ("   GPU: 'Sim' = inviável sem GPU; 'Recomendada' = roda em CPU, mas leva horas; 'Não' = CPU basta. "
-     "A máquina do Lactec não tem GPU; a de casa tem (RTX 4070).", False),
+     "Os testes rodaram numa máquina só de CPU e numa com GPU.", False),
     ("Encontrados — os 127 modelos do levantamento de 28/09/2026: o que cada um tem de diferente, onde achar, se foi testado e, se não, por quê.", False),
     (f"Testados — {len(TT)} modelos, variantes e referências presentes nas métricas atuais ({len(metricas)} combinações caso/regime), correspondendo a {len(testados)} entradas do levantamento e 7 referências/combinações.", False),
     ("Bibliotecas — 40 bibliotecas de previsão (versão, licença, situação), conferidas em 28/09/2026.", False),

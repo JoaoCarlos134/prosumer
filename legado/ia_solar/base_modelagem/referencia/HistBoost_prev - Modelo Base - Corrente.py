@@ -14,7 +14,8 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 ###############################################################################
 ###############################################################################
 # Carregar o arquivo Excel
-caminho_arquivo = r'C:\Users\L08741\OneDrive - Lactec\Documentos\2025_2\Projeto_solo\codigos\Base de Dados2.xlsx'
+import os
+caminho_arquivo = os.environ.get('BASE_DADOS_XLSX', 'Base de Dados2.xlsx')
 
 # Ler a primeira planilha do arquivo
 dados = pd.read_excel(

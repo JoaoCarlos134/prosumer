@@ -1,7 +1,7 @@
 """Shared HTTP transport for the readers that download (standard library only).
 
 `truststore`, when installed (extra `net`), makes the downloads work behind proxies that inspect TLS with the
-system certificates (the Lactec network). Every public reader takes an injectable getter, so nothing that
+system certificates. Every public reader takes an injectable getter, so nothing that
 uses this module needs the network to be tested.
 """
 

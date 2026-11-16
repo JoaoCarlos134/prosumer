@@ -2,7 +2,7 @@
 """Piloto E4 (12/10/2026): o diagnostico da usina so com a energia horaria CA e o local reencontra os achados antigos?
 
 Os achados (docs/projeto/ia_solar/ESTADO_DO_PROJETO.md, "Diagnosticos fechados") vieram dos dados de 5 min do
-Lactec, com corrente e tensao CC e geometria conhecida (Cascavel). A biblioteca recebe, no caso comum, so a
+privada, com corrente e tensao CC e geometria conhecida (Cascavel). A biblioteca recebe, no caso comum, so a
 energia horaria do inversor e o local. Aqui:
 
 1. dias claros SEM sensor: razao diaria energia / GHI de ceu claro, dia claro se >= 0,9 x o percentil 90 da janela

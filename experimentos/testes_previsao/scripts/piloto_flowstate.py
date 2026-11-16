@@ -7,7 +7,7 @@ tsfm_public.models.flowstate.utils.get_fixed_factor). Mesmas janelas dos outros 
 (1024 h de historico, 24 h a frente).
 
 Interesse para a biblioteca: e pequeno como o TTM (candidato ao embarcado) e devolve quantis.
-Portao: grupo da frente num caso (ver piloto_comum.py). So roda na maquina do Lactec: e o granite-tsfm
+Portao: grupo da frente num caso (ver piloto_comum.py). So roda na maquina so de CPU: e o granite-tsfm
 completo que tem o FlowState.
 
 Uso: python piloto_flowstate.py [caso ...]   (padrao: casas_cons; ambiente previsao)
@@ -21,7 +21,7 @@ import torch
 
 try:
     import truststore
-    truststore.inject_into_ssl()  # proxy do Lactec
+    truststore.inject_into_ssl()  # proxy com inspecao de TLS
 except ImportError:
     pass
 

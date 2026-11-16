@@ -19,28 +19,28 @@ look there for the history of anything below.
   user through his teacher, who is responsible for them; publishing needs his explicit written permission. To
   make the repo public, every per-hour plant file was removed from the WHOLE history with `git filter-repo`
   (173 paths: `dados/usinas_horario.parquet`, every `*__usinas__*` / `horizonte_usina_*` forecast and pilot,
-  `Emb-redes__usinas.npz`, both `dias_exemplo_cascavel.png`); `.gitignore` now blocks them, so a Lactec
-  re-sync cannot re-add them. Kept on purpose: aggregate metrics, ranking figures, legacy metric CSVs, the
+  `Emb-redes__usinas.npz`, both `dias_exemplo_cascavel.png`); `.gitignore` now blocks them, so a re-sync from
+  the private source cannot re-add them. Kept on purpose: aggregate metrics, ranking figures, legacy metric CSVs, the
   `.tflite` models, and the public Open-Meteo forecasts at the rounded sites. The full original history,
-  plant data included, is in the PRIVATE repo `JoaoCarlos134/prosumer-private` and in
-  `projects/prosumer-plant-data-backup/` (bundle + files) on the home machine. GitHub kept the rewritten-away commits
+  plant data included, is in the PRIVATE repo `JoaoCarlos134/prosumer-private` and in a
+  private backup (`CLAUDE.local.md`). GitHub kept the rewritten-away commits
   reachable by SHA, so the GitHub repo itself was recreated the same day: the old one is `prosumer-old`
   (private; never make it public), the current `prosumer` has only the clean history. Tests and scripts that need
   the plant files skip without them. Owner names were replaced by city ("Usina Cascavel", "Usina Curitiba");
   Cascavel coordinates rounded to 2 decimals (-24.83, -53.65); Curitiba's are the city's. Never reintroduce
-  names or exact coordinates. The name map exists only on the Lactec machine
-  (`biblioteca_tcc/scripts/exporta_repo_prossumidor.py`, never copied here). **Every clone made before
-  2026-11-04 has the old history: re-clone it, or purge it as the Lactec clone was on 2026-11-16 (`reset --hard`
+  names or exact coordinates. The name map is private
+  (`CLAUDE.local.md`), never copied here. **Every clone made before
+  2026-11-04 has the old history: re-clone it, or purge it as one clone was on 2026-11-16 (`reset --hard`
   to the new `origin/main`, delete every old branch/worktree/remote and the old `v0.1.0` tag, refetch tags,
   `reflog expire` + `gc --prune=now`; restore the plant files from the old history into the ignored paths first
-  if still needed). Old work lives only in `prosumer-private`; never fetch it into a working clone. The Lactec
-  clone has a local `.git/hooks/pre-push` that refuses any push whose history ever touched `usinas_horario.parquet`.**
+  if still needed). Old work lives only in `prosumer-private`; never fetch it into a working clone. A purged
+  clone gets a local `.git/hooks/pre-push` that refuses any push whose history ever touched `usinas_horario.parquet`.**
 - **Licence: AGPL-3.0-only (decided 2026-11-04).** The path recorded on 19/10 (AGPL-3.0 + dual licensing,
   product layer closed, an exception for `embedded` output) was followed; "-only" rather than "-or-later" so
   the author, as sole copyright holder, keeps control of future terms for dual licensing. Rejected: MIT and
   Apache-2.0 (would let anyone close a fork, which dual licensing needs to prevent). Still open from 19/10,
-  before PyPI: Lactec ownership (Lei 9.609 art. 4), the university's IP rules. Lactec is involved ONLY if
-  the user formally ties the project to a Lactec project.
+  before PyPI: the employer's ownership (Lei 9.609 art. 4), the university's IP rules. An employer is involved ONLY
+  if the user formally ties the project to one of its projects.
 - **Audience (decided 2026-10-09): international core + Brazilian layer.** English code and main docs (power
   sector worldwide + research/dev community), plus a Brazilian economics module (ANEEL, bandeiras, tarifa
   branca, Lei 14.300) and a Portuguese guide. The user wants the option of a master's/doctorate abroad. The
@@ -65,14 +65,11 @@ look there for the history of anything below.
   (figshare doi:10.6084/m9.figshare.c.6829134). Dingle Peninsula, Ireland (Europe/Dublin, with DST), 2020,
   1-min. Licence **CC0**: they can be published and used as real example data — cite the paper.
   (Identified 2026-10-07; before that they were treated as unknown origin and kept private.)
-- Re-syncing from Lactec is done there by rerunning the export script; files here may be overwritten by it.
-  Commit work done here before a re-sync. Its default destination is the Lactec clone in
-  `OneDrive - Lactec/Documentos/1Projects/prossumidor` (to be renamed `prosumer`: update the exporter) (was `~/repos/prossumidor` until 07/10/2026).
 
 ## Layout
 
-- `docs/proposta/` — `Proposta_TCC_prossumidor.pdf` (10 pages, steps E0–E8, ~580 h, 9 months),
-  `PROPOSTA_BIBLIOTECA.md` (8 modules, where each comes from), `gera_proposta_tcc.py` (needs reportlab).
+- `docs/proposta/` — `PROPOSTA_BIBLIOTECA.md` (8 modules, where each comes from). The TCC proposal and plan
+  (PDFs, their generator) are private since 2026-11-16 (`CLAUDE.local.md`).
 - `docs/projeto/` — `ia_solar/ESTADO_DO_PROJETO.md` (plant analyses, pending items),
   `ia_solar/PLANO_ARTIGO.md` (papers A and B), `REDE_PROJETO.md` (project graph analysis), `RESUMO_*.txt`.
 - `docs/literatura/` — `Visao_geral_modelos_previsao.xlsx` (127 models found, which were tested and why the
@@ -84,7 +81,7 @@ look there for the history of anything below.
 - `webapp/` — the TCC's site (FastAPI over `prosumer.app.run` + React/ECharts page; standalone exe planned):
   `webapp/README.md` has its layout, how to run it and what is left.
 - `legado/` — the project's original scripts (ia_solar analysis, modelling base, TFLite models, ANEEL
-  tariffs, graph scripts). Reference only: raw 5-min data stayed at Lactec, so most won't run here.
+  tariffs, graph scripts). Reference only: raw 5-min data are private, so most won't run here.
   Some file names were changed by the anonymization (e.g. `*_curitiba*` scripts).
 
 ## The forecasting benchmark (`experimentos/testes_previsao/`)
@@ -123,7 +120,7 @@ Pipeline (run from `scripts/`):
     historico/                   finished one-off queues (roda_v2, roda_lote2, roda_B, ...): record only, don't rerun
     08_previsao_tempo.py         re-downloads the Open-Meteo forecast archive (already in dados/)
     09_clima_casas.py            measured weather of the houses (Dingle station, figshare CC0) -> dados/clima_casas_horario.parquet
-    01_prepara_dados.py          builds dados/*.parquet from Lactec raw data — does NOT run here
+    01_prepara_dados.py          builds dados/*.parquet from the private raw data — runs only where they are
 
 Environments: six (`previsao`, `previsao_gpu`, `lote2`, `lote2_hf`, `moirai`, `classicos`), frozen in `ambientes/*.txt` (see `ambientes/LEIA-ME.md` for uv commands). Scripts
 expect them in `~/.venvs/<name>` (override with `VENVS`). `previsao` runs almost everything.
@@ -134,27 +131,10 @@ the state of 06/10 and its findings are in `docs/projeto/HISTORICO.md`. Pilots: 
 
 ## Machines
 
-Two machines, one repository. Always work on `main`.
-
-| | Lactec (work) | Home |
-|---|---|---|
-| Clone | `OneDrive - Lactec/Documentos/1Projects/prosumer` | `Downloads/projects/prosumer` |
-| GPU | none (CPU torch) | RTX 4070 |
-| Library env | `~/.venvs/prosumer` (extras dev, plots, lightgbm, fronius, net, docs); `~/.venvs/prosumer_tsfm` for FlowState (granite-tsfm needs scikit-learn < 1.8; `PYTHONPATH=src`); `~/.venvs/classicos` | repo `.venv` on the signed Python 3.12.10; `~/.venvs/previsao_gpu` (torch 2.9.1+cu128) for GPU runs |
-| Benchmark envs | `~/.venvs/{previsao,lote2,lote2_hf,moirai}` = `ambientes/*.txt` | the same, see `ambientes/LEIA-ME.md` |
-| Runs here | the library, evaluation, references, LightGBM, zero-shot foundation models, TTM/FlowState | trained networks, TabPFN-TS (GPU) |
-| Raw data | 5-min Fronius exports and the bill summary in `Projeto_IA/ia_solar/dados_brutos` (private, never copied) | none |
-| RAM | 15.7 GB | more than Lactec's (memory, not the GPU, is the bottleneck there) |
-
-Home machine, Smart App Control (never turn it off: irreversible; WSL2 is the way out if needed): it blocks
-torch 2.14 (use `previsao_gpu`), pyarrow 26 (the `.venv` has 25.0.1; `moirai` has 24.0.0), the compiled mypy
-(the `.venv` has a pure mypy 2.4.0), `hypothesis._native` and the `statsmodels` of `classicos`. Tests at home:
-`.venv/Scripts/python.exe -m pytest -p no:hypothesispytest --ignore=tests/test_contracts.py`. At Lactec everything
-runs: `~/.venvs/prosumer/Scripts/python.exe -m pytest -n 6`.
-
-The Lactec exporter (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copies OLD files over
-new ones: never run it without comparing; the repository is the main copy. The Lactec clone's `origin` may
-still point at the old URL (it redirects; `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git`).
+Which machines exist, their environments and how to run the tests on each, the private raw data and the
+compute server: `CLAUDE.local.md` (gitignored, copied by hand to each machine). **No tracked file names the
+employer, a machine, a server or a private path** (decided 2026-11-16, the repo is public): write "a CPU-only
+machine", "a GPU", "the private raw data", "a compute server". Library tests: `pytest -n 6` in the library env.
 
 ## How to work here (the user's standing rules)
 
@@ -241,7 +221,7 @@ Not checked by the review: phone layouts (the README records a 390 px pass on 23
 - Later: a Home Assistant integration; the library as a hosted API.
 
 **Before the app goes public as a hosted beta**
-- Settle the two open questions already listed (Lactec ownership, Lei 9.609 art. 4; the university's IP rules)
+- Settle the two open questions already listed (the employer's ownership, Lei 9.609 art. 4; the university's IP rules)
   before money changes hands.
 - Open-Meteo's free API is non-commercial: a paid product needs one of its commercial plans (check the price on
   their site). Keep the hosted beta free and framed as the thesis's user evaluation.
@@ -257,18 +237,17 @@ Not checked by the review: phone layouts (the README records a 390 px pass on 23
 learnt from the data, the clock checked against the sun, a forecast with a confidence label, the Brazilian bill
 by Lei 14.300 with tarifa branca and bandeiras from ANEEL's open data, everything computed on the user's side.
 
-## Where to continue (2026-11-16, Lactec)
+## Where to continue (2026-11-16)
 
-The user got access to a Lactec VM (shared Slurm server: 48 threads, 2 x ~96 GB GPU, but only ~20 GB RAM free in
-practice while another user's job holds the rest; one GPU free). The review of every test so far and the ordered
+The user got access to a compute server (details in `CLAUDE.local.md`). The review of every test so far and the ordered
 plan of heavy runs for it: `docs/projeto/REVISAO_TESTES_2026-11-16.md`. Main finding: no number has been checked on
 a test period that did not help choose something (all post-v2 choices used the same test), so the most valuable
-run is V1 (a fresh plant test period 06-11/2026). Never put the VM's host or user names in this public repo. Before
-any run on the VM: gate committed first, as always.
+run is V1 (a fresh plant test period 06-11/2026). Never name the server, its host or its users in a tracked file.
+Before any run on it: gate committed first, as always.
 
 Later on 16/11: the 5-min Solar.web exports of both plants for 01/01-15/11/2026 arrived and are stored with the
-older exports in the private Lactec folder `2026/Projeto_IA/ia_solar/dados_brutos/<plant>/exportacoes/` (file names
-carry the owners' names: never in the repo); the owners allowed all data on the VM. V1 is unblocked (extend
+older private raw exports (`CLAUDE.local.md`; the file names carry the owners' names: never in the repo); the
+owners allowed all data on the server. V1 is unblocked (extend
 `usinas_horario.parquet` with `01_prepara_dados.py` first). Added to the plan (sections 7-9): a local database
 (SQLite: measurements, every issued forecast, per-site parameters, events the person marks, load plans) so a
 long-term user gets site-learnt trust/skill, calibrated bands and bias correction, shrunk to the defaults while data
@@ -278,14 +257,14 @@ EDS-lab PV collection with tilt/azimuth; ERA5 and the Historical Forecast API; I
 day: `outlook.look_back` / `Result.past` and the Next days page's "last 7 days" charts (`2f28e32`); the exe needs
 `prosumer_site.cmd rebuild`, and the pages were not checked in a browser yet.
 
-## Where to continue (2026-10-28, Lactec)
+## Where to continue (2026-10-28)
 
-On 28/10 at Lactec: merged both cloud branches into `main` (`claude/optimistic-lamport-b8s8u1` of 26/10 and
+On 28/10 on the CPU machine: merged both cloud branches into `main` (`claude/optimistic-lamport-b8s8u1` of 26/10 and
 `claude/quirky-thompson-4mgg6s` of 28/10, both from `4b8bc3a`, beside the unpushed `d8454a1`). Conflicts: `app.run`
 passes `issue_hour` and then rewords the notes for people (both kept); the suns: kept 28/10's
 `components/Sun.tsx` (disc pulse by hand; logo rays still), removed 26/10's `Spin.tsx` (its reduced-motion check
 moved into `Sun`). Library suite and `webapp/tests` green; exe rebuilt (`dist/prosumer`, 327 MB) and started.
-PyInstaller could not delete the old `dist/prosumer` (OneDrive lock): delete it by hand, then build again.
+PyInstaller could not delete the old `dist/prosumer` (the sync client's lock): delete it by hand, then build again.
 Next: the user looks at the pane in the browser.
 
 ### 2026-10-26, cloud (kept for the record)
@@ -296,10 +275,10 @@ by `Sun.tsx`; the rays orbited a point off the sun; SMIL barely moved in Chrome 
 the whole screen with a slide (landing "add your files", the pane's maximise button), with a site map ("use my
 location"), time-zone suggestions, a preview of each dropped file (`/api/peek` -> new `prosumer.app.peek`) and
 the new request fields `weeks`, `issue_hour`, `price.credit` (library + tests + docs). What the library can do
-that the pane still does not offer: `webapp/README.md` "2026-10-26 (cloud)". Next: rebuild the exe at Lactec
+that the pane still does not offer: `webapp/README.md` "2026-10-26 (cloud)". Next: rebuild the exe on the CPU machine
 (`prosumer_site.cmd rebuild`) and look at the pane there.
 
-### 2026-10-26, Lactec (kept for the record)
+### 2026-10-26, CPU machine (kept for the record)
 
 **The user is reworking the site's pages (26/10: "the site is not 100%")**: keep `webapp/README.md`
 "Left" as the list; ask before redesigning pages. One launcher now: `webapp/prosumer_site.cmd` (builds
@@ -308,7 +287,7 @@ changes; `dev` = API --reload with the library from `../src` + Vite on :5173); i
 `run.cmd`/`dev.cmd`/`build_exe.cmd`/`run.sh`, one env `webapp/.venv` (`.venv-build` gone). The mkdocs user
 guide now builds into `build/docs` (was the confusing top-level `site/`).
 
-Done on 26/10 at Lactec: pulled the cloud branch (fast-forward, pushed), library suite 698 passed / 23 skipped,
+Done on 26/10 on the CPU machine: pulled the cloud branch (fast-forward, pushed), library suite 698 passed / 23 skipped,
 `webapp/tests` 12 passed (FastAPI etc. added to `~/.venvs/prosumer`); the Windows exe built and checked through
 its API: demo with live Open-Meteo, a real Cascavel Fronius 5-min year (read as Fronius Solar.web) with live
 ANEEL tariff and bandeira. Then the library fixes the site exposed (README "Left" 3-4): the consumption
@@ -316,7 +295,7 @@ outlook's daily range = range of past daily totals (was the sum of hourly extrem
 read it), `app.FOR_PEOPLE` rewords programmer notes on the app's pages, credits' notes translated. Still left: a
 browser pass over the pages (after the user's changes).
 
-### 2026-10-23, cloud -> Lactec (kept for the record)
+### 2026-10-23, cloud -> CPU machine (kept for the record)
 
 The cloud's `work-reviewer` pass over `941dae7..f6fc344` (ready with fixes, 1 MAJOR) is fixed in `8676a80`; its
 open minors are in `webapp/README.md` "Left" 3.
@@ -340,7 +319,7 @@ a pill tab bar; legends one scrolling row clear of the axis names; range whisker
 - Cloud sandbox note: its proxy drops some TLS connections to Open-Meteo (the library turns it into a message);
   the browser checks used the test suite's fake weather.
 
-### 2026-10-23 morning, Lactec (kept for the record)
+### 2026-10-23 morning, CPU machine (kept for the record)
 
 **On "continue": build the site in `webapp/` following `webapp/README.md` "State ... and what is left", steps
 1-7 in order** (the five missing pages, `npm run build` and its type errors, `webapp/tests/test_api.py`,
@@ -350,7 +329,7 @@ canvas, page tabs at the bottom, a filter-like Inputs pane, focus mode / show as
 visual, cross-filter by day) WITH animations, visual objects from open-source tools (no paid service needed:
 ECharts, Framer Motion, Leaflet + OpenStreetMap, lucide; the user offered to create an account / API key if
 one is ever needed); then the whole site must run from an exe in a standalone folder that carries the
-library and every dependency (PyInstaller one-folder; the Windows build and its test happen on the Lactec
+library and every dependency (PyInstaller one-folder; the Windows build and its test happen on the CPU
 machine, see README step 5).
 
 - The site lives in `webapp/` of THIS repo (moved on 23/10 from a sibling folder `1Projects/prosumer_site` so
@@ -427,8 +406,8 @@ Done on 19/10 (all pushed): review fixes F2/F4/F8/F9 and `analyze(bias_days=, ca
 `app.run` runs LightGBM in the forecast check by default (`models`: lightgbm/naive/all), `Result.charts`
 (daily history, test hours = `Report.hourly`, clear-day performance), fix of the past folds of `analyze`
 (`7895d7f`). Licence: decided to stay PRIVATE for now (all rights reserved; site installs from the private
-repo); recommended path when publishing is in the Lactec machine's memory only: AGPL-3.0 + dual licensing,
-product layer closed, exception for `embedded` output; check Lactec ownership (Lei 9.609 art. 4), university
+repo); recommended path when publishing is in the author's private notes only: AGPL-3.0 + dual licensing,
+product layer closed, exception for `embedded` output; check the employer's ownership (Lei 9.609 art. 4), university
 IP rules, patents, AI-written code first.
 
 The user asked to do groups 1 and 2 of "is the library done" (library first, then the site):

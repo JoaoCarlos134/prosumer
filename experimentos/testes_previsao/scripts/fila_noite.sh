@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fila da noite (maquina de casa, RTX 4070): so o que pesa (GPU/CPU por horas). De dia a maquina fica livre.
+# Fila da noite (maquina com GPU, GPU): so o que pesa (GPU/CPU por horas). De dia a maquina fica livre.
 # Uso (de scripts/):  bash fila_noite.sh        log em ../resultados/log_fila_noite_<data>.txt (fora do git)
 # MODO_TESTE=1 bash fila_noite.sh: liga o modo_teste.ps1 antes (fecha a lista de programas, plano Alto desempenho) e
 # restaura no fim. Sem a variavel, nada e fechado.

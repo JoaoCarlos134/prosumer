@@ -47,7 +47,7 @@ from prosumer.contracts import EnergySeries  # noqa: E402
 from prosumer.physics import clear_sky_ghi  # noqa: E402
 from prosumer.protocol import DayAhead, folds, standardize_by_training  # noqa: E402
 
-# CPU por padrao (como foi rodado no Lactec). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
+# CPU por padrao (como foi rodado em CPU). DISPOSITIVO=cuda leva as redes treinadas para a GPU; os lotes e o
 # resto do protocolo nao mudam, mas os numeros podem variar um pouco: o dispositivo fica anotado nos tempos.
 DISPOSITIVO = os.environ.get("DISPOSITIVO", "cpu")
 

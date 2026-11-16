@@ -13,7 +13,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[2]
 IGNORA = ("referencias_pdf", "prev_consumo_embarcado_refs", "ocr_paper/references/pdfs", "graphify-out", ".git/",
           "ocr_paper/template", "IEEEtran")
-PDF_PROPRIOS = ["projeto/Síntese do Projeto de PD&I - IA_Borda_rev02.pdf", "outros/guias/Guide1_Claude_App_Setup.pdf",
+PDF_PROPRIOS = ["projeto/sintese_do_projeto.pdf", "outros/guias/Guide1_Claude_App_Setup.pdf",
                 "outros/guias/Guide2_VSCode_Claude_Code_Setup.pdf", "ocr_paper/paper/main.pdf",
                 "ocr_paper/references/Solo___UPEC_2026.pdf", "outros/Paper_Solo_UPEC_2026.pdf"]
 NOME = re.compile(r"[\w\-\.&]+\.(?:py|csv|parquet|xlsx|json|md|html|png|tflite|tex|bib|docx|pdf|ipynb|zip)\b", re.I)

@@ -3,7 +3,7 @@
 Primeira rodada (v1) entre 30/09 e 02/10/2026; **protocolo v2** em 05–06/10/2026, a partir do
 levantamento de 127 modelos (`../../docs/literatura/Modelos_previsao_geracao_consumo.xlsx`).
 **36 modelos e referências, 3 casos, uma tarefa só: prever as 24 horas do dia seguinte, emitindo a
-previsão às 00:00.** As redes treinadas rodaram em GPU (RTX 4070); os fundacionais, em CPU.
+previsão às 00:00.** As redes treinadas rodaram em GPU (GPU); os fundacionais, em CPU.
 
 > **Atualização de 09/10/2026 (passo T + FlowState + mediana corrigida):** agora são **53 modelos e 248 linhas
 > de métricas**, mais `resultados/metricas_por_resolucao.csv` (hora, dia/noite, pico 17–21 h, dia;
@@ -269,7 +269,7 @@ Seis defeitos encontrados e corrigidos entre 05 e 06/10/2026, dois deles com efe
   modelo da dobra seguinte, treinado com dados posteriores a eles. Também duplicava 480 linhas por
   modelo e quebrava o `05_avalia`. Atingia as 9 redes do `casas_cons`, que foram refeitas; `usinas` e
   `casas_prod` têm todas as séries terminando no mesmo dia e não mudaram. Nenhum número publicado antes
-  dependia disso (o `metricas.csv` exportado do Lactec não tinha redes no `casas_cons`).
+  dependia disso (o `metricas.csv` exportado da fonte privada não tinha redes no `casas_cons`).
 - **TiDE não usava o clima.** O `MLPResidual` do TiDE termina num LayerNorm sobre `temporal_width` (4 =
   o número de exógenas), aplicado em **cada hora**: isso tira média e escala das 4 variáveis de clima
   hora a hora, ou seja, apaga a amplitude — exatamente o sinal de "quanto sol faz". O TiDE ficava em
@@ -334,7 +334,7 @@ Outras limitações:
   regimes, e qualquer correção de hora inteira afasta mais: medido com o LightGBM
   (`scripts/piloto_curitiba_hora.py`), NASA adiantada 1 h no B leva Curitiba de +0,471 a +0,440; previsão e
   céu claro atrasados 1 h no C, de +0,326 a +0,313 (as duas usinas). O conserto real seria reagregar
-  Curitiba dos dados de 5 min do Lactec com o deslocamento de fração de hora, o que muda o alvo e obriga a
+  Curitiba dos dados de 5 min privados com o deslocamento de fração de hora, o que muda o alvo e obriga a
   refazer todos os modelos das usinas nos três regimes, por um ganho pequeno num teto (B). Decisão: os
   números publicados ficam, e este parágrafo os acompanha.
 
@@ -345,7 +345,7 @@ montagem falha ou deixa o ambiente errado em silêncio). Rodar de `scripts/`:
 
     set DISPOSITIVO=cuda        # PowerShell: $env:DISPOSITIVO="cuda"; bash: export DISPOSITIVO=cuda
 
-    python 01_prepara_dados.py        # dados horarios (NAO roda aqui: a base de 5 min ficou no Lactec)
+    python 01_prepara_dados.py        # dados horarios (NAO roda aqui: a base de 5 min e privada)
     python 02_referencias.py          # referencias, linear fisico, LightGBM (todos os regimes)
     python 03_fundacionais.py         # fundacionais v1
     <moirai>/python 03b_moirai.py     # Moirai 2.0

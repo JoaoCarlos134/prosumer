@@ -29,7 +29,7 @@
 
 > **Estado em 06/10/2026.** Este estudo de viabilidade descreve uma arquitetura proposta;
 > o pacote instalável existe (etapa E1, 06/10/2026), com `contratos`, `protocolo`, `metricas` e `dados`; os outros módulos ainda não foram escritos. O uso acadêmico para o TCC
-> foi liberado em 05/10/2026; a licença é decisão do autor (a Lactec só entra se o projeto for ligado
+> foi liberado em 05/10/2026; a licença é decisão do autor (um empregador só entra se o projeto for ligado
 > formalmente a ela) e os dados das usinas dependem da permissão do professor. Público decidido em
 > 09/10/2026: núcleo internacional (inglês) com camada brasileira; ver `CLAUDE.md`. O benchmark v2 deve ser concluído e validado antes de atualizar as decisões
 > baseadas nos testes v1 abaixo. Consulte [`CLAUDE.md`](../../CLAUDE.md) e a
@@ -191,7 +191,7 @@ parte da 5b e mudam o resto. Cada linha diz o que fazer na biblioteca e de onde 
 | **Interface pensada para o aplicativo** (09/10/2026) | o TCC é um aplicativo fácil de usar sobre a biblioteca (página web local como o SciKeywordMap ou programa como o Loom). A API pública precisa de uma chamada que faça a análise completa a partir dos arquivos do usuário e devolva um relatório |
 | **O melhor modelo muda com a resolução** (09/10/2026; `metricas.por_resolucao`) | no consumo A, a mediana corrigida é a melhor por hora (+0,207), mas o Timer-XL-84m é o melhor no pico da noite (+0,202) e no total do dia (+0,146); no B, o Ridge vence no dia. Na geração solar o total do dia é MAIS difícil que a hora (R² 0,36 × 0,43 nas casas). A biblioteca mede em todas as resoluções e recomenda pelo nível da decisão do usuário |
 | **Mediana corrigida como saída padrão do consumo** (09/10/2026; `posprocessamento.corrige_vies`) | 1ª no consumo A e B do benchmark (+0,207 e +0,208), viés de −19% para −0,5%; a mediana sem correção cai para 9ª e 7ª (no B, nem empata com a melhor). Bloqueada para geração |
-| **O repositório é a cópia principal** | o exportador do Lactec copia arquivos antigos por cima dos novos (planilhas, `comum.py`, resultados da GPU). Trabalho da biblioteca não depende dele |
+| **O repositório é a cópia principal** | o exportador privado copia arquivos antigos por cima dos novos (planilhas, `comum.py`, resultados da GPU). Trabalho da biblioteca não depende dele |
 
 ## 6. Princípios de projeto
 

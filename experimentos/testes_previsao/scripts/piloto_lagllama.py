@@ -15,7 +15,7 @@ Codigo: so no GitHub (time-series-foundation-models/lag-llama, commit df7531a, 0
 ~/.cache/lag-llama-repo/src e posto no sys.path; pesos do HuggingFace time-series-foundation-models/Lag-Llama
 (Apache-2.0). Precisa de ambiente proprio, ~/.venvs/lagllama: o gluonts 0.16 tirou `modules.loss` e o pandas
 >= 2.2 recusa a frequencia 'Q' das defasagens; = previsao_gpu com gluonts 0.14.4, pandas 2.1.4, numpy 1.26.4 e
-scipy 1.13.1. Na RTX 4070: ~680 s para 920 janelas com contexto 32 (11,5 GB de VRAM). O checkpoint guarda
+scipy 1.13.1. Na GPU: ~680 s para 920 janelas com contexto 32 (11,5 GB de VRAM). O checkpoint guarda
 objetos Python: o torch >= 2.6 so carrega com TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 (posto so neste processo).
 
 Uso: python piloto_lagllama.py [ctx=32|256|1024] [caso ...]   (ambiente previsao_gpu)

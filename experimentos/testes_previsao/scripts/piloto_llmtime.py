@@ -17,7 +17,7 @@ digitos de precisao, sem espaco entre digitos (o tokenizador ja separa cada digi
 correcao de meio-bin (ruido uniforme dentro do ultimo digito). LLM: Qwen2.5-1.5B BASE (Apache-2.0; o artigo
 mostra que modelos ajustados para conversa pioram), tokeniza cada digito separado, como o LLaMA. Separador ","
 (o oficial usa ", "; uma ficha a menos por valor). Contexto: 336 h (duas semanas, ~1.400 fichas); 10 amostras por
-janela (o oficial usa 20). Custo medido na RTX 4070: ~7 s por janela (2 janelas x 10 amostras por chamada; a
+janela (o oficial usa 20). Custo medido na GPU: ~7 s por janela (2 janelas x 10 amostras por chamada; a
 memoria cresce rapido com o lote), ~3,5 h no consumo: roda na fila da noite. Saidas com menos de 24 valores sao completadas com o
 ultimo valor valido (contadas e impressas).
 

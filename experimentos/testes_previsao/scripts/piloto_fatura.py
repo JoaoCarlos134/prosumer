@@ -105,8 +105,7 @@ from prosumer.economics import brazil
 
 FATURA = os.environ.get(
     "FATURA_CASCAVEL",
-    r"C:\Users\L08741\OneDrive - Lactec\Documentos\2026\Projeto_IA\ia_solar\dados_brutos\cascavel"
-    r"\Fatura de energia.xlsx",
+    str(Path(os.environ.get("PROSUMER_RAW_DATA", ".")) / "cascavel" / "Fatura de energia.xlsx"),
 )
 # "sem-duplicatas" na linha de comando: diagnostico pos-hoc (ver `_get_sem_duplicatas`), arquivos proprios
 SEM_DUP = "sem-duplicatas" in sys.argv
@@ -349,7 +348,7 @@ def alinhamento(fat):
 
 def main():
     if not os.path.exists(FATURA):
-        print(f"planilha da fatura nao encontrada ({FATURA}): piloto pulado (so roda no Lactec)")
+        print(f"planilha da fatura nao encontrada ({FATURA}): piloto pulado (so roda na maquina de CPU)")
         return
     t0 = time.time()
     book = livro()

@@ -3,7 +3,7 @@
 Quatro ambientes, porque os modelos exigem versões incompatíveis de torch e transformers.
 Versões exatas congeladas em 05/10/2026 (`uv pip freeze`).
 
-`previsao.txt` foi recongelado em 09/10/2026 na máquina de casa com `torch==2.14.1+cu130` (o Controle de
+`previsao.txt` foi recongelado em 09/10/2026 na máquina com GPU com `torch==2.14.1+cu130` (o Controle de
 Aplicativo bloqueou o 2.11.0; ver CLAUDE.md). As 52 redes originais rodaram em 2.11.0, as do passo T em
 2.14.1. Para CPU, troque `+cu130` por `+cpu`. `classicos.txt` congelado na mesma data.
 
@@ -26,7 +26,7 @@ cabecalho de `scripts/piloto_buildingsbench.py`).
 `moirai.txt` (11/10/2026): `pyarrow` 25.0.1 -> **24.0.0**. O Smart App Control passou a bloquear o `_parquet` da
 roda cp311 do 25.0.1 (mesmo numa instalacao limpa); 19 a 24 carregam. Sem isso o ambiente nao le os parquets.
 | `classicos.txt` | 3.12 | AutoARIMA, AutoETS, AutoTheta, MSTL (StatsForecast 2.1.1; sem torch) |
-| `previsao_gpu.txt` | 3.12 | igual ao `previsao`, só com `torch==2.9.1+cu128`: o que roda na GPU da máquina de casa desde 09/10/2026 (etapa A) |
+| `previsao_gpu.txt` | 3.12 | igual ao `previsao`, só com `torch==2.9.1+cu128`: o que roda na GPU da máquina com GPU desde 09/10/2026 (etapa A) |
 
 Criar (com [uv](https://docs.astral.sh/uv/)), na pasta `~/.venvs` (ou defina `VENVS` para outra):
 
@@ -37,9 +37,9 @@ Repita para `lote2` e `lote2_hf` (Python 3.12) e `moirai` (Python 3.11). Em Linu
 `bin/python`. Com GPU NVIDIA, troque o índice `whl/cpu` por `whl/cu126` (ou a versão do seu driver) e
 remova o sufixo `+cpu` de `moirai.txt`.
 
-Atrás de proxy com certificado próprio (rede do Lactec): `export UV_NATIVE_TLS=1`.
+Atrás de proxy com certificado próprio (rede com inspeção de TLS): `export UV_NATIVE_TLS=1`.
 
-## O que foi preciso mudar para recriar os quatro ambientes (06/10/2026, Windows + RTX 4070)
+## O que foi preciso mudar para recriar os quatro ambientes (06/10/2026, Windows + GPU)
 
 Recriar do zero numa máquina com GPU exigiu três desvios da receita acima. Sem eles a instalação
 falha ou — pior — passa calada e deixa o ambiente errado.

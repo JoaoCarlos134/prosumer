@@ -57,7 +57,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph PRIV["🔒 Private · Lactec machine only"]
+    subgraph PRIV["🔒 Private · never in the repo"]
         LAC["<b>Paraná plants</b><br/>Fronius 5-min exports · bills<br/><i>teacher's permission needed</i>"]
     end
     subgraph PUB["🌐 Public sources"]
@@ -116,7 +116,7 @@ Three products, in order of importance (CLAUDE.md, "Library first"):
 | `examples/site_local/` | local example page: `app.py` (stdlib HTTP server, a thin shell over `app.run`), `index.html`, `README.md` | English |
 | `webapp/` | the TCC's site: `server/` (FastAPI over `app.run`: `api.py`, `demo.py`, `launch.py`), `web/` (React + Vite + TS + Tailwind + ECharts, seven report pages), `tests/test_api.py`, `prosumer_site.cmd` (the one launcher: builds the first time, then runs; `rebuild`, `dev`), `prosumer_site.spec` (PyInstaller, one folder); `README.md` has its state | English |
 | `docs/library/` | the user guide (mkdocs, `mkdocs.yml` at the root); every example runs in `tests/test_docs.py` | English (+ `pt/guia.md`) |
-| `docs/proposta/` | the TCC proposal (E0-E8, PDF made by `gera_proposta_tcc.py`), `PROPOSTA_BIBLIOTECA.md` (the 8 planned modules, their sources, the old -> new name map), `Plano_TCC_simples` | Portuguese |
+| `docs/proposta/` | `PROPOSTA_BIBLIOTECA.md` (the 8 planned modules, their sources, the old -> new name map); the TCC proposal and plan PDFs are private since 2026-11-16 | Portuguese |
 | `docs/projeto/` | research records: `HISTORICO.md` (the diary 05-17/10), `PILOTOS_F1_F2.md` (every pilot's gate and result), `ESTUDO_ETAPA_A.md`, `ESTUDO_EMBARCADO.md`, `ia_solar/` (plant analyses, paper plan), network analyses | Portuguese |
 | `docs/literatura/` | model surveys (xlsx; two are regenerated from `metricas.csv` by `docs/literatura/scripts/`), references, review draft | Portuguese |
 | `experimentos/testes_previsao/` | the forecasting benchmark (section 6) | Portuguese |
@@ -224,7 +224,7 @@ locally; a model whose card says `sends_data` gets a note in the report.
 ## 4. The tests, `tests/`
 
 One file per module (`test_<module>.py`), flat, no conftest; ~710 tests (~20 min with `pytest -n 4` in the
-cloud container, ~110 s with `-n 6` at Lactec). Helpers: `aneel_fake.py` (a fake ANEEL CKAN, and the live extract of
+cloud container, ~110 s with `-n 6` on a 12-thread CPU). Helpers: `aneel_fake.py` (a fake ANEEL CKAN, and the live extract of
 2026-10-12), `series.py` (an hourly `EnergySeries` for the economics tests), `wasm_c.py` (C -> WebAssembly to run
 the embedded headers). `test_i18n` imports its helpers from `test_app`.
 
@@ -272,7 +272,7 @@ rolling origin, 57 models, 260 rows of `resultados/metricas.csv`. Write-up: its 
 
 | File | Made by | Source |
 |---|---|---|
-| `usinas_horario.parquet` | `01_prepara_dados.py` (Lactec only) | **private** Fronius 5-min data of the plants + NASA POWER |
+| `usinas_horario.parquet` | `01_prepara_dados.py` (private raw data only) | **private** Fronius 5-min data of the plants + NASA POWER |
 | `casas_horario.parquet` | `01_prepara_dados.py` | Khadem et al. 2024 (figshare, CC0) |
 | `clima_casas_horario.parquet` | `09_clima_casas.py` | Dingle weather station (figshare, CC0) |
 | `previsao_tempo.parquet` | `08_previsao_tempo.py` | Open-Meteo Previous Runs, ECMWF IFS and GFS (CC BY 4.0) |
@@ -316,7 +316,7 @@ Environments: six frozen lists in `ambientes/` (`previsao`, `previsao_gpu`, `lot
 | `ia_solar/base_modelagem/` | the modelling base, regression scripts, 32 TFLite models of the embedded study | `embedded` (the lesson: export WITH the preprocessing) |
 | `analise_rede/` | project graph scripts | `docs/projeto/REDE_PROJETO.md` |
 
-The raw 5-min data stayed at Lactec: most legacy scripts do not run here. Planned module -> source files:
+The raw 5-min data are private: most legacy scripts do not run here. Planned module -> source files:
 `docs/proposta/PROPOSTA_BIBLIOTECA.md` section 4.
 
 ## 8. Known loose ends found while mapping (2026-10-21)
@@ -325,7 +325,7 @@ The raw 5-min data stayed at Lactec: most legacy scripts do not run here. Planne
 the plant data were not in the repository.)
 
 
-- `01_prepara_dados.py` writes to an old Lactec layout (`Projeto_IA/testes_modelos/dados`); the `08` and `03c`
+- `01_prepara_dados.py` writes to an old private layout (`Projeto_IA/testes_modelos/dados`); the `08` and `03c`
   docstrings cite old paths.
 - `docs/proposta/LEIA-ME.md` still describes the state of 06/10 (`src/prossumidor/`); the README says "version
   0.1 (step E2)".

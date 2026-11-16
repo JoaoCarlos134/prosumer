@@ -3,7 +3,7 @@
 Parity: the library adapter regenerates the benchmark's saved FlowState forecasts
 (`resultados/previsoes/FlowState__<case>__A.parquet`, `03_fundacionais.py`) and the 9 quantiles of pilot F2(c)
 (`resultados/pilotos/FlowState-quantis__<case>__A.parquet`, `piloto_quantis.py gera FlowState`). Checked on
-2026-10-16 (Lactec, CPU, torch 2.11.0+cpu, granite-tsfm 0.3.9): see the docstring of the parity test. By
+2026-10-16 (CPU, torch 2.11.0+cpu, granite-tsfm 0.3.9): see the docstring of the parity test. By
 default the first 32 windows of the houses' consumption (~30 s); `PROSUMER_FULL=1` runs every window of the
 three cases.
 

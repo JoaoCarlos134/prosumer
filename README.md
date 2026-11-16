@@ -6,8 +6,7 @@
 
 Day-ahead forecasting of energy prosumers' generation and consumption (PV plants, houses with PV), from
 meter data to a complete, honest analysis. It is the basis of João Carlos Jachenski Junior's undergraduate
-thesis (TCC), whose app is a thin layer over `prosumer.analyze`, and grew out of the Edge AI R&D project at
-Lactec.
+thesis (TCC), whose app is a thin layer over `prosumer.analyze`, and grew out of an Edge AI R&D project.
 
 ![The prosumer app's Overview page: next-7-days generation and consumption, forecast skill, expected bill, PV savings and the site](docs/screenshots/app-overview.png)
 
@@ -184,7 +183,7 @@ recompute plant numbers skip without the data. Plants are named by city, and coo
 | `docs/projeto/` | state of the analyses, pilots, plans for papers A and B |
 | `docs/literatura/` | Edge AI review, references, survey of 127 models |
 | `experimentos/testes_previsao/` | the day-ahead forecasting benchmark: scripts, hourly data, environments, results |
-| `legado/` | the project's original code (reference only: the raw data stayed at Lactec) |
+| `legado/` | the project's original code (reference only: the raw data are private) |
 
 The package was called `prossumidor` until 2026-10-09. To pick up the work with Claude Code, start with
 `CLAUDE.md`.

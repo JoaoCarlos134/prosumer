@@ -2,7 +2,7 @@ PROJETO_IA - SUMMARY OF TESTS, NETWORK ANALYSIS AND LIBRARY PROPOSAL
 2 October 2026
 
 NOTA DE LEITURA (06/10/2026): este resumo e um registro historico dos testes v1
-e da estrutura original no Lactec. Para o estado atual, consulte ../../CLAUDE.md
+e da estrutura original na máquina de CPU. Para o estado atual, consulte ../../CLAUDE.md
 e ../../graphify-out/revisao_projeto.md. A rede atual desta exportacao esta em
 ../../graphify-out/graph.html. Correcao: a mediana ficou em 5o no consumo,
 a 0,012 do primeiro; os 32 TFLite foram recarregados em 05/10 e tiveram R2

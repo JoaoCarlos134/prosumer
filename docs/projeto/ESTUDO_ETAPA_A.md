@@ -10,7 +10,7 @@ Avaliação: `scripts/piloto_comum.py` (mesmas horas avaliadas, mesmo corte de n
 `05_avalia.py`). Saídas em `resultados/pilotos/` (fora de `previsoes/`: não entram na mediana nem no
 `metricas.csv`); números em `resultados/pilotos/resumo.json`.
 
-Ambiente da etapa A na máquina de casa: `~/.venvs/previsao_gpu` (torch 2.9.1+cu128), com o pacote de cada
+Ambiente da etapa A na máquina com GPU: `~/.venvs/previsao_gpu` (torch 2.9.1+cu128), com o pacote de cada
 modelo novo instalado com `--no-deps` (resolver puxaria o torch 2.14.1, bloqueado pelo Smart App Control) e o
 congelamento refeito em `ambientes/previsao_gpu.txt`. (Até 09/10 havia um `etapa_a` separado; foi juntado.)
 Modelos do `uni2ts` usam o `~/.venvs/moirai` já existente.
@@ -56,7 +56,7 @@ cor da imagem) seria um segundo caminho de clima-sem-treino — **não testado**
 Pesos baixados na primeira chamada para `~/.cache/visionts` (MAE do Facebook, 427 MB; VisionTS++ do
 HuggingFace `Lefei/VisionTSpp`). Contexto de 1024 h como os outros fundacionais, `periodicity=24`.
 Script: `scripts/piloto_visionts.py [VisionTS|VisionTS++] [caso ...]`.
-Tempo na RTX 4070: usinas 47 s (VisionTS) e 341 s (VisionTS++, 598 janelas); casas 3–6 s.
+Tempo na GPU: usinas 47 s (VisionTS) e 341 s (VisionTS++, 598 janelas); casas 3–6 s.
 
 **Licença.** Código do VisionTS: MIT. Pesos do VisionTS++ no HuggingFace: MIT. **Atenção:** o VisionTS
 baixa o MAE oficial do Facebook, cujo repositório é CC-BY-NC 4.0 (uso não comercial); o VisionTS++ é
@@ -141,7 +141,7 @@ linhas, reescrito em `scripts/piloto_cyclenet.py` sem dependência nova (cada ca
 seu ciclo, como os clientes no conjunto Electricity do artigo). Protocolo **igual ao do SparseTSF** no
 `04_redes_treinadas.py`: 168 h de entrada, retreino do zero em cada dobra só com o passado, janelas de treino
 a cada 6 h, 10% para parada antecipada, até 30 épocas, L1, Adam 1e-3, lote 256, semente 42. Única diferença:
-o modelo recebe a fase e o índice da série. Tempo na RTX 4070: 7–16 s por caso (todas as dobras).
+o modelo recebe a fase e o índice da série. Tempo na GPU: 7–16 s por caso (todas as dobras).
 Uso: `piloto_cyclenet.py <caso> [W=24|168] [linear|mlp] [mse] [semente=N]`. Licença do código oficial: MIT
 (reescrito aqui, sem cópia).
 
@@ -196,7 +196,7 @@ com o transformers 5.17 do ambiente o codificador carrega e roda igual). Pesos `
 large}` (36 M, 111 M, 343 M). Script: `scripts/piloto_moment.py [small|base|large] [caso ...]`. Protocolo das
 redes próprias, com entrada de 512 h (exigência do modelo) e perda MSE (a do artigo). **Eficiência:** como o
 codificador é congelado, as saídas dele são calculadas uma vez por dobra e guardadas na GPU em fp16 (~1,4 GB no
-consumo); a cabeça treina sobre o cache. Tempo na RTX 4070: 20–36 s (small), ~90 s (base), 265 s (large) por
+consumo); a cabeça treina sobre o cache. Tempo na GPU: 20–36 s (small), ~90 s (base), 265 s (large) por
 caso. Licença dos pesos: MIT.
 
 **Piloto (regime A).**
@@ -234,7 +234,7 @@ diária e semanal, que combinam com o consumo de casa.
 (= previsao_gpu com gluonts 0.14.4, pandas 2.1.4, numpy 1.26.4, scipy 1.13.1: o gluonts 0.16 tirou
 `modules.loss` e o pandas ≥ 2.2 recusa a frequência 'Q' das defasagens). O checkpoint guarda objetos Python:
 `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1`. Script: `scripts/piloto_lagllama.py [ctx=32|256] [caso ...]`; previsão
-pontual = mediana das 100 amostras (grava também a média, `-media`). Tempo na RTX 4070 com contexto 32: ~680 s
+pontual = mediana das 100 amostras (grava também a média, `-media`). Tempo na GPU com contexto 32: ~680 s
 na FV das casas (920 janelas), 1.011 s no consumo (1.820 janelas), 11,5 GB de VRAM.
 
 **Piloto (regime A, contexto 32, o padrão do modelo).**
@@ -273,7 +273,7 @@ em `~/.cache/duet-repo/src`; o arcabouço de benchmark dele não é importado (p
 no `previsao_gpu` sem instalar nada. Script: `scripts/piloto_duet.py [dm=512|64] [caso ...]`. Hiperparâmetros do
 script oficial do conjunto Solar (entrada 512 h, d_model 512, 2 camadas, `CI=1`, MAE, Adam 5e-4, lote 32,
 paciência 5); protocolo nosso: origem móvel, janelas de treino a cada 6 h, 10% para parada antecipada, até 30
-épocas, semente 42, perda de balanceamento somada à MAE. Tempo na RTX 4070: 39–85 s nas casas, 727 s nas usinas.
+épocas, semente 42, perda de balanceamento somada à MAE. Tempo na GPU: 39–85 s nas casas, 727 s nas usinas.
 
 **Piloto (regime A).**
 
@@ -311,7 +311,7 @@ fáceis de embarcar).
 só porque a GPU existe, e exige `CUDA_HOME` (o mesmo problema do TiRex-2). Basta apontar `CUDA_HOME` para a pasta
 do torch: com o backbone mLSTM (o padrão) nada é compilado. Script: `scripts/piloto_xlstm.py [caso ...]`, com o
 protocolo IDÊNTICO ao das redes do `04` (mesmo `COMUM_T` e `roda_nf`: entrada de 168 h, origem móvel, 30 dias de
-validação, semente 42). 243 mil parâmetros; 116–175 s por caso na RTX 4070.
+validação, semente 42). 243 mil parâmetros; 116–175 s por caso na GPU.
 
 **Piloto (regime A).**
 
@@ -408,7 +408,7 @@ kernel fundido, então muito mais lento. TSLib commit 4e938a1 (`~/.cache/tslib-r
 eletricidade (ECL), MSE, paciência 3: Mamba d_model 128, 2 camadas, expand 2, d_state 16, d_conv 4, Adam 1e-4,
 lote 32 (~0,24 M parâmetros); S-Mamba d_model 512, d_ff 512, 3 camadas, d_state 16, Adam 1e-3, lote 16 (6,8 M).
 Protocolo e laço do Crossformer (`treina_multivariado`). Script: `scripts/piloto_mamba.py <Mamba|S-Mamba> [caso ...]`.
-Tempo na RTX 4070: S-Mamba 57 s / 96 s / 439 s (FV das casas / consumo / usinas); Mamba 1.290 s / 1.805 s nas
+Tempo na GPU: S-Mamba 57 s / 96 s / 439 s (FV das casas / consumo / usinas); Mamba 1.290 s / 1.805 s nas
 casas, e nas usinas passou de 1 h 50 min sem terminar (interrompido para liberar a máquina; vai para a rodada do
 benchmark, de noite). A lentidão é da varredura sequencial, não do modelo.
 
@@ -455,7 +455,7 @@ casas). Origem móvel, quadro largo com interpolação causal. Ponto = mediana d
 Script: `scripts/piloto_timegrad.py [teste] [caso ...]`; o modo `teste` (1 época de 5 lotes, 5 dias) rodou de ponta
 a ponta em 9 s.
 
-**Piloto (regime A; fila da noite, 276 s / 279 s / 706 s na RTX 4070).**
+**Piloto (regime A; fila da noite, 276 s / 279 s / 706 s na GPU).**
 
 | Caso | mediana de 100 amostras | média das amostras | Melhor do teste |
 |---|---|---|---|
@@ -526,7 +526,7 @@ consumo. Modo teste: saída válida, nenhuma amostra completada. Script: `script
 [caso ...]`. **Portão:** grupo da frente no consumo.
 
 **Piloto (fila da noite de 11/10, consumo A, GPU).** −0,056 (52º de 53, abaixo do "igual a ontem"), viés −37%,
-11.341 s (3 h 09 min) na RTX 4070. Todas as 18.200 amostras saíram com 24 valores (nenhuma completada) e nenhuma
+11.341 s (3 h 09 min) na GPU. Todas as 18.200 amostras saíram com 24 valores (nenhuma completada) e nenhuma
 janela ficou sem amostra válida: o resultado é do método, não de falha de geração. Com um LLM de 1,5 B a
 continuação do texto subestima a carga e não reproduz o ciclo diário melhor que repetir o dia anterior; o artigo
 já mostrava a queda com o tamanho do LLM. **Decisão: não passa.** Um LLM maior não cabe nesta GPU nem caberia no

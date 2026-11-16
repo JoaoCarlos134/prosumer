@@ -1,19 +1,18 @@
-# Revisão de todos os testes e plano para a VM do Lactec (16/11/2026)
+# Revisão de todos os testes e plano para um servidor de computação (16/11/2026)
 
 Revisão de tudo o que foi testado até hoje, com todos os dados disponíveis (públicos e privados), feita a partir
 dos registros do repositório: `experimentos/testes_previsao/LEIA-ME.md` (benchmark v2), `PILOTOS_F1_F2.md`,
 `ESTUDO_ETAPA_A.md`, `ESTUDO_EMBARCADO.md`, `HISTORICO.md` e `resultados/metricas.csv` (260 linhas, 57 modelos).
-Nenhum número abaixo foi recalculado: são os gravados. A segunda parte é o plano de rodadas para a VM do Lactec
-(servidor compartilhado com Slurm: 48 threads, 2 GPU de ~96 GB, 251 GB de RAM, mas na prática ~20 GB de RAM livres
-enquanto outro usuário ocupar o resto; uma GPU livre).
+Nenhum número abaixo foi recalculado: são os gravados. A segunda parte é o plano de rodadas para um servidor de computação
+(fila Slurm, GPU com bastante memória, muitos núcleos, mas pouca RAM livre por job).
 
 ## 1. Os dados
 
 | Dado | Licença / acesso | Período | Onde já entrou |
 |---|---|---|---|
 | Usinas Cascavel (3,96 kWp) e Curitiba (~9,6 kWp), horário | **privado** (do professor) | 26/07/2019 → 31/05/2026 | benchmark A/B/C, horizonte, E4 diagnóstico, conformal |
-| Exports de 5 min do Fronius (CA, MPPT, CC) | **privado**, só no Lactec | idem (as faturas vão até 08/2026) | análise ia_solar, piloto MPPT |
-| Resumo das faturas Copel (104 faturas) | **privado**, só no Lactec | 01/2018 → 08/2026 | E6 (não passa) |
+| Exports de 5 min do Fronius (CA, MPPT, CC) | **privado**, só nos dados privados | idem (as faturas vão até 08/2026) | análise ia_solar, piloto MPPT |
+| Resumo das faturas Copel (104 faturas) | **privado**, só nos dados privados | 01/2018 → 08/2026 | E6 (não passa) |
 | 20 casas de Dingle (Khadem et al. 2024) | CC0 | 2020 inteiro, 1 min | benchmark A/B (só out–dez como teste) |
 | Clima medido de Dingle | CC0 | 2020 | regime B das casas |
 | Open-Meteo Previous Runs (IFS, GFS, ICON, Météo-France, GEM, CMA, AIFS, UKMO), leads 1–7 | não comercial | 2024 → 05/2026 | regime C, F2(a), horizonte |
@@ -36,7 +35,7 @@ enquanto outro usuário ocupar o resto; uma GPU livre).
 | Composição da mediana da biblioteca | adaptadores × mediana de 47 | regime A não passa (a 0,01); regime C passa |
 | MPPT | parcela por canal separa falha de sujeira | não passa (1 de 3) |
 | Embarcado | SparseTSF, CycleNet, LightGBM/RF em C | passa no x86/WebAssembly; **sem medida no Raspberry Pi / ESP32** |
-| Biblioteca | ~700 testes + regressão contra `metricas.csv` | verde no Lactec |
+| Biblioteca | ~700 testes + regressão contra `metricas.csv` | verde na máquina de CPU |
 
 ## 3. Fraquezas que a revisão encontrou
 
@@ -66,14 +65,14 @@ Ordenadas pelo quanto limitam o que o TCC e os artigos podem afirmar.
 8. **O benchmark nunca foi refeito de ponta a ponta numa máquina só.** A regressão confere as métricas a partir das
    previsões gravadas, não as previsões em si. As previsões vêm de três máquinas e de vários contornos do Smart App
    Control.
-9. **Relógio de Curitiba (NASA 1 h atrasada).** Está declarado. Não foi refeito por custo; com a VM o custo cai.
+9. **Relógio de Curitiba (NASA 1 h atrasada).** Está declarado. Não foi refeito por custo; com o servidor o custo cai.
 10. **Fora do alcance de computação:** as faturas pedem faturas detalhadas em PDF, o embarcado pede o hardware, a
     separação sujeira × sombra × string pede a análise das tensões CC de 5 min (leve), e o TimeGPT pede a sua decisão.
 
-## 4. O que a VM muda
+## 4. O que o servidor muda
 
-- **Muda:** GPU de 96 GB livre (cabem o ajuste fino de fundacionais, o Time-LLM com LLM grande e todas as redes com
-  várias sementes); 48 threads (classicos estatísticos, LightGBM, PVDAQ em paralelo); Linux (sem Smart App Control:
+- **Muda:** uma GPU com muita memória livre (cabem o ajuste fino de fundacionais, o Time-LLM com LLM grande e todas as redes com
+  várias sementes); muitos núcleos (classicos estatísticos, LightGBM, PVDAQ em paralelo); Linux (sem Smart App Control:
   um ambiente único e congelado para tudo); Slurm (fila com limite de tempo de verdade, sem o problema de processos
   filhos soltos de `subprocess.run(timeout=)`, ver HISTORICO 09/10).
 - **Não muda enquanto a RAM estiver ocupada:** ~20 GB por job. O AutoARIMA com clima e o PVDAQ completo podem
@@ -81,7 +80,7 @@ Ordenadas pelo quanto limitam o que o TCC e os artigos podem afirmar.
   memória liberar.
 - **Dados privados num servidor compartilhado:** a cópia das usinas vai para um diretório próprio com `chmod 700`,
   nunca para pasta compartilhada nem para o repositório, e é apagada ao fim. Confirmar com o professor que isso
-  está dentro da permissão dele (os dados já moravam no Lactec, mas o servidor tem outros usuários).
+  está dentro da permissão dele (os dados já moravam na máquina de CPU, mas o servidor tem outros usuários).
 
 ## 5. Plano de rodadas, em ordem de valor
 
@@ -91,7 +90,7 @@ num `resultados_v3/` novo), registro honesto em `PILOTOS_F1_F2.md` também quand
 | # | Rodada | Pergunta | Recurso | Dados |
 |---|---|---|---|---|
 | V0 | **Montagem** | os ambientes de `ambientes/*.txt` montam no Linux; suíte da biblioteca, `test_auditoria.py` e a paridade completa (todas as combinações do `test_forecast_parity`, não só as duas padrão) passam | CPU, horas | repo + usinas (privado) |
-| V1 | **Teste intocado das usinas** (a mais valiosa) | as escolhas congeladas (mediana, `median_weather`, a_k, fator 3, conformal) seguem valendo num período que não serviu para escolher nada: 01/06 → ~15/11/2026 | CPU; GPU para as redes | exports até 15/11/2026 **recebidos em 16/11** (seção 6) + `01_prepara_dados.py` no Lactec + Open-Meteo do período |
+| V1 | **Teste intocado das usinas** (a mais valiosa) | as escolhas congeladas (mediana, `median_weather`, a_k, fator 3, conformal) seguem valendo num período que não serviu para escolher nada: 01/06 → ~15/11/2026 | CPU; GPU para as redes | exports até 15/11/2026 **recebidos em 16/11** (seção 6) + `01_prepara_dados.py` na máquina de CPU + Open-Meteo do período |
 | V2 | **Generalidade no PVDAQ + telhado medido** | os portões `d630450` e `08aba0b`/`06827c2` (já escritos): orientação × metadata, relógio, cadeia física fora do Paraná | CPU, ≤20 GB por sistema, um job por sistema | PVDAQ (público) |
 | V3 | **Reprodução v3 numa máquina só** | o ranking e os empates da v2 sobrevivem a um ambiente só, um torch só e **3 sementes** em toda rede treinada? Portão: mesmos grupos de empate (DM + Holm) e diferença de skill por modelo dentro da variação entre sementes | GPU livre, dias | tudo |
 | V4 | **Casas no ano inteiro** | origem móvel de abril a dezembro de 2020 (quatro estações) em vez de um inverno: o ranking e a mediana mudam com a estação? | CPU + GPU | Dingle (CC0) |
@@ -100,10 +99,10 @@ num `resultados_v3/` novo), registro honesto em `PILOTOS_F1_F2.md` também quand
 | V7 | **Ajuste fino de Chronos-2, TiRex-2 e Toto-2.0** | o ajuste por usina/casa, com origem móvel, ganha +0,02 sobre o zero-shot em ≥ 2 casos? A biblioteca continua zero-shot salvo ganho grande (regra de velocidade de 16/10) | GPU 96 GB | tudo |
 | V8 | **AutoARIMA** | medir o pico de memória e o tempo numa série (o `piloto_autoarima_memoria.py` está pronto) e, se couber, as 6 combinações; senão declarar inviável com a medida | CPU, RAM > 20 GB: na fila | tudo |
 | V9 | **Time-LLM na configuração do artigo** | com LLaMA-7B o LLM ainda piora (como com GPT-2 e em Tan et al. 2024)? Baixa prioridade: fecha a evidência, não muda a biblioteca | GPU 96 GB | casas |
-| V10 | **Curitiba reagregada com o deslocamento de fração de hora** (opcional) | a decisão de 11–12/10 foi não refazer por custo; com a VM custa uma noite. Decisão sua | CPU + GPU | 5 min do Lactec |
+| V10 | **Curitiba reagregada com o deslocamento de fração de hora** (opcional) | a decisão de 11–12/10 foi não refazer por custo; com o servidor custa uma noite. Decisão sua | CPU + GPU | 5 min privados |
 
-Fora da VM (não é computação): faturas detalhadas (E6), Raspberry Pi 5 / ESP32 (E5), tensões CC por MPPT
-(leve, no Lactec), TimeGPT (decisão), segundo conjunto público de consumo para validar as constantes do consumo
+Fora do servidor (não é computação): faturas detalhadas (E6), Raspberry Pi 5 / ESP32 (E5), tensões CC por MPPT
+(leve, na máquina de CPU), TimeGPT (decisão), segundo conjunto público de consumo para validar as constantes do consumo
 (candidato: o Solar Home da Ausgrid, 300 casas com FV; **conferir a licença antes**).
 
 ## 6. Decisões
@@ -112,11 +111,11 @@ Resolvidas em 16/11/2026:
 
 1. **Novo export das usinas: RECEBIDO.** Exports de 5 min do Solar.web das duas usinas, 01/01 → 15/11/2026
    (Cascavel: Primo 4.0, CA + 1 MPPT; Curitiba: Symo 12.0, CA trifásica + 2 MPPT, com energia por MPPT), guardados
-   junto dos exports antigos na pasta privada de dados brutos do Lactec (`Projeto_IA/ia_solar/dados_brutos/<usina>/
+   junto dos exports antigos na pasta privada de dados brutos (`Projeto_IA/ia_solar/dados_brutos/<usina>/
    exportacoes/`; os nomes dos arquivos trazem o nome do dono e NUNCA entram no repositório). Com eles o V1 tem
    01/06 → 15/11/2026 de teste intocado (~5,5 meses, inverno e primavera) e o `01_prepara_dados.py` pode estender
    `usinas_horario.parquet` (privado, fora do repositório desde 04/11).
-2. **Dados na VM: PERMITIDO pelos donos** (todos os dados podem ir para a VM). Boa prática mantida: diretório
+2. **Dados no servidor: PERMITIDO pelos donos** (todos os dados podem ir para o servidor). Boa prática mantida: diretório
    próprio com `chmod 700`, nada em pasta compartilhada, porque o servidor tem outros usuários.
 
 Ainda abertas:
@@ -192,9 +191,9 @@ Sítios: usinas de Cascavel e Curitiba (2024-03 → 2026-11 com os exports novos
 arquivado), BR-PVGen (51 usinas brasileiras, se o período cruzar o arquivo da Open-Meteo), Dingle e Ausgrid para o
 consumo (sem tempo: só o perfil e o viés). Divisão ajuste/avaliação fixada por sorteio com semente, antes de olhar.
 
-Custo: CPU, independente por sítio × início × variante: o caso ideal da VM (48 threads, pouca RAM por job). Uma
+Custo: CPU, independente por sítio × início × variante: o caso ideal do servidor (muitos núcleos, pouca RAM por job). Uma
 estimativa grosseira: ~2 s por noite simulada (o `forecast_ahead` + `look_back` medidos hoje) × ~1.000 noites × ~60
-sítios × 9 combinações (H, k) × 2 variantes ≈ 600 h de CPU, ~13 h na VM com 48 threads; o piloto começa com 3 sítios
+sítios × 9 combinações (H, k) × 2 variantes ≈ 600 h de CPU, ~13 h num servidor com 48 threads; o piloto começa com 3 sítios
 e uma combinação.
 
 ## 9. Dados públicos que ajudam o projeto (busca de 16/11/2026)
@@ -220,7 +219,7 @@ qualquer coisa derivada.
 | **Kaggle**: Growatt (CC BY) e casa com bateria (MIT) | já anotados em 17/10 | leitor de contadores; bateria para o "e se" | CC BY / MIT |
 
 Lacuna que a busca NÃO resolveu: não há conjunto aberto de consumo de CASAS brasileiras hora a hora (só a carga
-agregada do ONS/EPE). Fonte possível: Lactec/Copel, com anonimização, ou os próprios usuários do aplicativo com
+agregada do ONS/EPE). Fonte possível: a distribuidora, com anonimização, ou os próprios usuários do aplicativo com
 consentimento.
 
 Fontes da busca: [BR-PVGen v2](https://zenodo.org/records/23739670), [BR-PVGen v1](https://zenodo.org/records/21511487),

@@ -9045,12 +9045,12 @@
     },
     {
       "id": "legado_ia_solar_analise_tarifas_scripts_baixa_tarifas_aneel_rationale_33",
-      "label": "Pagina\u00e7\u00e3o da API do CKAN, com repeti\u00e7\u00e3o \u2014 o proxy da Lactec derruba.",
+      "label": "Pagina\u00e7\u00e3o da API do CKAN, com repeti\u00e7\u00e3o \u2014 o proxy com inspeção de TLS derruba.",
       "_origin": "ast",
       "community": 55,
       "community_name": "baixa_tarifas_aneel.py (13)",
       "file_type": "rationale",
-      "norm_label": "paginacao da api do ckan, com repeticao \u2014 o proxy da lactec derruba.",
+      "norm_label": "paginacao da api do ckan, com repeticao \u2014 o proxy derruba.",
       "source_file": "legado/ia_solar/analise/tarifas/scripts/baixa_tarifas_aneel.py",
       "source_location": "L33"
     },
@@ -10763,7 +10763,7 @@
     },
     {
       "id": "docs_proposta_leia_me_exportador_repo",
-      "label": "exporta_repo_prossumidor.py (so na maquina do Lactec)",
+      "label": "exporta_repo_prossumidor.py (so na maquina so de CPU)",
       "_origin": "semantic",
       "author": null,
       "captured_at": null,
@@ -10771,7 +10771,7 @@
       "community_name": "Usinas anonimizadas e diagnostico",
       "contributor": null,
       "file_type": "code",
-      "norm_label": "exporta_repo_prossumidor.py (so na maquina do lactec)",
+      "norm_label": "exporta_repo_prossumidor.py (privado)",
       "source_file": "docs/proposta/LEIA-ME.md",
       "source_location": null,
       "source_url": null
@@ -13268,7 +13268,7 @@
     },
     {
       "id": "readme_projeto_edge_ai",
-      "label": "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1, CC EMBRAPII Lactec)",
+      "label": "Projeto PD&I Edge AI",
       "_origin": "semantic",
       "author": null,
       "captured_at": null,
@@ -13276,7 +13276,7 @@
       "community_name": "Revisao de literatura",
       "contributor": null,
       "file_type": "concept",
-      "norm_label": "projeto pd&i edge ai (grd-acs-2026-1-21-1, cc embrapii lactec)",
+      "norm_label": "projeto pd&i edge ai",
       "source_file": "README.md",
       "source_location": null,
       "source_url": null
@@ -15098,7 +15098,7 @@
     },
     {
       "id": "docs_projeto_ia_solar_estado_do_projeto_truststore",
-      "label": "truststore.inject_into_ssl() (proxy do Lactec)",
+      "label": "truststore.inject_into_ssl() (proxy com inspecao de TLS)",
       "_origin": "semantic",
       "author": null,
       "captured_at": null,
@@ -15106,7 +15106,7 @@
       "community_name": "Tarifas e regulacao BR",
       "contributor": null,
       "file_type": "rationale",
-      "norm_label": "truststore.inject_into_ssl() (proxy do lactec)",
+      "norm_label": "truststore.inject_into_ssl() (proxy com inspecao de tls)",
       "source_file": "docs/projeto/ia_solar/ESTADO_DO_PROJETO.md",
       "source_location": null,
       "source_url": null
@@ -15248,7 +15248,7 @@
     },
     {
       "id": "experimentos_testes_previsao_ambientes_leia_me_uv_native_tls",
-      "label": "UV_NATIVE_TLS=1 atras do proxy do Lactec",
+      "label": "UV_NATIVE_TLS=1 atras do proxy com inspecao de TLS",
       "_origin": "semantic",
       "author": null,
       "captured_at": null,
@@ -15256,7 +15256,7 @@
       "community_name": "Tarifas e regulacao BR",
       "contributor": null,
       "file_type": "rationale",
-      "norm_label": "uv_native_tls=1 atras do proxy do lactec",
+      "norm_label": "uv_native_tls=1 atras de proxy com inspecao de tls",
       "source_file": "experimentos/testes_previsao/ambientes/LEIA-ME.md",
       "source_location": null,
       "source_url": null

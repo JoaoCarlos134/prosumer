@@ -9,7 +9,7 @@ By default two combinations run (~30 s): the houses' PV with history only and th
 weather forecast and the clear-sky persistence. `PROSUMER_FULL=1` runs the nine (~3 min).
 
 Across machines: LightGBM is not bit-for-bit reproducible between CPUs. The saved forecasts were made on the
-home machine; on the Lactec one (2026-10-16) the plants in regime C differ by up to 0.0046 kWh in the first
+GPU machine; on the CPU-only one (2026-10-16) the plants in regime C differ by up to 0.0046 kWh in the first
 fold, with or without threads. So a forecast that is not identical must still be the same forecast up to
 floating point: relative L2 difference <= 1e-3 and the skill on the benchmark's evaluated hours within 1e-3
 (`_same_forecast`). Anything larger fails as before.

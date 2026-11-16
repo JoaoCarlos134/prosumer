@@ -14,7 +14,7 @@ P = "ia_solar/PLANO_ARTIGO.md"; L = "ia_solar/LEIA-ME.md"
 
 # ---------------- entregas (artigos, relatorios, projeto) ----------------
 ENTREGAS = {
- "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1)": dict(tipo="projeto", doc="projeto/Síntese do Projeto de PD&I - IA_Borda_rev02.pdf"),
+ "Projeto PD&I Edge AI": dict(tipo="projeto", doc="projeto/sintese_do_projeto.pdf"),
  "Revisao Edge AI em smart buildings": dict(tipo="artigo_rascunho", doc="revisao_edge_ai/smart_buildings.docx"),
  "Artigo OCR hidrometro (ICIT 2027)": dict(tipo="artigo_rascunho", doc="ocr_paper/paper/main.tex"),
  "Artigo SOLO/UPEC 2026 (sujeira FV, publicado)": dict(tipo="artigo_publicado", doc="outros/Paper_Solo_UPEC_2026.pdf"),
@@ -23,7 +23,7 @@ ENTREGAS = {
  "Testes de modelos de previsao (dia seguinte)": dict(tipo="estudo", doc=T + "LEIA-ME.md"),
  "Levantamento de 127 modelos": dict(tipo="estudo", doc="revisao_edge_ai/Modelos_previsao_geracao_consumo.xlsx"),
 }
-PARTE_DE = [(e, "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1)") for e in ENTREGAS if not e.startswith("Projeto")]
+PARTE_DE = [(e, "Projeto PD&I Edge AI") for e in ENTREGAS if not e.startswith("Projeto")]
 
 # ---------------- fontes de dados externas ----------------
 FONTES = {
@@ -61,7 +61,7 @@ ACHADOS = {
  "Um sensor de irradiancia fecha 99% do vao": dict(evid=[B + "referencia/sensor_irradiancia.py", B + "embarcado/sensor_irradiancia.csv"],
     docs=[E], sustenta=["Artigo A: entrada, nao algoritmo, limita a estimativa FV"]),
  "TFLite de 3,4 KB com R2 0,81": dict(evid=[B + "referencia/compara_modelos_embarcado.py", B + "embarcado/comparacao_embarcado.csv"],
-    docs=[E], sustenta=["Artigo A: entrada, nao algoritmo, limita a estimativa FV", "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1)"]),
+    docs=[E], sustenta=["Artigo A: entrada, nao algoritmo, limita a estimativa FV", "Projeto PD&I Edge AI"]),
  "HistGradientBoosting melhor de 13 algoritmos": dict(evid=[B + "referencia/comparar_modelos.py", B + "ambas_usinas/comparacao_modelos_completa.csv"],
     docs=[E, L]),
  "Tarifa fecha contra a fatura de 2018 (residuo = COSIP)": dict(evid=[A + "tarifas/scripts/aplica_tarifas.py"], docs=[A + "tarifas/dados/LEIA-ME.md"]),
@@ -73,11 +73,11 @@ ACHADOS = {
  "Fundacionais zero-shot empatam com LightGBM treinado": dict(evid=[T + "scripts/03_fundacionais.py", T + "resultados/metricas.csv"],
     docs=[T + "LEIA-ME.md"], sustenta=["Testes de modelos de previsao (dia seguinte)"]),
  "TTM (3M parametros) e o mais consistente, 40-70x menor que os grandes": dict(evid=[T + "scripts/03_fundacionais.py"], docs=[T + "LEIA-ME.md"],
-    sustenta=["Testes de modelos de previsao (dia seguinte)", "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1)"]),
+    sustenta=["Testes de modelos de previsao (dia seguinte)", "Projeto PD&I Edge AI"]),
  "Mediana de todos os modelos e o resultado mais robusto": dict(evid=[T + "scripts/07_ensemble.py", T + "resultados/metricas.csv"],
     docs=[T + "LEIA-ME.md"], sustenta=["Testes de modelos de previsao (dia seguinte)"]),
  "SparseTSF com 32 parametros empata com os melhores no consumo": dict(evid=[T + "scripts/04_redes_treinadas.py"], docs=[T + "LEIA-ME.md"],
-    sustenta=["Testes de modelos de previsao (dia seguinte)", "Projeto PD&I Edge AI (GRD-ACS-2026-1-21-1)"]),
+    sustenta=["Testes de modelos de previsao (dia seguinte)", "Projeto PD&I Edge AI"]),
  "Fundacionais subestimam o consumo em ~20% (preveem a mediana)": dict(evid=[T + "scripts/05_avalia.py"], docs=[T + "LEIA-ME.md"],
     sustenta=["Testes de modelos de previsao (dia seguinte)"]),
  "Normalizacao por janela explode com clima futuro (corrigido)": dict(evid=[T + "scripts/04_redes_treinadas.py",

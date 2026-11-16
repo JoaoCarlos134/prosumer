@@ -18,7 +18,7 @@ o `Plano_TCC_simples.tex`, o `CLAUDE.md`, o `ESTUDO_ETAPA_A.md` e o `PILOTOS_F1_
    que a E2 pede.
 3. **O legado é a maior comunidade sem dono na biblioteca**: diagnóstico das usinas (`a2_fault`, `a3_shading`, …,
    55 nós), tarifas (`aplica_tarifas`), relatórios de 5 min. São as fontes da E4 (diagnóstico) e da E6 (economia),
-   mas dependem dos dados brutos de 5 min, que só existem no Lactec.
+   mas dependem dos dados brutos de 5 min, que são privados.
 4. **Os 20 pilotos repetem infraestrutura**: cada `piloto_*.py` novo de F2 (meio-dia, total do dia, multi-NWP,
    geometria) recalcula skill e DM à mão; há duas guardas de memória diferentes (psutil no Time-LLM, API do
    Windows no AutoARIMA). O `piloto_comum` só cobre o caso "uma previsão horária contra o benchmark".
@@ -34,7 +34,7 @@ o `Plano_TCC_simples.tex`, o `CLAUDE.md`, o `ESTUDO_ETAPA_A.md` e o `PILOTOS_F1_
 | F0 Decisões | out | idioma decidido; licença, permissão por escrito do professor e compra do Pi 5 + ESP32 em aberto | parcial |
 | F1 Fechar o teste | out | a–c feitos; e, f decididos (MLP instável, TimesFM-3 e BuildingsBench não passam, FlowState entrou); **d (AutoARIMA) sem como rodar aqui** | quase |
 | A Modelos pendentes | nov–dez | **12 de 13 decididos um mês e meio antes**: entraram VisionTS++, CycleNet, Crossformer, Mamba; falta só o TimeGPT (decisão do autor) | quase |
-| F2 Pilotos | out–nov | passaram (a) várias NWP, (c) faixas no regime A, (d) meio-dia; não passaram (b) geometria, (e) ajuste fino do TTM, (f) total do dia; FlowState nas faixas no Lactec | quase |
+| F2 Pilotos | out–nov | passaram (a) várias NWP, (c) faixas no regime A, (d) meio-dia; não passaram (b) geometria, (e) ajuste fino do TTM, (f) total do dia; FlowState nas faixas na máquina de CPU | quase |
 | F2b Levar para a biblioteca | — | não começou | — |
 | E1 Base | feito | pacote, contratos, dados sintéticos, CI, teste de regressão | feito |
 | E2 Versão 0.1 | nov–jan | nomes em inglês, métricas em resoluções, correção de viés, `DayAhead`; **no mesmo dia:** protocolo completo (janelas com preenchimento causal e covariáveis, normalização só com o treino, máscara de horas) | ~35% |
@@ -57,7 +57,7 @@ para o texto (o LLM piora o Time-LLM; ajuste fino do TTM piora; correção de vi
 comprar o Pi 5 + ESP32 agora: a E5 é em maio, mas a E4 (modelos para aparelho) já precisa medir neles.
 
 **F1.** O AutoARIMA não roda mais nesta máquina: o Smart App Control passou a bloquear o `statsmodels` do
-`classicos` em 11/10. Duas saídas: rodar o `piloto_autoarima_memoria.py` no Lactec, ou fechar o item como
+`classicos` em 11/10. Duas saídas: rodar o `piloto_autoarima_memoria.py` na máquina de CPU, ou fechar o item como
 "inviável em resolução horária" com o que já se mediu (15,2 h em usinas|A no padrão; >20 GB na configuração
 reduzida com exógenas). Recomendo a segunda, citando as medições: o portão (< 2 h/caso) já falhou duas vezes.
 
@@ -91,7 +91,7 @@ dia: anotar como candidato da E4 (previsão do dia no aparelho).
 **E3.** Hoje o teste de regressão confere as métricas a partir das previsões gravadas; a E3 do plano é mais forte
 (as previsões saem da biblioteca). Com a sugestão 1 da E2, ela anda junto.
 
-**E4.** Diagnóstico depende dos dados de 5 min do Lactec: planejar uma ida ao Lactec para exportar uma amostra
+**E4.** Diagnóstico depende dos dados de 5 min privados: planejar a exportação de uma amostra
 anonimizada (ou rodar a E4 lá). Candidatos de aparelho já medidos no benchmark: SparseTSF (32 parâmetros),
 CycleNet (4,3 mil), Ridge, LightGBM do total do dia, TTM, FlowState (9 M, Pi).
 

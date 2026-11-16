@@ -1,5 +1,5 @@
 <#
-Modo teste da maquina de casa: libera CPU, RAM e GPU para uma rodada pesada do benchmark e depois desfaz.
+Modo teste da maquina com GPU: libera CPU, RAM e GPU para uma rodada pesada do benchmark e depois desfaz.
 
 O que faz (padrao = SO MOSTRA; nada muda sem -Aplicar):
   1. fecha os programas de uma LISTA explicita (abaixo), que estavam abertos nesta maquina em 11/10/2026 e nao
@@ -8,7 +8,7 @@ O que faz (padrao = SO MOSTRA; nada muda sem -Aplicar):
   2. pausa o OneDrive (fecha o cliente; a sincronizacao volta ao reabrir);
   3. troca o plano de energia para "Alto desempenho" (processador sem economia) e guarda o plano anterior;
   4. -Prioridade: sobe para AboveNormal os python.exe que ja estiverem rodando (nunca Realtime: trava a maquina);
-  5. GPU: mostra o limite de potencia (padrao 200 W, maximo 216 W na RTX 4070). Subir para 216 W esta DENTRO da
+  5. GPU: mostra o limite de potencia (padrao 200 W, maximo 216 W na GPU). Subir para 216 W esta DENTRO da
      especificacao (nao e overclock) mas exige administrador: o script imprime o comando, nao executa.
   -Restaurar: volta o plano de energia anterior e reabre os programas fechados que tinham caminho conhecido.
 

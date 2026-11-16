@@ -1,4 +1,4 @@
-# E4 embarcado: estudo e piloto (12/10/2026, máquina de casa)
+# E4 embarcado: estudo e piloto (12/10/2026, máquina com GPU)
 
 Linha do plano (E4): "embarcado (TTM, SparseTSF, Ridge/RandomForest via emlearn, previsão do dia e por bloco de
 tarifa)". Alvos: **Raspberry Pi 5** (Linux, Cortex-A76 de 4 núcleos, 4–8 GB de RAM) e **ESP32** (520 KB de SRAM,
@@ -41,7 +41,7 @@ estimativa marcada com ~.
 | kNN (25 vizinhos) | +0,193 | +0,094 | +0,077 | o treino inteiro (~130 mil × 11 floats ≈ 5,7 MB) | não | sim | não exportar (sem ganho sobre o Ridge) |
 | TTM-r2 (zero-shot) | +0,191 | +0,119 | +0,092 | ~1 M parâmetros (~4 MB float32) | não (só com PSRAM e int8, sem ganho) | **sim** | PyTorch/ONNX em CPU (2,9 s para 1.820 janelas no PC) |
 | FlowState (zero-shot) | +0,192 | +0,134 | +0,114 | 9,1 M parâmetros (~36 MB) | não | **sim** | PyTorch em CPU (~0,4 s por janela no PC) |
-| Mediana de todos (saída da biblioteca) | +0,194 | +0,164 | +0,128 | — | não | só a dos modelos de CPU (F2, Lactec) | — |
+| Mediana de todos (saída da biblioteca) | +0,194 | +0,164 | +0,128 | — | não | só a dos modelos de CPU (F2) | — |
 
 Leitura:
 
@@ -151,7 +151,7 @@ geração FV e regimes B/C não testados no dispositivo.
 
 ## 6. Como o C foi conferido (Smart App Control)
 
-A máquina de casa não tem compilador C, e o Smart App Control **bloqueia qualquer .exe compilado localmente**
+A máquina com GPU não tem compilador C, e o Smart App Control **bloqueia qualquer .exe compilado localmente**
 ("Uma política de Controle de Aplicativo bloqueou este arquivo"; testado com um olá-mundo do zig). Não foi
 desligado. Saída: o C vai para **WebAssembly (WASI)** com o `zig cc` (pacote `ziglang` do PyPI, que roda) e
 executa dentro do **Node.js** (assinado). O float32 do WebAssembly é IEEE 754 binário32, o mesmo da FPU do

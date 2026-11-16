@@ -6,22 +6,20 @@ atual. Cada seção é o estado daquela data; números e decisões posteriores p
 
 ## Cabeçalho original do CLAUDE.md
 
-Snapshot written on 2026-10-05 from the work machine (Lactec), where the project lives in OneDrive
-(`Documentos/2026/Projeto_IA`); state, findings and next steps updated on 2026-10-06 after the v2 +
-batch 2 run finished on the home GPU. This repo is the exported, anonymized subset needed for the TCC, the
+Snapshot written on 2026-10-05 from the CPU-only work machine; state, findings and next steps updated on 2026-10-06 after the v2 +
+batch 2 run finished on the GPU machine. This repo is the exported, anonymized subset needed for the TCC, the
 future master's and the `prosumer` library (called `prossumidor` until 2026-10-09; GitHub repo renamed to
-`JoaoCarlos134/prosumer` on 2026-10-11, the old URL redirects; the home folder became `Downloads/projects/prosumer` the same day,
-via `~/renomeia_prosumer.ps1`, which also fixes the editable install, graphify's root and copies the Claude Code memory;
-at Lactec rename the clone to `1Projects/prosumer`, run `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git` and change the exporter's default destination). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
+`JoaoCarlos134/prosumer` on 2026-10-11, the old URL redirects; the clones were renamed to `prosumer` the same day (a
+script also fixed the editable install, graphify's root and the Claude Code memory); on each clone run `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git`). The user (João) works in English with Claude. The LIBRARY (`src/prosumer/`,
 `tests/`, README, pyproject) is in English since 2026-10-09; project docs, benchmark scripts and their
 comments stay in Portuguese (code comments without accents) — keep that convention there.
 
-### State (2026-10-06) — v2 + lote 2 COMPLETOS na maquina de casa (RTX 4070)
+### State (2026-10-06) — v2 + lote 2 COMPLETOS na maquina com GPU (GPU)
 
 A rodada acabou. Tudo o que a v2 e o lote 2 previam esta feito, em GPU, sem falhas pendentes:
 52 entradas de rede treinada (todas com `dispositivo` anotado), 25 fundacionais v1 + 28 do lote 2,
 131 linhas em `resultados/metricas.csv`, 7 figuras e os quatro CSVs de metricas regenerados.
-Os 9 modelos que tinham rodado em CPU no Lactec foram refeitos em GPU para paridade de hardware.
+Os 9 modelos que tinham rodado em CPU na máquina de CPU foram refeitos em GPU para paridade de hardware.
 
 Detalhes do protocolo, dos resultados e dos seis defeitos corrigidos no caminho:
 `experimentos/testes_previsao/LEIA-ME.md` (reescrito para a v2 em 06/10/2026).
@@ -72,20 +70,19 @@ planilha do congresso: a mediana caiu para +0,508 e 2a nas usinas em B, atras do
 Duas maquinas, um repositorio. Trabalhar sempre em `main` (o ramo `correcoes-v2-gpu` foi juntado em
 07/10/2026 e so fica como historico).
 
-| | Lactec (trabalho) | Casa |
+| | CPU | GPU |
 |---|---|---|
-| Clone | `OneDrive - Lactec/Documentos/1Projects/prossumidor` (atalho em `2026/Projeto_IA`) | — |
-| GPU | **nenhuma**: os quatro ambientes tem torch `+cpu` | RTX 4070 (torch cu128/cu130) |
+| GPU | **nenhuma**: os quatro ambientes tem torch `+cpu` | GPU (torch cu128/cu130) |
 | Ambientes | `~/.venvs/{previsao,lote2,lote2_hf,moirai}` iguais aos `.txt` congelados (conferido 07/10) + `~/.venvs/prossumidor` (biblioteca; **reinstalar** apos o nome novo: `uv pip install -e ".[dev,plots,lightgbm]"`, os extras mudaram de nome; os scripts agora citam `~/.venvs/prosumer`) | os quatro, ver `ambientes/LEIA-ME.md` |
 | TTM (`tsfm_public.toolkit`) | **funciona** | quebrado (instala sem o subpacote) |
 | Dados brutos / exportador | sim (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) | nao |
 
 O que roda em cada uma: biblioteca, avaliacao (`05_avalia.py`, `06_figuras.py`), referencias, LightGBM,
-fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (Lactec). Redes treinadas em origem
-movel e o TabPFN-TS ficam para a GPU de casa (`DISPOSITIVO=cuda`); sem GPU o `historico/roda_lote2.py` pulava o
-TabPFN-TS. Os venvs ficam fora do OneDrive de proposito (milhares de arquivos sincronizando).
+fundacionais zero-shot e o ajuste fino do TTM rodam bem em CPU (CPU). Redes treinadas em origem
+movel e o TabPFN-TS ficam para a GPU (`DISPOSITIVO=cuda`); sem GPU o `historico/roda_lote2.py` pulava o
+TabPFN-TS. Os venvs ficam fora da pasta sincronizada de proposito (milhares de arquivos sincronizando).
 
-### Estado em 09/10/2026 a tarde (maquina de casa): Smart App Control e o nome em ingles
+### Estado em 09/10/2026 a tarde (maquina com GPU): Smart App Control e o nome em ingles
 
 Feito: reset para o `origin/main` reescrito (o HEAD antigo ficou no ramo local
 `backup-pre-reescrita-2026-10-09`, mesmo conteudo do `c6b5726`); identidade git = endereco noreply do GitHub;
@@ -115,7 +112,7 @@ regressao contra o `metricas.csv` incluido); o unico de fora e o de propriedade 
   `tsfm_public.toolkit` falta, como no `previsao`). Os scripts escolhem o ambiente pelo `VENVS`/nome: para a
   etapa A, chamar `~/.venvs/previsao_gpu/Scripts/python.exe` direto.
 - `pyarrow 26.0.0`: bloqueado; o `.venv` usa `pyarrow==25.0.1` (o `classicos` ja tinha 25.0.1).
-- `mypy` (compilado com mypyc, e o `librt` que ele usa): bloqueado. Rodar o mypy na CI ou no Lactec.
+- `mypy` (compilado com mypyc, e o `librt` que ele usa): bloqueado. Rodar o mypy na CI ou na máquina de CPU.
 - `hypothesis._native`: continua bloqueado (so o teste de propriedade de `test_contracts.py`).
 
 Para rodar a suite aqui: `.venv/Scripts/python.exe -m pytest -p no:hypothesispytest --ignore=tests/test_contracts.py`.
@@ -168,9 +165,9 @@ VS Code aberto): morto de novo por falta de memoria antes das 15:43, sem nenhuma
 `n_jobs=1`, entao e o proprio ARIMAX (com as exogenas de clima, ~60 mil pontos por serie) que passa de
 ~20 GB em menos de 30 min. **Leitura para o portao (< 2 h/caso):** nesta maquina o AutoARIMA com exogenas
 nao cabe nem na configuracao reduzida; nao soltar os seis. Proximo passo possivel, antes de declarar
-inviavel: um piloto de memoria (uma serie, uma dobra, medindo o pico) ou rodar no Lactec.
+inviavel: um piloto de memoria (uma serie, uma dobra, medindo o pico) ou rodar na máquina de CPU.
 
-### Estado em 09/10/2026 (fim da sessao na maquina de casa)
+### Estado em 09/10/2026 (fim da sessao na maquina com GPU)
 
 `metricas.csv` tem **243 linhas e 51 modelos**. Entraram nesta sessao: regime B das casas (completo),
 8 redes do passo T, 4 classicos do sklearn e 3 dos 4 classicos estatisticos.
@@ -190,11 +187,11 @@ um por processo.
 casos em 250 s; AutoTheta precisa de 4,8 h em usinas|A (139 s e 622 s nas casas); MSTL 2,3 h em
 usinas|A; AutoARIMA 15,2 h em usinas|A no padrao. A familia e pouco pratica nesta resolucao.
 
-**Bloqueios desta maquina (nao existem no Lactec):**
+**Bloqueios desta maquina (nao existem na máquina de CPU):**
 
 - O App Control bloqueia o `_native` do `hypothesis`, e o plugin do pytest carrega o hypothesis
   sempre: **a suite da biblioteca nao roda aqui**, nem com `-p no:hypothesis`. Ja esta na ultima
-  versao, entao reinstalar nao muda os bytes. Rodar `pytest` no Lactec ou deixar para a CI. O teste de
+  versao, entao reinstalar nao muda os bytes. Rodar `pytest` na máquina de CPU ou deixar para a CI. O teste de
   regressao contra o `metricas.csv` nao foi executado nesta ultima rodada por causa disso.
 - O mesmo bloqueio tirou o `torch 2.11.0+cu128` do ambiente `previsao`, que foi para `2.14.1+cu130`.
 - TimeLLM saiu do conjunto de redes: estoura o commit charge (limite 40,8 GB, folga ~13 GB) e derrubou
@@ -206,7 +203,7 @@ terminaram horas depois. Dois efeitos: um runner que espera `FIM` de outro pode 
 o que deixou 13 h sem produzir nada), e dois processos do mesmo script sobrescreviam o
 `tempos_classicos.json` (corrigido: agora rele o arquivo antes de gravar).
 
-### Cuidados novos de 08/10/2026 (maquina de casa)
+### Cuidados novos de 08/10/2026 (maquina com GPU)
 
 - **O ambiente `previsao` esta com `torch 2.14.1+cu130`, nao mais 2.11.0+cu128.** A politica de
   Controle de Aplicativo do Windows passou a bloquear o `torch/lib/shm.dll` da versao antiga de forma
@@ -221,7 +218,7 @@ o que deixou 13 h sem produzir nada), e dois processos do mesmo script sobrescre
   do Time-MoE = 13 GB; redes do passo T junto com os classicos; o TimeLLM carrega um LLM). Rodar em
   lotes pequenos, um processo por lote, e nao misturar fila de CPU com fila de GPU.
 
-## Where to continue (handoff de 07/10/2026, maquina do Lactec)
+## Where to continue (handoff de 07/10/2026, maquina so de CPU)
 
 Feito em 07/10: ramo juntado em `main`; CI consertada (venv do setup-uv, nao `--system`); pre-commit com
 mypy 2.4 e `.gitattributes` LF; **teste de regressao** `tests/test_regressao_benchmark.py` (recalcula as 131
@@ -230,7 +227,7 @@ linhas de `metricas.csv` com a biblioteca, igualdade numerica; 184 testes no tot
 `docs/literatura/`; casas identificadas (CC0, Dingle). **O que isso muda na biblioteca** esta na secao 5c
 de `docs/proposta/PROPOSTA_BIBLIOTECA.md` — ler antes de mexer em `contratos`, `protocolo` ou adaptadores.
 
-**PLANO (revisao de 09/10/2026, Lactec). Fonte: `docs/proposta/Plano_TCC_simples.tex` (secoes 4-8).**
+**PLANO (revisao de 09/10/2026). Fonte: `docs/proposta/Plano_TCC_simples.tex` (secoes 4-8).**
 Prioridade: a BIBLIOTECA. Artigos sao subprodutos e nao atrasam a E2. Regra: toda melhoria comeca por um
 PILOTO curto (1-4 h, um caso) e so vira trabalho completo se passar no PORTAO. Nada de rodada longa as cegas.
 
@@ -243,14 +240,14 @@ Pilotos ja feitos em 09/10 (sobre as previsoes gravadas, sem rodar modelo; ver P
 - Resolucao (consumo, LightGBM): hora R2 0,37 / skill +0,21; pico 17-20h 0,35 / +0,16; noite-dia 0,69 /
   +0,12; dia 0,58 / +0,10 (mediana +0,01; media 7 dias +0,04). 20 casas somadas: R2 0,64.
 
-Pilotos feitos no Lactec em 09/10 a tarde (scripts `piloto_*.py`; saidas em `resultados/pilotos/`, FORA de
+Pilotos feitos na máquina de CPU em 09/10 a tarde (scripts `piloto_*.py`; saidas em `resultados/pilotos/`, FORA de
 `previsoes/`: nao entram na mediana nem no metricas.csv; resumo em `resultados/pilotos/resumo.json`):
 - **FlowState** (IBM, 9,1 M param., zero-shot, CPU): consumo A +0,192 (8o/47, empata com o melhor, p 0,098);
   FV casas A +0,134 (7o/47); usinas A +0,114 (5o/49). PASSOU o portao e ENTROU no benchmark em 09/10
   (`03_fundacionais.py FlowState`; as 3 previsoes do piloto foram gravadas com o mesmo `comum.grava`, janelas
   conferidas): 52 modelos, 246 linhas; mediana em A subiu 0,0003-0,0017; 3o no ranking geral do congresso. Melhor que
   o TTM na geracao solar (+0,134 x +0,119; +0,114 x +0,092): segundo candidato pequeno (Raspberry Pi; nao cabe
-  no ESP32). ~0,4 s por janela em CPU. Devolve quantis (util no piloto F2c). So roda no Lactec.
+  no ESP32). ~0,4 s por janela em CPU. Devolve quantis (util no piloto F2c). So roda na máquina de CPU.
 - **Ajuste fino do TTM-r2** (F2e, origem movel, so dados anteriores a dobra): PIORA nos 3 casos. So a cabeca,
   lr 1e-4: consumo +0,181 (zero-shot +0,191), FV +0,100 (+0,119), usinas +0,075 (+0,092). Decoder + cabeca,
   lr 1e-3: consumo +0,148. => F2e REPROVADO com evidencia para o TTM: a biblioteca usa o TTM sem ajuste.
@@ -272,15 +269,15 @@ Feito em 09/10 (F1 b e c), com o codigo na BIBLIOTECA primeiro:
   que o da hora (FV casas 0,36 x 0,43; usinas A 0,48 x 0,74): por hora a forma do dia de sol e previsivel, o
   total do dia depende das nuvens. Aba "Por resolucao" da planilha do congresso; 5c da PROPOSTA.
 
-~~Pendente NO LACTEC: piloto F2c de faixas com os quantis do FlowState~~ **feito 16/10/2026**, ver "Estado em
-16/10/2026 (Lactec)" abaixo.
+~~Pendente na maquina de CPU: piloto F2c de faixas com os quantis do FlowState~~ **feito 16/10/2026**, ver "Estado em
+16/10/2026 (CPU)" abaixo.
 
 | Etapa | Horas | Onde | O que, e o PORTAO |
 |---|---|---|---|
 | F0 Decisoes | 0 | — | Idioma DECIDIDO (internacional + camada BR, ver Ground rules). Pendentes: licenca (do autor, antes da E6); permissao por escrito do professor para os dados das usinas; comprar Raspberry Pi 5 + ESP32 |
-| F1 Fechar o teste | 17 | ver linha | (a) ~~casa: congelar `classicos` e atualizar `previsao.txt`~~ **feito 09/10**. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (Lactec), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
-| **A Modelos pendentes** | 40 | casa (GPU) e Lactec | Os 13 pendentes (Moirai 1, CycleNet, VisionTS, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT): para CADA um, estudar como funciona (artigo, matematica), o que pode acrescentar e como fazer rodar; depois piloto num caso. **Regra do usuario (09/10): nao descartar modelo sem estudo + evidencia.** PORTAO para o teste completo: empatar com o melhor num caso ou trazer algo que nenhum outro traz (clima sem treino, tamanho de embarcado, faixa, dependencia entre series). Tabela com o porque de cada um: secao 7 do plano |
-| F2 Pilotos de melhoria | 22 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (Lactec, granite-tsfm completo); (f) modelo direto para o total do dia (consumo) |
+| F1 Fechar o teste | 17 | ver linha | (a) ~~maquina com GPU: congelar `classicos` e atualizar `previsao.txt`~~ **feito 09/10**. (b) avaliacao por resolucao (hora, noite-dia, pico 17-20h, dia) no `05_avalia.py` e aba na planilha do congresso, 3 h. (c) `Ensemble-mediana-corrigida` so no consumo (correcao de vies acima), 2 h. (d) AutoARIMA: medir 1 caso com a config reduzida; PORTAO < 2 h/caso -> rodar os 6 e refazer `usinas|A` reduzido; senao relatar como inviavel em resolucao horaria. (e) MLP: piloto de ajuste em casas_prod A (alpha maior, validacao temporal); PORTAO ganho >= 0,05 e estavel, senao rotular "sem ajuste". (f) TimesFM-3, FlowState (CPU), BuildingsBench (so consumo): piloto em casas_cons A; PORTAO entrar no grupo da frente, senao parar |
+| **A Modelos pendentes** | 40 | GPU e CPU | Os 13 pendentes (Moirai 1, CycleNet, VisionTS, MOMENT, Lag-Llama, DUET, Crossformer, Mamba/S-Mamba, xLSTM, TimeGrad, Time-LLM, LLMTime, TimeGPT): para CADA um, estudar como funciona (artigo, matematica), o que pode acrescentar e como fazer rodar; depois piloto num caso. **Regra do usuario (09/10): nao descartar modelo sem estudo + evidencia.** PORTAO para o teste completo: empatar com o melhor num caso ou trazer algo que nenhum outro traz (clima sem treino, tamanho de embarcado, faixa, dependencia entre series). Tabela com o porque de cada um: secao 7 do plano |
+| F2 Pilotos de melhoria | 22 | CPU | Cada um num caso; PORTAO skill +0,02 (ou faixa calibrada): (a) combinar 2-3 NWP no regime C (IFS + AIFS + GFS/ICON, Open-Meteo Previous Runs; conferir arquivo) com LightGBM nas usinas; (b) estimar inclinacao/azimute de cada telhado pelos dados (`legado/.../a1_geometry.py`) e usar POA no B das casas; (c) quantis: LightGBM quantilico + quantis do Chronos-2, medir CRPS e cobertura; (d) atualizacao ao meio-dia (pico 17-20h); (e) ajuste fino do TTM (granite-tsfm completo); (f) modelo direto para o total do dia (consumo) |
 | F2b Levar para a biblioteca | ~40 | qualquer | so os pilotos que passaram |
 | E2 Versao 0.1 | 120 | qualquer | ~~Trocar nomes e API para ingles~~ **feito 09/10** (`prosumer`). Portar o protocolo (normaliza_por_treino, interpolacao CAUSAL so do historico, mascara de horas, corte de negativos, exogenas, passo regular), metricas em varias resolucoes, `ranking()` e `empata_com_melhor()`, `fisica`, `io` (Fronius, medidores, clima: NASA, estacao local, Open-Meteo com checagem de cobertura), `qualidade` (verificacao do relogio pelo sol, proveniencia/licenca), `previsao` com metadados (GPU, licenca, envio de dados), mediana como saida (+ correcao de vies no consumo), `data.dingle_houses()` |
 | E3 Checagem 1 | 30 | qualquer | o benchmark refeito so com a biblioteca bate com as 243 linhas |
@@ -300,8 +297,8 @@ em todos os casos (TimesFM-3 nos tres; Chronos-2 e LightGBM quantilico em dois c
 sementes: -0,22 / +0,13 / -0,07); F1(f) TimesFM-3 (+0,184 no consumo, 16o; ~igual ao 2.5); F2(b) geometria do
 telhado (LightGBM piora -0,029; inclinacao no limite da grade); F2(f) total do dia direto (empata com o melhor
 somado, +0,147 x +0,146). BuildingsBench (L +0,127 no consumo, 40o; faixas descalibradas; instalado com --no-deps no
-`previsao_gpu`, pesos em `~/.cache/buildingsbench`). PENDENTES: F1(d) AutoARIMA no Lactec (**o ambiente `classicos` foi bloqueado aqui em
-11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); FlowState nas faixas (Lactec).
+`previsao_gpu`, pesos em `~/.cache/buildingsbench`). PENDENTES: F1(d) AutoARIMA na máquina de CPU (**o ambiente `classicos` foi bloqueado aqui em
+11/10**: Smart App Control no `statsmodels/_smoothers_lowess`); FlowState nas faixas (CPU).
 
 **E2/E3 comecou (11/10/2026): o protocolo do benchmark vem da biblioteca.** `comum.dobras`, `dias_teste`, `janelas`,
 `normaliza_por_treino` e `05_avalia.real` viraram envelopes finos de `prosumer.protocol` (`folds`, `DayAhead` com
@@ -387,7 +384,7 @@ da geracao e do GHI, pico refinado por parabola entre passos, IC 90% por reamost
 ignora a orientacao do telhado (os pontos cegos do `clock_offset`). Nas usinas: a GERACAO de Curitiba tambem esta
 atrasada e quase compensa a NASA: -0,16 h da NASA do B, +0,45 h da previsao do C (Cascavel -0,11 e -0,36). Toda
 correcao de hora inteira afasta (por isso os dois pilotos pioraram); o conserto real seria reagregar Curitiba dos
-5 min do Lactec com deslocamento fracionario e refazer as usinas nos tres regimes: NAO vale. Paragrafo declarado em
+5 min privados com deslocamento fracionario e refazer as usinas nos tres regimes: NAO vale. Paragrafo declarado em
 `experimentos/testes_previsao/LEIA-ME.md` secao 7.
 **E2 FECHADA, versao 0.1.0 (12/10/2026, tag `v0.1.0`).** Entraram por ultimo: `io.fronius` (`read_solarweb`,
 `read_solarweb_raw`, `canonical`/`ALIASES`; formato dos exportadores antigos do `legado`: xlsx por ano, linha 1
@@ -548,12 +545,12 @@ periodo de teste: igual para todos, nao e entrada de modelo. (4) O 03 pula model
 benchmark usa Holm. Testes: auditoria 4/4, biblioteca 313/313 (sem o de propriedade do hypothesis). Total do plano: ~759 h (~12 meses, ate out/2027), com o
 aplicativo (o TCC) no fim.
 
-Cuidados: o exportador do Lactec (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
+Cuidados: o exportador privado (`Projeto_IA/biblioteca_tcc/scripts/exporta_repo_prossumidor.py`) copia
 arquivos antigos por cima dos novos — nao rodar sem antes comparar; o repositorio e a copia principal.
 No Windows, editar arquivos com Python grava CRLF: o gancho `mixed-line-ending` conserta e derruba o
 commit uma vez, e so adicionar de novo.
 
-### Estado em 16/10/2026 (Lactec): o que so rodava aqui
+### Estado em 16/10/2026 (CPU): o que so rodava aqui
 
 - **Clone em `1Projects/prosumer`** (renomeado); ambiente da biblioteca `~/.venvs/prosumer` (extras dev, plots,
   lightgbm, fronius, net); `~/.venvs/classicos` criado do `classicos.txt`. O `origin` ainda aponta para a URL
@@ -561,7 +558,7 @@ commit uma vez, e so adicionar de novo.
   O exportador ja aponta para `1Projects/prosumer`. Aqui roda tudo: hypothesis e mypy sem contorno.
 - **Suite:** tudo passa menos `test_forecast_parity[usinas-C]` (LightGBM): previsoes diferem ate 0,0046 kWh SO na
   1a dobra (ago-set/2025), igual com 1 ou 12 threads e tambem no ambiente `previsao`; RMSE relativo 6e-6. E
-  diferenca de ponto flutuante ENTRE MAQUINAS (a CI nao instala o lightgbm, entao o teste so rodou em casa). Em
+  diferenca de ponto flutuante ENTRE MAQUINAS (a CI nao instala o lightgbm, entao o teste so rodou na maquina com GPU). Em
   `usinas|A` (fora do teste rapido) chega a 0,105 kWh na 1a dobra. Decidir: tolerancia por maquina ou checar o skill.
 - **F2(c) FlowState (faixas): bruto NAO passa, conformal PASSA nos 3 casos.** Bruto (`piloto_quantis.py`): CRPS melhor
   que a referencia de 14 dias (skill +0,069 usinas, +0,128 FV casas, +0,052 consumo) mas faixas estreitas (cobertura
@@ -582,10 +579,10 @@ commit uma vez, e so adicionar de novo.
   site de exemplo.
 - **Telhado de Cascavel:** `diagnostics` acha 15 graus virado a 30 (bussola) contra a ficha 13 graus / 25 a leste do
   norte: primeira conferencia contra a verdade.
-- **AutoARIMA (F1 d) nao cabe aqui:** o Lactec tem 15,7 GB de RAM (menos que casa, onde passou de 20 GB). So o piloto
+- **AutoARIMA (F1 d) nao cabe aqui:** a maquina de CPU tem 15,7 GB de RAM (menos que a com GPU, onde passou de 20 GB). So o piloto
   de memoria com historico cortado (`piloto_autoarima_memoria.py historico=8760`, `LIMITE_GB` abaixo de 12) faz sentido,
   na fila da noite.
-- **Fatura real** (`Projeto_IA/ia_solar/dados_brutos/cascavel/Fatura de energia.xlsx`, so no Lactec, privada): resumo
+- **Fatura real** (`Projeto_IA/ia_solar/dados_brutos/cascavel/Fatura de energia.xlsx`, so na máquina de CPU, privada): resumo
   mensal 2018-2024 feito a mao. Serve para conferir `brazil.bill` contra uma conta real da Copel (piloto em curso, abaixo).
 - **Site de exemplo nao funcionava com um arquivo real do Solar.web** (relato do usuario, 16/10: CSV do Fronius de
   Curitiba + "Curitiba, Paraná, Brazil", nada opcional): devolvia HTTP 200 com previsao ~30x grande demais (lia a 2a
@@ -644,11 +641,11 @@ commit uma vez, e so adicionar de novo.
    num arquivo a parte.
 4. Site para mostrar a biblioteca, o que falta: geracao + consumo juntos (autoconsumo, economia), botao "dados de
    exemplo" (Dingle, CC0), um grafico SVG, upload > 10 MB pelo navegador ok (o servidor aceita; so a ferramenta de teste
-   limita). AutoARIMA: piloto de memoria com historico cortado, na fila da noite (Lactec tem 15,7 GB).
+   limita). AutoARIMA: piloto de memoria com historico cortado, na fila da noite (a maquina de CPU tem 15,7 GB).
 5. `git remote set-url origin https://github.com/JoaoCarlos134/prosumer.git` (bloqueado para o Claude; a URL antiga
    redireciona).
 
-#### Onde retomar (16/10/2026, fim da tarde no Lactec; sessao interrompida pelo usuario)
+#### Onde retomar (16/10/2026, fim da tarde na máquina de CPU; sessao interrompida pelo usuario)
 
 Diretriz nova do usuario (16/10): **a previsao de GERACAO e o principal** (mais util ao usuario); consumo vale mas
 interessa mais as distribuidoras; **nao sacrificar velocidade por um ganho pequeno** (fundacionais ficam opcionais:
@@ -685,7 +682,7 @@ adaptadores a mediana fica a 0,01 da de 47 modelos mas nao empata com o melhor e
 3. Kaggle (pedido do usuario, ultimos 90 dias): uteis so dois reais, o Growatt acima e `christiancanillas/solar-
    energy-generation-and-weather-data` (MIT; casa com FV, consumo, injecao, compra e BATERIA, horario, UTC+8,
    02-09/2026, sem localizacao). O resto e sintetico, imagem ou nivel de rede.
-4. `test_forecast_parity[usinas-C]`: NAO precisa da maquina de casa; recomendado: tolerancia entre maquinas no
+4. `test_forecast_parity[usinas-C]`: NAO precisa da maquina com GPU; recomendado: tolerancia entre maquinas no
    skill/RMSE (~1e-3) e igualdade exata so na maquina que gravou (decisao do usuario pendente).
 5. Rodar o `work-reviewer` sobre `9d3ade0..HEAD`; dividir o CLAUDE.md (regras + estado curto; historico a parte).
 
@@ -693,21 +690,21 @@ adaptadores a mediana fica a 0,01 da de 47 modelos mas nao empata com o melhor e
 
 1. TCC passo **E2** (versao 0.1). O E1 (esqueleto, contratos, dados sinteticos, CI) esta feito e o teste de
    regressao contra `metricas.csv` tambem (07/10). O que falta do E2 esta na tabela acima.
-2. **Teste ampliado (passo T, ~80 h, GPU de casa, nov-dez/2026):** dos 99 modelos do levantamento nao
+2. **Teste ampliado (passo T, ~80 h, GPU, nov-dez/2026):** dos 99 modelos do levantamento nao
    testados, 70 nao tem codigo e 5 pedem satelite ou supercomputador; os 24 com codigo entram agora
    (mais forca para as conclusoes, nao para muda-las). Redes do NeuralForecast 3.1.9 ja instalado (9):
    TimeMixer, TimesNet, DeepAR, TimeXer, FEDformer, Autoformer, Informer, xLSTM, Time-LLM. Fundacionais (8):
-   Moirai 1, MOMENT, VisionTS, Lag-Llama, FlowState (granite-tsfm: so no Lactec), BuildingsBench (so
+   Moirai 1, MOMENT, VisionTS, Lag-Llama, FlowState (granite-tsfm: so na máquina de CPU), BuildingsBench (so
    consumo), TimesFM-3 (pesos nao comerciais: so pesquisa), TimeGPT (API paga externa: so casas, NUNCA
    usinas). Repositorios proprios (5): CycleNet, DUET, Crossformer, S-Mamba, Mamba (mamba_ssm: talvez WSL).
    Outros (2): LLMTime, TimeGrad. Mais o regime C com o ECMWF AIFS (IA) no lugar do IFS, se a Open-Meteo
    tiver arquivo historico. Depois: 07 -> 05 -> 06 e atualizar a coluna "Testado" da planilha.
    Plano completo em `docs/proposta/Plano_TCC_simples.tex` (fonte editavel do PDF).
 3. Ainda aberto nos testes: ajuste fino do TTM/Chronos-2 (o `granite-tsfm` esta incompleto na maquina
-   de casa, mas **funciona no Lactec** — fazer la, em CPU), previsao probabilistica (CRPS), vies de
+   com GPU, mas **funciona na máquina de CPU** — fazer la, em CPU), previsao probabilistica (CRPS), vies de
    consumo dos fundacionais (~-20%), ceu claro das casas (localizacao agora conhecida: peninsula de Dingle, Irlanda), latencia/energia no
    Raspberry Pi 5 / ESP32 (passo E5 da proposta).
-4. TFLite (feito em 05/10/2026 no Lactec, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
+4. TFLite (feito em 05/10/2026 na máquina de CPU, `legado/ia_solar/base_modelagem/referencia/verifica_tflite.py`):
    os 32 `.tflite` em `legado/ia_solar/base_modelagem/embarcado/` foram recarregados do disco e todos
    reproduzem o R2 original (`verificacao_tflite.csv`). O `.tflite` guarda so a rede: imputacao,
    escala e desnormalizacao foram reconstruidas e salvas em

@@ -23,7 +23,7 @@ merges; an independent `work-reviewer` checks everything you claim, so be exact.
 - Never reintroduce plant owner names or exact coordinates (Cascavel is -24.83, -53.65). No LICENSE file.
 - Plant data are private: tests with them skip when the file is missing; examples use the Dingle houses
   (CC0) or synthetic series.
-- Windows home machine: never disable Smart App Control. Use the repo `.venv`
+- Windows GPU machine: never disable Smart App Control. Use the repo `.venv`
   (`.venv/Scripts/python.exe`). Import `lightgbm` before `sklearn.ensemble`. Locally built .exe files are
   blocked: C is checked via `tests/wasm_c.py` (zig -> WebAssembly -> Node).
 - Every bug fix includes a regression test that reproduces it (fails before the fix, passes after), in

@@ -16,7 +16,7 @@ Protocolo (o mesmo das redes do benchmark, origem movel):
 Comparacao: o TTM-r2 zero-shot publicado no metricas.csv. Portao: skill +0,02 ou mais.
 
 Uso: python piloto_ttm_ajuste.py [caso ...] [--variante decoder|cabeca]   (padrao: casas_cons, decoder;
-     ambiente previsao, so no Lactec)
+     ambiente previsao, so na maquina de CPU)
 Depois: python piloto_comum.py TTM-r2-ajustado <caso> A   (ambiente da biblioteca)
 """
 import sys
@@ -28,7 +28,7 @@ import torch
 
 try:
     import truststore
-    truststore.inject_into_ssl()  # proxy do Lactec
+    truststore.inject_into_ssl()  # proxy com inspecao de TLS
 except ImportError:
     pass
 

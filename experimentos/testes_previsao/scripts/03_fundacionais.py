@@ -115,7 +115,7 @@ def toto(jan, exog=False):
 def flowstate(jan, exog=False):
     """FlowState (IBM, ~9,1 M param.): codificador S5 + decodificador de base funcional. Entrou em 09/10/2026
     depois de passar no piloto (piloto_flowstate.py, mesmo codigo). scale_factor 1,0 = serie horaria
-    (tsfm_public.models.flowstate.utils.get_fixed_factor("H")). Precisa do granite-tsfm completo (Lactec)."""
+    (tsfm_public.models.flowstate.utils.get_fixed_factor("H")). Precisa do granite-tsfm completo (CPU)."""
     from tsfm_public import FlowStateForPrediction
     m = FlowStateForPrediction.from_pretrained("ibm-granite/granite-timeseries-flowstate-r1").eval()
     out = []
@@ -131,7 +131,7 @@ def visiontspp(jan, exog=False):
     """VisionTS++ (MAE de imagens com pre-treino continuado em series, ~115 M param.): dobra a serie em
     24 linhas x N dias e reconstroi a parte mascarada da imagem. Entrou em 09/10/2026 depois de passar no
     piloto (piloto_visionts.py, mesmo codigo; empatou na FV das casas). Previsao pontual: a saida de ponto
-    do modelo (os 9 quantis ficam de fora aqui). Roda no ~/.venvs/previsao_gpu, em GPU na maquina de casa (o
+    do modelo (os 9 quantis ficam de fora aqui). Roda no ~/.venvs/previsao_gpu, em GPU na maquina com GPU (o
     torch do `previsao` foi bloqueado pelo Smart App Control). Pesos em ~/.cache/visionts/pp."""
     from pathlib import Path
     from visionts import VisionTSpp

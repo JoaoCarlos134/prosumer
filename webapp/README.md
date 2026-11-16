@@ -51,7 +51,7 @@ The build (`prosumer_site.cmd` the first time, or `rebuild`): `.venv` with the l
 That folder runs by itself on another Windows computer (copy or zip it). torch and the foundation models are
 left out (gigabytes): `models: "all"` notes them as not installed. PyInstaller does not cross-compile: the
 Windows exe is built and tested on the Windows machine. The cloud built the same spec on Linux on 2026-10-23
-(465 MB folder; `/api/info`, the page and the port fallback 8080 -> 8081 checked). The home machine's Smart App
+(465 MB folder; `/api/info`, the page and the port fallback 8080 -> 8081 checked). The GPU machine's Smart App
 Control blocks unsigned, locally built exes: expect it not to run there (signing would fix it).
 
 ## State (2026-10-23, cloud)
@@ -99,7 +99,7 @@ What the library can do that the pane still does not offer (each needs a field i
 - out of the page, on the result: the fitted model as a C header for a microcontroller (`embedded.to_c`).
 
 Left:
-1. The Windows build and its test on the Lactec machine: first pass on 26/10 (325 MB; up in 17 s cold; the demo
+1. The Windows build and its test on the CPU machine: first pass on 26/10 (325 MB; up in 17 s cold; the demo
    in 16 s with live Open-Meteo; a real Fronius 5-min year read as Fronius Solar.web, live ANEEL tariff and
    bandeira, 40 s). Redo after the page changes still planned (`prosumer_site.cmd rebuild`).
 2. A browser pass there with the live services (Open-Meteo, the Brazilian price with live ANEEL).

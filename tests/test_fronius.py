@@ -266,7 +266,7 @@ def test_daily_step_and_night_zeros(tmp_path: Path) -> None:
 
 
 def as_exported(data: list[list[Any]]) -> list[list[Any]]:
-    """The layout of the real exports (checked at Lactec on 2026-10-16): units in brackets and a site-total
+    """The layout of the real exports (checked on 2026-10-16): units in brackets and a site-total
     `Produção fotovoltaica` column without a device suffix, at the end."""
     head, units, *body = data
     return [

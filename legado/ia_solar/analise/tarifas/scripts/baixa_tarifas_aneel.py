@@ -30,7 +30,7 @@ API = "https://dadosabertos.aneel.gov.br/api/3/action/datastore_search?"
 
 
 def busca(resource_id, filtros=None, pagina=1000):
-    """Paginação da API do CKAN, com repetição — o proxy da Lactec derruba."""
+    """Paginação da API do CKAN, com repetição — o proxy com inspecao de TLS derruba."""
     recs, off = [], 0
     while True:
         p = {"resource_id": resource_id, "limit": pagina, "offset": off}

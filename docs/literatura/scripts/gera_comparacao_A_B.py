@@ -12,6 +12,7 @@ Uso: python gera_comparacao_A_B.py [pasta_resultados]
 """
 import sys
 from datetime import date
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -21,11 +22,11 @@ from openpyxl.utils import get_column_letter
 
 AQUI = Path(__file__).resolve().parents[1]
 SAIDA = AQUI / "Comparacao_modelos_regimes_A_B.xlsx"
-# Resultados: dentro do repositorio (docs/literatura -> experimentos) ou no clone do Lactec.
+# Resultados: dentro do repositorio (docs/literatura -> experimentos) ou em PROSUMER_RESULTS.
 CANDIDATOS = [
     Path(sys.argv[1]) if len(sys.argv) > 1 else None,
     AQUI.parents[1] / "experimentos" / "testes_previsao" / "resultados",
-    Path("C:/Users/L08741/OneDrive - Lactec/Documentos/1Projects/prossumidor/experimentos/testes_previsao/resultados"),
+    Path(os.environ.get("PROSUMER_RESULTS", "experimentos/testes_previsao/resultados")),
 ]
 RES = next(p for p in CANDIDATOS if p is not None and (p / "metricas.csv").exists())
 
@@ -114,8 +115,8 @@ M["pct"] = (M.pos - 1) / (M.n - 1)
 media = M.groupby("modelo").pct.mean().sort_values()
 POR = M.set_index(["caso", "regime", "modelo"])
 
-# Modelos que rodaram nas usinas B mas ainda nao nas casas B. Os de CPU rodam na maquina do Lactec; o resto
-# (redes treinadas e TabPFN-TS) precisa da GPU da maquina de casa.
+# Modelos que rodaram nas usinas B mas ainda nao nas casas B. Os de CPU rodam na maquina so de CPU; o resto
+# (redes treinadas e TabPFN-TS) precisa da GPU da maquina com GPU.
 RODA_EM_CPU = {"LightGBM", "linear_fisico", "Chronos-2", "TimesFM-2.5", "TiRex-2"}
 faltam_b_casas = {
     c: sorted(set(M[(M.caso == "usinas") & (M.regime == "B")].modelo)
@@ -236,7 +237,7 @@ pend = [f"{CASO[c]}: {', '.join(m if m in RODA_EM_CPU else m + '*' for m in v)}"
 if pend:
     leia += [("", None), ("Ainda falta (resultados preliminares nas casas B)", "h"),
              ("Modelos que rodaram nas usinas B mas ainda não nas casas B (os marcados com * precisam de GPU e "
-              "rodam na máquina de casa; os outros rodam em CPU):", None),
+              "rodam na máquina com GPU; os outros rodam em CPU):", None),
              *[(f"   {p}", None) for p in pend],
              ("Enquanto isso, a mediana de todos (Ensemble-mediana) nas casas B é só dos modelos já rodados e pode mudar.", None)]
 nao = [ABA[t] for t in TESTES if t not in avaliados]
@@ -487,7 +488,7 @@ PREVISTOS = [  # modelo, grupo, testes (UsA, UsB, FVA, FVB, ConsA, ConsB), gpu, 
     ("VisionTS", "Fundacional (levantamento)", SO_A, "Não", "visionts",
      "Trata a série como imagem. Entra como VisionTS++ (empatou na FV das casas no piloto); o original não passou."),
     ("Lag-Llama", "Fundacional (levantamento)", SO_A, "Não", "lag-llama (GitHub)", "Pilotado em 10/10/2026: não passou."),
-    ("FlowState", "Fundacional (levantamento)", SO_A, "Não", "granite-tsfm", "Completo só na máquina do Lactec."),
+    ("FlowState", "Fundacional (levantamento)", SO_A, "Não", "granite-tsfm", "Completo só na maquina so de CPU."),
     ("BuildingsBench", "Fundacional (levantamento)", [NA, NA, NA, NA, P, AC], "Não", "BuildingsBench (NREL)",
      "Treinado em prédios: só no consumo. Pilotado em 11/10/2026: não passou (40º)."),
     ("TimesFM-3", "Fundacional (levantamento)", A_E_B, "Não", "timesfm",
@@ -527,7 +528,7 @@ COR = {"feito": VERDE, "falta": CLARO, "falta (GPU)": PatternFill("solid", fgCol
 COR_GPU = {"Sim": PatternFill("solid", fgColor="F8D2BE"), "Recomendada": PatternFill("solid", fgColor="FFF0C2")}
 # Nome na lista acima -> nome em metricas.csv
 ALIAS = {"Random Forest": "RandomForest", "k-NN": "kNN", "Time-LLM": "TimeLLM", "VisionTS": "VisionTS++"}
-# Decisoes medidas na rodada do passo T (maquina de casa, 07-09/10/2026; ver CLAUDE.md e 04_redes_treinadas.py).
+# Decisoes medidas na rodada do passo T (maquina com GPU, 07-09/10/2026; ver CLAUDE.md e 04_redes_treinadas.py).
 FORA = {  # so com evidencia (teste). Inviabilidade tecnica nao e "fora": vai para a etapa A do plano.
     "TimesNet": ({"B"}, "Aceita o clima mas o IGNORA (previsão idêntica com o clima embaralhado): fica só no A."),
     "Moirai 1": (None, "Piloto da etapa A (09/10/2026): último em B nas usinas, quase não usa o clima; no A fica "
@@ -552,7 +553,7 @@ for mod in pend:
     cpu = mod in RODA_EM_CPU
     blocos.append((mod, "Já testado: falta casas B", marc,
                    "Não" if cpu else ("Sim" if mod == "TabPFN-TS" else "Recomendada"), "já no benchmark",
-                   "Roda em CPU (máquina do Lactec)." if cpu else "Roda na máquina de casa (GPU)."))
+                   "Roda em CPU (maquina so de CPU)." if cpu else "Roda na máquina com GPU (GPU)."))
 # 2) os previstos, com a situacao tirada dos resultados (nao da lista)
 feitos = falta = fora = 0
 for mod, grupo, marc, gpu, lib, obs in PREVISTOS:

@@ -1,4 +1,4 @@
-# Pilotos F1 e F2 do plano (11/10/2026, máquina de casa)
+# Pilotos F1 e F2 do plano (11/10/2026, máquina com GPU)
 
 Regra do plano: cada melhoria começa por um piloto curto num caso, com a regra de escolha fixada **antes** de
 ver o teste, e só vira trabalho completo se passar no portão. Portões: F1(e) ganho ≥ 0,05 e estável; F1(f)
@@ -12,7 +12,7 @@ venha só do que foi acrescentado.
 
 | Item | Script | Resultado | Decisão |
 |---|---|---|---|
-| F1(d) AutoARIMA, memória | `piloto_autoarima_memoria.py` | não roda aqui: desde 11/10 o Smart App Control bloqueia o `statsmodels` (`_smoothers_lowess`) do ambiente `classicos`, e o `statsforecast.models` importa ele | **rodar no Lactec** (script pronto: uma série, uma dobra, pico de memória, vigia de 16 GB) |
+| F1(d) AutoARIMA, memória | `piloto_autoarima_memoria.py` | não roda aqui: desde 11/10 o Smart App Control bloqueia o `statsmodels` (`_smoothers_lowess`) do ambiente `classicos`, e o `statsforecast.models` importa ele | **rodar na máquina de CPU** (script pronto: uma série, uma dobra, pico de memória, vigia de 16 GB) |
 | F1(e) MLP ajustado (FV das casas A) | `piloto_mlp.py` | sementes 42/1/2: −0,219 / +0,133 / −0,072 (benchmark −0,271); viés até +51% | **não passa** (instável); o MLP fica "sem ajuste" no texto |
 | F1(f) TimesFM-3 | `piloto_timesfm3.py` | consumo +0,184 (16º/53, p < 0,001); FV casas +0,092 (28º); usinas +0,059 (22º) | **não passa** (+0,000 a +0,013 sobre o TimesFM-2.5 já no benchmark) |
 | F1(f) BuildingsBench (consumo A) | `piloto_buildingsbench.py` | L (161 M, decide): +0,127 (40º/53, p < 0,001), viés −17%; M (16 M) +0,138, S (2,6 M) +0,121, ambos sem viés; faixas: cobertura de 80% entre 0,49 e 0,62, CRPS muito pior que a referência | **não passa** |
@@ -51,11 +51,11 @@ Open-Meteo com vários modelos) e, se for o caso, refazer o regime C dos outros 
 | Chronos-2 | usinas A | 0,844 | 0,567 | +0,086 | passa |
 | LightGBM quantílico | usinas C | 0,741 | 0,560 | **+0,340** | estreita por 0,009 |
 | Chronos-2 | usinas C | 0,838 | 0,656 | +0,294 | larga por 0,006 |
-| FlowState (Lactec, 16/10) | consumo A | 0,537 | 0,389 | +0,052 | estreita |
-| FlowState (Lactec, 16/10) | FV casas A | 0,607 | 0,466 | +0,128 | estreita |
-| FlowState (Lactec, 16/10) | usinas A | 0,612 | 0,456 | +0,069 | estreita |
+| FlowState (CPU, 16/10) | consumo A | 0,537 | 0,389 | +0,052 | estreita |
+| FlowState (CPU, 16/10) | FV casas A | 0,607 | 0,466 | +0,128 | estreita |
+| FlowState (CPU, 16/10) | usinas A | 0,612 | 0,456 | +0,069 | estreita |
 
-Referência: quantis do mesmo horário nos 14 dias anteriores. FlowState rodado no Lactec em 16/10 (CPU, 4-12 min por
+Referência: quantis do mesmo horário nos 14 dias anteriores. FlowState rodado em CPU em 16/10 (CPU, 4-12 min por
 caso): CRPS melhor que a referência nos três, faixas estreitas demais; com a calibração conformal (F2(c') abaixo)
 passa nos três. Os pesos do
 TimesFM-3 têm licença própria (anotada no plano como não comercial): a biblioteca deve preferir Chronos-2
@@ -90,7 +90,7 @@ Por nível, 28 dias: LightGBM FV das casas 0,651/0,457 → 0,814/0,622 (skill de
 +0,296; o CQR não consegue estreitá-la: os erros se amontoam em 0 nas horas de borda do dia); Chronos-2 consumo
 0,748/0,546 → 0,808/0,608. A única falha: TimesFM-3 FV das casas, que já passava e foi 3 pontos além (0,832/0,653).
 
-**FlowState (acrescentado em 16/10, Lactec; as 11 fontes acima saíram idênticas na nova rodada):** as seis formas
+**FlowState (acrescentado em 16/10; as 11 fontes acima saíram idênticas na nova rodada):** as seis formas
 passam nos três casos. Por nível, 28 dias: consumo 0,541/0,393 → 0,806/0,608 (skill de CRPS +0,051 → +0,071); FV das
 casas 0,609/0,468 → 0,818/0,627 (+0,115 → +0,125); usinas 0,611/0,454 → 0,806/0,617 (+0,066 → +0,091). (Os números
 brutos diferem um pouco da tabela F2(c): aqui só os dias com calibração ativa.)
@@ -368,14 +368,14 @@ o lead 7 do IFS depende do filtro (interpolacao de passo de 6 h); a composicao d
 e teste nos leads 5-7; o Meteo-France puxa a media para cima nos leads 2-3; os leads 8-15 tem so ~2 meses; as
 casas sao um outono irlandes.
 
-## E6: a conta da `economics.brazil` contra as faturas reais da Copel (16/10/2026, Lactec, CPU) — NAO PASSA
+## E6: a conta da `economics.brazil` contra as faturas reais da Copel (16/10/2026, CPU) — NAO PASSA
 
 Pergunta: com a tarifa convencional da Copel (`COPEL-DIS`, ANEEL), bandeiras, custo de disponibilidade, SCEE / GD I
 (usina de Cascavel, 07/2019) e ICMS + PIS/COFINS, o `brazil.Setup(...).bill` reproduz o total pago mes a mes? Script
 `experimentos/testes_previsao/scripts/piloto_fatura.py`; saidas `resultados/pilotos/fatura.json` (rodada do portao) e
 `fatura_sem_duplicatas.json` (diagnostico pos-hoc); livro da ANEEL em `dados/aneel_*.csv` (ODbL 1.0, atribuicao
 ANEEL; base derivada redistribuida fica sob ODbL). Dados: planilha feita a mao pelo dono com o resumo das faturas
-(so no Lactec, nunca copiada): por mes de referencia, kWh importado, kWh injetado, total pago e saldo; NAO tem
+(so na máquina de CPU, nunca copiada): por mes de referencia, kWh importado, kWh injetado, total pago e saldo; NAO tem
 COSIP, aliquotas, bandeira nem a energia separada. 104 faturas (01/2018-08/2026): P0 sem geracao 19 (01/2018-07/2019),
 P1 com geracao 85; nenhuma excluida (em todas as P1 a injecao do mes cobre o importado acima de 50 kWh, entao o
 saldo nao entra). Gravados so erros relativos por fatura e agregados.
@@ -467,7 +467,7 @@ duplicatas (conferido por igualdade dos JSON). Logo o defeito (1) esta consertad
 muda: **NAO PASSA** (G1 5/19, G2 9/19, G3 0/85 na primaria). O que falta e o defeito (2), o imposto sobre a energia
 compensada preso ao limite do minimo, que so se separa com faturas detalhadas (PDF). Tempo 209 s.
 
-## Composicao da mediana: os adaptadores da biblioteca chegam a mediana do benchmark? (16/10/2026, Lactec, CPU) — G-A NAO PASSA, G-C PASSA
+## Composicao da mediana: os adaptadores da biblioteca chegam a mediana do benchmark? (16/10/2026, CPU) — G-A NAO PASSA, G-C PASSA
 
 Pergunta (do usuario, 16/10): o `Ensemble-mediana` do benchmark e a mediana de TODOS os modelos de cada teste (47-48
 no regime A, 21-22 em B e C); a biblioteca usa a mesma regra, mas por padrao so com as tres ingenuas, e o usuario
@@ -505,7 +505,7 @@ passa nas usinas e na FV das casas; as ingenuas da geracao sao fracas, +0,013 e 
 0,004). Testar "mediana sem as ingenuas quando ha modelos" pede dado que nao serviu para escolhe-la (nao ha outro
 caso no benchmark): fica registrada para quando houver um sitio novo.
 
-## Parcela de cada canal (MPPT) para separar falha de string de sujeira (17/10/2026, Lactec, CPU) — NAO PASSA
+## Parcela de cada canal (MPPT) para separar falha de string de sujeira (17/10/2026, CPU) — NAO PASSA
 
 Script `experimentos/testes_previsao/scripts/piloto_mppt.py` (portao no commit `81b06bb`, antes de rodar); saida
 `resultados/pilotos/mppt.json`. Dias claros pela energia CA total, parcela de cada MPPT na energia dos dias claros,

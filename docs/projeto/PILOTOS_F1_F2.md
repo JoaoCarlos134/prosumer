@@ -583,3 +583,33 @@ ate [181-365]"; o sentido e o mesmo). (2) Relato extra, FORA do portao, pedido p
 percentual da energia (soma|real - previsto| / soma real) no total do dia, da semana e do mes, e a fracao de
 dias/semanas/meses com erro <= 10%, F e variante, leads 1 e 7. A meta de 10% do usuario e lida nesses numeros;
 nao decide nada aqui.
+
+### Resultado (18/11/2026, CPU, ~16 min Cascavel + ~10 min Curitiba de replay; avaliacao ~1 min) — NAO PASSA
+
+`resultados/pilotos/uso_prolongado.json`. 816 noites por usina, 3 chamadas do `forecast_ahead` por noite (0,7 s
+Curitiba, 1,1 s Cascavel por noite). A congelada F reproduz o `SKILL` do pacote (lead 1: 0,44-0,51 por faixa).
+
+| Variante, usina (n0 da outra usina) | G1 lead 1, uso 91-180: ganho (p DM) | G2 | G3 |
+|---|---|---|---|
+| L, Cascavel (60) | -0,001 (0,95) | sim | nao (0,74 no lead 1 uso 1-30) |
+| L, Curitiba (240) | +0,003 (0,78) | sim | nao (0,74-0,77) |
+| LB, Cascavel (120) | +0,001 (0,26) | sim | nao (0,77; lead 1 uso 31-90 abaixo de 0,75) |
+| LB, Curitiba (120) | +0,004 (0,91) | sim | nao (0,74 no lead 1) |
+
+Leitura:
+1. **Nao ha o que aprender aqui no a_k e no vies:** o a_k aprendido fica no padrao (lead 1 0,99-1,00; lead 4
+   0,88-0,95; lead 7 0,69-0,81, contra 1,00 / 0,92 / 0,79) e o b_k em 0,99-1,02. Esperado: o `TRUST` foi ajustado
+   NESTAS usinas (o vies declarado no portao). O piloto nao diz se um sitio novo ganha; so que aprender NAO PIORA
+   (G2 passa em todas, ganho medio dos n0 entre -0,001 e +0,005) e que o encolhimento protege o comeco.
+2. **A faixa e onde o uso ensina algo:** a faixa de 80% do app de hoje fica estreita nos leads longos (lead 7:
+   cobertura 0,59-0,67 em Cascavel, 0,67-0,73 em Curitiba); a conformal sobre o proprio erro leva a 0,75-0,78. O
+   G3 cai por 0,74 no lead 1 (a faixa F ja estava perto). Sugere: conformal por sitio nos leads 4-7, a testar no V11.
+3. **Erro percentual (pedido da demo; LB, lead 1, uso 91-365; F entre parenteses):** total do dia 13-16% (13-16%),
+   ~50% dos dias dentro de 10% em Cascavel, ~43% em Curitiba; semana 5,6-8,8% (6-9%), 70-82% das semanas dentro de
+   10%; mes 3,4-5,9% (3,8-6,2%), 86-97% dos meses dentro de 10%. Lead 7: dia 21-26%, mes 5-7%. A meta de 10% vale
+   para a semana e o mes, nao para o dia (nuvem de um telhado, ja visto no piloto do horizonte).
+
+Consequencia (a do portao): os padroes ficam; o V11 completo (BR-PVGen + periodo intocado) continua sendo quem
+decide para sitios novos, agora com a pergunta afiada: (a) a_k/vies num sitio que NAO escolheu o `TRUST`;
+(b) a faixa conformal por sitio nos leads 4-7. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
+`vitrine_local/`) mostra estes resultados com as curvas das usinas, so para a apresentacao.

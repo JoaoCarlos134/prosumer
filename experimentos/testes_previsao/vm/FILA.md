@@ -47,6 +47,9 @@ como faixa) e testado depois de 2-3 meses de coleta: escrever o portao entao.
 | C7 | V6: CRPS e cobertura das faixas | minutos |
 | C8 | V8: AutoARIMA (memoria) | `--mem=64G`, espera a memoria liberar |
 
+| C9 | **Posicao das usinas do BR-PVGen pelos proprios dados** (pedido de 18/11): longitude pelo meio-dia solar medido (o `quality.clock_offset` / relogio contra o sol, ao contrario: hora conhecida -> longitude), latitude pela duracao do dia e pela altura do sol ao meio-dia nos dias claros, dentro do estado declarado | portao: validar ANTES nas duas usinas e no PVDAQ (coordenadas conhecidas): erro <= 0,5 grau. So entao usar as posicoes estimadas para baixar o tempo e destravar P5/V11 no BR-PVGen. Declarar a incerteza |
+| C10 | **Busca de mais dados publicos** (pedido de 18/11): FV com coordenadas (ou ao menos o municipio) e dados de 2024 em diante, para cruzar com o arquivo de tempo; FV residencial de preferencia; Brasil e outros climas | candidatos a conferir: PVDAQ (sistemas ainda ativos), colecao FV do EDS-lab, Open Power System Data, UK PV (Sheffield Solar), dados abertos de distribuidoras, Solcast/PVOutput (licenca!), Kaggle. Para cada um: licenca, coordenadas, periodo, resolucao, tamanho. Lista em `docs/projeto/` (tabela), nada baixado sem licenca clara; nada de dado com nome de dono |
+
 **Bloqueado:** P5 (confianca por clima no BR-PVGen) e o V11 completo no BR-PVGen: sem coordenadas nao ha previsao do
 tempo no sitio. Precisa de outro conjunto publico com coordenadas e dados de 2024 em diante (PVDAQ recente, a
 colecao do EDS-lab, ou outro) ou da estimativa de posicao de C6.

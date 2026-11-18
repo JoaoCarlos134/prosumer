@@ -37,6 +37,15 @@ nada. A suite da biblioteca rodou em 17/11: 712 ok, 2 falhas = `test_clear_sky_i
 2.5.5 / pandas 3.1.1; o mesmo do ambiente da nuvem em 23/10, CLAUDE.md): ambiente, nao codigo, nao bloqueia.
 O V0 de 16/11 (um job so, 3 h) estourou o tempo na paridade e a fila afterok morreu (DependencyNeverSatisfied).
 
+## Estado em 18/11/2026 (fim da sessao)
+
+Tudo abaixo esta na fila Slurm (`slurm/fila_18nov.sh`, 57 jobs, ids em `~/Projeto_IA/logs/fila_18nov.ids`), com
+portao commitado antes (`PILOTOS_F1_F2.md`). Mudancas em relacao ao plano: V9 DESTRAVADO (token de leitura do
+HuggingFace do usuario, fora do repo; `huggyllama/llama-7b`, o checkpoint do codigo dos autores); V7 so com o
+Chronos-2 (TiRex-2 e Toto-2.0 nao tem codigo de treino nos pacotes); V1 sem o regime B (NASA cobre 55 % das horas
+novas); C10 feito na sessao (`docs/projeto/DADOS_PUBLICOS_C10.md`): o PVDAQ residencial (1158 sistemas com 2024-2025)
+e o candidato para o V11 num sitio novo e para o P5 fora do Brasil (portao ainda por escrever).
+
 ## 1. GPU (em ordem; um job de GPU por vez)
 
 | # | Rodada | Por que na GPU | Portao |

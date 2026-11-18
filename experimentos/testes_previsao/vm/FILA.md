@@ -39,7 +39,7 @@ como faixa) e testado depois de 2-3 meses de coleta: escrever o portao entao.
 | # | Rodada | Nota |
 |---|---|---|
 | C1 | V0 + `01b_estende_usinas.py` (prompt privado) | pre-requisito do V1 e do C2 |
-| C2 | **V11-b: o replay do piloto V11 no periodo intocado 06-11/2026** (`piloto_uso_prolongado.py` com o arquivo do tempo estendido; nada reajustado) | o piloto de 18/11 NAO PASSOU nas usinas: o a_k e o vies ja eram os padroes (ajustados nelas). Pergunta que sobra: a faixa conformal por sitio nos leads 4-7 (cobertura 0,59-0,73 -> 0,75-0,78). Portao novo, so sobre a faixa |
+| C2 | **V11-b: o replay do piloto V11 no periodo intocado 06-11/2026** (`piloto_uso_prolongado.py` com o arquivo do tempo estendido; nada reajustado) | o piloto de 18/11 NAO PASSOU nas usinas: o a_k e o vies ja eram os padroes (ajustados nelas). Pergunta que sobra: a faixa conformal por sitio (F cobre so 0,59-0,73 no lead 7). Portao novo, so sobre a faixa, com os quantis CONSERVADORES de amostra finita (floor/ceil de a(n+1)/n; a sonda pos hoc da revisao deu 0,77-0,84) e a regra exata escrita antes |
 | C3 | V1 (parte CPU): referencias, LightGBM, fisico, fundacionais zero-shot | o do V1 |
 | C4 | P2: leads 8-15 com abr-nov/2026 de rodadas unicas | baixar a Single Runs ate 15/11 |
 | C5 | V2: PVDAQ + telhado medido (portoes ja commitados) | um job por sistema, `--mem=20G`; se algum sistema PVDAQ tiver dados de 2024 em diante, ele e o candidato para o V11 num sitio NOVO (o tempo arquivado comeca em 2024) |

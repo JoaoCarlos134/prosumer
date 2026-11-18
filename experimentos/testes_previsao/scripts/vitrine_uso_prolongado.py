@@ -41,9 +41,12 @@ def _dados(serie):
                aprende=mm.Yhat.round(0).tolist(),
                erro_hoje=((mm.F - mm.Y) / mm.Y * 100).round(1).tolist(),
                erro_aprende=((mm.Yhat - mm.Y) / mm.Y * 100).round(1).tolist())
-    aprendeu = {f"lead{k}": dict(a=lb[(lb.ini == INICIO_EXEMPLO) & (lb.lead == k)].sort_values("alvo").a.round(3)
-                                 .tolist(), b=lb[(lb.ini == INICIO_EXEMPLO) & (lb.lead == k)].sort_values("alvo")
-                                 .b.round(3).tolist()) for k in (1, 4, 7)}
+    aprendeu = {}
+    for k in (1, 4, 7):                                 # cada lead com as PROPRIAS datas (lead k comeca k-1 dias depois)
+        q = lb[(lb.ini == INICIO_EXEMPLO) & (lb.lead == k)].sort_values("alvo")
+        datas = q.alvo.dt.strftime("%Y-%m-%d").tolist()
+        aprendeu[f"lead{k}"] = dict(a=[[d, round(x, 3)] for d, x in zip(datas, q.a)],
+                                    b=[[d, round(x, 3)] for d, x in zip(datas, q.b)])
     curva = {}
     for n in ("L", "LB"):
         r = rel["variantes"][f"{n}|{serie}"]
@@ -117,7 +120,7 @@ function desenha(i){
  const s = []; for (const [l,v] of Object.entries(d.aprendeu)) { s.push({name:'a '+l,type:'line',data:v.a,symbol:'none'});
   s.push({name:'b '+l,type:'line',data:v.b,symbol:'none',lineStyle:{type:'dashed'}}); }
  ch('c_aprendeu').setOption({tooltip:{trigger:'axis'},legend:{top:0},grid:{left:50,right:20,top:40,bottom:30},
-  xAxis:{type:'category',data:d.dia.x.slice(0,s[0].data.length)},yAxis:{min:0.5},series:s},true);
+  xAxis:{type:'time'},yAxis:{min:0.5},series:s},true);
 }
 sel.onchange = () => desenha(+sel.value); desenha(0);
 window.onresize = () => Object.values(charts).forEach(c=>c.resize());

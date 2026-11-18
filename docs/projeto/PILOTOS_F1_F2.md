@@ -586,30 +586,44 @@ nao decide nada aqui.
 
 ### Resultado (18/11/2026, CPU, ~16 min Cascavel + ~10 min Curitiba de replay; avaliacao ~1 min) — NAO PASSA
 
-`resultados/pilotos/uso_prolongado.json`. 816 noites por usina, 3 chamadas do `forecast_ahead` por noite (0,7 s
-Curitiba, 1,1 s Cascavel por noite). A congelada F reproduz o `SKILL` do pacote (lead 1: 0,44-0,51 por faixa).
+`resultados/pilotos/uso_prolongado.json`. 816 noites por usina, 3 chamadas do `forecast_ahead` por noite (~1,1 s
+por noite em Cascavel, ~0,7 s em Curitiba, isto e ~0,2-0,4 s por chamada; o "0,9 s por chamada" do portao foi a
+primeira chamada, fria). A congelada F e exatamente s + TRUST(y_w - s) da biblioteca (conferido pela revisao em
+todas as 137.088 horas) e e COERENTE com o `SKILL` (lead 1: 0,44-0,51 por faixa; lead 7: 0,12-0,23 contra 0,199),
+mas por construcao em parte: o `SKILL` foi medido em 2025-08 -> 2026-05 destas usinas, dentro do replay.
 
-| Variante, usina (n0 da outra usina) | G1 lead 1, uso 91-180: ganho (p DM) | G2 | G3 |
+| Variante, usina (n0 da outra usina) | G1 lead 1, uso 91-180: ganho (p DM) | G2 | G3: celulas fora de [0,75; 0,85] (pior) |
 |---|---|---|---|
-| L, Cascavel (60) | -0,001 (0,95) | sim | nao (0,74 no lead 1 uso 1-30) |
-| L, Curitiba (240) | +0,003 (0,78) | sim | nao (0,74-0,77) |
-| LB, Cascavel (120) | +0,001 (0,26) | sim | nao (0,77; lead 1 uso 31-90 abaixo de 0,75) |
-| LB, Curitiba (120) | +0,004 (0,91) | sim | nao (0,74 no lead 1) |
+| L, Cascavel (60) | -0,001 (0,95) | sim | 2 de 21 (lead 7 uso 31-90: 0,701) |
+| L, Curitiba (240) | +0,003 (0,78) | sim | 8 de 21 (lead 5 uso 31-90: 0,731), quase todas leads 5-6 |
+| LB, Cascavel (120) | +0,001 (0,26) | sim | 2 de 21 (lead 3 uso 181-365: 0,734) |
+| LB, Curitiba (120) | +0,004 (0,91) | sim | 8 de 21 (lead 6 uso 31-90: 0,729) |
 
-Leitura:
-1. **Nao ha o que aprender aqui no a_k e no vies:** o a_k aprendido fica no padrao (lead 1 0,99-1,00; lead 4
+Leitura (corrigida depois da revisao do mesmo dia; a primeira versao exagerava 1 e 2):
+1. **Nao ha o que aprender aqui no a_k e no vies:** o a_k aprendido fica no padrao (lead 1 0,98-1,00; lead 4
    0,88-0,95; lead 7 0,69-0,81, contra 1,00 / 0,92 / 0,79) e o b_k em 0,99-1,02. Esperado: o `TRUST` foi ajustado
-   NESTAS usinas (o vies declarado no portao). O piloto nao diz se um sitio novo ganha; so que aprender NAO PIORA
-   (G2 passa em todas, ganho medio dos n0 entre -0,001 e +0,005) e que o encolhimento protege o comeco.
-2. **A faixa e onde o uso ensina algo:** a faixa de 80% do app de hoje fica estreita nos leads longos (lead 7:
-   cobertura 0,59-0,67 em Cascavel, 0,67-0,73 em Curitiba); a conformal sobre o proprio erro leva a 0,75-0,78. O
-   G3 cai por 0,74 no lead 1 (a faixa F ja estava perto). Sugere: conformal por sitio nos leads 4-7, a testar no V11.
-3. **Erro percentual (pedido da demo; LB, lead 1, uso 91-365; F entre parenteses):** total do dia 13-16% (13-16%),
+   NESTAS usinas (o vies declarado no portao). O piloto nao diz se um sitio novo ganha.
+2. **Aprender nao e "sempre inofensivo":** com o n0 escolhido na outra usina (60-240) os primeiros 30 dias nunca
+   perdem mais de 0,01 (G2). Mas n0 pequeno perde (ganho medio dos leads 1-7: L Cascavel -0,009 com n0 = 7, -0,005
+   com 15), e mais tarde no uso o lead 7 perde ate 0,012 (LB Curitiba, uso 91-180) e 0,008 (L Cascavel, 31-90).
+   Ganho medio por n0, todas as variantes: -0,009 a +0,005.
+3. **A faixa: a ideia ajuda nos leads longos, a conta do piloto nao calibra.** A faixa F e estreita no lead 7
+   (cobertura 0,59-0,67 em Cascavel, 0,67-0,73 em Curitiba) e a conformal a alarga, mas a variante NUNCA passa de
+   0,781 em nenhuma celula do G3 (abaixo de 80% em toda parte), e PIORA os leads 2-3, onde F ja cobria 0,77-0,83
+   (Cascavel lead 3 uso 181-365: 0,819 -> 0,734/0,740). Causa achada pela revisao: `np.quantile` linear SEM a
+   correcao de amostra finita (n+1) sobre so 30-60 escores diarios (a biblioteca usa ~700 escores por hora, onde o
+   vies some). Sonda POS HOC da revisao (quantis conservadores de split conformal, niveis floor/ceil de a(n+1)/n):
+   LB cobriria 0,79-0,84 (Cascavel) e 0,77-0,82 (Curitiba) em toda celula do G3. Nao muda este veredito (o G1 cai
+   de qualquer forma); a correcao entra no portao do V11-b ANTES de rodar. Nota: a regra do piloto centra no
+   ponto (Y_hat + q(r) W, r = (Y - Y_hat)/W); a `conformal_quantiles` desloca cada borda pelo proprio escore: nao
+   e "a mesma regra", como o portao dizia.
+4. **Erro percentual (pedido da demo; LB, lead 1, uso 91-365; F entre parenteses):** total do dia 13-16% (13-16%),
    ~50% dos dias dentro de 10% em Cascavel, ~43% em Curitiba; semana 5,6-8,8% (6-9%), 70-82% das semanas dentro de
    10%; mes 3,4-5,9% (3,8-6,2%), 86-97% dos meses dentro de 10%. Lead 7: dia 21-26%, mes 5-7%. A meta de 10% vale
-   para a semana e o mes, nao para o dia (nuvem de um telhado, ja visto no piloto do horizonte).
+   para a semana e o mes, nao para o dia. Cuidado com o mes: os inicios se sobrepoem, entao os ~60 pares
+   (inicio, mes completo) de cada usina sao so 17-18 meses de calendario distintos.
 
 Consequencia (a do portao): os padroes ficam; o V11 completo (BR-PVGen + periodo intocado) continua sendo quem
 decide para sitios novos, agora com a pergunta afiada: (a) a_k/vies num sitio que NAO escolheu o `TRUST`;
-(b) a faixa conformal por sitio nos leads 4-7. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
+(b) a faixa conformal por sitio, com a correcao de amostra finita escrita no portao antes de rodar. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
 `vitrine_local/`) mostra estes resultados com as curvas das usinas, so para a apresentacao.

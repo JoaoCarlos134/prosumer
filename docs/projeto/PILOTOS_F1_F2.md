@@ -670,3 +670,125 @@ regime C (céu claro × kc). Previous Runs baixada de novo até 15/11 em arquivo
 correlação NASA nova × antiga (esperada > 0,99), cobertura da NASA nas horas novas, correlação do proxy da
 `poa_estimada`, diferença máxima dos arquivos de tempo na sobreposição. Se a NASA cobrir < 95 % das horas de sol
 novas, o regime B fica fora do V1 (é só o teto). Saída agregada: `resultados/pilotos/estende_usinas.json`.
+
+## Fila do servidor de 18/11/2026: portões escritos ANTES de qualquer rodada
+
+Todas rodam sem supervisão no servidor (cadeia Slurm em `experimentos/testes_previsao/vm/slurm/fila_18nov.sh`); o
+clone do servidor não é ligado ao GitHub: o registro abaixo é completado lá, commitado no ramo local `vm/2026-11`, e o
+usuário leva o ramo e os agregados à máquina de CPU. Saídas por hora das usinas ficam em caminhos ignorados.
+Escolhas congeladas comuns: nada é reajustado no período intocado 01/06 → 15/11/2026; as configurações abaixo são as
+únicas rodadas (sem busca de hiperparâmetros no teste).
+
+### V11-b: faixa conformal por sítio no período intocado (C2)
+
+**Pergunta.** A faixa de 80 % do total do dia, recalibrada por sítio com os resíduos que o banco já tinha, cobre
+~80 % num período que não serviu para escolher nada? (No V11-piloto a faixa de hoje cobriu 0,59–0,73 no lead 7 e a
+conformal sem correção de amostra finita ficou abaixo.) **Método.** `scripts/piloto_v11b.py`: replay causal do app de
+hoje (padrões, nada reajustado) de 25/03 a 15/11/2026 com os dados do C1; regra da faixa no cabeçalho do script:
+resíduos escalados r = (Y − F)/(hi − lo) dos 60 dias anteriores à emissão (só pares com alvo ≤ noite da emissão),
+n ≥ 30, níveis conservadores de amostra finita (ordem ⌊0,1(n+1)⌋ e ⌈0,9(n+1)⌉), **cada borda anda a partir da
+previsão pontual** (não centrada). **Portão.** Nas duas usinas: cobertura de todos os leads juntos em [0,77; 0,83] E
+cada lead 1–7 em [0,70; 0,90] (≈ 168 dias por lead: ±0,03 de erro de amostragem). Relatados: cobertura da faixa de
+hoje, largura relativa, skill do app contra a expectativa sazonal por lead, erro percentual dia/semana/mês e fração
+dentro de 10 % (leads 1 e 7). **Se passar:** a faixa conformal por sítio entra no `outlook` (biblioteca, com testes)
+como faixa padrão quando o banco tiver ≥ 30 pares; senão fica a de hoje e o achado é registrado.
+
+### G1 / P1-gpu: fundacionais com as 6 NWP como covariáveis, leads 1–7
+
+**Pergunta.** Chronos-2 ou TabPFN-TS, recebendo a POA de cada uma das 6 NWP (+ média, espalhamento e céu claro),
+batem a cadeia física do app no total do dia? **Método.** `scripts/piloto_p1_gpu.py` (cabeçalho): uma previsão de
+168 h por noite; o dia e+k usa o `previous_day{k}`; passado com o lead 1; referência física = replay do app de hoje
+nas mesmas noites; comparação também com o `LightGBM-C-multi6` do F2(a) no lead 1. Período de DECISÃO: o teste do
+benchmark (01/08/2025 → 31/05/2026). **Portão.** Lead 1, nas duas usinas: skill diário (contra a expectativa sazonal
+do app) do modelo − skill do físico ≥ +0,02 E DM p < 0,05 (perda quadrática diária, HAC lag 7). Relatados: leads 2–7,
+skill horário, tempo de inferência por sítio na CPU (regra de velocidade: só entra na biblioteca como opção). O
+período intocado (01/06 → 15/11/2026) é lido SÓ como confirmação do modelo que passar; não muda a decisão.
+
+### V1: teste intocado das usinas (C3 + G4)
+
+**Pergunta.** O ranking e as escolhas da v2 valem num período que não serviu para escolher nada? **Método.** O
+benchmark inteiro com `BENCH_TESTE=v1 BENCH_SAIDA=resultados_v1` (`comum.py`): teste 01/06 → 15/11/2026, dobras de 61
+dias, dados do C1, regimes A, C e C-gfs (o B fica fora: a NASA cobre só 55 % das horas de sol novas; portão do C1).
+Modelos: os do pipeline (`02_referencias`, `02b_classicos` sem AutoARIMA, `03_fundacionais`, `03b_moirai`,
+`03c_fundacionais_lote2`, `04_redes_treinadas` na GPU), `07_ensemble`, `05_avalia`. Os modelos que entraram na v2 por
+pilotos (TimesFM-3, Crossformer, DUET etc.) não são refeitos aqui (declarado). **Portão** (`confere_servidor.py v1`):
+o `Ensemble-mediana` é o melhor ou empata com ele (DM + Holm) nos regimes A e C; o LightGBM C ganha do A. Relatados:
+Spearman do skill v1 × v2 por regime, skill de cada modelo nos dois períodos. **Se falhar:** a mediana como padrão da
+biblioteca é revista com os dois períodos lado a lado (decisão do usuário).
+
+### V5 / G2: regime C6 (a média das 6 NWP) em todo modelo que aceita clima
+
+**Pergunta.** O ganho do F2(a) (várias NWP no LightGBM) vale para os outros modelos? **Método.** `BENCH_C6=1
+BENCH_SAIDA=resultados_v5`: regime novo C6 = as 4 colunas de clima do C com o GHI e a temperatura = média hora a hora
+das 6 NWP do `LightGBM-C-multi6` (IFS, GFS, ICON, Météo-France, GEM, CMA; o AIFS fica de fora porque só existe desde
+18/02/2025 e mudaria os membros no meio do treino). Mesmo teste do benchmark. Modelos com clima: LightGBM, linear
+físico (`02`), Chronos-2, TimesFM-2.5 (`03`), TiRex-2, TabPFN-TS (`03c`), redes com clima (`04`, GPU). As previsões
+de C e A da v2 são copiadas para a pasta para o `05_avalia` comparar C6 × C (DM entre regimes). **Portão**
+(`confere_servidor.py v5`): C6 − C ≥ +0,02 de skill horário com DM p < 0,05 em ≥ metade dos modelos. **Se passar:** o
+regime C publicado ganha a média das NWP (a biblioteca já usa a mediana das NWP no `outlook`); senão fica registrado
+que o ganho do F2(a) é do LightGBM com as NWP separadas.
+
+### V7 / G3: ajuste fino do Chronos-2
+
+**Pergunta.** Ajustar o Chronos-2 por caso, com origem móvel, ganha do zero-shot? **Método.**
+`scripts/piloto_v7_ajuste_fino.py`: configuração única (ajuste completo, lr 1e-5, 500 passos, lote 64, contexto 1024),
+refeito no início de cada dobra com os dados anteriores; casos usinas A, usinas C, casas_prod A, casas_cons A. TiRex-2 e
+Toto-2.0 ficam de fora: os pacotes instalados (`tirex2` 0.3.1, `toto2` 2.0.0) não têm código de treino. **Portão**
+(`confere_servidor.py v7`): +0,02 de skill sobre o zero-shot em ≥ 2 dos 4 casos. **Se passar:** a biblioteca
+continua zero-shot por padrão (regra de velocidade), com o ajuste como opção documentada.
+
+### V4 / G5: casas no ano todo
+
+**Pergunta.** O ranking e a mediana mudam com a estação? **Método.** `BENCH_TESTE=v4 BENCH_SAIDA=resultados_v4`: teste
+01/04 → 31/12/2020, dobras de 31 dias, regimes A e B, todos os modelos do pipeline (como no V1). **Portão**
+(`confere_servidor.py v4`): por estação (abr–jun, jul–set, out–dez; média do skill das dobras), o ensemble padrão
+(`Ensemble-mediana` na produção, `Ensemble-mediana-corrigida` no consumo) fica no quartil de cima dos modelos em
+todas as estações. Relatados: Spearman entre estações, melhor modelo por estação. **Se falhar:** o padrão da biblioteca
+para casas ganha uma nota sazonal e a escolha é revista.
+
+### V3 / G6: benchmark inteiro com 3 sementes num ambiente só
+
+**Pergunta.** O ranking e os empates da v2 sobrevivem a um ambiente só e à variação de semente? **Método.** Uma
+pasta por semente (`BENCH_SAIDA=resultados_v3_s{42,43,44}`, `SEMENTE`): as redes treinadas (`04`, GPU) por semente;
+LightGBM/referências/clássicos/fundacionais zero-shot (determinísticos) uma vez em `resultados_v3_base` e copiados;
+`07` + `05` por semente. **Portão** (`confere_servidor.py v3`): em ≥ 90 % dos modelos comuns, o status "empatado com o
+melhor" é o mesmo da v2 nas três sementes E |skill v2 − média das sementes| ≤ max(faixa das sementes, 0,01). Nada
+decidido sobre publicar a v3 (decisão aberta do usuário, seção 6 da revisão).
+
+### V9 / G7: Time-LLM com LLaMA-7B (configuração do artigo)
+
+**Pergunta.** Com o LLM do artigo o Time-LLM ainda perde para a própria ablação sem LLM (como com GPT-2 e em Tan et
+al. 2024)? **Método.** `scripts/piloto_timellm.py llama7b` e `llama7b semLLM` (mesmo protocolo do piloto de 10/10,
+casas_cons A; `huggyllama/llama-7b` congelado, token de leitura do HuggingFace fora do repositório). **Portão** (o do
+piloto de 10/10): grupo da frente no consumo E o LLM ganha da própria ablação. Baixa prioridade: fecha a evidência,
+não muda a biblioteca.
+
+### P2 / C4: leads 8–15 com abr–nov/2026 de rodadas únicas
+
+**Pergunta.** Com ~7,5 meses (eram 2) os leads 8–10 têm habilidade? **Método.** `scripts/piloto_p2.py`: rodada das
+12 UTC de cada dia (IFS e GFS, Single Runs) de 28/03 a 14/11/2026; `outlook.forecast_ahead(days=15)` com confiança 1
+(W) e 0 (S, a expectativa sazonal); telhado causal por mês. **Portão.** Um lead k ∈ {8, 9, 10} ganha peso no `TRUST`
+só se, nas duas usinas, n ≥ 150 dias, skill de W contra S > 0 e DM p < 0,05; senão a linha plana depois do dia 7 fica,
+agora com evidência. O a_k ótimo é só relato (não vira padrão sem um sítio que não o escolheu).
+
+### C9: posição das usinas do BR-PVGen pelos próprios dados
+
+**Pergunta.** Dá para estimar latitude e longitude de uma usina só pela forma da curva medida em dias claros?
+**Método.** `scripts/piloto_c9_posicao.py` (cabeçalho): ajuste da forma da curva de céu claro (posição do sol + plano)
+nos dias claros; validação em sistemas de posição conhecida, nunca usados para ajustar nada: os 6 do PVDAQ (potência
+AC, plano ajustado junto) e as duas usinas (só relato, passo de 1 h). Conferido antes só em curvas SINTÉTICAS (erro
+< 0,05°), não nos dados de validação. **Portão.** Nos sistemas do PVDAQ com passo ≤ 5 min (50, 1200, 1201): |erro|
+≤ 0,5° na latitude E na longitude em ≥ 2 dos 3. **Se passar:** as posições do BR-PVGen (GHI medido da estação, plano
+horizontal) são gravadas com a incerteza = o maior erro da validação e destravam o tempo no sítio (P5 e V11 no BR-PVGen,
+em portões próprios depois); senão P5/V11 no BR-PVGen continuam bloqueados.
+
+### P4 / C6: conversão tempo → kWh nas 21 usinas fixas do BR-PVGen
+
+**Pergunta.** Onde está o erro de conversão que deixa o teto do regime B em ~+0,51? **Método.**
+`scripts/piloto_p4_conversao.py` (ambiente `p4` = biblioteca + pvlib): metade dos dias para ajustar, metade para
+avaliar; (a) GHI medido → POA: isotrópica da biblioteca × Hay-Davies × Perez (plano ajustado por modelo na metade de
+ajuste); (b) POA medida → potência: linear × derating de temperatura (Ross, com a temperatura do ar, o que o app teria
+da previsão; painel medido só diagnóstico). Posição: a do C9 se passou, senão o centro do estado (declarado).
+**Portão.** (a) Perez com RMSE da POA ≥ 5 % menor que a isotrópica em ≥ 2/3 das usinas → a biblioteca ganha Perez
+(com testes); (b) derating de Ross com RMSE da potência ≥ 2 % menor em ≥ 2/3 → a biblioteca ganha o derating. Usinas
+bifaciais de 1–5 MW no chão, não telhados: o resultado vale para a física, não para a escala (declarado).

@@ -21,7 +21,11 @@ configuracao comuns do 04_redes_treinadas.py (COMUM_T: entrada 168 h, 500 passos
 janela), com `windows_batch_size` 32 (era 128): em 08/10 o Time-LLM derrubou a maquina quatro vezes por memoria.
 Guarda de memoria: o processo se encerra se passar de LIMITE_GB de memoria privada.
 
-Uso: DISPOSITIVO=cuda python piloto_timellm.py [semLLM] [teste] [caso ...]   (ambiente previsao_gpu; padrao casas_cons)
+V9 (servidor, 18/11/2026; portao em PILOTOS_F1_F2.md "V9"): `llama7b` troca o GPT-2 pelo LLaMA-7B da configuracao do
+artigo (`huggyllama/llama-7b`, o checkpoint que o codigo dos autores usa; congelado, 32 camadas, d_llm 4096), com a
+guarda de memoria em 60 GB. Precisa de um token de leitura do HuggingFace em ~/.cache/huggingface/token (fora do repo).
+
+Uso: DISPOSITIVO=cuda python piloto_timellm.py [semLLM] [llama7b] [teste] [caso ...]   (ambiente previsao_gpu; padrao casas_cons)
 Depois: python piloto_comum.py Time-LLM[-semLLM] <caso> A   (ambiente da biblioteca)
 """
 import importlib
@@ -41,7 +45,9 @@ from piloto_comum import grava_piloto
 R = importlib.import_module("04_redes_treinadas")
 SEM_LLM = "semLLM" in sys.argv[1:]
 TESTE = "teste" in sys.argv[1:]  # 2 passos de treino: so confere que roda
-LIMITE_GB = 18
+LLAMA = "llama7b" in sys.argv[1:]
+LIMITE_GB = 60 if LLAMA else 18
+LLM = dict(llm="huggyllama/llama-7b", d_llm=4096, llm_num_hidden_layers=32) if LLAMA else {}
 PROMPT = {"casas_cons": "Hourly electricity consumption of a house in a rural community in Ireland.",
           "casas_prod": "Hourly rooftop solar photovoltaic generation of a house in Ireland.",
           "usinas": "Hourly generation of a small solar photovoltaic plant in southern Brazil."}
@@ -50,7 +56,8 @@ PROMPT = {"casas_cons": "Hourly electricity consumption of a house in a rural co
 def guarda():
     p = psutil.Process()
     while True:
-        gb = p.memory_info().private / 2**30
+        mi = p.memory_info()
+        gb = getattr(mi, "private", mi.rss) / 2**30   # private so existe no Windows; rss no Linux
         if gb > LIMITE_GB:
             print(f"ABORTADO: memoria privada {gb:.1f} GB > {LIMITE_GB} GB", flush=True)
             os._exit(3)
@@ -71,8 +78,16 @@ class SemLLM(torch.nn.Module):
         return types.SimpleNamespace(last_hidden_state=inputs_embeds)
 
 
+def _pico_gb():
+    mi = psutil.Process().memory_info()
+    if hasattr(mi, "peak_pagefile"):
+        return mi.peak_pagefile / 2**30
+    import resource
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20   # Linux: KB
+
+
 def fabrica(caso):
-    m = M.TimeLLM(prompt_prefix=PROMPT[caso], **{**R.COMUM_T, "windows_batch_size": 32,
+    m = M.TimeLLM(prompt_prefix=PROMPT[caso], **LLM, **{**R.COMUM_T, "windows_batch_size": 32,
                                                   "inference_windows_batch_size": 32,
                                                   **({"max_steps": 2, "val_check_steps": 1} if TESTE else {})})
     if SEM_LLM:
@@ -83,11 +98,11 @@ def fabrica(caso):
 if __name__ == "__main__":
     threading.Thread(target=guarda, daemon=True).start()
     casos = [a for a in sys.argv[1:] if a in ("usinas", "casas_prod", "casas_cons")] or ["casas_cons"]
-    nome = ("Time-LLM-semLLM" if SEM_LLM else "Time-LLM") + ("-teste" if TESTE else "")
+    nome = ("Time-LLM-semLLM" if SEM_LLM else "Time-LLM") + ("-LLaMA7B" if LLAMA else "") + ("-teste" if TESTE else "")
     for caso in casos:
         t0 = time.time()
         df = R.df_nf(carrega(caso), "A")
         jan, prev, n_par = R.roda_nf(df, lambda: fabrica(caso), caso, "A")
         f = grava_piloto(nome, caso, "A", jan, prev)
         print(f"OK {f.name} | {len(jan)} janelas | {time.time() - t0:.0f} s | {n_par} parametros "
-              f"| pico de memoria privada {psutil.Process().memory_info().peak_pagefile / 2**30:.1f} GB", flush=True)
+              f"| pico de memoria privada {_pico_gb():.1f} GB", flush=True)

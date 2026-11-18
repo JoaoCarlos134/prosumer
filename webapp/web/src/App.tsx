@@ -36,6 +36,10 @@ export default function App() {
   }, [theme]);
   useEffect(() => {
     document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+    document.title =
+      lang === "pt"
+        ? "prosumer: previsão solar e de consumo a partir dos seus dados"
+        : "prosumer: solar and consumption forecast from your own data";
   }, [lang]);
   useEffect(() => {
     getInfo()
@@ -50,7 +54,8 @@ export default function App() {
         .catch(() => undefined);
   }, [lang, payload, set]);
 
-  const Page = PAGES[payload?.result.outlooks.generation || page !== "system" ? page : "overview"];
+  // "check" has no tab since 18/11 (it is the Overview's details); a saved "check" or "system" without PV -> overview
+  const Page = PAGES[page === "check" || (page === "system" && !payload?.result.outlooks.generation) ? "overview" : page];
   return (
     <div className="flex h-full flex-col">
       <Header />

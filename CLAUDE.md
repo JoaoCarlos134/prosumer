@@ -187,6 +187,8 @@ this list. It is the to-do for the pages; `webapp/README.md` "Left" stays the li
 asked on 26/10 to be consulted before any redesign of the pages: confirm the order below before starting.
 Not checked by the review: phone layouts (the README records a 390 px pass on 23/10), alerts of any kind.
 
+**Done on 2026-11-18 (checked in a browser on the demo, pt): items 4 (Overview card and a plain sentence; statistics behind "Show the details"), 5 (unknown roof: no numbers, one sentence + "Open the inputs", chart one click away; the "what the forecast learnt" tile says the data do not confirm its roof), 6 (pane folds after every run; empty site fields hint the analysed place, never filled with it), 7 (title, description, og tags; no preview image yet) and 8 (no Forecast check tab). Left: bugs 1-2 (whiskers, flattened band: still visible on the demo), 3 (demo 15-30 s), the preview image.**
+
 **Bugs on screen (fix first)**
 1. Overview: every consumption bar carries a range whisker that leaves the top of the chart with an arrow (the
    card reads 4.8 to 203 kWh for the week); looks broken to a newcomer. Show a 10th-90th percentile band on the

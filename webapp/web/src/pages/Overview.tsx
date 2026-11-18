@@ -1,7 +1,7 @@
 import type { EChartsOption } from "echarts";
 import { motion } from "framer-motion";
-import { Clock, FileText, Gauge, Home, PiggyBank, Receipt, Sun } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronDown, Clock, FileText, Gauge, Home, PiggyBank, Receipt, Sun } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Chart } from "../components/Chart";
 import { Kpi } from "../components/Kpi";
 import { SiteMap } from "../components/SiteMap";
@@ -12,6 +12,7 @@ import { code } from "../i18n";
 import { useStore, useT } from "../store";
 import { alpha, BASE, C, CONFIDENCE, LEGEND } from "../theme";
 import type { Payload, Quantity } from "../types";
+import { Check } from "./Check";
 import { niceCeil, PageGrid } from "./common";
 
 export const QCOLOR: Record<Quantity, string> = { generation: C.generation, consumption: C.consumption };
@@ -62,14 +63,16 @@ export function Overview({ payload }: { payload: Payload }) {
         icon={<Clock size={14} />}
       />,
     );
+  // plain words on the first screen (product review 16/11): skill = 1 - RMSE/RMSE of the reference, so a positive
+  // skill reads "errors X smaller than a simple guess"; the statistics (CI, nRMSE, R2) live behind "details"
+  const nDays = r.report.summary.test_windows;
   if (median)
     kpis.push(
       <Kpi
         key="skill"
-        label={t("kpi_skill")}
-        value={median.skill}
-        format={(v) => pct(lang, v, 0)}
-        sub={t("kpi_skillSub", { ref: code(lang, r.report.summary.reference), lo: pct(lang, median.skill_ci_low), hi: pct(lang, median.skill_ci_high) })}
+        label={t("kpi_quality")}
+        text={median.skill != null && median.skill > 0 ? t("kpi_qualityBetter", { x: pct(lang, median.skill, 0) }) : t("kpi_qualityNot")}
+        sub={t("kpi_qualitySub", { n: num(lang, nDays, 0) })}
         color={C.accent}
         icon={<Gauge size={14} />}
       />,
@@ -341,7 +344,44 @@ export function Overview({ payload }: { payload: Payload }) {
           })}
         </div>
       </Visual>
+      <Quality payload={payload} />
     </PageGrid>
+  );
+}
+
+/** "How good the forecast has been" in one sentence, and the whole former Forecast check page behind a switch
+ * (user's decision 18/11: the check lives in the Overview, one tab fewer). */
+function Quality({ payload }: { payload: Payload }) {
+  const t = useT();
+  const lang = useStore((s) => s.lang);
+  const [open, setOpen] = useState(false);
+  const r = payload.result;
+  const s = r.report.summary;
+  const m = r.report.forecast?.find((f) => f.forecast === (s.output ?? "median"));
+  const args = { n: num(lang, s.test_windows, 0), x: pct(lang, m?.skill, 0), ref: code(lang, s.reference ?? "") };
+  const text = !m ? t("qualityNone") : m.skill != null && m.skill > 0 ? t("qualityBetter", args) : t("qualityNot", args);
+  return (
+    <>
+      <Visual title={t("v_forecastQuality")} className="col-span-12">
+        <div className="flex flex-wrap items-center justify-between gap-3 py-1">
+          <p className="max-w-[900px] text-[13px] leading-relaxed text-ink">{text}</p>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12.5px] font-semibold text-muted hover:bg-hover hover:text-ink"
+          >
+            {t(open ? "hideDetails" : "showDetails")}
+            <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+      </Visual>
+      {open && (
+        <div className="col-span-12">
+          <Check payload={payload} />
+        </div>
+      )}
+    </>
   );
 }
 

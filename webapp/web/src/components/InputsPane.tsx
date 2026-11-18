@@ -124,8 +124,11 @@ function Wide() {
 /** The sections: folding ones in the side pane, cards side by side over the whole screen. */
 function Body({ wide }: { wide: boolean }) {
   const t = useT();
-  const { form, setForm, info } = useStore();
+  const { form, setForm, info, payload } = useStore();
   const coords = form.where === "coords";
+  // after a run the empty fields hint at the place that WAS analysed (the demo's Dingle, not Curitiba); hints only,
+  // never values: filling them would send the demo's site with the person's next upload
+  const done = payload?.result.site;
   return (
     <>
       <Group wide={wide} title={t("sec_files")} open>
@@ -147,19 +150,19 @@ function Body({ wide }: { wide: boolean }) {
             {coords ? (
               <div className="grid grid-cols-2 gap-2">
                 <Field label={t("latitude")}>
-                  <input className="field" inputMode="decimal" value={form.latitude} placeholder="-25.43" onChange={(e) => setForm({ latitude: e.target.value })} />
+                  <input className="field" inputMode="decimal" value={form.latitude} placeholder={done ? String(done.latitude) : "-25.43"} onChange={(e) => setForm({ latitude: e.target.value })} />
                 </Field>
                 <Field label={t("longitude")}>
-                  <input className="field" inputMode="decimal" value={form.longitude} placeholder="-49.27" onChange={(e) => setForm({ longitude: e.target.value })} />
+                  <input className="field" inputMode="decimal" value={form.longitude} placeholder={done ? String(done.longitude) : "-49.27"} onChange={(e) => setForm({ longitude: e.target.value })} />
                 </Field>
               </div>
             ) : (
               <Field label={t("address")}>
-                <input className="field" value={form.address} placeholder={t("addressHint")} onChange={(e) => setForm({ address: e.target.value })} />
+                <input className="field" value={form.address} placeholder={done?.address_found ?? t("addressHint")} onChange={(e) => setForm({ address: e.target.value })} />
               </Field>
             )}
             <Field label={t("timezone")} hint={t("timezoneHint")}>
-              <input className="field" list="time-zones" value={form.timezone} placeholder="America/Sao_Paulo" onChange={(e) => setForm({ timezone: e.target.value })} />
+              <input className="field" list="time-zones" value={form.timezone} placeholder={done ? done.timezone : "America/Sao_Paulo"} onChange={(e) => setForm({ timezone: e.target.value })} />
               <TimeZones />
             </Field>
             <Field label={t("fileTimes")}>

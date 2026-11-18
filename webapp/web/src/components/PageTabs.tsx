@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, CalendarDays, Gauge, History, LayoutDashboard, Receipt, SunMedium } from "lucide-react";
+import { BookOpen, CalendarDays, History, LayoutDashboard, Receipt, SunMedium } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Key } from "../i18n";
 import { useStore, useT, type PageId } from "../store";
@@ -8,7 +8,6 @@ const PAGES: { id: PageId; key: Key; icon: ReactNode }[] = [
   { id: "overview", key: "page_overview", icon: <LayoutDashboard size={14} /> },
   { id: "next", key: "page_next", icon: <CalendarDays size={14} /> },
   { id: "history", key: "page_history", icon: <History size={14} /> },
-  { id: "check", key: "page_check", icon: <Gauge size={14} /> },
   { id: "system", key: "page_system", icon: <SunMedium size={14} /> },
   { id: "bill", key: "page_bill", icon: <Receipt size={14} /> },
   { id: "notes", key: "page_notes", icon: <BookOpen size={14} /> },

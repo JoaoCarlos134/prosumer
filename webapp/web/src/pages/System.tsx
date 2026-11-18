@@ -17,6 +17,8 @@ import { Plant } from "./NextDays";
 export function System({ payload }: { payload: Payload }) {
   const t = useT();
   const lang = useStore((s) => s.lang);
+  const set = useStore((s) => s.set);
+  const [showPerf, setShowPerf] = useState(false);
   const r = payload.result;
   const diag = r.report.diagnostics;
   const plants = r.outlooks.generation?.method.series ?? {};
@@ -141,7 +143,14 @@ export function System({ payload }: { payload: Payload }) {
       </PageGrid>
     );
 
-  const roofText = roof && roof.tilt != null && roof.azimuth != null ? `${num(lang, roof.tilt, 0)}° · ${num(lang, roof.azimuth, 0)}° ${compass(lang, roof.azimuth)}` : "–";
+  // a roof the data do not identify (`reliable` false, not typed in): no numbers, no index chart of 2-6 where 1 is
+  // normal; one sentence asks for tilt and direction (product review 16/11, item 5). The chart stays one click away.
+  const unknown = roof != null && !reliable && !given;
+  const roofText = unknown
+    ? t("roofUnknown")
+    : roof && roof.tilt != null && roof.azimuth != null
+      ? `${num(lang, roof.tilt, 0)}° · ${num(lang, roof.azimuth, 0)}° ${compass(lang, roof.azimuth)}`
+      : "–";
   return (
     <PageGrid>
       {uids.length > 1 && <Chips value={uid} options={uids.map((u) => ({ value: u, label: u, color: C.generation }))} onChange={(v) => v && setUid(v)} />}
@@ -160,8 +169,8 @@ export function System({ payload }: { payload: Payload }) {
         <Kpi
           label={t("v_roof")}
           text={roofText}
-          sub={roof ? (given ? capital(code(lang, "given")) : roof.edge ? t("edge") : `${t("r2")} ${num(lang, roof.r2, 2)}`) : undefined}
-          color={roof?.edge && !given ? C.warn : C.accent}
+          sub={unknown ? t("roofUnknownSub") : roof ? (given ? capital(code(lang, "given")) : roof.edge ? t("edge") : `${t("r2")} ${num(lang, roof.r2, 2)}`) : undefined}
+          color={unknown || (roof?.edge && !given) ? C.warn : C.accent}
           icon={<Compass size={14} />}
         />
       </div>
@@ -203,9 +212,31 @@ export function System({ payload }: { payload: Payload }) {
           file: "performance_index",
         }}
       >
-        {(big) => (perfOption ? <Chart option={perfOption} height={big ? "calc(100vh - 210px)" : 330} /> : <Empty>{t("noData")}</Empty>)}
+        {(big) =>
+          unknown && !showPerf ? (
+            <div className="flex min-h-[200px] flex-col items-start justify-center gap-3 px-1">
+              <p className="max-w-[640px] text-[13px] leading-relaxed text-ink">{t("roofAsk")}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => set({ pane: true, paneWide: true })}
+                  className="rounded-full bg-gradient-to-b from-[#2a9bff] to-[#0b74d8] px-4 py-1.5 text-[12.5px] font-semibold text-white shadow"
+                >
+                  {t("openInputs")}
+                </button>
+                <button type="button" onClick={() => setShowPerf(true)} className="text-[12px] text-muted underline hover:text-ink">
+                  {t("showAnyway")}
+                </button>
+              </div>
+            </div>
+          ) : perfOption ? (
+            <Chart option={perfOption} height={big ? "calc(100vh - 210px)" : 330} />
+          ) : (
+            <Empty>{t("noData")}</Empty>
+          )
+        }
       </Visual>
-      <Visual title={t("v_learnt")} className="col-span-12 xl:col-span-4">
+      <Visual title={t("v_learnt")} subtitle={unknown ? t("learntUncertain") : undefined} className="col-span-12 xl:col-span-4">
         {plant ? <Plant uid={uid!} m={plant} many={uids.length > 1} /> : <Empty>–</Empty>}
       </Visual>
       <Visual

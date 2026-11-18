@@ -14,7 +14,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from comum import DISPOSITIVO, ENTRADA_NN, H, janelas
+from comum import DISPOSITIVO, ENTRADA_NN, H, SEMENTE, janelas
 
 DEV = torch.device("cuda" if DISPOSITIVO == "cuda" and torch.cuda.is_available() else "cpu")
 
@@ -82,7 +82,7 @@ def fase_de(ts, W):
     return (ts.hour if W == 24 else ts.dayofweek * 24 + ts.hour).to_numpy()
 
 
-def treina_proprio(d, caso, fab, ini, fim, epocas=30, perda="l1", semente=42):
+def treina_proprio(d, caso, fab, ini, fim, epocas=30, perda="l1", semente=None):
     """Treina do zero com os dados anteriores a `ini` e preve os dias de [ini, fim].
 
     `fab(n_series)` constroi o modelo. Modelos com `usa_fase` recebem (x, serie, fase); os outros so x.
@@ -102,6 +102,7 @@ def treina_proprio(d, caso, fab, ini, fim, epocas=30, perda="l1", semente=42):
     X, Y = np.stack(Xs), np.stack(Ys)
     mu, sd = X.mean(1, keepdims=True), X.std(1, keepdims=True) + 1e-3
     X, Y = torch.tensor((X - mu) / sd).to(DEV), torch.tensor((Y - mu) / sd).to(DEV)
+    semente = SEMENTE if semente is None else semente
     torch.manual_seed(semente); rng = np.random.default_rng(semente)
     idx = rng.permutation(len(X)); nval = len(X) // 10
     va, trn = idx[:nval], idx[nval:]
@@ -157,7 +158,7 @@ def _preenche(w):
 
 
 def treina_multivariado(d, caso, fab, chama, ini, fim, L, lr, perda="l1", escala=False, lote=32, epocas=30,
-                        paciencia_max=5, semente=42):
+                        paciencia_max=5, semente=None):
     """Treina do zero com os dados anteriores a `ini` e preve os dias de [ini, fim], uma janela por dia com
     TODAS as series. `fab(n_series)` constroi o modelo; `chama(m, x)` devolve (previsao, perda_auxiliar).
     `escala`: padroniza cada serie com media e desvio do treino da dobra (para modelos sem RevIN).
@@ -176,6 +177,7 @@ def treina_multivariado(d, caso, fab, chama, ini, fim, L, lr, perda="l1", escala
     X = np.stack([tr[k - L:k] for k in range(L, len(tr) - H + 1, 6)])
     Y = np.stack([tr[k:k + H] for k in range(L, len(tr) - H + 1, 6)])
     X, Y = torch.tensor(X), torch.tensor(Y)
+    semente = SEMENTE if semente is None else semente
     torch.manual_seed(semente); rng = np.random.default_rng(semente)
     idx = rng.permutation(len(X)); nval = len(X) // 10
     va, trn = idx[:nval], idx[nval:]

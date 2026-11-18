@@ -146,7 +146,7 @@ def avalia():
     DM = pd.DataFrame(dm)
 
     # Diebold-Mariano entre regimes (usinas): o mesmo modelo, e o melhor de cada regime
-    pares = [("C", "A"), ("C", "B"), ("C-gfs", "C"), ("B-curto", "B"), ("B-curto", "C")]
+    pares = [("C", "A"), ("C", "B"), ("C-gfs", "C"), ("B-curto", "B"), ("B-curto", "C"), ("C6", "C")]
     dr = []
     U = M[M.caso == "usinas"]
     for r1, r2 in pares:

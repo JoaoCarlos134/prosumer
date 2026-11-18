@@ -652,3 +652,21 @@ rodada reconfere e não é evidência independente. Só as 3 do BuildingsBench s
 O teste intocado das usinas é o V1 (01/06 a 15/11/2026), fora desta rodada.
 
 **Saídas.** `resultados/pilotos/faixas_v6.json` e `faixas_v6.csv` (agregados; nada por hora de usina).
+
+## C1: usinas e previsão do tempo estendidas até 15/11/2026 (servidor, 18/11/2026) — PORTÃO (antes de rodar)
+
+**Pergunta.** Os exports novos de 5 min (01/01 → 15/11/2026) estendem `usinas_horario.parquet` sem mudar nada do que
+já existe? Pré-requisito do V1, do V11-b, do P2 e do G1 no período novo.
+
+**Método.** `scripts/01b_estende_usinas.py` (ambiente da biblioteca): energia horária com as regras do
+`01_prepara_dados.py`; convenção do carimbo de 5 min (0, −5 ou +5 min) escolhida pela concordância com a série
+existente em jan–mai/2026; geometria (`poa_ceu_claro`) de jun–nov copiada da mesma hora um ano antes; NASA POWER
+baixada de novo (atraso de 0 ou 1 h por usina, o que reproduz a coluna existente); `poa_estimada` nova pela conversão do
+regime C (céu claro × kc). Previous Runs baixada de novo até 15/11 em arquivos `_v1` (IFS/GFS lead 1, os 6 extras lead 1,
+6 modelos leads 1–7). Nada publicado é sobrescrito.
+
+**Portão.** (1) Na sobreposição jan–mai/2026, ≥ 99,5 % das horas de sol válidas nas duas séries batem ao Wh (|dif| <
+0,5 Wh); senão o script para SEM gravar. (2) Relatados, sem portão: erro relativo da geometria copiada (esperado < 1 %),
+correlação NASA nova × antiga (esperada > 0,99), cobertura da NASA nas horas novas, correlação do proxy da
+`poa_estimada`, diferença máxima dos arquivos de tempo na sobreposição. Se a NASA cobrir < 95 % das horas de sol
+novas, o regime B fica fora do V1 (é só o teto). Saída agregada: `resultados/pilotos/estende_usinas.json`.

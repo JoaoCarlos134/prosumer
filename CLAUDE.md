@@ -208,6 +208,10 @@ Not checked by the review: phone layouts (the README records a 390 px pass on 23
    the result is for Dingle. Collapse it after a run, or fill the fields with what was analysed.
 7. The page has no description tag and the title is the bare word "prosumer": a public site needs both (and a
    preview image for shared links).
+8. Fewer page tabs (the user's decision, 2026-11-18): the Forecast check page (`webapp/web/src/pages/Check.tsx`)
+   goes INTO the Overview, as a plain-words section ("how good the forecast has been") with the statistics behind a
+   details/advanced switch (item 4); the bottom tab bar loses the Forecast check tab. Overview gets more complete,
+   the tab bar shorter.
 
 **Functions worth adding (none started; each is a user decision)**
 - First: connect to the inverter's cloud instead of asking for an export (the export is the biggest step a

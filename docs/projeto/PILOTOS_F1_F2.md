@@ -520,3 +520,60 @@ Script `experimentos/testes_previsao/scripts/piloto_mppt.py` (portao no commit `
 **Decisao:** G1 nao passa (1 de 3): a parcela por canal nao entra na biblioteca. Sujeira x sombra x falha de string
 continua em aberto; o proximo passo seria olhar as tensoes CC por MPPT (a analise de 5 min viu a reconfiguracao
 nelas), e um controle com mais dias claros.
+
+## V11-piloto: o aplicativo aprende com o proprio erro? Replay causal nas duas usinas (portao 18/11/2026, ANTES de rodar)
+
+Pergunta (secao 8 de `REVISAO_TESTES_2026-11-16.md`, versao piloto: 2 usinas, uma combinacao H/k): uma pessoa que
+usa o aplicativo por N dias recebe previsoes melhores se o aplicativo guardar o que previu e ajustar os parametros
+do SITIO com o erro observado, contra o aplicativo "congelado" de hoje (padroes do Parana)? Script
+`experimentos/testes_previsao/scripts/piloto_uso_prolongado.py` (commit seguinte a este portao); saidas em
+`resultados/pilotos/uso_prolongado*.{parquet,json}` (o parquet de previsoes por hora e de usina: fica fora do git,
+como os outros `*__usinas__*`; o json so com metricas agregadas).
+
+**Replay (nenhum dado do futuro).** Noite t (emissao no dia t-1, depois das 23:00): `outlook.forecast_ahead` da
+biblioteca, `days=7`, sobre a serie ate 23:00 de t-1, com o tempo que existia: o dia D = t+k-1 usa o
+`previous_day{k}` (lead k) de `dados/previsao_tempo_horizonte.parquet` (seis modelos, a convencao do piloto do
+horizonte). Telhado: `diagnostics.roof_orientation` sobre os dados ANTES do primeiro dia de cada mes, passado como
+`tilt/azimuth` (o app real reajusta a cada envio; mensal = o mesmo efeito, 30x mais barato). Tres chamadas por
+noite, mesmas entradas: `trust=TRUST` (a saida CONGELADA, exatamente a do app), `trust=(1,)*7` (y_w = so o tempo)
+e `trust=(0,)*7` (s = expectativa sazonal); como a previsao e s + a(y_w - s), as tres bastam para qualquer a.
+Noites: alvos de 2024-03-07 a 2026-05-31 (o arquivo do tempo), ~810 por usina. Medido antes: ~0,9 s por chamada.
+
+**Inicios e dias de uso.** Inicios S = 1o dia de cada dois meses de 2024-09-01 a 2025-11-01 (8 inicios); de cada S,
+ate 365 dias de uso (cortados em 2026-05-31). Faixas de dias de uso: [1-30], [31-90], [91-180], [181-365].
+
+**Variantes** (por usina, por inicio; o aprendizado da manha do dia t so usa pares (previsao, real) com alvo <= t-1):
+- **F (congelada):** a saida de `trust=TRUST`, faixa da biblioteca (`low`/`high` do total do dia).
+- **L (aprende so com o que ela mesma previu desde S)** e **LB (L + historico: no dia S o app reconstroi as previsoes
+  dos 365 dias anteriores, como o `look_back`, e aprende com elas tambem).** Tres pecas, nesta ordem:
+  1. a_k: por lead, minimos quadrados sem intercepto nas horas de sol dos ultimos 365 dias de pares,
+     a_sitio = soma((y-s)(y_w-s)) / soma((y_w-s)^2); encolhido a = (n a_sitio + n0 TRUST_k)/(n + n0), n = dias
+     com pares, cortado em [0, 1] (o teto 1 da biblioteca, decisao de 12/10).
+  2. vies b_k: razao soma(y)/soma(y_hat com o a_k acima) dos totais diarios dos ultimos 90 dias do lead k,
+     encolhida para 1 com o mesmo n0, cortada em [0,7; 1,3]. Previsao = b_k (s + a_k (y_w - s)).
+  3. faixa de 80% do total do dia: a regra do `postprocessing.conformal_quantiles` aplicada ao total do dia de cada
+     lead: escores r = (Y - Y_hat)/W dos ultimos 60 dias, W = largura da faixa F daquele dia; faixa =
+     Y_hat + quantil_{0,1 e 0,9}(r) W. Com menos de 30 dias de pares: a faixa F transladada para o novo Y_hat.
+  Ablacao relatada: so a_k; a_k + b_k.
+- **n0** em {7, 15, 30, 60, 120, 240}, escolhido deixando a usina de fora: o n0 de Cascavel e o que maximiza o ganho
+  medio de skill (leads 1-7, todas as faixas e inicios) em Curitiba, e vice-versa. Todos os n0 relatados.
+
+**Metricas.** Skill do total do dia = 1 - RMSE/RMSE da expectativa sazonal s (a referencia do `SKILL`), por usina,
+lead e faixa de dias de uso, juntando os inicios. DM (perda quadratica, HAC lag 7) sobre os dias de calendario:
+diferenca de perda de cada dia = media entre os inicios que o cobrem naquela faixa. Cobertura da faixa de 80% do
+total do dia. Relato: a_k e b_k aprendidos ao longo do tempo; skill por lead medido vs o `SKILL` padrao; por hora.
+
+**Portao** (decidido separadamente para L e para LB, com o n0 da outra usina, previsao com a_k + b_k):
+- **G1:** faixa [91-180], lead 1: skill(variante) - skill(F) >= +0,02 NAS DUAS usinas, DM p < 0,05 em cada uma.
+- **G2:** faixa [1-30], todo lead 1-7: a variante nunca perde mais de 0,01 de skill para F em nenhuma usina.
+- **G3:** faixas >= [31-90]... ate [181-365]: cobertura de 80% da variante entre 0,75 e 0,85 nas duas usinas.
+- Passa = G1 e G2 e G3. LB e o que o app faria de fato (ele ja tem o historico); L mede o aprender com o uso puro.
+
+**Vies a declarar (contra o aprendizado):** o `TRUST` foi ajustado em 2024-03-07 -> 2025-07-31 DESTAS duas usinas e
+o `SKILL` medido em 2025-08 -> 2026-05 delas: a congelada F esta dentro da amostra em todo o replay. O ganho medido
+aqui SUBESTIMA o de um sitio novo; um PASSA e conservador, um NAO PASSA nao e conclusivo. Quem decide e o V11
+completo (BR-PVGen, 51 usinas, e o periodo intocado 06-11/2026), no servidor.
+
+**Consequencia.** Passa: o V11 completo vai para a fila do servidor e o banco local (secao 7) ganha as pecas que
+passaram. Nao passa: registro aqui, padroes ficam, e a secao 7 e revista. Consumo (casas de Dingle: vies + faixa)
+fica para um portao proprio, depois deste.

@@ -56,7 +56,7 @@ Control blocks unsigned, locally built exes: expect it not to run there (signing
 
 ## State (2026-10-23, cloud)
 
-Done: every page (Overview, Next days, History, Forecast check, PV system, Bill, Notes & sources), `npm run
+Done: every page (Overview, Next days, History, Forecast check, PV system, Bill, Notes & sources; since 18/11 the Forecast check is the Overview's "Show the details", not a tab), `npm run
 build` clean (tsc strict), `tests/test_api.py` (13 tests; CI job `site` runs them and the build), the launchers, the PyInstaller spec, and a browser
 check with Playwright (fake weather): every page in en/pt, light/dark, 1440 px and a 390 px phone; focus mode,
 show as a table, export CSV, the cross-filter by day (Overview -> Next days) and by month (Bill), the language
@@ -71,7 +71,7 @@ the diagnostics too). Choices the page makes on its own:
 - A file with several series (inverters, meters): a day or hour is the file's total only when every series
   has a value (else a gap); hours measured are the mean over the series, complete against the hours of that
   local day (23 or 25 on a clock change).
-- The Forecast check and Bill pages show "why it was skipped" from `report.skipped.forecast` / `.economics`
+- The Forecast check (Overview details) and Bill pages show "why it was skipped" from `report.skipped.forecast` / `.economics`
   (the library's note, in the page's language).
 
 ### 2026-10-26 (cloud): the Inputs pane

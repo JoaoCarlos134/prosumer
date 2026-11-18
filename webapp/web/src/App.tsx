@@ -14,6 +14,7 @@ import { NextDays } from "./pages/NextDays";
 import { Notes } from "./pages/Notes";
 import { Overview } from "./pages/Overview";
 import { System } from "./pages/System";
+import { translate } from "./i18n";
 import { useStore, useT, type PageId } from "./store";
 import type { Payload } from "./types";
 
@@ -36,10 +37,7 @@ export default function App() {
   }, [theme]);
   useEffect(() => {
     document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
-    document.title =
-      lang === "pt"
-        ? "prosumer: previsão solar e de consumo a partir dos seus dados"
-        : "prosumer: solar and consumption forecast from your own data";
+    document.title = translate(lang, "pageTitle");
   }, [lang]);
   useEffect(() => {
     getInfo()

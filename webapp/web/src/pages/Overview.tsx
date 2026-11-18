@@ -63,16 +63,16 @@ export function Overview({ payload }: { payload: Payload }) {
         icon={<Clock size={14} />}
       />,
     );
-  // plain words on the first screen (product review 16/11): skill = 1 - RMSE/RMSE of the reference, so a positive
-  // skill reads "errors X smaller than a simple guess"; the statistics (CI, nRMSE, R2) live behind "details"
-  const nDays = r.report.summary.test_windows;
-  if (median)
+  // plain words on the first screen (product review 16/11): skill = 1 - RMSE/RMSE of the reference. "Better" only
+  // when the whole 95% CI is above 0 ("worse" when below); the CI, nRMSE and R2 live behind "details".
+  const q = quality(r);
+  if (median && q.verdict !== "none")
     kpis.push(
       <Kpi
         key="skill"
         label={t("kpi_quality")}
-        text={median.skill != null && median.skill > 0 ? t("kpi_qualityBetter", { x: pct(lang, median.skill, 0) }) : t("kpi_qualityNot")}
-        sub={t("kpi_qualitySub", { n: num(lang, nDays, 0) })}
+        text={q.verdict === "better" ? t("kpi_qualityBetter", { x: pct(lang, median.skill, 0) }) : t(q.verdict === "worse" ? "kpi_qualityWorse" : "kpi_qualitySame")}
+        sub={t("kpi_qualitySub", { n: num(lang, q.days, 0) })}
         color={C.accent}
         icon={<Gauge size={14} />}
       />,
@@ -349,7 +349,27 @@ export function Overview({ payload }: { payload: Payload }) {
   );
 }
 
-/** "How good the forecast has been" in one sentence, and the whole former Forecast check page behind a switch
+type Verdict = "better" | "same" | "worse" | "none";
+
+/** What the forecast check says, honestly: the verdict from the 95% CI of the output's skill (not its sign), and
+ * the number of DAYS tested (`summary.test_windows` counts series-days: two inverters would double it). The check
+ * is `analyze`'s history-only forecast, not the coming days' method: the sentence says so. */
+function quality(r: Payload["result"]): { verdict: Verdict; days: number; a: string | null; b: string | null } {
+  const s = r.report.summary;
+  const m = r.report.forecast?.find((f) => f.forecast === (s.output ?? "median"));
+  const tested = (r.charts.check ?? []).filter((h) => h.evaluated).map((h) => h.ds.slice(0, 10));
+  const dates = [...new Set(tested)].sort();
+  const days = dates.length || s.test_windows || 0;
+  const a = dates[0] ?? s.test_start ?? null;
+  const b = dates[dates.length - 1] ?? s.test_end ?? null;
+  if (!m || m.skill == null || !days) return { verdict: "none", days, a, b };
+  const lo = m.skill_ci_low;
+  const hi = m.skill_ci_high;
+  const verdict: Verdict = lo != null && lo > 0 ? "better" : hi != null && hi < 0 ? "worse" : "same";
+  return { verdict, days, a, b };
+}
+
+/** "How good the forecast has been" in plain words, and the whole former Forecast check page behind a switch
  * (user's decision 18/11: the check lives in the Overview, one tab fewer). */
 function Quality({ payload }: { payload: Payload }) {
   const t = useT();
@@ -358,8 +378,16 @@ function Quality({ payload }: { payload: Payload }) {
   const r = payload.result;
   const s = r.report.summary;
   const m = r.report.forecast?.find((f) => f.forecast === (s.output ?? "median"));
-  const args = { n: num(lang, s.test_windows, 0), x: pct(lang, m?.skill, 0), ref: code(lang, s.reference ?? "") };
-  const text = !m ? t("qualityNone") : m.skill != null && m.skill > 0 ? t("qualityBetter", args) : t("qualityNot", args);
+  const q = quality(r);
+  const args = {
+    n: num(lang, q.days, 0),
+    x: pct(lang, m?.skill, 0),
+    ref: code(lang, s.reference ?? ""),
+    a: q.a ? date(lang, q.a) : "–",
+    b: q.b ? date(lang, q.b) : "–",
+  };
+  const key = q.verdict === "better" ? "qualityBetter" : q.verdict === "worse" ? "qualityWorse" : "qualitySame";
+  const text = q.verdict === "none" ? t("qualityNone") : `${t(key, args)} ${t("qualityScope")}`;
   return (
     <>
       <Visual title={t("v_forecastQuality")} className="col-span-12">

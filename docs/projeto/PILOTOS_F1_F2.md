@@ -627,6 +627,7 @@ Consequencia (a do portao): os padroes ficam; o V11 completo (BR-PVGen + periodo
 decide para sitios novos, agora com a pergunta afiada: (a) a_k/vies num sitio que NAO escolheu o `TRUST`;
 (b) a faixa conformal por sitio, com a correcao de amostra finita escrita no portao antes de rodar. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
 `vitrine_local/`) mostra estes resultados com as curvas das usinas, so para a apresentacao.
+
 ## V6: CRPS e cobertura das faixas de todo modelo que as entrega, sem e com conformal (16/11/2026, CPU) — PORTÃO (rodada ainda não feita)
 
 **Pergunta.** O benchmark (`05_avalia.py`) avalia só o ponto. As faixas existem em 17 arquivos

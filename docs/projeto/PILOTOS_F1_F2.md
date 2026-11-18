@@ -566,7 +566,7 @@ total do dia. Relato: a_k e b_k aprendidos ao longo do tempo; skill por lead med
 **Portao** (decidido separadamente para L e para LB, com o n0 da outra usina, previsao com a_k + b_k):
 - **G1:** faixa [91-180], lead 1: skill(variante) - skill(F) >= +0,02 NAS DUAS usinas, DM p < 0,05 em cada uma.
 - **G2:** faixa [1-30], todo lead 1-7: a variante nunca perde mais de 0,01 de skill para F em nenhuma usina.
-- **G3:** faixas >= [31-90]... ate [181-365]: cobertura de 80% da variante entre 0,75 e 0,85 nas duas usinas.
+- **G3:** faixas [31-90], [91-180] e [181-365]: cobertura de 80% da variante entre 0,75 e 0,85 nas duas usinas.
 - Passa = G1 e G2 e G3. LB e o que o app faria de fato (ele ja tem o historico); L mede o aprender com o uso puro.
 
 **Vies a declarar (contra o aprendizado):** o `TRUST` foi ajustado em 2024-03-07 -> 2025-07-31 DESTAS duas usinas e
@@ -577,3 +577,9 @@ completo (BR-PVGen, 51 usinas, e o periodo intocado 06-11/2026), no servidor.
 **Consequencia.** Passa: o V11 completo vai para a fila do servidor e o banco local (secao 7) ganha as pecas que
 passaram. Nao passa: registro aqui, padroes ficam, e a secao 7 e revista. Consumo (casas de Dingle: vies + faixa)
 fica para um portao proprio, depois deste.
+
+Emenda ANTES de rodar (18/11, commit do script): (1) a redacao do G3 acima foi corrigida (era "faixas >= [31-90]...
+ate [181-365]"; o sentido e o mesmo). (2) Relato extra, FORA do portao, pedido pelo usuario para a demo: erro
+percentual da energia (soma|real - previsto| / soma real) no total do dia, da semana e do mes, e a fracao de
+dias/semanas/meses com erro <= 10%, F e variante, leads 1 e 7. A meta de 10% do usuario e lida nesses numeros;
+nao decide nada aqui.

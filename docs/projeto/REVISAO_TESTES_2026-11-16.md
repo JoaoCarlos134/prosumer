@@ -187,6 +187,8 @@ nunca perde mais que 0,01 (o encolhimento tem de proteger quem acabou de chegar)
 pontos depois de 60 dias. n0 e qualquer limiar são escolhidos num grupo de sítios de AJUSTE separado antes, e os
 números do relatório saem só dos sítios de avaliação.
 
+**Atualização 18/11/2026:** o piloto rodou nas duas usinas (`PILOTOS_F1_F2.md`, V11-piloto: NÃO PASSA; o a_k e o viés já eram os padrões, a faixa conformal melhora os leads 4-7). O BR-PVGen NÃO tem coordenadas (só o estado, anonimizado): não serve para o V11 nem para o P5 sem estimar a posição. Fila do servidor: `experimentos/testes_previsao/vm/FILA.md`.
+
 Sítios: usinas de Cascavel e Curitiba (2024-03 → 2026-11 com os exports novos: ~2,7 anos de replay com tempo
 arquivado), BR-PVGen (51 usinas brasileiras, se o período cruzar o arquivo da Open-Meteo), Dingle e Ausgrid para o
 consumo (sem tempo: só o perfil e o viés). Divisão ajuste/avaliação fixada por sorteio com semente, antes de olhar.

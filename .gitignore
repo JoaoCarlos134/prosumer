@@ -56,3 +56,5 @@ experimentos/testes_previsao/resultados*/figuras/dias_exemplo_cascavel.png
 CLAUDE.local.md
 # vitrine LOCAL do uso prolongado com os dados das usinas (apresentacao do TCC; nunca no GitHub)
 **/vitrine_local/
+# coleta diaria dos ensembles (scripts/10_coleta_ensembles.py): dados publicos, mas crescem todo dia
+experimentos/testes_previsao/dados/ensembles/

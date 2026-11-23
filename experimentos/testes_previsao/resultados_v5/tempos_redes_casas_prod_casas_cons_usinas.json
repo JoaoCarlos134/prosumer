@@ -1,0 +1,23 @@
+{
+ "Mamba|casas_prod|A": {
+  "segundos": 1281.3,
+  "parametros": 238976,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ },
+ "Mamba|casas_cons|A": {
+  "segundos": 1767.5,
+  "parametros": 244096,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ },
+ "Mamba|usinas|A": {
+  "segundos": 6972.0,
+  "parametros": 234880,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.9.1+cu128"
+ }
+}

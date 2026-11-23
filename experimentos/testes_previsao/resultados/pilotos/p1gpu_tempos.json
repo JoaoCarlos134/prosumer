@@ -1,0 +1,20 @@
+{
+ "Chronos-2": {
+  "Cascavel": {
+   "cpu_s_por_noite": 0.68,
+   "horas_sem_nwp": 10472
+  },
+  "Curitiba": {
+   "cpu_s_por_noite": 0.6,
+   "horas_sem_nwp": 10696
+  }
+ },
+ "TabPFN-TS": {
+  "Cascavel": {
+   "horas_sem_nwp": 10472
+  },
+  "Curitiba": {
+   "horas_sem_nwp": 10696
+  }
+ }
+}

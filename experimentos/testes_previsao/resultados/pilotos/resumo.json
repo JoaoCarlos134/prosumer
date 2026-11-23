@@ -3228,5 +3228,18 @@
   "skill_CRPS": 0.0516,
   "portao": false,
   "horas_avaliadas": 43680
+ },
+ "AutoARIMA-memoria|usinas-Cascavel|B|hist=todo": {
+  "serie": "Cascavel",
+  "regime": "B",
+  "horas_treino": 52746,
+  "limite_gb": 56.0,
+  "config": "approximation=True max_p=3 max_q=3 max_P=1 max_Q=1 nmodels=24 (02b)",
+  "ajuste_s": 1057.9,
+  "pico_ajuste_gb": 41.76,
+  "ordem": "(1, 1, 1, 0, 24, 1, 0)",
+  "dobra_s": 1061.4,
+  "pico_dobra_gb": 41.77,
+  "janelas": 61
  }
 }

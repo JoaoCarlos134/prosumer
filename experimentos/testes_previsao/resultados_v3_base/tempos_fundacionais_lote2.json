@@ -1,0 +1,130 @@
+{
+ "Toto-2.0-22m|usinas|A": {
+  "segundos": 7.0,
+  "janelas": 598
+ },
+ "Toto-2.0-22m|casas_prod|A": {
+  "segundos": 7.3,
+  "janelas": 920
+ },
+ "Toto-2.0-22m|casas_cons|A": {
+  "segundos": 14.0,
+  "janelas": 1820
+ },
+ "Toto-2.0-313m|usinas|A": {
+  "segundos": 44.8,
+  "janelas": 598
+ },
+ "Toto-2.0-313m|casas_prod|A": {
+  "segundos": 68.6,
+  "janelas": 920
+ },
+ "Toto-2.0-313m|casas_cons|A": {
+  "segundos": 129.1,
+  "janelas": 1820
+ },
+ "TiRex-2|usinas|A": {
+  "segundos": 16.9,
+  "janelas": 598
+ },
+ "TiRex-2|usinas|B": {
+  "segundos": 175.6,
+  "janelas": 598
+ },
+ "TiRex-2|usinas|C": {
+  "segundos": 174.8,
+  "janelas": 598
+ },
+ "TiRex-2|casas_prod|A": {
+  "segundos": 24.6,
+  "janelas": 920
+ },
+ "TiRex-2|casas_prod|B": {
+  "segundos": 270.3,
+  "janelas": 920
+ },
+ "TiRex-2|casas_cons|A": {
+  "segundos": 48.3,
+  "janelas": 1820
+ },
+ "TiRex-2|casas_cons|B": {
+  "segundos": 534.0,
+  "janelas": 1820
+ },
+ "TabPFN-TS|usinas|A": {
+  "segundos": 4499.1,
+  "janelas": 598
+ },
+ "TabPFN-TS|usinas|B": {
+  "segundos": 5288.6,
+  "janelas": 598
+ },
+ "TabPFN-TS|usinas|C": {
+  "segundos": 5295.7,
+  "janelas": 598
+ },
+ "TabPFN-TS|casas_prod|A": {
+  "segundos": 7227.9,
+  "janelas": 920
+ },
+ "TabPFN-TS|casas_prod|B": {
+  "segundos": 8221.1,
+  "janelas": 920
+ },
+ "TabPFN-TS|casas_cons|A": {
+  "segundos": 13484.3,
+  "janelas": 1820
+ },
+ "TabPFN-TS|casas_cons|B": {
+  "segundos": 15196.3,
+  "janelas": 1820
+ },
+ "Sundial-128m|usinas|A": {
+  "segundos": 66.1,
+  "janelas": 598
+ },
+ "Sundial-128m|casas_prod|A": {
+  "segundos": 99.9,
+  "janelas": 920
+ },
+ "Sundial-128m|casas_cons|A": {
+  "segundos": 195.6,
+  "janelas": 1820
+ },
+ "Timer-XL-84m|usinas|A": {
+  "segundos": 4.6,
+  "janelas": 598
+ },
+ "Timer-XL-84m|casas_prod|A": {
+  "segundos": 6.5,
+  "janelas": 920
+ },
+ "Timer-XL-84m|casas_cons|A": {
+  "segundos": 12.2,
+  "janelas": 1820
+ },
+ "Time-MoE-50M|usinas|A": {
+  "segundos": 418.4,
+  "janelas": 598
+ },
+ "Time-MoE-50M|casas_prod|A": {
+  "segundos": 640.6,
+  "janelas": 920
+ },
+ "Time-MoE-50M|casas_cons|A": {
+  "segundos": 1264.5,
+  "janelas": 1820
+ },
+ "Moirai-MoE-small|usinas|A": {
+  "segundos": 556.0,
+  "janelas": 598
+ },
+ "Moirai-MoE-small|casas_prod|A": {
+  "segundos": 856.5,
+  "janelas": 920
+ },
+ "Moirai-MoE-small|casas_cons|A": {
+  "segundos": 1689.4,
+  "janelas": 1820
+ }
+}

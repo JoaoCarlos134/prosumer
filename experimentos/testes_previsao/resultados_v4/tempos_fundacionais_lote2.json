@@ -1,0 +1,82 @@
+{
+ "Toto-2.0-22m|casas_prod|A": {
+  "segundos": 21.7,
+  "janelas": 2750
+ },
+ "Toto-2.0-22m|casas_cons|A": {
+  "segundos": 40.7,
+  "janelas": 5480
+ },
+ "Toto-2.0-313m|casas_prod|A": {
+  "segundos": 199.2,
+  "janelas": 2750
+ },
+ "Toto-2.0-313m|casas_cons|A": {
+  "segundos": 402.2,
+  "janelas": 5480
+ },
+ "TiRex-2|casas_prod|A": {
+  "segundos": 71.4,
+  "janelas": 2750
+ },
+ "TiRex-2|casas_prod|B": {
+  "segundos": 642.6,
+  "janelas": 2750
+ },
+ "TiRex-2|casas_cons|A": {
+  "segundos": 141.6,
+  "janelas": 5480
+ },
+ "TiRex-2|casas_cons|B": {
+  "segundos": 1287.8,
+  "janelas": 5480
+ },
+ "TabPFN-TS|casas_prod|A": {
+  "segundos": 21667.3,
+  "janelas": 2750
+ },
+ "TabPFN-TS|casas_prod|B": {
+  "segundos": 24630.9,
+  "janelas": 2750
+ },
+ "TabPFN-TS|casas_cons|A": {
+  "segundos": 40596.8,
+  "janelas": 5480
+ },
+ "TabPFN-TS|casas_cons|B": {
+  "segundos": 45303.8,
+  "janelas": 5480
+ },
+ "Sundial-128m|casas_prod|A": {
+  "segundos": 289.9,
+  "janelas": 2750
+ },
+ "Sundial-128m|casas_cons|A": {
+  "segundos": 578.9,
+  "janelas": 5480
+ },
+ "Timer-XL-84m|casas_prod|A": {
+  "segundos": 17.2,
+  "janelas": 2750
+ },
+ "Timer-XL-84m|casas_cons|A": {
+  "segundos": 33.6,
+  "janelas": 5480
+ },
+ "Time-MoE-50M|casas_prod|A": {
+  "segundos": 1914.4,
+  "janelas": 2750
+ },
+ "Time-MoE-50M|casas_cons|A": {
+  "segundos": 3771.1,
+  "janelas": 5480
+ },
+ "Moirai-MoE-small|casas_prod|A": {
+  "segundos": 2482.4,
+  "janelas": 2750
+ },
+ "Moirai-MoE-small|casas_cons|A": {
+  "segundos": 4912.9,
+  "janelas": 5480
+ }
+}

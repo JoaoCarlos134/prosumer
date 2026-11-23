@@ -1,0 +1,50 @@
+{
+ "usinas": {
+  "Cascavel": {
+   "deslocamento_carimbo_min": 0,
+   "fracao_horas_iguais_ao_Wh": 1.0,
+   "horas_comparadas": 2239,
+   "erro_rel_poa_ceu_claro_copiado": 0.0006,
+   "horas_novas": 4032,
+   "fracao_valida_nova": 0.996,
+   "kwh_novo": 2147.3,
+   "nasa_atraso_h": 0,
+   "nasa_correlacao_ghi_sobreposicao": 0.996,
+   "nasa_dif_media_wm2": 16.9,
+   "nasa_cobertura_horas_sol_novas": 0.5476,
+   "correlacao_poa_estimada_proxy": 0.9945
+  },
+  "Curitiba": {
+   "deslocamento_carimbo_min": 0,
+   "fracao_horas_iguais_ao_Wh": 1.0,
+   "horas_comparadas": 2264,
+   "erro_rel_poa_ceu_claro_copiado": 0.00231,
+   "horas_novas": 4032,
+   "fracao_valida_nova": 0.9983,
+   "kwh_novo": 4312.9,
+   "nasa_atraso_h": 1,
+   "nasa_correlacao_ghi_sobreposicao": 0.9986,
+   "nasa_dif_media_wm2": 11.3,
+   "nasa_cobertura_horas_sol_novas": 0.5476,
+   "correlacao_poa_estimada_proxy": 0.9365
+  }
+ },
+ "portao_wh": "PASSOU",
+ "previsao_tempo_v1.parquet": {
+  "dif_max_ghi_sobreposicao": 0.0,
+  "fracao_igual": 0.9524045729402872,
+  "horas_novas_com_valor": 16220,
+  "ultimo": "2026-11-15 23:00:00"
+ },
+ "previsao_tempo_extra_v1.parquet": {
+  "dif_max_ghi_sobreposicao": 0.0,
+  "fracao_igual": 0.8044453892668179,
+  "horas_novas_com_valor": 48038,
+  "ultimo": "2026-11-15 23:00:00"
+ },
+ "previsao_tempo_horizonte_v1.parquet": {
+  "dif_max_ghi_sobreposicao": 0.0,
+  "fracao_igual": 0.8416488046962499,
+  "ultimo": "2026-11-15 23:00:00"
+ }
+}

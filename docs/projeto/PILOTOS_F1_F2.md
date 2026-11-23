@@ -628,7 +628,7 @@ decide para sitios novos, agora com a pergunta afiada: (a) a_k/vies num sitio qu
 (b) a faixa conformal por sitio, com a correcao de amostra finita escrita no portao antes de rodar. A vitrine LOCAL (`scripts/vitrine_uso_prolongado.py`, pasta ignorada
 `vitrine_local/`) mostra estes resultados com as curvas das usinas, so para a apresentacao.
 
-## V6: CRPS e cobertura das faixas de todo modelo que as entrega, sem e com conformal (16/11/2026, CPU) — PORTÃO (rodada ainda não feita)
+## V6: CRPS e cobertura das faixas de todo modelo que as entrega, sem e com conformal (16/11/2026, CPU) — PORTÃO (resultado: PASSA, ver "Resultados da fila do servidor de 18/11/2026")
 
 **Pergunta.** O benchmark (`05_avalia.py`) avalia só o ponto. As faixas existem em 17 arquivos
 `resultados/pilotos/*-quantis__*.parquet` (as 260 previsões de `resultados/previsoes/` guardam só `yhat`): LightGBM,
@@ -792,3 +792,65 @@ da previsão; painel medido só diagnóstico). Posição: a do C9 se passou, sen
 **Portão.** (a) Perez com RMSE da POA ≥ 5 % menor que a isotrópica em ≥ 2/3 das usinas → a biblioteca ganha Perez
 (com testes); (b) derating de Ross com RMSE da potência ≥ 2 % menor em ≥ 2/3 → a biblioteca ganha o derating. Usinas
 bifaciais de 1–5 MW no chão, não telhados: o resultado vale para a física, não para a escala (declarado).
+
+## Resultados da fila do servidor de 18/11/2026 (rodadas 18-20/11, registro de 23/11/2026)
+
+Cada veredito abaixo e o do portao escrito antes (secoes acima e V6). Agregados em `resultados/pilotos/*.json|csv` e
+`resultados_v{1,3_s42,3_s43,3_s44,4,5,7}/` (metricas e DM; as previsoes ficam fora do git). Log das rodadas:
+`~/Projeto_IA/STATUS.md` do servidor. Numeros conferidos contra os JSONs em 23/11.
+
+| Rodada | Veredito | Numeros que decidem |
+|---|---|---|
+| C1 estende usinas | PASSA | 100 % das horas batem ao Wh na sobreposicao; 4032 horas novas por usina; NASA cobre 55 % das horas de sol novas (B fora do V1) |
+| V0 paridade | ok | 712 passam, 2 falham = `test_clear_sky_is_bit_identical` por 1 ulp (ambiente, ja conhecido) |
+| V11-b faixa conformal por sitio | **PASSA** | cobertura todos os leads 0,819 (Cascavel) e 0,793 (Curitiba), hoje 0,691 e 0,637; por lead 0,771-0,841 (hoje no lead 7: 0,512 e 0,500); largura relativa a de hoje ~1,0 nos leads 1-3, 1,45-1,76 nos leads 5-7 |
+| G1 / P1-gpu fundacionais + 6 NWP | NAO PASSA | lead 1, ganho sobre o fisico: Chronos-2 -0,107 / -0,126, TabPFN-TS -0,113 / -0,065 (Cascavel / Curitiba; DM p <= 0,03); pior em quase todo lead 1-7. LightGBM-6NWP +0,021 (p 0,25) / +0,004 (p 0,88) |
+| V1 teste intocado | PASSA | Ensemble-mediana empatado com o melhor em A (melhor MLP) e C (melhor KAN); Spearman v1 x v2 0,94 (A) e 0,87 (C); LightGBM C - A = +0,25 |
+| V5 regime C6 | PASSA | 18 de 23 modelos ganham >= +0,02 com p < 0,05; nao ganham KAN, NBEATSx, NHITS, RandomForest, TiDE |
+| V7 ajuste fino Chronos-2 | PASSA (3 de 4) | usinas A +0,066, usinas C +0,090, casas_cons A +0,029; casas_prod A **-0,062** |
+| V4 casas no ano todo | NAO PASSA | so `casas_prod|B` falha: mediana em 2o, 1o e **7o de 23** (out-dez); Spearman entre estacoes 0,36-0,48 nesse caso (0,61-0,97 nos outros) |
+| V3 3 sementes | PASSA | 250 linhas modelo x caso; status de empate igual ao da v2 em 92,4 %; skill dentro da tolerancia em 95,6 % |
+| V6 faixas + conformal | **PASSA** (decisao do usuario, 23/11) | 13 de 17 combinacoes passam o item; calibradas 7 -> 16 (G2). Ver nota abaixo |
+| V2 PVDAQ | NAO PASSA | G1 telhado: tilt certo em 1 de 6; G2 relogio: 2 de 6; G3 cadeia fisica: mediana 0,465 contra 0,718 em Cascavel |
+| V2 telhado medido | NAO PASSA | H1: medido nao pior em 3 de 5 (precisava de todos); H2 passa (0,547 contra 0,558) |
+| P4 conversao (21 usinas BR-PVGen) | NAO PASSA | Perez ganha em 7 de 21, Hay-Davies 7, Ross 4 (precisava de 14). Posicao pelo centro do estado (o C9 nao validou): fraco, nao conclusivo |
+| V8 AutoARIMA memoria | ok | pico 41,8 GB (limite 56), ajuste ~1060 s, 61 janelas |
+| C9 posicao BR-PVGen | NAO VALIDADO | a validacao quebrou (`IndexError` no `np.add.reduceat` com lista de dias vazia, `piloto_c9_posicao.py:120`); as posicoes gravadas tem latitude sistematicamente ao sul (-27 a -32 para SP/RJ/GO/MG) e so 18 de 51 caem no estado: nao usar |
+| P2 leads 8-15 | NAO RODOU | Open-Meteo Single Runs: `HTTP 400 No data is available for this location`; os 3 jobs seguintes falharam sem o arquivo |
+| V9 Time-LLM LLaMA-7B | NAO RODOU | `mat1 and mat2 must have the same dtype (Half x Float)` em `piloto_timellm.py` |
+
+Redes (G4, G5, G6) marcadas FALHOU no STATUS so porque Crossformer e Mamba quebram (`No module named 'models'`, caminho
+do codigo dos autores); as outras redes rodaram (32 a 108 por job) e estao no V1, V3, V4 e V5. Crossformer e Mamba ja
+estavam fora do V1 pelo portao (entraram na v2 por pilotos).
+
+**Nota V6 (portao ambiguo, decidido 23/11).** O portao dizia ">= 80 % das 17 combinacoes (13 de 17)"; 13/17 = 76 %.
+O `05c_faixas.py` aplicou 0,8 x 17 = 13,6 e deu NAO PASSA; o usuario decidiu pela contagem escrita (13 de 17), que foi o
+numero fixado antes de rodar. Rejeitado: ler o 80 % literal (o parentese era a regra operacional). As 4 que falham:
+as 3 novas (BuildingsBench S/M/L, as unicas independentes): a conformal conserta a cobertura (0,49-0,62 -> 0,80-0,81)
+mas o CRPS fica muito pior que a referencia (skill -1,9 a -21,8: o modelo, nao a faixa); e TimesFM-3 casas_prod A
+(cobertura de 60 % 0,653, CRPS 1,5 % pior). Leitura: a calibracao conformal conserta a cobertura em todo lugar; nao
+salva um modelo ruim.
+
+**Achados que mudam a biblioteca (para a maquina de CPU):**
+1. V11-b: a faixa conformal por sitio (regra do `piloto_v11b.py`: residuos escalados dos 60 dias, n >= 30, quantis de
+   amostra finita, cada borda a partir do ponto) entra no `outlook` como faixa padrao quando o banco tiver >= 30
+   pares, com testes. E o unico resultado desta fila que muda o que o app entrega.
+2. V2/PVDAQ, contra a regra "nada sob medida": (a) `diagnostics.roof_orientation` superestima o tilt em 5 de 6
+   sistemas dos EUA (ajustado 25-60 graus, verdade 10-45); (b) o relogio so acerta com confianca onde nao ha horario de
+   verao (os sistemas em America/New_York e America/Los_Angeles dao +-1 h com concordancia 0,14-0,30, com saltos
+   mensais em mar-jul). O Parana nao tem horario de verao desde 2019: o `quality.clock_offset` nunca foi testado
+   nisso. Antes de mexer na biblioteca, conferir se o erro nao esta na conversao de fuso do proprio piloto.
+3. V5: o regime C publicado ganha a media das 6 NWP (consequencia do portao).
+4. V4: o padrao da biblioteca para producao das casas ganha nota sazonal; a escolha da mediana para `casas_prod` no
+   regime B e revista.
+5. V7: zero-shot continua padrao; ajuste fino vira opcao documentada, com o aviso de que perdeu em `casas_prod`.
+6. V1 e V3: a mediana como padrao e o ranking da v2 confirmados fora da amostra e entre sementes (nada muda; publicar
+   a v3 continua decisao do usuario).
+
+**Negativos que fecham caminhos:** P1-gpu (fundacionais com NWP como covariaveis nao chegam perto da cadeia fisica:
+a Prioridade 1 continua na cadeia fisica e no LightGBM com NWP separadas). O periodo intocado do P1-gpu foi calculado
+pelo script e da o mesmo sinal (-0,06 a -0,16), mas pelo portao nao decide nada.
+
+**A refazer (bugs de script, nao resultados):** C9 (dias vazios na validacao, e o vies de latitude), P2 (fonte das
+rodadas unicas: conferir se a Single Runs guarda abr-nov/2026 ou trocar de fonte), V9 (dtype), Crossformer/Mamba
+(caminho do `models`). P4 so tem sentido de novo com posicoes do C9 validadas.

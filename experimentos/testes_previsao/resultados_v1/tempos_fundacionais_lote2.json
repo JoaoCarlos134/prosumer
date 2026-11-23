@@ -1,0 +1,50 @@
+{
+ "Toto-2.0-22m|usinas|A": {
+  "segundos": 11.1,
+  "janelas": 330
+ },
+ "Toto-2.0-313m|usinas|A": {
+  "segundos": 44.1,
+  "janelas": 330
+ },
+ "TiRex-2|usinas|A": {
+  "segundos": 20.7,
+  "janelas": 330
+ },
+ "TiRex-2|usinas|B": {
+  "segundos": 97.8,
+  "janelas": 330
+ },
+ "TiRex-2|usinas|C": {
+  "segundos": 98.8,
+  "janelas": 330
+ },
+ "TabPFN-TS|usinas|A": {
+  "segundos": 2563.7,
+  "janelas": 330
+ },
+ "TabPFN-TS|usinas|B": {
+  "segundos": 2920.1,
+  "janelas": 330
+ },
+ "TabPFN-TS|usinas|C": {
+  "segundos": 2936.7,
+  "janelas": 330
+ },
+ "Sundial-128m|usinas|A": {
+  "segundos": 63.9,
+  "janelas": 330
+ },
+ "Timer-XL-84m|usinas|A": {
+  "segundos": 19.0,
+  "janelas": 330
+ },
+ "Time-MoE-50M|usinas|A": {
+  "segundos": 209.7,
+  "janelas": 330
+ },
+ "Moirai-MoE-small|usinas|A": {
+  "segundos": 293.8,
+  "janelas": 330
+ }
+}

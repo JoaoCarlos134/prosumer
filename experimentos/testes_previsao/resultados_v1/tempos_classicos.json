@@ -1,0 +1,23 @@
+{
+ "AutoETS|usinas|A": {
+  "segundos": 72.8,
+  "janelas": 336,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoTheta|usinas|A": {
+  "segundos": 3584.5,
+  "janelas": 336,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "MSTL|usinas|A": {
+  "segundos": 3142.6,
+  "janelas": 336,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ }
+}

@@ -1,0 +1,624 @@
+{
+ "portao": "docs/projeto/PILOTOS_F1_F2.md, G1",
+ "tempos": {
+  "Chronos-2": {
+   "Cascavel": {
+    "cpu_s_por_noite": 0.68,
+    "horas_sem_nwp": 10472
+   },
+   "Curitiba": {
+    "cpu_s_por_noite": 0.6,
+    "horas_sem_nwp": 10696
+   }
+  },
+  "TabPFN-TS": {
+   "Cascavel": {
+    "horas_sem_nwp": 10472
+   },
+   "Curitiba": {
+    "horas_sem_nwp": 10696
+   }
+  }
+ },
+ "Cascavel": {
+  "teste_lead1": {
+   "n_dias": 297,
+   "skill_dia_fisico": 0.4903188895872497,
+   "Chronos-2": {
+    "n": 297,
+    "skill_dia": 0.383590886660766,
+    "ganho_sobre_fisico": -0.10672800292648366,
+    "p_dm": 6.666366688108525e-05,
+    "skill_hora": 0.2750785768334769,
+    "skill_hora_fisico": 0.34239257431296544
+   },
+   "TabPFN-TS": {
+    "n": 297,
+    "skill_dia": 0.37740151223700447,
+    "ganho_sobre_fisico": -0.11291737735024521,
+    "p_dm": 5.904883057421014e-05,
+    "skill_hora": 0.25796230824780364,
+    "skill_hora_fisico": 0.34239257431296544
+   },
+   "LightGBM-6NWP": {
+    "n": 297,
+    "skill_dia": 0.5110837389445253,
+    "ganho_sobre_fisico": 0.020764849357275628,
+    "p_dm": 0.24810400904901053,
+    "skill_hora": 0.3235354574295225,
+    "skill_hora_fisico": 0.3312121566419396
+   }
+  },
+  "teste_lead2": {
+   "n_dias": 296,
+   "skill_dia_fisico": 0.4499412428353803,
+   "Chronos-2": {
+    "n": 296,
+    "skill_dia": 0.3467833854084075,
+    "ganho_sobre_fisico": -0.10315785742697281,
+    "p_dm": 7.665695563553028e-05,
+    "skill_hora": 0.2489744412475382,
+    "skill_hora_fisico": 0.31199620576586184
+   },
+   "TabPFN-TS": {
+    "n": 296,
+    "skill_dia": 0.3630243582988346,
+    "ganho_sobre_fisico": -0.08691688453654567,
+    "p_dm": 0.0022163826099724,
+    "skill_hora": 0.24263642343984881,
+    "skill_hora_fisico": 0.31199620576586184
+   }
+  },
+  "teste_lead3": {
+   "n_dias": 295,
+   "skill_dia_fisico": 0.4185326252782592,
+   "Chronos-2": {
+    "n": 295,
+    "skill_dia": 0.2808903157857068,
+    "ganho_sobre_fisico": -0.1376423094925524,
+    "p_dm": 2.8849150912926457e-05,
+    "skill_hora": 0.19736239227319907,
+    "skill_hora_fisico": 0.2891087122641718
+   },
+   "TabPFN-TS": {
+    "n": 295,
+    "skill_dia": 0.3215909686957972,
+    "ganho_sobre_fisico": -0.09694165658246201,
+    "p_dm": 0.00010141060119016329,
+    "skill_hora": 0.21585771748757832,
+    "skill_hora_fisico": 0.2891087122641718
+   }
+  },
+  "teste_lead4": {
+   "n_dias": 294,
+   "skill_dia_fisico": 0.3960894077212399,
+   "Chronos-2": {
+    "n": 294,
+    "skill_dia": 0.3319201421230098,
+    "ganho_sobre_fisico": -0.06416926559823011,
+    "p_dm": 0.009058206670692162,
+    "skill_hora": 0.2352480762865734,
+    "skill_hora_fisico": 0.2654702254112129
+   },
+   "TabPFN-TS": {
+    "n": 294,
+    "skill_dia": 0.2979383285346181,
+    "ganho_sobre_fisico": -0.0981510791866218,
+    "p_dm": 0.0005643561349373289,
+    "skill_hora": 0.19862844044851768,
+    "skill_hora_fisico": 0.2654702254112129
+   }
+  },
+  "teste_lead5": {
+   "n_dias": 293,
+   "skill_dia_fisico": 0.35182878684118934,
+   "Chronos-2": {
+    "n": 293,
+    "skill_dia": 0.2814693185513346,
+    "ganho_sobre_fisico": -0.07035946828985473,
+    "p_dm": 0.011151195518052144,
+    "skill_hora": 0.1916029329734561,
+    "skill_hora_fisico": 0.24112279182435448
+   },
+   "TabPFN-TS": {
+    "n": 293,
+    "skill_dia": 0.27782642980405037,
+    "ganho_sobre_fisico": -0.07400235703713898,
+    "p_dm": 0.012535288810935998,
+    "skill_hora": 0.17373246749614935,
+    "skill_hora_fisico": 0.24112279182435448
+   }
+  },
+  "teste_lead6": {
+   "n_dias": 292,
+   "skill_dia_fisico": 0.23907515534458312,
+   "Chronos-2": {
+    "n": 292,
+    "skill_dia": 0.24014543364023166,
+    "ganho_sobre_fisico": 0.0010702782956485413,
+    "p_dm": 0.9647576122481484,
+    "skill_hora": 0.16686381325761834,
+    "skill_hora_fisico": 0.1549054440600326
+   },
+   "TabPFN-TS": {
+    "n": 292,
+    "skill_dia": 0.18124668822095258,
+    "ganho_sobre_fisico": -0.057828467123630545,
+    "p_dm": 0.020649314230658737,
+    "skill_hora": 0.11359284931675939,
+    "skill_hora_fisico": 0.1549054440600326
+   }
+  },
+  "teste_lead7": {
+   "n_dias": 291,
+   "skill_dia_fisico": 0.17714190660540619,
+   "Chronos-2": {
+    "n": 291,
+    "skill_dia": 0.1552073706985425,
+    "ganho_sobre_fisico": -0.021934535906863672,
+    "p_dm": 0.39241901731189144,
+    "skill_hora": 0.1098669107787631,
+    "skill_hora_fisico": 0.11051239744415509
+   },
+   "TabPFN-TS": {
+    "n": 291,
+    "skill_dia": 0.0737718613642887,
+    "ganho_sobre_fisico": -0.10337004524111748,
+    "p_dm": 3.8197914954557214e-05,
+    "skill_hora": 0.02654237074399346,
+    "skill_hora_fisico": 0.11051239744415509
+   }
+  },
+  "intocado_lead1": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.5795343508693288,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.4597804952542215,
+    "ganho_sobre_fisico": -0.11975385561510732,
+    "p_dm": 9.619422816622613e-05,
+    "skill_hora": 0.3683324203556224,
+    "skill_hora_fisico": 0.4551976374119384
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.47113909043519553,
+    "ganho_sobre_fisico": -0.10839526043413328,
+    "p_dm": 0.011630467261979853,
+    "skill_hora": 0.3627590492387356,
+    "skill_hora_fisico": 0.4551976374119384
+   },
+   "LightGBM-6NWP": {
+    "n": 0,
+    "skill_dia": NaN,
+    "ganho_sobre_fisico": NaN,
+    "p_dm": 1.0,
+    "skill_hora": NaN,
+    "skill_hora_fisico": NaN
+   }
+  },
+  "intocado_lead2": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.5608661393243581,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.44485404524200933,
+    "ganho_sobre_fisico": -0.1160120940823488,
+    "p_dm": 0.0010325873481620155,
+    "skill_hora": 0.3550577926874847,
+    "skill_hora_fisico": 0.4294272153789286
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.42639877535231874,
+    "ganho_sobre_fisico": -0.1344673639720394,
+    "p_dm": 9.010189253392265e-05,
+    "skill_hora": 0.32467770195078116,
+    "skill_hora_fisico": 0.4294272153789286
+   }
+  },
+  "intocado_lead3": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.5185947712312831,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.3891652408361105,
+    "ganho_sobre_fisico": -0.12942953039517258,
+    "p_dm": 0.0014390130798877842,
+    "skill_hora": 0.30368088811359084,
+    "skill_hora_fisico": 0.3952220301801608
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.385971970160489,
+    "ganho_sobre_fisico": -0.13262280107079405,
+    "p_dm": 1.2941107301427018e-05,
+    "skill_hora": 0.29640376745745967,
+    "skill_hora_fisico": 0.3952220301801608
+   }
+  },
+  "intocado_lead4": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.4694027786149352,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.3923386727146647,
+    "ganho_sobre_fisico": -0.07706410590027046,
+    "p_dm": 0.00739648298959638,
+    "skill_hora": 0.30709063225299416,
+    "skill_hora_fisico": 0.3551338891328891
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.3583857471177344,
+    "ganho_sobre_fisico": -0.11101703149720077,
+    "p_dm": 0.0001766268790891622,
+    "skill_hora": 0.2576238687976774,
+    "skill_hora_fisico": 0.3551338891328891
+   }
+  },
+  "intocado_lead5": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.43237446294352777,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.33804643193942896,
+    "ganho_sobre_fisico": -0.09432803100409881,
+    "p_dm": 0.02593566226141619,
+    "skill_hora": 0.26518839843006614,
+    "skill_hora_fisico": 0.33402492579535803
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.3233041001122392,
+    "ganho_sobre_fisico": -0.10907036283128857,
+    "p_dm": 0.006678652357138773,
+    "skill_hora": 0.23917548049512238,
+    "skill_hora_fisico": 0.33402492579535803
+   }
+  },
+  "intocado_lead6": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.38948259230111315,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.32367647565287816,
+    "ganho_sobre_fisico": -0.06580611664823499,
+    "p_dm": 0.05019047186998737,
+    "skill_hora": 0.2573531155636819,
+    "skill_hora_fisico": 0.3008082487491637
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.27870851032409016,
+    "ganho_sobre_fisico": -0.11077408197702299,
+    "p_dm": 0.003209363963343607,
+    "skill_hora": 0.19229356816512555,
+    "skill_hora_fisico": 0.3008082487491637
+   }
+  },
+  "intocado_lead7": {
+   "n_dias": 164,
+   "skill_dia_fisico": 0.29674586137638237,
+   "Chronos-2": {
+    "n": 164,
+    "skill_dia": 0.20358668708112426,
+    "ganho_sobre_fisico": -0.09315917429525811,
+    "p_dm": 0.019139644458499614,
+    "skill_hora": 0.1481697114523607,
+    "skill_hora_fisico": 0.21522140310525562
+   },
+   "TabPFN-TS": {
+    "n": 164,
+    "skill_dia": 0.2377981590621111,
+    "ganho_sobre_fisico": -0.058947702314271266,
+    "p_dm": 0.0951479871643228,
+    "skill_hora": 0.1493025947882478,
+    "skill_hora_fisico": 0.21522140310525562
+   }
+  }
+ },
+ "Curitiba": {
+  "teste_lead1": {
+   "n_dias": 301,
+   "skill_dia_fisico": 0.5029218086316947,
+   "Chronos-2": {
+    "n": 301,
+    "skill_dia": 0.37651317664015993,
+    "ganho_sobre_fisico": -0.12640863199153474,
+    "p_dm": 1.537070082802292e-08,
+    "skill_hora": 0.30272671486722613,
+    "skill_hora_fisico": 0.29839555993033384
+   },
+   "TabPFN-TS": {
+    "n": 301,
+    "skill_dia": 0.43768937203374414,
+    "ganho_sobre_fisico": -0.06523243659795053,
+    "p_dm": 0.02512277266370044,
+    "skill_hora": 0.31812665319517686,
+    "skill_hora_fisico": 0.29839555993033384
+   },
+   "LightGBM-6NWP": {
+    "n": 301,
+    "skill_dia": 0.5065671214664942,
+    "ganho_sobre_fisico": 0.003645312834799519,
+    "p_dm": 0.8751173599930384,
+    "skill_hora": 0.3576983586909309,
+    "skill_hora_fisico": 0.29800263435179797
+   }
+  },
+  "teste_lead2": {
+   "n_dias": 300,
+   "skill_dia_fisico": 0.42869809492221067,
+   "Chronos-2": {
+    "n": 300,
+    "skill_dia": 0.3154377590222204,
+    "ganho_sobre_fisico": -0.1132603358999903,
+    "p_dm": 3.5349554843934086e-05,
+    "skill_hora": 0.26053860381422966,
+    "skill_hora_fisico": 0.25634335787315277
+   },
+   "TabPFN-TS": {
+    "n": 300,
+    "skill_dia": 0.40115084916136146,
+    "ganho_sobre_fisico": -0.027547245760849215,
+    "p_dm": 0.2771809063145463,
+    "skill_hora": 0.295363041068189,
+    "skill_hora_fisico": 0.25634335787315277
+   }
+  },
+  "teste_lead3": {
+   "n_dias": 299,
+   "skill_dia_fisico": 0.39747834522151726,
+   "Chronos-2": {
+    "n": 299,
+    "skill_dia": 0.25531500193802725,
+    "ganho_sobre_fisico": -0.14216334328349,
+    "p_dm": 8.092158027657952e-08,
+    "skill_hora": 0.21183946087008299,
+    "skill_hora_fisico": 0.2365287468709878
+   },
+   "TabPFN-TS": {
+    "n": 299,
+    "skill_dia": 0.3766479202647668,
+    "ganho_sobre_fisico": -0.02083042495675047,
+    "p_dm": 0.465418215802225,
+    "skill_hora": 0.2685421213021594,
+    "skill_hora_fisico": 0.2365287468709878
+   }
+  },
+  "teste_lead4": {
+   "n_dias": 298,
+   "skill_dia_fisico": 0.3901316956932043,
+   "Chronos-2": {
+    "n": 298,
+    "skill_dia": 0.3076258404022435,
+    "ganho_sobre_fisico": -0.08250585529096077,
+    "p_dm": 0.0013989333234618387,
+    "skill_hora": 0.24761386424251774,
+    "skill_hora_fisico": 0.22713864488232394
+   },
+   "TabPFN-TS": {
+    "n": 298,
+    "skill_dia": 0.3355120711376204,
+    "ganho_sobre_fisico": -0.05461962455558389,
+    "p_dm": 0.034155156753623496,
+    "skill_hora": 0.245987559560497,
+    "skill_hora_fisico": 0.22713864488232394
+   }
+  },
+  "teste_lead5": {
+   "n_dias": 297,
+   "skill_dia_fisico": 0.33139108369632053,
+   "Chronos-2": {
+    "n": 297,
+    "skill_dia": 0.24703636093756676,
+    "ganho_sobre_fisico": -0.08435472275875378,
+    "p_dm": 0.0012679334080980167,
+    "skill_hora": 0.206651888469357,
+    "skill_hora_fisico": 0.19753469393037693
+   },
+   "TabPFN-TS": {
+    "n": 297,
+    "skill_dia": 0.26215238802595797,
+    "ganho_sobre_fisico": -0.06923869567036256,
+    "p_dm": 0.026275134363198168,
+    "skill_hora": 0.18879578101263061,
+    "skill_hora_fisico": 0.19753469393037693
+   }
+  },
+  "teste_lead6": {
+   "n_dias": 296,
+   "skill_dia_fisico": 0.3038062939619871,
+   "Chronos-2": {
+    "n": 296,
+    "skill_dia": 0.2405085653899004,
+    "ganho_sobre_fisico": -0.06329772857208671,
+    "p_dm": 0.0038917093431926554,
+    "skill_hora": 0.19923439292331446,
+    "skill_hora_fisico": 0.17373792996033954
+   },
+   "TabPFN-TS": {
+    "n": 296,
+    "skill_dia": 0.2580518988043823,
+    "ganho_sobre_fisico": -0.04575439515760482,
+    "p_dm": 0.0676176763419282,
+    "skill_hora": 0.1777066395294289,
+    "skill_hora_fisico": 0.17373792996033954
+   }
+  },
+  "teste_lead7": {
+   "n_dias": 295,
+   "skill_dia_fisico": 0.2124320684541514,
+   "Chronos-2": {
+    "n": 295,
+    "skill_dia": 0.15600538649242368,
+    "ganho_sobre_fisico": -0.05642668196172773,
+    "p_dm": 0.06419089274520547,
+    "skill_hora": 0.1388802137867564,
+    "skill_hora_fisico": 0.11192400717644213
+   },
+   "TabPFN-TS": {
+    "n": 295,
+    "skill_dia": 0.14503338035877866,
+    "ganho_sobre_fisico": -0.06739868809537275,
+    "p_dm": 0.025124915627992465,
+    "skill_hora": 0.09458752995630693,
+    "skill_hora_fisico": 0.11192400717644213
+   }
+  },
+  "intocado_lead1": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.5309693577879553,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.444549272051901,
+    "ganho_sobre_fisico": -0.08642008573605431,
+    "p_dm": 0.0010537313525114844,
+    "skill_hora": 0.35350985628053033,
+    "skill_hora_fisico": 0.3396571571174607
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.41557195558528537,
+    "ganho_sobre_fisico": -0.11539740220266992,
+    "p_dm": 0.0035713541188428844,
+    "skill_hora": 0.3210081583316541,
+    "skill_hora_fisico": 0.3396571571174607
+   },
+   "LightGBM-6NWP": {
+    "n": 0,
+    "skill_dia": NaN,
+    "ganho_sobre_fisico": NaN,
+    "p_dm": 1.0,
+    "skill_hora": NaN,
+    "skill_hora_fisico": NaN
+   }
+  },
+  "intocado_lead2": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.5208160454259134,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.3747816646755374,
+    "ganho_sobre_fisico": -0.146034380750376,
+    "p_dm": 0.00011400181055756154,
+    "skill_hora": 0.30279924997289764,
+    "skill_hora_fisico": 0.337093731806011
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.4030963700882425,
+    "ganho_sobre_fisico": -0.11771967533767091,
+    "p_dm": 0.0011672472007047627,
+    "skill_hora": 0.2967094780752536,
+    "skill_hora_fisico": 0.337093731806011
+   }
+  },
+  "intocado_lead3": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.46631612418227597,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.3039808735443994,
+    "ganho_sobre_fisico": -0.16233525063787657,
+    "p_dm": 0.0019291893888068016,
+    "skill_hora": 0.24702422320642803,
+    "skill_hora_fisico": 0.2982645712648606
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.3513762120007573,
+    "ganho_sobre_fisico": -0.11493991218151867,
+    "p_dm": 0.004836795290044413,
+    "skill_hora": 0.25606386567877915,
+    "skill_hora_fisico": 0.2982645712648606
+   }
+  },
+  "intocado_lead4": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.41286990162963755,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.30869317629391724,
+    "ganho_sobre_fisico": -0.10417672533572031,
+    "p_dm": 0.006897347436292276,
+    "skill_hora": 0.24893057695647725,
+    "skill_hora_fisico": 0.26640405396719635
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.3247242612995981,
+    "ganho_sobre_fisico": -0.08814564033003947,
+    "p_dm": 0.02418520239227566,
+    "skill_hora": 0.2432380401129437,
+    "skill_hora_fisico": 0.26640405396719635
+   }
+  },
+  "intocado_lead5": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.36540966445219425,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.23703896387357493,
+    "ganho_sobre_fisico": -0.12837070057861932,
+    "p_dm": 0.009799086512379374,
+    "skill_hora": 0.1915459480923274,
+    "skill_hora_fisico": 0.22359163202877663
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.26929148020982396,
+    "ganho_sobre_fisico": -0.09611818424237029,
+    "p_dm": 0.01516553448528841,
+    "skill_hora": 0.19875787154032698,
+    "skill_hora_fisico": 0.22359163202877663
+   }
+  },
+  "intocado_lead6": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.31731345094864616,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.21332328623385,
+    "ganho_sobre_fisico": -0.10399016471479616,
+    "p_dm": 0.042396853168267426,
+    "skill_hora": 0.17833603844776968,
+    "skill_hora_fisico": 0.17992477597577305
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.20946142183057181,
+    "ganho_sobre_fisico": -0.10785202911807434,
+    "p_dm": 0.005665665880162353,
+    "skill_hora": 0.14469901147771125,
+    "skill_hora_fisico": 0.17992477597577305
+   }
+  },
+  "intocado_lead7": {
+   "n_dias": 166,
+   "skill_dia_fisico": 0.20220412782940256,
+   "Chronos-2": {
+    "n": 166,
+    "skill_dia": 0.08392602766822099,
+    "ganho_sobre_fisico": -0.11827810016118157,
+    "p_dm": 0.02580972664105939,
+    "skill_hora": 0.07874657672822383,
+    "skill_hora_fisico": 0.10434629624609526
+   },
+   "TabPFN-TS": {
+    "n": 166,
+    "skill_dia": 0.09441770649055381,
+    "ganho_sobre_fisico": -0.10778642133884875,
+    "p_dm": 0.007615753926114543,
+    "skill_hora": 0.04539827245814765,
+    "skill_hora_fisico": 0.10434629624609526
+   }
+  }
+ },
+ "PASSA": {
+  "Chronos-2": false,
+  "TabPFN-TS": false
+ },
+ "nota": "o periodo intocado so e lido como confirmacao do modelo que PASSA no teste (portao G1)"
+}

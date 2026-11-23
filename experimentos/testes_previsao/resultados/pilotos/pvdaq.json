@@ -1,0 +1,632 @@
+{
+ "pergunta": "pecas ajustadas no Parana valem em sistemas do PVDAQ (EUA)?",
+ "veredito": {
+  "G1_telhado": {
+   "tilt_ok": 1,
+   "de": 6,
+   "passa": false,
+   "azimute_50_ok": true
+  },
+  "G2_relogio": {
+   "ok": 2,
+   "de": 6,
+   "passa": false
+  },
+  "G3_cadeia_fisica": {
+   "mediana_pvdaq": 0.4653,
+   "cascavel": 0.7182,
+   "passa": false
+  }
+ },
+ "sistemas": {
+  "50": {
+   "local": "Golden, CO",
+   "clima": "Bsk",
+   "kwp": 6.0,
+   "tz": "Etc/GMT+7",
+   "cobertura_horaria": 0.992,
+   "telhado": {
+    "ajustado": [
+     60.0,
+     170.0
+    ],
+    "r2": 0.878,
+    "borda": true,
+    "verdade": [
+     45.0,
+     158.0
+    ],
+    "erro_tilt": 15.0,
+    "erro_azimute": 12.0,
+    "tilt_ok": false,
+    "azimute_ok": true
+   },
+   "relogio": {
+    "desvio_h": 0.0,
+    "confiante": true,
+    "concordancia": 0.612,
+    "ok": true,
+    "meses": {
+     "2022-02": [
+      0.0,
+      true
+     ],
+     "2022-03": [
+      -1.0,
+      false
+     ],
+     "2022-04": [
+      0.0,
+      true
+     ],
+     "2022-05": [
+      0.0,
+      false
+     ],
+     "2022-06": [
+      1.0,
+      false
+     ],
+     "2022-07": [
+      1.0,
+      false
+     ],
+     "2022-08": [
+      -1.0,
+      false
+     ],
+     "2022-09": [
+      0.0,
+      true
+     ],
+     "2022-10": [
+      0.0,
+      true
+     ],
+     "2022-11": [
+      0.0,
+      true
+     ],
+     "2022-12": [
+      0.0,
+      true
+     ],
+     "2023-01": [
+      0.0,
+      true
+     ]
+    }
+   },
+   "passos_diagnostico": 0,
+   "g3": {
+    "dias": 239,
+    "skill_diario": 0.1938,
+    "skill_horario_sol": 0.1648,
+    "fonte_tempo_em_todos": true,
+    "kw_eff_ultimo": 6.17,
+    "kw_eff_sobre_kwp": 1.028,
+    "orientacao_usada": [
+     60.0,
+     170.0,
+     "fitted"
+    ],
+    "vies_diario_tempo": 0.0417
+   }
+  },
+  "1200": {
+   "local": "Linthicum Heights, MD",
+   "clima": "Cfa",
+   "kwp": 51.84,
+   "tz": "America/New_York",
+   "cobertura_horaria": 1.0,
+   "telhado": {
+    "ajustado": [
+     45.0,
+     200.0
+    ],
+    "r2": 0.923,
+    "borda": false,
+    "verdade": [
+     10.0,
+     205.0
+    ],
+    "erro_tilt": 35.0,
+    "erro_azimute": 5.0,
+    "tilt_ok": false,
+    "azimute_ok": null
+   },
+   "relogio": {
+    "desvio_h": 1.0,
+    "confiante": false,
+    "concordancia": 0.208,
+    "ok": false,
+    "meses": {
+     "2019-01": [
+      0.0,
+      true
+     ],
+     "2019-02": [
+      0.0,
+      true
+     ],
+     "2019-03": [
+      1.0,
+      false
+     ],
+     "2019-04": [
+      2.0,
+      false
+     ],
+     "2019-05": [
+      2.0,
+      false
+     ],
+     "2019-06": [
+      2.0,
+      false
+     ],
+     "2019-07": [
+      2.0,
+      false
+     ],
+     "2019-08": [
+      1.0,
+      false
+     ],
+     "2019-09": [
+      1.0,
+      true
+     ],
+     "2019-10": [
+      0.0,
+      true
+     ],
+     "2019-11": [
+      0.0,
+      true
+     ],
+     "2019-12": [
+      0.0,
+      true
+     ]
+    }
+   },
+   "passos_diagnostico": 0,
+   "g3": {
+    "dias": 243,
+    "skill_diario": 0.6741,
+    "skill_horario_sol": 0.4709,
+    "fonte_tempo_em_todos": true,
+    "kw_eff_ultimo": 37.729,
+    "kw_eff_sobre_kwp": 0.728,
+    "orientacao_usada": [
+     45.0,
+     200.0,
+     "fitted"
+    ],
+    "vies_diario_tempo": -0.0315
+   }
+  },
+  "1201": {
+   "local": "Cherry Hill, NJ",
+   "clima": "Cfa",
+   "kwp": 140.14,
+   "tz": "America/New_York",
+   "cobertura_horaria": 0.994,
+   "telhado": {
+    "ajustado": [
+     25.0,
+     190.0
+    ],
+    "r2": 0.939,
+    "borda": false,
+    "verdade": [
+     10.0,
+     230.0
+    ],
+    "erro_tilt": 15.0,
+    "erro_azimute": 40.0,
+    "tilt_ok": false,
+    "azimute_ok": null
+   },
+   "relogio": {
+    "desvio_h": -1.0,
+    "confiante": false,
+    "concordancia": 0.303,
+    "ok": false,
+    "meses": {
+     "2019-01": [
+      0.0,
+      true
+     ],
+     "2019-02": [
+      0.0,
+      false
+     ],
+     "2019-03": [
+      1.0,
+      false
+     ],
+     "2019-04": [
+      0.0,
+      false
+     ],
+     "2019-05": [
+      -1.0,
+      false
+     ],
+     "2019-06": [
+      1.0,
+      false
+     ],
+     "2019-07": [
+      1.0,
+      true
+     ],
+     "2019-08": [
+      1.0,
+      true
+     ],
+     "2019-09": [
+      -1.0,
+      false
+     ],
+     "2019-10": [
+      -1.0,
+      false
+     ],
+     "2019-11": [
+      0.0,
+      false
+     ],
+     "2019-12": [
+      -1.0,
+      false
+     ]
+    }
+   },
+   "passos_diagnostico": 0,
+   "g3": {
+    "dias": 239,
+    "skill_diario": 0.6497,
+    "skill_horario_sol": 0.4658,
+    "fonte_tempo_em_todos": true,
+    "kw_eff_ultimo": 91.028,
+    "kw_eff_sobre_kwp": 0.65,
+    "orientacao_usada": [
+     25.0,
+     190.0,
+     "fitted"
+    ],
+    "vies_diario_tempo": -0.0213
+   }
+  },
+  "1239": {
+   "local": "Presque Isle, ME",
+   "clima": "Dfb",
+   "kwp": 20.16,
+   "tz": "America/New_York",
+   "cobertura_horaria": 0.93,
+   "telhado": {
+    "ajustado": [
+     5.0,
+     180.0
+    ],
+    "r2": 0.913,
+    "borda": false,
+    "verdade": [
+     10.0,
+     155.0
+    ],
+    "erro_tilt": 5.0,
+    "erro_azimute": 25.0,
+    "tilt_ok": true,
+    "azimute_ok": null
+   },
+   "relogio": {
+    "desvio_h": -1.0,
+    "confiante": false,
+    "concordancia": 0.142,
+    "ok": false,
+    "meses": {
+     "2019-01": [
+      -11.0,
+      true
+     ],
+     "2019-02": [
+      -11.0,
+      true
+     ],
+     "2019-03": [
+      0.0,
+      false
+     ],
+     "2019-04": [
+      -1.0,
+      false
+     ],
+     "2019-05": [
+      0.0,
+      false
+     ],
+     "2019-06": [
+      -1.0,
+      false
+     ],
+     "2019-07": [
+      0.0,
+      false
+     ],
+     "2019-08": [
+      0.0,
+      false
+     ],
+     "2019-09": [
+      0.0,
+      false
+     ],
+     "2019-10": [
+      -1.0,
+      false
+     ],
+     "2019-11": [
+      1.0,
+      false
+     ],
+     "2019-12": [
+      0.0,
+      false
+     ]
+    }
+   },
+   "passos_diagnostico": 0,
+   "g3": {
+    "dias": 206,
+    "skill_diario": 0.4653,
+    "skill_horario_sol": 0.3258,
+    "fonte_tempo_em_todos": true,
+    "kw_eff_ultimo": 4.247,
+    "kw_eff_sobre_kwp": 0.211,
+    "orientacao_usada": [
+     5.0,
+     180.0,
+     "fitted"
+    ],
+    "vies_diario_tempo": 0.0141
+   }
+  },
+  "34": {
+   "local": "Las Vegas, NV",
+   "clima": "Bwh",
+   "kwp": 146.64,
+   "tz": "America/Los_Angeles",
+   "cobertura_horaria": 0.986,
+   "telhado": {
+    "ajustado": [
+     25.0,
+     180.0
+    ],
+    "r2": 0.964,
+    "borda": false,
+    "verdade": [
+     11.2,
+     180.0
+    ],
+    "erro_tilt": 13.8,
+    "erro_azimute": 0.0,
+    "tilt_ok": false,
+    "azimute_ok": null
+   },
+   "relogio": {
+    "desvio_h": 1.0,
+    "confiante": false,
+    "concordancia": 0.173,
+    "ok": false,
+    "meses": {
+     "2019-01": [
+      0.0,
+      true
+     ],
+     "2019-02": [
+      0.0,
+      true
+     ],
+     "2019-03": [
+      0.0,
+      true
+     ],
+     "2019-04": [
+      0.0,
+      true
+     ],
+     "2019-05": [
+      1.0,
+      false
+     ],
+     "2019-06": [
+      0.0,
+      false
+     ],
+     "2019-07": [
+      0.0,
+      false
+     ],
+     "2019-08": [
+      0.0,
+      true
+     ],
+     "2019-09": [
+      0.0,
+      true
+     ],
+     "2019-10": [
+      0.0,
+      true
+     ],
+     "2019-11": [
+      0.0,
+      true
+     ],
+     "2019-12": [
+      0.0,
+      true
+     ]
+    }
+   },
+   "passos_diagnostico": 1,
+   "g3": {
+    "dias": 244,
+    "skill_diario": 0.3397,
+    "skill_horario_sol": 0.2117,
+    "fonte_tempo_em_todos": true,
+    "kw_eff_ultimo": 94.775,
+    "kw_eff_sobre_kwp": 0.646,
+    "orientacao_usada": [
+     25.0,
+     180.0,
+     "fitted"
+    ],
+    "vies_diario_tempo": 0.0154
+   }
+  },
+  "1433": {
+   "local": "Golden, CO",
+   "clima": "Bsk",
+   "kwp": 449.28,
+   "tz": "America/Denver",
+   "cobertura_horaria": 0.471,
+   "telhado": {
+    "ajustado": [
+     30.0,
+     180.0
+    ],
+    "r2": 0.921,
+    "borda": false,
+    "verdade": [
+     10.0,
+     180.0
+    ],
+    "erro_tilt": 20.0,
+    "erro_azimute": 0.0,
+    "tilt_ok": false,
+    "azimute_ok": null
+   },
+   "relogio": {
+    "desvio_h": 0.0,
+    "confiante": true,
+    "concordancia": 0.537,
+    "ok": true,
+    "meses": {
+     "2017-01": [
+      0.0,
+      true
+     ],
+     "2017-02": [
+      0.0,
+      true
+     ],
+     "2017-03": [
+      1.0,
+      true
+     ],
+     "2017-04": [
+      0.0,
+      true
+     ],
+     "2017-05": [
+      1.0,
+      false
+     ]
+    }
+   },
+   "passos_diagnostico": 0,
+   "g3": {
+    "dias": 0
+   }
+  }
+ },
+ "cascavel": {
+  "cobertura_horaria": 0.995,
+  "telhado": {
+   "ajustado": [
+    20.0,
+    20.0
+   ],
+   "r2": 0.931,
+   "borda": false
+  },
+  "relogio": {
+   "desvio_h": -1.0,
+   "confiante": false,
+   "concordancia": 0.19,
+   "ok": false,
+   "meses": {
+    "2022-02": [
+     1.0,
+     false
+    ],
+    "2022-03": [
+     0.0,
+     true
+    ],
+    "2022-04": [
+     0.0,
+     true
+    ],
+    "2022-05": [
+     0.0,
+     true
+    ],
+    "2022-06": [
+     0.0,
+     true
+    ],
+    "2022-07": [
+     -1.0,
+     false
+    ],
+    "2022-08": [
+     0.0,
+     true
+    ],
+    "2022-09": [
+     -1.0,
+     false
+    ],
+    "2022-10": [
+     -1.0,
+     false
+    ],
+    "2022-11": [
+     1.0,
+     false
+    ],
+    "2022-12": [
+     -1.0,
+     false
+    ],
+    "2023-01": [
+     0.0,
+     false
+    ]
+   }
+  },
+  "passos_diagnostico": 0,
+  "g3": {
+   "dias": 242,
+   "skill_diario": 0.7182,
+   "skill_horario_sol": 0.5513,
+   "fonte_tempo_em_todos": true,
+   "kw_eff_ultimo": 2.696,
+   "kw_eff_sobre_kwp": 0.681,
+   "orientacao_usada": [
+    20.0,
+    20.0,
+    "fitted"
+   ],
+   "vies_diario_tempo": -0.0333
+  }
+ },
+ "tempo_s": 242,
+ "licenca_dados": "NREL PVDAQ, CC BY 4.0, doi:10.25984/1846021; NASA POWER"
+}

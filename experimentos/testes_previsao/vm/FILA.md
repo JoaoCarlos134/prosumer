@@ -82,3 +82,9 @@ colecao do EDS-lab, ou outro) ou da estimativa de posicao de C6.
 
 Resultados agregados + registro em `PILOTOS_F1_F2.md` no ramo local do servidor (commit, SEM push); o usuario leva o ramo a maquina de CPU, que revisa
 (`work-reviewer`) e junta no `main`. Nada de dado de usina por hora no git (`git status` antes de cada commit).
+
+## Estado em 23/11/2026
+
+Fila de 18/11 terminada; vereditos em `docs/projeto/PILOTOS_F1_F2.md` ("Resultados da fila do servidor de 18/11/2026").
+Na fila so a coleta diaria dos ensembles (ok todo dia de 19 a 23/11). A refazer no servidor quando os scripts forem
+consertados: C9 (validacao), P2 (fonte das rodadas unicas), V9 (dtype), Crossformer/Mamba (caminho `models`).

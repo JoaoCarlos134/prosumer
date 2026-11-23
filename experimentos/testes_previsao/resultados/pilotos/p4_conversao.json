@@ -1,0 +1,829 @@
+{
+ "PS_002": {
+  "uf": "RJ",
+  "origem_posicao": "centro_do_estado",
+  "dias": 441,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 26,
+    "az": 350,
+    "rmse_poa": 25.781095513046143
+   },
+   "hay_davies": {
+    "tilt": 20,
+    "az": 350,
+    "rmse_poa": 22.781316572916783
+   },
+   "perez": {
+    "tilt": 20,
+    "az": 350,
+    "rmse_poa": 24.250835066179555
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 1095.2596207677745,
+    "rmse_p": 0.3349665696918934
+   },
+   "ross": {
+    "k": 1193.133071837491,
+    "rmse_p": 0.3124811014002407
+   },
+   "painel_medido": {
+    "k": 1170.2965647938427,
+    "rmse_p": 0.31537636026063337
+   }
+  },
+  "ganho_perez": 0.05935591240070548,
+  "ganho_hay": 0.1163557591496206,
+  "ganho_ross": 0.06712749965566756
+ },
+ "PS_003": {
+  "uf": "RJ",
+  "origem_posicao": "centro_do_estado",
+  "dias": 441,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 26,
+    "az": 350,
+    "rmse_poa": 25.217376899689437
+   },
+   "hay_davies": {
+    "tilt": 20,
+    "az": 350,
+    "rmse_poa": 22.1841668144012
+   },
+   "perez": {
+    "tilt": 20,
+    "az": 350,
+    "rmse_poa": 23.734309336389313
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 1090.0047660389841,
+    "rmse_p": 0.31892704955708046
+   },
+   "ross": {
+    "k": 1187.9575013716524,
+    "rmse_p": 0.2932003631804774
+   },
+   "painel_medido": {
+    "k": 1165.7570670130735,
+    "rmse_p": 0.29561492867984457
+   }
+  },
+  "ganho_perez": 0.05881133351813406,
+  "ganho_hay": 0.12028253760705754,
+  "ganho_ross": 0.08066636684574668
+ },
+ "PS_004": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 441,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 24,
+    "az": 0,
+    "rmse_poa": 23.71602455304475
+   },
+   "hay_davies": {
+    "tilt": 20,
+    "az": 0,
+    "rmse_poa": 20.638788410134886
+   },
+   "perez": {
+    "tilt": 18,
+    "az": 0,
+    "rmse_poa": 20.34086821238698
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2342.0575974953485,
+    "rmse_p": 0.2390280637856199
+   },
+   "ross": {
+    "k": 2541.194246585069,
+    "rmse_p": 0.2112190988144228
+   },
+   "painel_medido": {
+    "k": 2467.8003888801286,
+    "rmse_p": 0.2214961720663406
+   }
+  },
+  "ganho_perez": 0.14231543457499318,
+  "ganho_hay": 0.1297534557711021,
+  "ganho_ross": 0.11634184091512556
+ },
+ "PS_015": {
+  "uf": "MG",
+  "origem_posicao": "centro_do_estado",
+  "dias": 293,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 28,
+    "az": 180,
+    "rmse_poa": 463.9859380883129
+   },
+   "hay_davies": {
+    "tilt": 26,
+    "az": 180,
+    "rmse_poa": 465.6416446475301
+   },
+   "perez": {
+    "tilt": 26,
+    "az": 180,
+    "rmse_poa": 452.0304042683106
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2441.767239659028,
+    "rmse_p": 0.9239177559999878
+   },
+   "ross": {
+    "k": 2559.232640536355,
+    "rmse_p": 0.9281028404362373
+   },
+   "painel_medido": {
+    "k": 2592.7288367600604,
+    "rmse_p": 0.9241885603836256
+   }
+  },
+  "ganho_perez": 0.0257670175722583,
+  "ganho_hay": -0.0035684412463854454,
+  "ganho_ross": -0.004529715344327112
+ },
+ "PS_016": {
+  "uf": "MG",
+  "origem_posicao": "centro_do_estado",
+  "dias": 221,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 40,
+    "az": 10,
+    "rmse_poa": 405.99205968122453
+   },
+   "hay_davies": {
+    "tilt": 40,
+    "az": 0,
+    "rmse_poa": 415.698836490919
+   },
+   "perez": {
+    "tilt": 40,
+    "az": 0,
+    "rmse_poa": 426.99201948668934
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.05172505053905119,
+  "ganho_hay": -0.02390878485977299,
+  "ganho_ross": NaN
+ },
+ "PS_017": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 260,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 11.007171435606088
+   },
+   "hay_davies": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 10.830168869939294
+   },
+   "perez": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 10.830168869939296
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2212.8734386817237,
+    "rmse_p": 0.24263262995698692
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": 0.016080658569032735,
+  "ganho_hay": 0.016080658569032957,
+  "ganho_ross": NaN
+ },
+ "PS_018": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 200,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 0,
+    "rmse_poa": 7.297946703427547
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 0,
+    "rmse_poa": 8.024777422629604
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 0,
+    "rmse_poa": 8.312023165372217
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3342.541589350082,
+    "rmse_p": 0.23484353921393358
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.13895366781294793,
+  "ganho_hay": -0.09959386506079793,
+  "ganho_ross": NaN
+ },
+ "PS_019": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 260,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 6,
+    "az": 0,
+    "rmse_poa": 23.622423479078336
+   },
+   "hay_davies": {
+    "tilt": 6,
+    "az": 0,
+    "rmse_poa": 28.305966635629513
+   },
+   "perez": {
+    "tilt": 6,
+    "az": 0,
+    "rmse_poa": 28.99713817906873
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3412.180230807062,
+    "rmse_p": 0.2249667875977522
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.2275259650962831,
+  "ganho_hay": -0.19826683577573023,
+  "ganho_ross": NaN
+ },
+ "PS_020": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 260,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 9.351581974236511
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 8.337745243759302
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 7.729503890048933
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2194.875947936676,
+    "rmse_p": 0.365142538346189
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": 0.17345493935212064,
+  "ganho_hay": 0.10841339286447105,
+  "ganho_ross": NaN
+ },
+ "PS_021": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 194,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 40,
+    "rmse_poa": 7.0018486433780724
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 30,
+    "rmse_poa": 8.372185497867813
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 30,
+    "rmse_poa": 8.225398884632268
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3319.5809848346566,
+    "rmse_p": 0.2253061770420703
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.1747467424065723,
+  "ganho_hay": -0.1957107221655987,
+  "ganho_ross": NaN
+ },
+ "PS_022": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 249,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 9.924995926029641
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 9.03525785183875
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 340,
+    "rmse_poa": 8.466770455255789
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 1913.0708221908394,
+    "rmse_p": 0.3562850802094906
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": 0.1469245409914436,
+  "ganho_hay": 0.08964619036844468,
+  "ganho_ross": NaN
+ },
+ "PS_023": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 250,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 30,
+    "rmse_poa": 11.75101322826067
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 30,
+    "rmse_poa": 13.52221631980012
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 30,
+    "rmse_poa": 13.72215816457672
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2316.2732417070074,
+    "rmse_p": 0.2092563686027848
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.16774255104875002,
+  "ganho_hay": -0.15072769106240003,
+  "ganho_ross": NaN
+ },
+ "PS_024": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 244,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 160,
+    "rmse_poa": 11.646632967498553
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 170,
+    "rmse_poa": 13.91542378922644
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 170,
+    "rmse_poa": 13.11818445296492
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2289.73624886908,
+    "rmse_p": 0.24716288456217844
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.12634994934355048,
+  "ganho_hay": -0.19480229419603434,
+  "ganho_ross": NaN
+ },
+ "PS_025": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 250,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 12.962990114719249
+   },
+   "hay_davies": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 12.847039559005289
+   },
+   "perez": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 12.847039559005289
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3526.370977865753,
+    "rmse_p": 0.21143289883888033
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": 0.008944738419749299,
+  "ganho_hay": 0.008944738419749299,
+  "ganho_ross": NaN
+ },
+ "PS_026": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 256,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 350,
+    "rmse_poa": 7.630448677361628
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 350,
+    "rmse_poa": 8.62425582744777
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 350,
+    "rmse_poa": 8.701247604782921
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2109.7635746509727,
+    "rmse_p": 0.19896839077579306
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.14033236742659572,
+  "ganho_hay": -0.13024229532329024,
+  "ganho_ross": NaN
+ },
+ "PS_027": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 201,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 50,
+    "rmse_poa": 6.844673797191338
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 40,
+    "rmse_poa": 6.383067813103117
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 40,
+    "rmse_poa": 5.837383070635537
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3357.083799924924,
+    "rmse_p": 0.22569844018865975
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": 0.14716416828646162,
+  "ganho_hay": 0.06744017286516091,
+  "ganho_ross": NaN
+ },
+ "PS_028": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 252,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 6,
+    "az": 110,
+    "rmse_poa": 66.30412031480257
+   },
+   "hay_davies": {
+    "tilt": 6,
+    "az": 120,
+    "rmse_poa": 61.65506933322343
+   },
+   "perez": {
+    "tilt": 8,
+    "az": 130,
+    "rmse_poa": 56.69664661463747
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 1001.4645837516587,
+    "rmse_p": 0.23936675624190512
+   },
+   "ross": {
+    "k": 1075.1216664196668,
+    "rmse_p": 0.22712048936016385
+   },
+   "painel_medido": {
+    "k": 1046.716134322908,
+    "rmse_p": 0.2383567204002367
+   }
+  },
+  "ganho_perez": 0.14490010054503666,
+  "ganho_hay": 0.07011707507023857,
+  "ganho_ross": 0.05116110137434926
+ },
+ "PS_029": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 250,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 7.701924670653492
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 9.71695436198862
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 15.598003245757322
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3229.975175129595,
+    "rmse_p": 0.9455334541345368
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -1.0252084917410476,
+  "ganho_hay": -0.261626772203182,
+  "ganho_ross": NaN
+ },
+ "PS_030": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 251,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 7.316905343922529
+   },
+   "hay_davies": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 8.254521531238089
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 20,
+    "rmse_poa": 7.944324269312495
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 2300.254038996769,
+    "rmse_p": 0.19872930658115773
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.08574921990908413,
+  "ganho_hay": -0.12814381808210085,
+  "ganho_ross": NaN
+ },
+ "PS_031": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 170,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 8.273798487580871
+   },
+   "hay_davies": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 8.27908133984081
+   },
+   "perez": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 8.28114734432534
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3005.9214668235163,
+    "rmse_p": 0.22386276743246494
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.0008882083308532351,
+  "ganho_hay": -0.0006385038586409486,
+  "ganho_ross": NaN
+ },
+ "PS_032": {
+  "uf": "SP",
+  "origem_posicao": "centro_do_estado",
+  "dias": 249,
+  "transposicao": {
+   "isotropica_biblioteca": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 14.697549836224454
+   },
+   "hay_davies": {
+    "tilt": 0,
+    "az": 0,
+    "rmse_poa": 14.685395759623093
+   },
+   "perez": {
+    "tilt": 2,
+    "az": 10,
+    "rmse_poa": 18.932915655036137
+   }
+  },
+  "temperatura": {
+   "linear": {
+    "k": 3308.1676352648406,
+    "rmse_p": 0.2867844809370963
+   },
+   "ross": {
+    "k": NaN,
+    "rmse_p": NaN
+   },
+   "painel_medido": {
+    "k": NaN,
+    "rmse_p": NaN
+   }
+  },
+  "ganho_perez": -0.28816815496505055,
+  "ganho_hay": 0.0008269457655727397,
+  "ganho_ross": NaN
+ },
+ "PORTAO": {
+  "n": 21,
+  "perez_ganha": 7,
+  "hay_ganha": 7,
+  "ross_ganha": 4,
+  "PASSA_transposicao": false,
+  "PASSA_temperatura": false
+ }
+}

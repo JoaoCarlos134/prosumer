@@ -1,0 +1,65 @@
+{
+ "AutoETS|usinas|A": {
+  "segundos": 109.5,
+  "janelas": 608,
+  "dobras": 5,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoTheta|usinas|A": {
+  "segundos": 4566.1,
+  "janelas": 608,
+  "dobras": 5,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "MSTL|usinas|A": {
+  "segundos": 5087.8,
+  "janelas": 608,
+  "dobras": 5,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoETS|casas_prod|A": {
+  "segundos": 46.3,
+  "janelas": 920,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoTheta|casas_prod|A": {
+  "segundos": 182.6,
+  "janelas": 920,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "MSTL|casas_prod|A": {
+  "segundos": 1286.2,
+  "janelas": 920,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoETS|casas_cons|A": {
+  "segundos": 103.8,
+  "janelas": 1820,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "AutoTheta|casas_cons|A": {
+  "segundos": 802.4,
+  "janelas": 1820,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ },
+ "MSTL|casas_cons|A": {
+  "segundos": 2569.1,
+  "janelas": 1820,
+  "dobras": 3,
+  "exogenas": false,
+  "config": "padrao"
+ }
+}

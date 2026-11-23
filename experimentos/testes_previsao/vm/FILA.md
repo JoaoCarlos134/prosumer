@@ -1,5 +1,12 @@
 # Fila do servidor de computacao (18/11/2026)
 
+**Sem GitHub por desenho (decisao do usuario, 18/11/2026).** O clone do servidor NAO e ligado ao GitHub: nao ha
+credencial e nao se faz push daqui. Os commits (portoes, scripts, registros) ficam no ramo local `vm/2026-11`; ao
+fim das rodadas o usuario leva o ramo e os resultados a mao para a maquina de CPU (por exemplo `git bundle create
+vm.bundle main..vm/2026-11` + os agregados de `resultados/pilotos/`), onde sao revisados e juntados no `main`.
+`git fetch` do repositorio publico e permitido para atualizar a base. Toda rodada tem de andar SEM supervisao: jobs
+em cadeia com `--dependency`, idempotentes, cada um registrando inicio/fim/falha em `~/Projeto_IA/STATUS.md`.
+
 Complementa o prompt privado do servidor (que segue valendo: pastas, identidade, guarda de push, ambientes V0,
 higiene dos jobs). Decisao do usuario em 18/11: **o maximo possivel vai para o servidor**, que tem espaco e esta
 livre; a GPU costuma estar mais livre que a CPU, entao os jobs de GPU vem primeiro. A maquina de CPU fica com a
@@ -21,6 +28,23 @@ coleta_ens` (um pendente) e a linha `ok` em `~/Projeto_IA/STATUS.md`. Se o no na
 cair, alternativa: `crontab -e` com `30 2 * * * <python> <repo>/experimentos/testes_previsao/scripts/10_coleta_ensembles.py --saida ~/Projeto_IA/ensembles`
 (o cron usa o fuso do sistema: ajustar a hora para 02:30 UTC). O P3 (media do ensemble para os dias 4-15, membros
 como faixa) e testado depois de 2-3 meses de coleta: escrever o portao entao.
+
+## V0 (18/11): partido em dois
+
+`slurm/01a_v0_rapido.sbatch` (test_auditoria + torch na GPU nos 3 ambientes; minutos) libera a fila (afterok);
+`slurm/01b_v0_paridade.sbatch` (paridade completa, `gpu_train`, 24 h, 8 CPUs, sem GPU) roda ao lado e nao bloqueia
+nada. A suite da biblioteca rodou em 17/11: 712 ok, 2 falhas = `test_clear_sky_is_bit_identical` por 1 ulp (numpy
+2.5.5 / pandas 3.1.1; o mesmo do ambiente da nuvem em 23/10, CLAUDE.md): ambiente, nao codigo, nao bloqueia.
+O V0 de 16/11 (um job so, 3 h) estourou o tempo na paridade e a fila afterok morreu (DependencyNeverSatisfied).
+
+## Estado em 18/11/2026 (fim da sessao)
+
+Tudo abaixo esta na fila Slurm (`slurm/fila_18nov.sh`, 57 jobs, ids em `~/Projeto_IA/logs/fila_18nov.ids`), com
+portao commitado antes (`PILOTOS_F1_F2.md`). Mudancas em relacao ao plano: V9 DESTRAVADO (token de leitura do
+HuggingFace do usuario, fora do repo; `huggyllama/llama-7b`, o checkpoint do codigo dos autores); V7 so com o
+Chronos-2 (TiRex-2 e Toto-2.0 nao tem codigo de treino nos pacotes); V1 sem o regime B (NASA cobre 55 % das horas
+novas); C10 feito na sessao (`docs/projeto/DADOS_PUBLICOS_C10.md`): o PVDAQ residencial (1158 sistemas com 2024-2025)
+e o candidato para o V11 num sitio novo e para o P5 fora do Brasil (portao ainda por escrever).
 
 ## 1. GPU (em ordem; um job de GPU por vez)
 
@@ -56,5 +80,11 @@ colecao do EDS-lab, ou outro) ou da estimativa de posicao de C6.
 
 ## 3. Quando cada rodada termina
 
-Resultados agregados + registro em `PILOTOS_F1_F2.md` no ramo do servidor, push do RAMO; a maquina de CPU revisa
+Resultados agregados + registro em `PILOTOS_F1_F2.md` no ramo local do servidor (commit, SEM push); o usuario leva o ramo a maquina de CPU, que revisa
 (`work-reviewer`) e junta no `main`. Nada de dado de usina por hora no git (`git status` antes de cada commit).
+
+## Estado em 23/11/2026
+
+Fila de 18/11 terminada; vereditos em `docs/projeto/PILOTOS_F1_F2.md` ("Resultados da fila do servidor de 18/11/2026").
+Na fila so a coleta diaria dos ensembles (ok todo dia de 19 a 23/11). A refazer no servidor quando os scripts forem
+consertados: C9 (validacao), P2 (fonte das rodadas unicas), V9 (dtype), Crossformer/Mamba (caminho `models`).

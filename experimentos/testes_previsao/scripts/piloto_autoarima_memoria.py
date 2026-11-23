@@ -31,7 +31,7 @@ from comum import H, dobras  # noqa: E402
 from piloto_comum import PILOTOS  # noqa: E402
 
 C = importlib.import_module("02b_classicos")
-LIMITE_GB = 16
+LIMITE_GB = float(os.environ.get("LIMITE_GB", 16))   # VM (2026-11-16): o job calcula o limite pela RAM livre do no
 ARGS = dict(a.split("=", 1) for a in sys.argv[1:] if "=" in a)
 SERIE, REGIME = ARGS.get("serie", "Cascavel"), ARGS.get("regime", "B")
 HIST = int(ARGS["historico"]) if "historico" in ARGS else None
@@ -40,7 +40,14 @@ etapa = {"nome": "carga"}
 
 
 def memoria_privada_gb():
-    """Memoria privada (commit) do processo pela API do Windows: o ambiente classicos e congelado e nao tem psutil."""
+    """Memoria privada (commit) do processo pela API do Windows: o ambiente classicos e congelado e nao tem psutil.
+    Em Linux (VM, 2026-11-16): VmRSS de /proc/self/status (residente; o commit do Windows e o analogo mais proximo)."""
+    if sys.platform != "win32":
+        with open("/proc/self/status") as f:
+            for linha in f:
+                if linha.startswith("VmRSS:"):
+                    return int(linha.split()[1]) / 2**20
+        return 0.0
     import ctypes
     from ctypes import wintypes
 

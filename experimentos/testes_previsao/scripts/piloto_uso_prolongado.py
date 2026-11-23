@@ -44,6 +44,7 @@ JAN_A, JAN_B, JAN_C, MIN_C = 365, 90, 60, 30                        # janelas do
 B_LIM = (0.7, 1.3)
 HISTORICO_LB = 365
 SERIES = list(SITIOS)
+ARQ_USINAS, ARQ_HORIZONTE = "usinas_horario.parquet", "previsao_tempo_horizonte.parquet"   # V11-b troca pelos _v1
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
@@ -53,7 +54,7 @@ def arq(serie):
 
 # ------------------------------------------------------------------ replay
 def _serie(serie):
-    u = pd.read_parquet(DADOS / "usinas_horario.parquet")
+    u = pd.read_parquet(DADOS / ARQ_USINAS)
     u = u[u.serie == serie].sort_values("ds")
     x = pd.DataFrame({"unique_id": serie, "ds": pd.to_datetime(u.ds).dt.tz_localize(FUSO),
                       "y": (u.y_Wh / 1000.0).where(u.y_valido).to_numpy()})
@@ -83,7 +84,7 @@ def _tempo(H, primeiro):
 def replay(serie):
     site = SITIOS[serie]
     x = _serie(serie)
-    H = pd.read_parquet(DADOS / "previsao_tempo_horizonte.parquet")
+    H = pd.read_parquet(DADOS / ARQ_HORIZONTE)
     H = H[H.serie == serie].copy()
     H["dia"] = pd.to_datetime(H.ds).dt.normalize()
     feitos, antigos = set(), []

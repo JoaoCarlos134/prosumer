@@ -1,0 +1,130 @@
+{
+ "Chronos-2|usinas|A": {
+  "segundos": 28.0,
+  "janelas": 598
+ },
+ "Chronos-2|usinas|B": {
+  "segundos": 124.6,
+  "janelas": 598
+ },
+ "Chronos-2|usinas|C": {
+  "segundos": 125.9,
+  "janelas": 598
+ },
+ "Chronos-2|casas_prod|A": {
+  "segundos": 37.1,
+  "janelas": 920
+ },
+ "Chronos-2|casas_prod|B": {
+  "segundos": 192.6,
+  "janelas": 920
+ },
+ "Chronos-2|casas_cons|A": {
+  "segundos": 72.8,
+  "janelas": 1820
+ },
+ "Chronos-2|casas_cons|B": {
+  "segundos": 381.6,
+  "janelas": 1820
+ },
+ "Chronos-Bolt-small|usinas|A": {
+  "segundos": 6.3,
+  "janelas": 598
+ },
+ "Chronos-Bolt-small|casas_prod|A": {
+  "segundos": 9.0,
+  "janelas": 920
+ },
+ "Chronos-Bolt-small|casas_cons|A": {
+  "segundos": 17.2,
+  "janelas": 1820
+ },
+ "TimesFM-2.5|usinas|A": {
+  "segundos": 63.8,
+  "janelas": 598
+ },
+ "TimesFM-2.5|usinas|B": {
+  "segundos": 66.8,
+  "janelas": 598
+ },
+ "TimesFM-2.5|usinas|C": {
+  "segundos": 65.3,
+  "janelas": 598
+ },
+ "TimesFM-2.5|casas_prod|A": {
+  "segundos": 95.9,
+  "janelas": 920
+ },
+ "TimesFM-2.5|casas_prod|B": {
+  "segundos": 98.6,
+  "janelas": 920
+ },
+ "TimesFM-2.5|casas_cons|A": {
+  "segundos": 186.2,
+  "janelas": 1820
+ },
+ "TimesFM-2.5|casas_cons|B": {
+  "segundos": 190.4,
+  "janelas": 1820
+ },
+ "TiRex|usinas|A": {
+  "segundos": 33.9,
+  "janelas": 598
+ },
+ "TiRex|casas_prod|A": {
+  "segundos": 51.7,
+  "janelas": 920
+ },
+ "TiRex|casas_cons|A": {
+  "segundos": 101.0,
+  "janelas": 1820
+ },
+ "TTM-r2|usinas|A": {
+  "segundos": 1.4,
+  "janelas": 598
+ },
+ "TTM-r2|casas_prod|A": {
+  "segundos": 1.5,
+  "janelas": 920
+ },
+ "TTM-r2|casas_cons|A": {
+  "segundos": 2.6,
+  "janelas": 1820
+ },
+ "Toto|usinas|A": {
+  "segundos": 10.0,
+  "janelas": 598
+ },
+ "Toto|casas_prod|A": {
+  "segundos": 14.2,
+  "janelas": 920
+ },
+ "Toto|casas_cons|A": {
+  "segundos": 27.3,
+  "janelas": 1820
+ },
+ "FlowState|usinas|A": {
+  "segundos": 103.1,
+  "janelas": 598
+ },
+ "FlowState|casas_prod|A": {
+  "segundos": 155.4,
+  "janelas": 920
+ },
+ "FlowState|casas_cons|A": {
+  "segundos": 311.2,
+  "janelas": 1820
+ },
+ "Moirai-2.0-small|usinas|A": {
+  "segundos": 3.7,
+  "janelas": 598
+ },
+ "Moirai-2.0-small|casas_prod|A": {
+  "segundos": 5.6,
+  "janelas": 920
+ },
+ "Moirai-2.0-small|casas_cons|A": {
+  "segundos": 11.2,
+  "janelas": 1820
+ }
+}

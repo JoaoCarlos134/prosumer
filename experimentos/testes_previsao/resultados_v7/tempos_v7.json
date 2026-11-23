@@ -1,0 +1,38 @@
+{
+ "Chronos-2-ft|usinas|A": {
+  "segundos": 192,
+  "janelas": 598,
+  "context_length": 1024,
+  "learning_rate": 1e-05,
+  "num_steps": 500,
+  "batch_size": 64,
+  "finetune_mode": "full"
+ },
+ "Chronos-2-ft|usinas|C": {
+  "segundos": 191,
+  "janelas": 598,
+  "context_length": 1024,
+  "learning_rate": 1e-05,
+  "num_steps": 500,
+  "batch_size": 64,
+  "finetune_mode": "full"
+ },
+ "Chronos-2-ft|casas_prod|A": {
+  "segundos": 110,
+  "janelas": 920,
+  "context_length": 1024,
+  "learning_rate": 1e-05,
+  "num_steps": 500,
+  "batch_size": 64,
+  "finetune_mode": "full"
+ },
+ "Chronos-2-ft|casas_cons|A": {
+  "segundos": 110,
+  "janelas": 1820,
+  "context_length": 1024,
+  "learning_rate": 1e-05,
+  "num_steps": 500,
+  "batch_size": 64,
+  "finetune_mode": "full"
+ }
+}

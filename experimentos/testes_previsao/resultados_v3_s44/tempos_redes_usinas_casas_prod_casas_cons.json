@@ -1,0 +1,806 @@
+{
+ "LSTM|usinas|A": {
+  "segundos": 16.4,
+  "parametros": 215809,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "GRU|usinas|A": {
+  "segundos": 35.1,
+  "parametros": 388857,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NHITS|usinas|A": {
+  "segundos": 18.5,
+  "parametros": 2817570,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TiDE|usinas|A": {
+  "segundos": 16.6,
+  "parametros": 1494778,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "KAN|usinas|A": {
+  "segundos": 17.8,
+  "parametros": 983040,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NBEATSx|usinas|A": {
+  "segundos": 21.0,
+  "parametros": 2781666,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DeepAR|usinas|A": {
+  "segundos": 29.8,
+  "parametros": 199560,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "FEDformer|usinas|A": {
+  "segundos": 206.2,
+  "parametros": 642817,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Autoformer|usinas|A": {
+  "segundos": 102.6,
+  "parametros": 290561,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Informer|usinas|A": {
+  "segundos": 55.3,
+  "parametros": 341985,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TCN|usinas|A": {
+  "segundos": 16.5,
+  "parametros": 152665,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DLinear|usinas|A": {
+  "segundos": 13.3,
+  "parametros": 8112,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "iTransformer|usinas|A": {
+  "segundos": 22.2,
+  "parametros": 6404632,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "PatchTST|usinas|A": {
+  "segundos": 28.2,
+  "parametros": 466843,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeMixer|usinas|A": {
+  "segundos": 53.3,
+  "parametros": 323606,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeXer|usinas|A": {
+  "segundos": 30.2,
+  "parametros": 8640024,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimesNet|usinas|A": {
+  "segundos": 172.2,
+  "parametros": 4720193,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "LSTM|usinas|B": {
+  "segundos": 20.6,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|B": {
+  "segundos": 45.9,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|B": {
+  "segundos": 24.6,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|B": {
+  "segundos": 22.1,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|B": {
+  "segundos": 21.4,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|B": {
+  "segundos": 24.6,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|B": {
+  "segundos": 31.7,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|B": {
+  "segundos": 210.1,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|B": {
+  "segundos": 117.5,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|B": {
+  "segundos": 64.1,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|B": {
+  "segundos": 66.1,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|B": {
+  "segundos": 26.4,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "LSTM|usinas|C": {
+  "segundos": 19.6,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|C": {
+  "segundos": 41.8,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|C": {
+  "segundos": 22.4,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|C": {
+  "segundos": 19.7,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|C": {
+  "segundos": 19.0,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|C": {
+  "segundos": 22.5,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|C": {
+  "segundos": 29.7,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|C": {
+  "segundos": 208.6,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|C": {
+  "segundos": 109.7,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|C": {
+  "segundos": 63.9,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|C": {
+  "segundos": 60.4,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|C": {
+  "segundos": 26.3,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "SparseTSF|usinas|A": {
+  "segundos": 16.6,
+  "parametros": 32,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "ResNet-1D|usinas|A": {
+  "segundos": 59.9,
+  "parametros": 122328,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "CycleNet|usinas|A": {
+  "segundos": 22.8,
+  "parametros": 4104,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "LSTM|casas_prod|A": {
+  "segundos": 17.8,
+  "parametros": 215809,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "GRU|casas_prod|A": {
+  "segundos": 39.7,
+  "parametros": 388857,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NHITS|casas_prod|A": {
+  "segundos": 19.9,
+  "parametros": 2817570,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TiDE|casas_prod|A": {
+  "segundos": 15.3,
+  "parametros": 1494778,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "KAN|casas_prod|A": {
+  "segundos": 15.6,
+  "parametros": 983040,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NBEATSx|casas_prod|A": {
+  "segundos": 21.7,
+  "parametros": 2781666,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DeepAR|casas_prod|A": {
+  "segundos": 42.6,
+  "parametros": 199560,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "FEDformer|casas_prod|A": {
+  "segundos": 157.6,
+  "parametros": 642817,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Autoformer|casas_prod|A": {
+  "segundos": 78.4,
+  "parametros": 290561,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Informer|casas_prod|A": {
+  "segundos": 59.3,
+  "parametros": 341985,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TCN|casas_prod|A": {
+  "segundos": 17.2,
+  "parametros": 152665,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DLinear|casas_prod|A": {
+  "segundos": 10.6,
+  "parametros": 8112,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "iTransformer|casas_prod|A": {
+  "segundos": 22.4,
+  "parametros": 6404632,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "PatchTST|casas_prod|A": {
+  "segundos": 34.8,
+  "parametros": 466843,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeMixer|casas_prod|A": {
+  "segundos": 52.8,
+  "parametros": 324670,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeXer|casas_prod|A": {
+  "segundos": 40.9,
+  "parametros": 8644120,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimesNet|casas_prod|A": {
+  "segundos": 131.7,
+  "parametros": 4720193,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "LSTM|casas_prod|B": {
+  "segundos": 13.6,
+  "parametros": 218369,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|casas_prod|B": {
+  "segundos": 34.1,
+  "parametros": 391769,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|casas_prod|B": {
+  "segundos": 16.5,
+  "parametros": 3604002,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|casas_prod|B": {
+  "segundos": 13.3,
+  "parametros": 2288926,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|casas_prod|B": {
+  "segundos": 14.6,
+  "parametros": 4915200,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|casas_prod|B": {
+  "segundos": 18.5,
+  "parametros": 3961314,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|casas_prod|B": {
+  "segundos": 42.7,
+  "parametros": 201608,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|casas_prod|B": {
+  "segundos": 159.4,
+  "parametros": 643841,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|casas_prod|B": {
+  "segundos": 93.5,
+  "parametros": 291585,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|casas_prod|B": {
+  "segundos": 48.8,
+  "parametros": 343009,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|casas_prod|B": {
+  "segundos": 39.7,
+  "parametros": 1373230,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|casas_prod|B": {
+  "segundos": 16.7,
+  "parametros": 91582,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "SparseTSF|casas_prod|A": {
+  "segundos": 9.0,
+  "parametros": 32,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "ResNet-1D|casas_prod|A": {
+  "segundos": 47.1,
+  "parametros": 122328,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "CycleNet|casas_prod|A": {
+  "segundos": 12.6,
+  "parametros": 4296,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "LSTM|casas_cons|A": {
+  "segundos": 20.4,
+  "parametros": 215809,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "GRU|casas_cons|A": {
+  "segundos": 52.9,
+  "parametros": 388857,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NHITS|casas_cons|A": {
+  "segundos": 23.2,
+  "parametros": 2817570,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TiDE|casas_cons|A": {
+  "segundos": 18.4,
+  "parametros": 1494778,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "KAN|casas_cons|A": {
+  "segundos": 19.6,
+  "parametros": 983040,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "NBEATSx|casas_cons|A": {
+  "segundos": 25.1,
+  "parametros": 2781666,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DeepAR|casas_cons|A": {
+  "segundos": 71.6,
+  "parametros": 199560,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "FEDformer|casas_cons|A": {
+  "segundos": 192.3,
+  "parametros": 642817,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Autoformer|casas_cons|A": {
+  "segundos": 119.7,
+  "parametros": 290561,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "Informer|casas_cons|A": {
+  "segundos": 71.0,
+  "parametros": 341985,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TCN|casas_cons|A": {
+  "segundos": 18.3,
+  "parametros": 152665,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "DLinear|casas_cons|A": {
+  "segundos": 13.0,
+  "parametros": 8112,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "iTransformer|casas_cons|A": {
+  "segundos": 24.3,
+  "parametros": 6404632,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "PatchTST|casas_cons|A": {
+  "segundos": 41.0,
+  "parametros": 466843,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeMixer|casas_cons|A": {
+  "segundos": 58.1,
+  "parametros": 326000,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimeXer|casas_cons|A": {
+  "segundos": 69.2,
+  "parametros": 8649240,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "TimesNet|casas_cons|A": {
+  "segundos": 172.6,
+  "parametros": 4720193,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "LSTM|casas_cons|B": {
+  "segundos": 18.6,
+  "parametros": 218369,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|casas_cons|B": {
+  "segundos": 42.0,
+  "parametros": 391769,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|casas_cons|B": {
+  "segundos": 20.4,
+  "parametros": 3604002,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|casas_cons|B": {
+  "segundos": 18.8,
+  "parametros": 2288926,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|casas_cons|B": {
+  "segundos": 19.5,
+  "parametros": 4915200,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|casas_cons|B": {
+  "segundos": 21.4,
+  "parametros": 3961314,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|casas_cons|B": {
+  "segundos": 67.5,
+  "parametros": 201608,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|casas_cons|B": {
+  "segundos": 194.5,
+  "parametros": 643841,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|casas_cons|B": {
+  "segundos": 118.0,
+  "parametros": 291585,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|casas_cons|B": {
+  "segundos": 60.3,
+  "parametros": 343009,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|casas_cons|B": {
+  "segundos": 53.9,
+  "parametros": 1373230,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|casas_cons|B": {
+  "segundos": 17.4,
+  "parametros": 103772,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "SparseTSF|casas_cons|A": {
+  "segundos": 12.8,
+  "parametros": 32,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "ResNet-1D|casas_cons|A": {
+  "segundos": 65.2,
+  "parametros": 122328,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ },
+ "CycleNet|casas_cons|A": {
+  "segundos": 22.7,
+  "parametros": 7416,
+  "dobras": 3,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130"
+ }
+}

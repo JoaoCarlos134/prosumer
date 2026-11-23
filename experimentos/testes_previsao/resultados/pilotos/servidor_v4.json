@@ -1,0 +1,109 @@
+{
+ "casas_cons|A": {
+  "n_modelos": 46,
+  "posicao_ensemble": {
+   "abr-jun": {
+    "Ensemble-mediana-corrigida": 1,
+    "Ensemble-mediana": 5
+   },
+   "jul-set": {
+    "Ensemble-mediana-corrigida": 2,
+    "Ensemble-mediana": 9
+   },
+   "out-dez": {
+    "Ensemble-mediana-corrigida": 1,
+    "Ensemble-mediana": 7
+   }
+  },
+  "spearman_entre_estacoes": {
+   "abr-jun|jul-set": 0.9194572926302806,
+   "abr-jun|out-dez": 0.8903484427998767,
+   "jul-set|out-dez": 0.9728646315140301
+  },
+  "ensemble_no_quartil_de_cima": true,
+  "melhor_por_estacao": {
+   "abr-jun": "Ensemble-mediana-corrigida",
+   "jul-set": "Sundial-128m",
+   "out-dez": "Ensemble-mediana-corrigida"
+  }
+ },
+ "casas_cons|B": {
+  "n_modelos": 23,
+  "posicao_ensemble": {
+   "abr-jun": {
+    "Ensemble-mediana-corrigida": 2,
+    "Ensemble-mediana": 8
+   },
+   "jul-set": {
+    "Ensemble-mediana-corrigida": 1,
+    "Ensemble-mediana": 7
+   },
+   "out-dez": {
+    "Ensemble-mediana-corrigida": 1,
+    "Ensemble-mediana": 6
+   }
+  },
+  "spearman_entre_estacoes": {
+   "abr-jun|jul-set": 0.8675889328063242,
+   "abr-jun|out-dez": 0.7509881422924901,
+   "jul-set|out-dez": 0.9110671936758895
+  },
+  "ensemble_no_quartil_de_cima": true,
+  "melhor_por_estacao": {
+   "abr-jun": "TabPFN-TS",
+   "jul-set": "Ensemble-mediana-corrigida",
+   "out-dez": "Ensemble-mediana-corrigida"
+  }
+ },
+ "casas_prod|A": {
+  "n_modelos": 45,
+  "posicao_ensemble": {
+   "abr-jun": {
+    "Ensemble-mediana": 4
+   },
+   "jul-set": {
+    "Ensemble-mediana": 6
+   },
+   "out-dez": {
+    "Ensemble-mediana": 2
+   }
+  },
+  "spearman_entre_estacoes": {
+   "abr-jun|jul-set": 0.8869565217391303,
+   "abr-jun|out-dez": 0.6067193675889327,
+   "jul-set|out-dez": 0.6852437417654809
+  },
+  "ensemble_no_quartil_de_cima": true,
+  "melhor_por_estacao": {
+   "abr-jun": "TTM-r2",
+   "jul-set": "AutoTheta",
+   "out-dez": "Toto-2.0-313m"
+  }
+ },
+ "casas_prod|B": {
+  "n_modelos": 23,
+  "posicao_ensemble": {
+   "abr-jun": {
+    "Ensemble-mediana": 2
+   },
+   "jul-set": {
+    "Ensemble-mediana": 1
+   },
+   "out-dez": {
+    "Ensemble-mediana": 7
+   }
+  },
+  "spearman_entre_estacoes": {
+   "abr-jun|jul-set": 0.48023715415019763,
+   "abr-jun|out-dez": 0.36067193675889325,
+   "jul-set|out-dez": 0.44960474308300397
+  },
+  "ensemble_no_quartil_de_cima": false,
+  "melhor_por_estacao": {
+   "abr-jun": "TiRex-2",
+   "jul-set": "Ensemble-mediana",
+   "out-dez": "Chronos-2"
+  }
+ },
+ "PASSA": false
+}

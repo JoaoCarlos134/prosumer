@@ -1,0 +1,42 @@
+{
+ "Chronos-2|usinas|A": {
+  "segundos": 16.6,
+  "janelas": 330
+ },
+ "Chronos-2|usinas|C": {
+  "segundos": 68.8,
+  "janelas": 330
+ },
+ "Chronos-Bolt-small|usinas|A": {
+  "segundos": 11.5,
+  "janelas": 330
+ },
+ "TimesFM-2.5|usinas|A": {
+  "segundos": 54.1,
+  "janelas": 330
+ },
+ "TimesFM-2.5|usinas|C": {
+  "segundos": 41.3,
+  "janelas": 330
+ },
+ "TiRex|usinas|A": {
+  "segundos": 23.1,
+  "janelas": 330
+ },
+ "TTM-r2|usinas|A": {
+  "segundos": 5.2,
+  "janelas": 330
+ },
+ "Toto|usinas|A": {
+  "segundos": 17.7,
+  "janelas": 330
+ },
+ "FlowState|usinas|A": {
+  "segundos": 60.3,
+  "janelas": 330
+ },
+ "Moirai-2.0-small|usinas|A": {
+  "segundos": 2.0,
+  "janelas": 330
+ }
+}

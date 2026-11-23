@@ -1,0 +1,387 @@
+{
+ "NHITS|usinas|A": {
+  "segundos": 30.8,
+  "parametros": 2817570,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "KAN|usinas|A": {
+  "segundos": 32.2,
+  "parametros": 983040,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "NBEATSx|usinas|A": {
+  "segundos": 37.7,
+  "parametros": 2781666,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TCN|usinas|A": {
+  "segundos": 31.7,
+  "parametros": 152665,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "DLinear|usinas|A": {
+  "segundos": 24.2,
+  "parametros": 8112,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "iTransformer|usinas|A": {
+  "segundos": 37.8,
+  "parametros": 6404632,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "PatchTST|usinas|A": {
+  "segundos": 48.0,
+  "parametros": 466843,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "LSTM|usinas|A": {
+  "segundos": 45.4,
+  "parametros": 215809,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "GRU|usinas|A": {
+  "segundos": 67.3,
+  "parametros": 388857,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "SparseTSF|usinas|A": {
+  "segundos": 19.2,
+  "parametros": 32,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "ResNet-1D|usinas|A": {
+  "segundos": 57.9,
+  "parametros": 122328,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TiDE|usinas|A": {
+  "segundos": 19.3,
+  "parametros": 1494778,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "LSTM|usinas|B": {
+  "segundos": 33.9,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|B": {
+  "segundos": 58.8,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|B": {
+  "segundos": 29.1,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|B": {
+  "segundos": 26.6,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|B": {
+  "segundos": 27.2,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|B": {
+  "segundos": 28.7,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|B": {
+  "segundos": 105.2,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|B": {
+  "segundos": 25.9,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "LSTM|usinas|C": {
+  "segundos": 35.5,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|C": {
+  "segundos": 60.7,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|C": {
+  "segundos": 31.8,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|C": {
+  "segundos": 28.4,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|C": {
+  "segundos": 29.0,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|C": {
+  "segundos": 33.2,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|C": {
+  "segundos": 100.9,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|C": {
+  "segundos": 24.3,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|A": {
+  "segundos": 42.3,
+  "parametros": 199560,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "FEDformer|usinas|A": {
+  "segundos": 272.1,
+  "parametros": 642817,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "Autoformer|usinas|A": {
+  "segundos": 158.9,
+  "parametros": 290561,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "Informer|usinas|A": {
+  "segundos": 65.4,
+  "parametros": 341985,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TimeMixer|usinas|A": {
+  "segundos": 50.6,
+  "parametros": 323606,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "TimeXer|usinas|A": {
+  "segundos": 66.6,
+  "parametros": 8640024,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "DeepAR|usinas|B": {
+  "segundos": 53.8,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|B": {
+  "segundos": 298.3,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|B": {
+  "segundos": 182.7,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|B": {
+  "segundos": 74.0,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|C": {
+  "segundos": 47.4,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|C": {
+  "segundos": 302.1,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|C": {
+  "segundos": 183.8,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|C": {
+  "segundos": 75.1,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TimesNet|usinas|A": {
+  "segundos": 714.9,
+  "parametros": 4720193,
+  "dobras": 5,
+  "dispositivo": "cuda"
+ },
+ "CycleNet|usinas|A": {
+  "segundos": 13.1,
+  "parametros": 4104,
+  "dobras": 5,
+  "dispositivo": "cpu",
+  "torch": "2.9.1+cu128"
+ },
+ "LSTM|usinas|C6": {
+  "segundos": 16.6,
+  "parametros": 218369,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "GRU|usinas|C6": {
+  "segundos": 30.7,
+  "parametros": 391769,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NHITS|usinas|C6": {
+  "segundos": 17.2,
+  "parametros": 3604002,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TiDE|usinas|C6": {
+  "segundos": 15.5,
+  "parametros": 2288926,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "KAN|usinas|C6": {
+  "segundos": 15.8,
+  "parametros": 4915200,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "NBEATSx|usinas|C6": {
+  "segundos": 17.8,
+  "parametros": 3961314,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "DeepAR|usinas|C6": {
+  "segundos": 25.2,
+  "parametros": 201608,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "FEDformer|usinas|C6": {
+  "segundos": 197.3,
+  "parametros": 643841,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Autoformer|usinas|C6": {
+  "segundos": 106.3,
+  "parametros": 291585,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "Informer|usinas|C6": {
+  "segundos": 61.4,
+  "parametros": 343009,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TFT|usinas|C6": {
+  "segundos": 55.0,
+  "parametros": 1373230,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ },
+ "TSMixerx|usinas|C6": {
+  "segundos": 22.3,
+  "parametros": 81830,
+  "dobras": 5,
+  "dispositivo": "cuda",
+  "torch": "2.14.1+cu130",
+  "normalizacao": "treino_sem_validacao_2026-10-06"
+ }
+}

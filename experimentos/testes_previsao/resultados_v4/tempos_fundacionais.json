@@ -1,0 +1,82 @@
+{
+ "Chronos-2|casas_prod|A": {
+  "segundos": 113.4,
+  "janelas": 2750
+ },
+ "Chronos-2|casas_prod|B": {
+  "segundos": 576.7,
+  "janelas": 2750
+ },
+ "Chronos-2|casas_cons|A": {
+  "segundos": 218.2,
+  "janelas": 5480
+ },
+ "Chronos-2|casas_cons|B": {
+  "segundos": 1143.4,
+  "janelas": 5480
+ },
+ "Chronos-Bolt-small|casas_prod|A": {
+  "segundos": 24.7,
+  "janelas": 2750
+ },
+ "Chronos-Bolt-small|casas_cons|A": {
+  "segundos": 48.4,
+  "janelas": 5480
+ },
+ "TimesFM-2.5|casas_prod|A": {
+  "segundos": 269.8,
+  "janelas": 2750
+ },
+ "TimesFM-2.5|casas_prod|B": {
+  "segundos": 277.5,
+  "janelas": 2750
+ },
+ "TimesFM-2.5|casas_cons|A": {
+  "segundos": 538.3,
+  "janelas": 5480
+ },
+ "TimesFM-2.5|casas_cons|B": {
+  "segundos": 550.7,
+  "janelas": 5480
+ },
+ "TiRex|casas_prod|A": {
+  "segundos": 143.8,
+  "janelas": 2750
+ },
+ "TiRex|casas_cons|A": {
+  "segundos": 283.6,
+  "janelas": 5480
+ },
+ "TTM-r2|casas_prod|A": {
+  "segundos": 3.9,
+  "janelas": 2750
+ },
+ "TTM-r2|casas_cons|A": {
+  "segundos": 7.5,
+  "janelas": 5480
+ },
+ "Toto|casas_prod|A": {
+  "segundos": 40.8,
+  "janelas": 2750
+ },
+ "Toto|casas_cons|A": {
+  "segundos": 80.1,
+  "janelas": 5480
+ },
+ "FlowState|casas_prod|A": {
+  "segundos": 472.4,
+  "janelas": 2750
+ },
+ "FlowState|casas_cons|A": {
+  "segundos": 941.2,
+  "janelas": 5480
+ },
+ "Moirai-2.0-small|casas_prod|A": {
+  "segundos": 16.6,
+  "janelas": 2750
+ },
+ "Moirai-2.0-small|casas_cons|A": {
+  "segundos": 36.2,
+  "janelas": 5480
+ }
+}

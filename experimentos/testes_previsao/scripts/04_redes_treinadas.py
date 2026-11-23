@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore"); logging.getLogger("pytorch_lightning").setLev
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 from neuralforecast import NeuralForecast
 from neuralforecast import models as M
-from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO
+from comum import carrega, grava, janelas, dobras, normaliza_por_treino, CASOS, EXOG, H, ENTRADA_NN, RES, PREV, REGIMES, DISPOSITIVO, SEMENTE
 from redes_proprias import (DEV, RECEITA_CROSSFORMER, RECEITA_MAMBA, CycleNet, ResNet1D, SparseTSF, chama_tslib,
                             crossformer, mamba, treina_multivariado, treina_proprio)
 
@@ -37,7 +37,7 @@ def _le_tempos():
 tempos = _le_tempos()
 COMUM = dict(h=H, input_size=ENTRADA_NN, max_steps=500, val_check_steps=50, early_stop_patience_steps=4,
              batch_size=16, windows_batch_size=128, inference_windows_batch_size=128,
-             scaler_type="robust", random_seed=42, accelerator="gpu" if DISPOSITIVO == "cuda" else "cpu",
+             scaler_type="robust", random_seed=SEMENTE, accelerator="gpu" if DISPOSITIVO == "cuda" else "cpu",
              enable_progress_bar=False,
              logger=False, enable_model_summary=False)
 

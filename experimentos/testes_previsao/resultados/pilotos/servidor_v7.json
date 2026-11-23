@@ -1,0 +1,27 @@
+{
+ "usinas|A": {
+  "zero_shot": 0.0586409114012205,
+  "ajustado": 0.1246620097042258,
+  "ganho": 0.06602109830300532,
+  "ganha": true
+ },
+ "usinas|C": {
+  "zero_shot": 0.2765813212894884,
+  "ajustado": 0.3663499709763818,
+  "ganho": 0.08976864968689335,
+  "ganha": true
+ },
+ "casas_prod|A": {
+  "zero_shot": 0.1179414215767462,
+  "ajustado": 0.0560244226800352,
+  "ganho": -0.061916998896711,
+  "ganha": false
+ },
+ "casas_cons|A": {
+  "zero_shot": 0.1833985880797903,
+  "ajustado": 0.2121988311851953,
+  "ganho": 0.02880024310540502,
+  "ganha": true
+ },
+ "PASSA": 1.0
+}

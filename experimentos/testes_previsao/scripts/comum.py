@@ -52,8 +52,20 @@ from prosumer.protocol import DayAhead, folds, standardize_by_training  # noqa: 
 DISPOSITIVO = os.environ.get("DISPOSITIVO", "cpu")
 
 RAIZ = Path(__file__).resolve().parents[1]
-DADOS, RES = RAIZ / "dados", RAIZ / "resultados"
+# Variaveis de ambiente das rodadas do servidor (18/11/2026). SEM elas tudo fica exatamente como na v2.
+#   BENCH_SAIDA=resultados_v1   pasta das saidas (previsoes, metricas, tempos) no lugar de resultados/
+#   BENCH_TESTE=v1              so usinas, teste INTOCADO 01/06 -> 15/11/2026, dados de 01b_estende_usinas.py
+#                               (usinas_horario_v1.parquet, previsao_tempo_v1.parquet); dobras de 61 dias
+#   BENCH_TESTE=v4              so casas, teste 01/04 -> 31/12/2020 (quatro estacoes), dobras de 31 dias
+#   BENCH_C6=1                  acrescenta o regime C6 nas usinas (V5): media das 6 NWP do F2(a) como clima
+#   SEMENTE=n                   semente das redes treinadas (padrao 42; V3 usa 42, 43, 44)
+TESTE = os.environ.get("BENCH_TESTE", "")
+DADOS, RES = RAIZ / "dados", RAIZ / os.environ.get("BENCH_SAIDA", "resultados")
 PREV = RES / "previsoes"
+SEMENTE = int(os.environ.get("SEMENTE", "42"))
+ARQ_USINAS = "usinas_horario_v1.parquet" if TESTE == "v1" else "usinas_horario.parquet"
+ARQ_TEMPO = "previsao_tempo_v1.parquet" if TESTE == "v1" else "previsao_tempo.parquet"
+ARQ_TEMPO_EXTRA = "previsao_tempo_extra_v1.parquet" if TESTE == "v1" else "previsao_tempo_extra.parquet"
 PREV.mkdir(parents=True, exist_ok=True)
 H = 24
 CONTEXTO_FM = 1024          # horas de historico dadas aos modelos fundacionais
@@ -61,15 +73,27 @@ ENTRADA_NN = 168            # horas de historico das redes treinadas (7 dias)
 EXOG = ["poa_ceu_claro", "ghi_horario", "poa_estimada", "temp_ar_horaria"]
 REFIT_DIAS = {"usinas": 61, "casas_prod": 31, "casas_cons": 31}
 INICIO_C = pd.Timestamp("2024-03-07")       # primeiro dia completo com previsao arquivada
-REGIMES = {"usinas": ["A", "B", "C"], "casas_prod": ["A", "B"], "casas_cons": ["A", "B"]}
+REGIMES = {"usinas": ["A", "B", "C"] + (["C6"] if os.environ.get("BENCH_C6") == "1" else []),
+           "casas_prod": ["A", "B"], "casas_cons": ["A", "B"]}
 DIAGNOSTICOS = ["B-curto", "C-gfs"]
-NWP = {"C": "ecmwf_ifs025", "C-gfs": "gfs_seamless"}
+# C6 (V5, portao em PILOTOS_F1_F2.md): media hora a hora das 6 NWP do LightGBM-C-multi6 do F2(a), cada uma convertida
+# como no C (rotulo h+1 -> hora h); o AIFS fica de fora porque so existe desde 18/02/2025 (mudaria os membros no meio
+# do treino). As 6 cobrem todo o periodo do C.
+NWP = {"C": "ecmwf_ifs025", "C-gfs": "gfs_seamless",
+       "C6": ["ecmwf_ifs025", "gfs_seamless", "icon_seamless", "meteofrance_seamless", "gem_seamless",
+              "cma_grapes_global"]}
 SITIOS = {"Cascavel": (-24.83, -53.65), "Curitiba": (-25.4284, -49.2733)}
 CASOS = {
     "usinas": dict(ini="2025-08-01", fim="2026-05-31 23:00"),
     "casas_prod": dict(ini="2020-10-01", fim="2020-12-31 23:00"),
     "casas_cons": dict(ini="2020-10-01", fim="2020-12-31 23:00"),
 }
+if TESTE == "v1":
+    CASOS = {"usinas": dict(ini="2026-06-01", fim="2026-11-15 23:00")}
+elif TESTE == "v4":
+    CASOS = {c: dict(ini="2020-04-01", fim="2020-12-31 23:00") for c in ("casas_prod", "casas_cons")}
+elif TESTE:
+    raise ValueError(f"BENCH_TESTE desconhecido: {TESTE}")
 
 
 # Fuso dos dados: os parquets tem relogio local SEM fuso, numa grade sem buraco. A biblioteca exige fuso, entao a
@@ -110,14 +134,21 @@ def ghi_ceu_claro(serie, idx):
 
 def exog_previsao(d, regime):
     """Troca o clima NASA pela previsao real da vespera (regime C / C-gfs). Ceu claro (geometria) fica."""
-    P = pd.read_parquet(DADOS / "previsao_tempo.parquet")
-    P = P[P.modelo_nwp == NWP[regime]]
+    P = pd.read_parquet(DADOS / ARQ_TEMPO)
+    modelos = NWP[regime] if isinstance(NWP[regime], list) else [NWP[regime]]
+    if len(modelos) > 1:
+        P = pd.concat([P, pd.read_parquet(DADOS / ARQ_TEMPO_EXTRA)], ignore_index=True)
+    P = P[P.modelo_nwp.isin(modelos)]
     partes = []
     for uid, g in d.groupby("unique_id", sort=False):
-        p = P[P.serie == uid].set_index("ds").sort_index()
         g = g.set_index("ds").copy()
-        ghi = p.ghi_prev.shift(-1).reindex(g.index)                       # rotulo h+1 -> hora h
-        tmp = ((p.temp_prev + p.temp_prev.shift(-1)) / 2).reindex(g.index)
+        ghis, tmps = [], []
+        for m in modelos:
+            p = P[(P.serie == uid) & (P.modelo_nwp == m)].set_index("ds").sort_index()
+            ghis.append(p.ghi_prev.shift(-1).reindex(g.index))                       # rotulo h+1 -> hora h
+            tmps.append(((p.temp_prev + p.temp_prev.shift(-1)) / 2).reindex(g.index))
+        ghi = ghis[0] if len(ghis) == 1 else pd.concat(ghis, axis=1).mean(axis=1)
+        tmp = tmps[0] if len(tmps) == 1 else pd.concat(tmps, axis=1).mean(axis=1)
         kc = (ghi / ghi_ceu_claro(uid, g.index).where(lambda x: x > 20)).clip(0, 1.3).fillna(0.0)
         g["ghi_horario"] = ghi.where(g.poa_ceu_claro > 0, 0.0)
         g["poa_estimada"] = (g.poa_ceu_claro * kc).where(g.poa_ceu_claro > 0, 0.0)
@@ -130,7 +161,7 @@ def carrega(caso, regime="A"):
     """DataFrame longo: unique_id, ds, y (kWh/h, NaN onde invalido) e, nas usinas, as exogenas.
     Regimes C, C-gfs e B-curto (usinas) comecam em INICIO_C; C e C-gfs trocam o clima pela previsao."""
     if caso == "usinas":
-        u = pd.read_parquet(DADOS / "usinas_horario.parquet")
+        u = pd.read_parquet(DADOS / ARQ_USINAS)
         d = u.rename(columns={"serie": "unique_id"})
         d["y"] = d.y_Wh / 1000.0
         d = d[["unique_id", "ds", "y"] + EXOG]
@@ -145,7 +176,7 @@ def carrega(caso, regime="A"):
         if regime == "B":
             d = d.merge(clima_casas(), on="ds", how="left")
     d = d[d.ds <= CASOS[caso]["fim"]]
-    if caso == "usinas" and regime in ("C", "C-gfs", "B-curto"):
+    if caso == "usinas" and regime in ("C", "C-gfs", "C6", "B-curto"):
         d = d[d.ds >= INICIO_C]
         if regime != "B-curto":
             d = exog_previsao(d, regime)

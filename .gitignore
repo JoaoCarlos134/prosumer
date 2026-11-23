@@ -63,3 +63,12 @@ CLAUDE.local.md
 **/vitrine_local/
 # coleta diaria dos ensembles (scripts/10_coleta_ensembles.py): dados publicos, mas crescem todo dia
 experimentos/testes_previsao/dados/ensembles/
+# pacotes de handoff do servidor (trazem dados das usinas e logs com caminhos do servidor): nunca no git
+handoff_*.zip
+handoff_*/
+# previsoes por hora das rodadas do servidor (18/11/2026): casas sao publicas, mas ficam fora do git pelo tamanho
+experimentos/testes_previsao/resultados_v1/previsoes/
+experimentos/testes_previsao/resultados_v3_*/previsoes/
+experimentos/testes_previsao/resultados_v4/previsoes/
+experimentos/testes_previsao/resultados_v5/previsoes/
+experimentos/testes_previsao/resultados_v7/previsoes/

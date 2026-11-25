@@ -72,3 +72,6 @@ experimentos/testes_previsao/resultados_v3_*/previsoes/
 experimentos/testes_previsao/resultados_v4/previsoes/
 experimentos/testes_previsao/resultados_v5/previsoes/
 experimentos/testes_previsao/resultados_v7/previsoes/
+
+# TCC draft (private for now, decided 2026-11-25): text, template, compiled PDFs
+tcc/

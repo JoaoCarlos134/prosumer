@@ -145,6 +145,9 @@ machine", "a GPU", "the private raw data", "a compute server". Library tests: `p
   them). When a version is finished, move its row to "Done" with the date and the README status line. Rejected:
   the user's literal `v0.021` (PEP 440 reads it as 0.21); kept `0.x.y`, continuing the `v0.1.0` tag. Private
   details of a planned item stay in `CLAUDE.local.md`, under the same version number.
+- **The TCC text lives in `tcc/` (gitignored, decided 2026-11-25)** until the author decides to publish it: plan in
+  `tcc/PLANO.md` (UFPR EE rules, norms in force: NBR 14724:2024, 6023:2025, 10520:2023; template `eekBR/ufpr-abntex`),
+  draft in `tcc/rascunho/`. Every reference verified by DOI before entering the .bib; plant data only as aggregates.
 - **Library first.** The end product is the library and, on top of it, the app (the TCC). Papers are
   by-products. Generation (PV) forecasting is the main thing; consumption matters more to utilities. Never
   trade speed for a small skill gain: heavy foundation models stay opt-in (2026-10-16).

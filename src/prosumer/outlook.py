@@ -41,7 +41,9 @@ there): the average day of that month, not a forecast of that day's weather. It 
   7). `TRUST` holds the fitted shrink factors a_1..a_7, pooled over the two plants, capped at 1 after the
   review (above 1 at leads 1-3 in the calibration, below 1 on the test). Leads 8-15 (one run a day, Apr-May
   2026 only, no calibration): no lead showed skill, and lead 15 (GFS alone) was worse than the season at
-  Cascavel, so the weather is not used beyond lead 7. Two months of one season do not prove there is none.
+  Cascavel, so the weather is not used beyond lead 7. Two months of one season do not prove there is none:
+  re-measured with Apr-Nov 2026 (`piloto_p2.py`, 2026-11-25), lead 8 has skill at both plants (+0.19, +0.14)
+  and 9-10 do not; `TRUST` stays at 7 values until a weight for lead 8 is chosen.
 - At lead 1, on the benchmark's hours: +0.325 against clear-sky persistence (the weather forecast alone, which
   is what a factor of 1 gives), a statistical tie with the benchmark's LightGBM in regime C (+0.330, DM p
   0.88) and below the median of the benchmark's models (+0.367). It is the method that is simple to explain,

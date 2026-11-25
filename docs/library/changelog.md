@@ -22,7 +22,8 @@ between 0.1.0 and 0.6.3 is listed below by theme, under "0.2.0 to 0.6.3".
 
 - Library docs only ([Validation](validation.md)): the server's checks of 2026-11 (the median and ranking on an
   untouched period, seeds, houses' PV by season, fine-tuning as an option not taken, foundation models with
-  weather below the physical chain, the PVDAQ run).
+  weather below the physical chain, the PVDAQ run) and the re-measure of days 8-15 (day 8 has skill at both
+  plants; `TRUST` unchanged until its weight is chosen).
 
 ## 0.2.0 to 0.6.3 (after 0.1.0)
 

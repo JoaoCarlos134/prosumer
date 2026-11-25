@@ -1,0 +1,16 @@
+{
+ "linhas": 346232,
+ "indisponiveis": 24,
+ "exemplos": [
+  "Cascavel|ecmwf_ifs025|2026-03-28T12:00",
+  "Cascavel|ecmwf_ifs025|2026-03-29T12:00",
+  "Cascavel|ecmwf_ifs025|2026-03-30T12:00",
+  "Cascavel|ecmwf_ifs025|2026-03-31T12:00",
+  "Cascavel|ecmwf_ifs025|2026-04-01T12:00",
+  "Cascavel|ecmwf_ifs025|2026-06-10T12:00",
+  "Cascavel|gfs_seamless|2026-03-28T12:00",
+  "Cascavel|gfs_seamless|2026-03-29T12:00",
+  "Cascavel|gfs_seamless|2026-03-30T12:00",
+  "Cascavel|gfs_seamless|2026-03-31T12:00"
+ ]
+}

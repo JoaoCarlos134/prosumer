@@ -899,3 +899,28 @@ do C10, com coordenadas, e o caminho). `c9_posicao_brpvgen.csv` (de 18/11) conti
 Achado lateral (para a versao 0.7.1, relogio fora do Parana): os carimbos brutos do PVDAQ 1200, 1201 e 34 seguem o
 horario de verao (o centro da producao pula +1 h de marco a outubro); 1239 e 1433 tem relogio irregular (1433 deriva
 +-2 h no meio do ano).
+
+### P2 (leads 8-15 com rodadas unicas): PASSA no lead 8, NAO nos leads 9 e 10
+
+Consertado (a Single Runs ja nao guarda as rodadas antes de ~30/05/2026 e responde 400 "No data is available"; as
+rodadas 02/04-30/05 do piloto do horizonte entraram como estavam), rodou na maquina de CPU em 25/11: 227 noites de
+02/04 a 14/11/2026 por usina (o portao pedia desde 28/03: 5 dias perdidos, e 1 rodada de 10/06 faltando em Cascavel;
+`p2_download.json`), `forecast_ahead(days=15)` com confianca 1 (W) e 0 (S). Saidas: `p2.json` (agregados),
+`dados/previsao_tempo_rodadas_v1.parquet` (publico), `p2__usinas__*.parquet` (privado, fora do git).
+
+| lead | Cascavel n / skill W / p DM / a otimo | Curitiba n / skill W / p DM / a otimo |
+|---|---|---|
+| 7 | 213 / +0,248 / 0,0001 / 0,78 | 218 / +0,141 / 0,008 / 0,68 |
+| **8** | 212 / **+0,188** / **0,0008** / 0,72 | 217 / **+0,136** / **0,021** / 0,68 |
+| 9 | 211 / +0,113 / 0,064 / 0,65 | 216 / +0,073 / 0,20 / 0,60 |
+| 10 | 210 / +0,061 / 0,31 / 0,58 | 215 / +0,011 / 0,87 / 0,51 |
+| 13 | 208 / -0,037 / 0,49 / 0,44 | 213 / -0,144 / 0,011 / 0,30 |
+| 15 | 206 / -0,161 / 0,020 / 0,33 | 211 / -0,298 / <0,001 / 0,25 |
+
+**Portao: o lead 8 passa nas duas usinas (n >= 150, skill > 0, p < 0,05); 9 e 10 nao.** Com 2 meses (12/10) nenhum
+lead passava: a linha plana a partir do dia 8 nao tem mais evidencia, so a partir do dia 9. O portao nao diz QUAL peso
+o lead 8 ganha (o a otimo, 0,72 e 0,68, e so relato: nao vira padrao sem um sitio que nao o escolheu) -> decisao do
+usuario, versao 0.8.0 do README; o `TRUST` da biblioteca segue com 7 valores ate la. Leitura lateral: os a otimos dos
+leads 4-7 neste periodo (0,92/0,89, 0,86/0,84, 0,81/0,78, 0,78/0,68) ficam perto do `TRUST` atual (0,92, 0,91, 0,86,
+0,79), medido em outro periodo: o `TRUST` se sustenta, salvo Curitiba no lead 7. No dia 15 (e no 13 em Curitiba) o tempo
+piora a previsao com p < 0,05.

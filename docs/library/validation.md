@@ -25,7 +25,11 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
   below TiRex-2 alone); LightGBM with the linear model, 9th (+0.346). One test, two plants in Parana.
 - **The coming days** (horizon pilot, 2026-10-12): on two plants in Parana the weather forecast beat the
   seasonal expectation on the daily total at every lead 1-7 (skill +0.49 at lead 1 to +0.20 at lead 7), and
-  showed no skill at leads 8-15 (two months of data only). `trust` and `skill` come from there.
+  showed no skill at leads 8-15 (two months of data only). `trust` and `skill` come from there. Re-measured on
+  2026-11-25 with 7.5 months of daily runs (April to November 2026): lead 8 has skill at both plants (+0.19 and
+  +0.14, DM p 0.0008 and 0.02), leads 9-10 do not, and at lead 15 (13 too at Curitiba) the weather makes the day significantly worse. The
+  outlook still stops trusting the weather after day 7 until a weight for day 8 is chosen (0.8.0); the best
+  weights at leads 4-7 on this new period are close to `trust`.
 - **Not validated**: the lead-day trust and skill anywhere but Parana; the outlook's roof fit against a known
   roof (beyond Cascavel: fitted 15 degrees facing 30, the plant's sheet says 13 facing 25).
 

@@ -28,8 +28,18 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
   showed no skill at leads 8-15 (two months of data only). `trust` and `skill` come from there. Re-measured on
   2026-11-25 with 7.5 months of daily runs (April to November 2026): lead 8 has skill at both plants (+0.19 and
   +0.14, DM p 0.0008 and 0.02), leads 9-10 do not, and at lead 15 (13 too at Curitiba) the weather makes the day significantly worse. The
-  outlook still stops trusting the weather after day 7 until a weight for day 8 is chosen (0.8.0); the best
-  weights at leads 4-7 on this new period are close to `trust`.
+  best weights at leads 4-7 on this new period are close to `trust`. Day 8's weight (0.8.0, P2-b pilot, gate
+  committed first): each plant's best weight (0.72, 0.68) applied to the OTHER plant keeps its skill (+0.229 and
+  +0.176, DM p <= 0.0005, within 0.001 of the plant's own best), and a weight fitted on April-August keeps skill
+  on August-November at both (+0.30, +0.17). `trust` now reaches day 8 with 0.69, fitted on both plants over
+  the whole period; still two plants in one state.
+- **The weather-to-kWh conversion** (P4-b pilot, 2026-11-25, PVDAQ systems with a known plane and measured
+  irradiance on the plane): a richer sky model (Perez) brought the hourly plane irradiance from satellite GHI
+  3.9% closer than the library's isotropic sky on Las Vegas (the gate needed 5%; Hay-Davies 2.4%), and a panel
+  temperature factor from the air temperature (Ross, -0.4%/K) helped on 1 of 4 systems (6.4% on Las Vegas; worse
+  in Maine and on a Golden system with low-loss HIT panels, where snow and cold days confound it). Neither is in
+  the library. Most of the error left is the GHI's itself (RMSE 140 W/m2 on a mean of 597 in Las Vegas). One
+  system's plane sensor was broken (system 50: blank by day) and gave no data.
 - **Not validated**: the lead-day trust and skill anywhere but Parana; the outlook's roof fit against a known
   roof (beyond Cascavel: fitted 15 degrees facing 30, the plant's sheet says 13 facing 25).
 
@@ -81,7 +91,7 @@ chose nothing.
   0.72 on Cascavel. Fitting against measured irradiance gave the smaller tilt error in only 3 of 5 systems (the gate needed all 5). The clock result is not
   read as a daylight-saving failure: a Denver system with daylight saving passed and the Parana control failed.
   The raw PVDAQ timestamps of three systems do follow daylight saving (+1 h from March to October), and two
-  systems have irregular clocks; what is the pilot's and what is the library's is 0.7.1's question.
+  systems have irregular clocks; what is the pilot's and what is the library's is 0.8.1's question.
 - **Per-channel diagnostics** (pilot of 2026-10-17, Curitiba's two MPPTs): the share of each channel found 1 of
   3 known events (the return of July 2023), so it does not pass and is not in the library.
 - A labelled dataset of cleaning events exists (DuraMAT "Automated PV Systems Cleaning Detection",

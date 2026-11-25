@@ -45,8 +45,8 @@ default chosen on the project's sites shaped a result. Origins:
 
 | Argument | Default | Origin |
 |---|---|---|
-| `trust` | 1, 1, 1, 0.92, 0.91, 0.86, 0.79 (leads 1-7) | **measured** on the two Parana plants (horizon pilot), capped at 1 |
-| `skill` | 0.50 ... 0.20 (leads 1-7) | **measured** there: the daily skill behind the labels |
+| `trust` | 1, 1, 1, 0.92, 0.91, 0.86, 0.79 (leads 1-7), 0.69 (lead 8) | **measured** on the two Parana plants: leads 1-7 by the horizon pilot (Aug/2025-May/2026), capped at 1; lead 8 by the P2-b pilot (Apr-Nov 2026), checked across the two plants and in time |
+| `skill` | 0.50 ... 0.20 (leads 1-7), 0.20 (lead 8) | **measured** there: the daily skill behind the labels |
 | `confidence` | high >= 0.40, medium >= 0.25 | set by hand so leads 1-3 read high and 4-6 medium |
 | `implausible` | GHI > 1.2 x clear sky + 50 W/m2 | generic (physical) |
 | `kw_eff_days` | 60, else 120 days | set by hand (the pilot's rule) |

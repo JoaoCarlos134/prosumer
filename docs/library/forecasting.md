@@ -100,7 +100,7 @@ assert len(o.daily) == 3 and (o.daily["source"] == "seasonal").all()
 - **Generation** (needs the site): the plant is described by two numbers learnt from its own clear days, the
   orientation of the panels (or the tilt and azimuth you give) and the effective peak power. Each hour is that
   power x the irradiance on the panel plane from the weather forecast's GHI, pulled toward the season's
-  typical day as the lead grows (`trust`), and only the seasonal expectation beyond lead 7.
+  typical day as the lead grows (`trust`), and only the seasonal expectation beyond lead 8.
 - **Consumption**: the weekday/weekend profile of the last 4 weeks (it beat "same as the last day" at every
   lead 1-14 on the Dingle houses).
 - `daily.confidence` is "high", "medium", "low" or "seasonal only", from the skill measured per lead day
@@ -163,6 +163,6 @@ as wide over the next three days.
   method (for example `look_back` without archived weather feeding an outlook with a live forecast: then give
   `look_back` the archive, `weather=io.open_meteo.fetch_previous_runs(..., lead_days=1)`) it is untested.
 - The app (`app.run`) keeps no forecasts yet, so it shows the default range with a note that says so; the
-  local database of 0.9.0 is what lets it learn the site's range.
+  local database of 0.10.0 is what lets it learn the site's range.
 - `outlook.site_range(o, past, window_days=60, min_pairs=30, levels=(0.1, 0.9))` applies it to an outlook you
   already have.

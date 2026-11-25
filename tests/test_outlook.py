@@ -69,12 +69,22 @@ def test_perfect_weather_gives_the_truth_on_trusted_days() -> None:
     np.testing.assert_allclose(d.loc[first3, "total"], true_days[:3], rtol=0.03)
     assert (d.loc[first3, "confidence"] == "high").all()
     assert list(d["n_models"]) == [2, 2, 2] + [1] * 7  # the short model stops after 3 days
-    # with the measured defaults: weather to lead 7, labels from the pilot's skill, seasonal after
+    # with the measured defaults: weather to lead 8, labels from the pilots' skill, seasonal after
     o = outlook.forecast_ahead(_series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20)
     d = o.daily
-    assert d["confidence"].tolist() == ["high"] * 3 + ["medium"] * 3 + ["low"] + ["seasonal only"] * 3
-    assert (d.loc[d["lead_day"] >= 8, "source"] == "seasonal").all()
-    assert max(outlook.TRUST) == 1.0 and len(outlook.TRUST) == len(outlook.SKILL) == 7  # capped at 1
+    assert d["confidence"].tolist() == ["high"] * 3 + ["medium"] * 3 + ["low"] * 2 + ["seasonal only"] * 2
+    assert (d.loc[d["lead_day"] <= 8, "source"] == "weather").all()
+    assert (d.loc[d["lead_day"] >= 9, "source"] == "seasonal").all()
+    assert max(outlook.TRUST) == 1.0 and len(outlook.TRUST) == len(outlook.SKILL) == 8  # capped at 1
+    # day 8 sits between the weather and the season by the measured factor (P2-b pilot, 0.69)
+    seasonal = outlook.forecast_ahead(
+        _series(_plant(0.8)), days=10, site=SITE, weather=w, tilt=15, azimuth=20, trust=(0.0,) * 10
+    ).daily
+    day8 = d["lead_day"] == 8
+    t8 = d.loc[day8, "total"].iloc[0]
+    w8 = true_days[7]  # full trust gives the weather's total (checked above for days 1-3)
+    s8 = seasonal.loc[seasonal["lead_day"] == 8, "total"].iloc[0]
+    np.testing.assert_allclose(t8, s8 + outlook.TRUST[7] * (w8 - s8), rtol=0.03)
 
 
 def test_beyond_the_last_model_is_seasonal_and_says_so() -> None:
@@ -307,7 +317,7 @@ def test_tuning_arguments_default_to_the_old_constants_and_take_effect() -> None
     loose = outlook.forecast_ahead(
         s, days=10, site=SITE, weather=w, tilt=15, azimuth=20, confidence=(0.19, 0.1)
     )
-    assert loose.daily["confidence"].tolist() == ["high"] * 7 + ["seasonal only"] * 3
+    assert loose.daily["confidence"].tolist() == ["high"] * 8 + ["seasonal only"] * 2
     # own skill per lead: the labels follow it, and the note on the Parana measurements goes away
     mine = outlook.forecast_ahead(
         s, days=10, site=SITE, weather=w, tilt=15, azimuth=20, trust=(1.0,) * 7, skill=(0.3,) * 7

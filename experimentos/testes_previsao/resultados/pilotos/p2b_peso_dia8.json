@@ -1,0 +1,53 @@
+{
+ "portao": "docs/projeto/PILOTOS_F1_F2.md, P2-b",
+ "lead": 8,
+ "a_proprio": {
+  "Cascavel": 0.72,
+  "Curitiba": 0.68
+ },
+ "cruzado": {
+  "Cascavel": {
+   "n": 212,
+   "a": 0.68,
+   "skill": 0.22854457726564326,
+   "p_dm": 1.0269734501625143e-07,
+   "skill_a_proprio": 0.2291682163724168,
+   "ok": true
+  },
+  "Curitiba": {
+   "n": 217,
+   "a": 0.72,
+   "skill": 0.17571614171796268,
+   "p_dm": 0.0005078936342134126,
+   "skill_a_proprio": 0.17624906768779147,
+   "ok": true
+  }
+ },
+ "tempo": {
+  "a_primeira_metade": 0.710970273198201,
+  "corte": "2026-08-07",
+  "Cascavel": {
+   "n": 98,
+   "a": 0.710970273198201,
+   "skill": 0.29632563997705275,
+   "p_dm": 8.238444313482325e-07,
+   "ok": true
+  },
+  "Curitiba": {
+   "n": 99,
+   "a": 0.710970273198201,
+   "skill": 0.16789249644622162,
+   "p_dm": 0.0330492384322787,
+   "ok": true
+  }
+ },
+ "PORTAO": {
+  "PASSA": true,
+  "TRUST_8": 0.6904,
+  "SKILL_8": 0.203,
+  "skill_por_usina": {
+   "Cascavel": 0.22886447998717707,
+   "Curitiba": 0.1762389516928451
+  }
+ }
+}

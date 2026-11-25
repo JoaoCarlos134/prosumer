@@ -3,6 +3,15 @@
 Versions follow README "Versions and roadmap". Since 0.7.0 each version has its own section here; what came
 between 0.1.0 and 0.6.3 is listed below by theme, under "0.2.0 to 0.6.3".
 
+## 0.8.0 (2026-11-25): the weather counts on day 8
+
+- `outlook.TRUST` and `outlook.SKILL` gain lead day 8 (0.69 and 0.20): a generation outlook now uses the weather
+  forecast on day 8, pulled toward the season by that factor, labelled "low" confidence; from day 9 it is the
+  seasonal expectation as before. Measured on the two Parana plants, April-November 2026 (P2 and P2-b pilots,
+  gates committed first): each plant's factor holds on the other plant and on a later period. The notes say the
+  defaults were measured Aug/2025 to Nov/2026, and that past the last trusted day the weather showed no skill.
+- Checked and not taken: a Perez sky and a panel temperature factor (P4-b pilot on PVDAQ, [Validation](validation.md)).
+
 ## 0.7.0 (2026-11-25): an honest range per site
 
 - `outlook.site_range(outlook, past)` and `forecast_ahead(past=...)`: each day's low/high from this site's own
@@ -16,7 +25,7 @@ between 0.1.0 and 0.6.3 is listed below by theme, under "0.2.0 to 0.6.3".
   [Tuning](tuning.md).
 - A generation outlook now says that its default range is too narrow (the measured 6.4-6.9 days in 10) until
   the site's own forecasts can recalibrate it.
-- Not yet in the app: it stores no forecasts (the local database is 0.9.0).
+- Not yet in the app: it stores no forecasts (the local database is 0.10.0).
 
 ## 0.6.3 (2026-11-25): the server round closed
 

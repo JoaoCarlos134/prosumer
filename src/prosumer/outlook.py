@@ -29,7 +29,7 @@ daily range held the real total on 64-69% of days (V11-b pilot, 06-11/2026), not
 past forecasts next to what happened (`forecast_ahead(past=...)`, `site_range`), each lead day's daily range
 is recalibrated on them (79-82% there).
 
-Beyond lead 7 the generation is only the seasonal expectation (the pilot found no skill in the weather
+Beyond lead 8 the generation is only the seasonal expectation (the pilots found no skill in the weather
 there): the average day of that month, not a forecast of that day's weather. It is labelled so
 (`source = "seasonal"`).
 
@@ -41,9 +41,12 @@ there): the average day of that month, not a forecast of that day's weather. It 
   7). `TRUST` holds the fitted shrink factors a_1..a_7, pooled over the two plants, capped at 1 after the
   review (above 1 at leads 1-3 in the calibration, below 1 on the test). Leads 8-15 (one run a day, Apr-May
   2026 only, no calibration): no lead showed skill, and lead 15 (GFS alone) was worse than the season at
-  Cascavel, so the weather is not used beyond lead 7. Two months of one season do not prove there is none:
-  re-measured with Apr-Nov 2026 (`piloto_p2.py`, 2026-11-25), lead 8 has skill at both plants (+0.19, +0.14)
-  and 9-10 do not; `TRUST` stays at 7 values until a weight for lead 8 is chosen.
+  Cascavel, so the weather was not used beyond lead 7 (until 0.8.0). Two months of one season do not prove
+  there is none: re-measured with Apr-Nov 2026 (`piloto_p2.py`, 2026-11-25), lead 8 has skill at both plants
+  (+0.19, +0.14) and 9-10 do not. Lead 8's factor (`piloto_p2b_peso_dia8.py`, gate committed first): each
+  plant's fitted factor (0.72, 0.68) applied to the OTHER plant keeps its skill (+0.229, +0.176, DM p <=
+  0.0005), and a factor fitted on Apr-Aug only keeps skill on Aug-Nov at both; the default is the factor
+  fitted on both plants over the whole period (0.69).
 - At lead 1, on the benchmark's hours: +0.325 against clear-sky persistence (the weather forecast alone, which
   is what a factor of 1 gives), a statistical tie with the benchmark's LightGBM in regime C (+0.330, DM p
   0.88) and below the median of the benchmark's models (+0.367). It is the method that is simple to explain,
@@ -99,15 +102,19 @@ KW_EFF_FALLBACK_DAYS = 120  # ... or of the 120 days if there is none (the horiz
 MIN_MONTH_DAYS = 5  # days of the same month in earlier years for the typical clearness, else the last 30 days
 # Shrink factor of the weather forecast toward the seasonal expectation per lead day. Lead 1 is the day after
 # the forecast is issued (the archive's `previous_day1`); the rest of the issue day is lead 0 and uses lead
-# 1's value. Fitted (least squares, before the test) by the horizon pilot on the two plants, leads 1-7; zero
-# after. CAPPED AT 1 (decided after the review of the pilot, 2026-10-12, so post hoc): the fitted 1.08, 1.07
-# and 1.05 at leads 1-3 did not hold on the test (fitted there, every factor is below 1) and cost 0.007-0.009
-# of skill against the plain weather forecast; a factor above 1 would push the forecast past the weather.
-TRUST: tuple[float, ...] = (1.0, 1.0, 1.0, 0.9158, 0.9058, 0.8550, 0.7854)
+# 1's value. Fitted (least squares, before the test) by the horizon pilot on the two plants, leads 1-7; lead
+# 8 by the P2-b pilot (least squares on both plants, Apr-Nov 2026, after a check across plants and in time);
+# zero after. CAPPED AT 1 (decided after the review of the pilot, 2026-10-12, so post hoc): the fitted 1.08,
+# 1.07 and 1.05 at leads 1-3 did not hold on the test (fitted there, every factor is below 1) and cost
+# 0.007-0.009 of skill against the plain weather forecast; a factor above 1 would push the forecast past the
+# weather.
+TRUST: tuple[float, ...] = (1.0, 1.0, 1.0, 0.9158, 0.9058, 0.8550, 0.7854, 0.6904)
 # Daily-total skill against the seasonal expectation at each lead (same pilot, mean of the two plants; leads
 # 1-3 are the plain weather forecast's, `fisico`, since the factor is 1 there): what a day's confidence label
-# says. A day only partly covered by the weather gets it in proportion.
-SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199)
+# says. A day only partly covered by the weather gets it in proportion. Lead 8 is the P2-b pilot's (Apr-Nov
+# 2026, another period than leads 1-7: it is not below lead 7's because the periods differ, not because day 8
+# is easier).
+SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199, 0.203)
 # An hourly GHI above 1.2 x clear sky + 50 W/m2 is not weather but a broken value: on 2026-10-12 the live
 # `meteofrance_seamless` gave up to 2750 W/m2 at Cascavel on its 4th day (clear sky ~990). Brief cloud
 # enhancement exceeds clear sky by minutes, not by 20% over a whole hour. The fault looked systematic in the
@@ -348,7 +355,7 @@ def forecast_ahead(
                 notes.append(
                     Note(
                         "How much the weather forecast is trusted at each lead day, and the confidence "
-                        "labels, were measured on two plants in Parana (Brazil), Aug/2025 to May/2026; "
+                        "labels, were measured on two plants in Parana (Brazil), Aug/2025 to Nov/2026; "
                         "elsewhere they are an assumption (`trust=` and `skill=` change them)."
                     )
                 )
@@ -362,8 +369,8 @@ def forecast_ahead(
         notes.append(
             Note(
                 "Days beyond day {n} are the seasonal expectation (an average day of the month), not a "
-                "forecast of their weather: beyond a week the weather forecasts showed no skill in the "
-                "pilot.",
+                "forecast of their weather: past that day the weather forecasts showed no skill in the "
+                "pilots.",
                 n=len(trust),
             )
         )

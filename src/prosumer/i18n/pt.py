@@ -283,10 +283,10 @@ PT: dict[str, str] = {
     ),
     (
         "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured "
-        "on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption."
+        "on two plants in Parana (Brazil), Aug/2025 to Nov/2026; elsewhere they are an assumption."
     ): (
         "O quanto se confia na previsão do tempo em cada dia à frente, e os rótulos de confiança, foram "
-        "medidos em duas usinas no Paraná (Brasil), de ago/2025 a mai/2026; em outros lugares são uma "
+        "medidos em duas usinas no Paraná (Brasil), de ago/2025 a nov/2026; em outros lugares são uma "
         "suposição."
     ),
     "Unknown request fields {unknown}; the fields are {names}": (
@@ -819,11 +819,11 @@ PT: dict[str, str] = {
     ),
     (
         "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured "
-        "on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption (`trust=` "
+        "on two plants in Parana (Brazil), Aug/2025 to Nov/2026; elsewhere they are an assumption (`trust=` "
         "and `skill=` change them)."
     ): (
         "O quanto se confia na previsão do tempo em cada dia à frente, e os rótulos de confiança, foram "
-        "medidos em duas usinas no Paraná (Brasil), de ago/2025 a mai/2026; em outros lugares são uma "
+        "medidos em duas usinas no Paraná (Brasil), de ago/2025 a nov/2026; em outros lugares são uma "
         "suposição (`trust=` e `skill=` os alteram)."
     ),
     "Too little data before the last {days} days to check the forecast.": (
@@ -869,10 +869,10 @@ PT: dict[str, str] = {
     ),
     (
         "Days beyond day {n} are the seasonal expectation (an average day of the month), not a forecast of "
-        "their weather: beyond a week the weather forecasts showed no skill in the pilot."
+        "their weather: past that day the weather forecasts showed no skill in the pilots."
     ): (
         "Os dias depois do dia {n} são a expectativa sazonal (um dia médio do mês), não uma previsão do seu "
-        "tempo: além de uma semana, as previsões do tempo não mostraram skill no piloto."
+        "tempo: depois desse dia, as previsões do tempo não mostraram skill nos pilotos."
     ),
     (
         "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants in "

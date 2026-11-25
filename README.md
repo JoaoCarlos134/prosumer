@@ -25,7 +25,7 @@ the gap between history only (open circle) and perfect weather of the day (black
 Skill is over clear-sky persistence. Like the rest of the benchmark, its labels are in Portuguese; the write-up is
 `experimentos/testes_previsao/LEIA-ME.md`.*
 
-**Status: 0.7.0 (2026-11-25); next 0.6.4 (server reruns) and 0.7.1** (see [Versions and roadmap](#versions-and-roadmap)). CPU
+**Status: 0.8.0 (2026-11-25); next 0.6.4 (server reruns) and 0.8.1** (see [Versions and roadmap](#versions-and-roadmap)). CPU
 only by design: the best model of every benchmark test runs on a CPU.
 
 ## Install
@@ -195,17 +195,18 @@ recorded in `docs/projeto/PILOTOS_F1_F2.md`). The library's changes, item by ite
 | 0.6.1 | 2026-11-16 to 18 | `outlook.look_back`, the last days beside the next ones; product review of the app and its fixes (plain-words overview, unknown roof asks for tilt and direction, inputs pane, page tags); learning-with-use replay on the two plants (fails there, not conclusive for a new site: the defaults were fitted on these plants); public datasets found; the compute-server queue written |
 | 0.6.2 | 2026-11-18 to 23 | **Server results** (every gate written first). **Pass:** an untouched test period (06-11/2026) keeps the median and the ranking; 3 seeds reproduce the ties; a per-site range catches 79-82 % of days for an 80 % promise (the current range catches 64-69 %, and at 7 days ahead only 50 %); Chronos-2 fine-tuning wins 3 of 4 cases; range scores for every model. **Weak pass:** the mean of the 6 weather models wins 18 of 23 models on uncorrected p, but only 5 of 23 under Holm. **Fail:** foundation models with weather lose to the physical chain by 0.07-0.13; houses' PV in regime B changes rank with the season; the roof and clock checks on US systems; the weather-to-kWh conversion on BR-PVGen. **Broken:** plant positions, days 8-15, Time-LLM |
 | 0.6.3 | 2026-11-25 | The server round closed on this machine. The four broken scripts fixed. Plant positions from the data's own curves: the run now completes and **fails** its gate (0 of 3 systems within 0.5 degrees; panel plane and position trade off), so BR-PVGen stays blocked. Days 8-15 re-measured on 7.5 months of daily runs: **day 8 now has skill** at both plants (+0.19 and +0.14, gate passed), days 9-10 do not. The server's checks written into the library's validation page (median and ranking out of sample, houses' PV changes rank with the season, fine-tuning an option not taken, foundation models with weather below the physical chain) |
-| 0.7.0 | 2026-11-25 | **An honest daily range per site**: `outlook.site_range` and `forecast_ahead(past=...)` recalibrate each lead day's range on the site's own last 60 days of errors once 30 exist (79-82% of days inside an 80% range on the untouched period, against 64-69%); every generation outlook now says its default range is too narrow. Not in the app yet: it stores no forecasts (0.9.0) |
+| 0.7.0 | 2026-11-25 | **An honest daily range per site**: `outlook.site_range` and `forecast_ahead(past=...)` recalibrate each lead day's range on the site's own last 60 days of errors once 30 exist (79-82% of days inside an 80% range on the untouched period, against 64-69%); every generation outlook now says its default range is too narrow. Not in the app yet: it stores no forecasts (0.10.0) |
+| 0.8.0 | 2026-11-25 | **The weather counts on day 8**: `trust` gains day 8 (0.69, "low" confidence); each plant's weight held on the other plant and on a later period (pilot P2-b). Checked and **not taken**: a richer sky model (Perez, 3.9% better plane irradiance where 5% was needed) and a panel temperature factor (better on 1 of 4 US systems), on PVDAQ systems with known planes. The ensemble test's gate written ahead of its data |
 
 ### Planned
 
 | Version | What | Waiting on |
 |---|---|---|
 | 0.6.4 | The server's GPU reruns of the scripts fixed in 0.6.3: Time-LLM with LLaMA-7B and its no-LLM ablation; Crossformer and Mamba in the seed and season runs (`experimentos/testes_previsao/vm/FILA.md`) | a turn on the compute server |
-| 0.7.1 | **Diagnostics outside Paraná.** First check the pilot's time zones (the Paraná control also failed the clock, and one US system is off by 11 h); then the clock with daylight saving time, with a test; then the tilt overestimated on low roofs (5 of 6 systems) | — |
-| 0.8.0 | **A better generation forecast**, each item a pilot: a trained model over the 6 weather forecasts for days 1-7 (so far +0.02 and +0.004, not significant); the mean of the 6 weather models as published regime C, after checking it on the untouched period; a weight for day 8 in `trust` (it passed in 0.6.3; the weight is the author's choice, the fitted 0.68-0.72 needs a site that did not choose it); ensemble forecasts for days 4-15 (their mean as the forecast, their spread as a range that is narrow on settled days and wide on uncertain ones); a better weather-to-kWh conversion (transposition, panel temperature, shading by sun position); trust per climate and the Paraná constants checked elsewhere (PVDAQ's residential fleet, Ausgrid for consumption) | ensembles collected daily since 2026-11-18, testable from ~2027-02; the conversion needs a public PV set with coordinates (the PVDAQ residential fleet: estimating positions from the data failed in 0.6.3) |
-| 0.9.0 | **Learning with use and the long view.** A local database (measurements, every issued forecast, per-site parameters, events the person marks); per-site trust and bias only where a site that did not choose the defaults shows a gain; days 8-15 as a weekly total with a range and the chance of a sunny day; the app stores what it forecast, so `site_range` (0.7.0) recalibrates every lead day | 0.7.0 and 0.8.0 |
-| 0.9.1 | Site polish: the overview's range whiskers and the flattened hourly band become a percentile band; the demo served at once, with real progress for uploads; a preview image for shared links; a phone-width check | — |
+| 0.8.1 | **Diagnostics outside Paraná.** First check the pilot's time zones (the Paraná control also failed the clock, and one US system is off by 11 h); then the clock with daylight saving time, with a test; then the tilt overestimated on low roofs (5 of 6 systems) | — |
+| 0.9.0 | **A better generation forecast**, each item a pilot: ensemble forecasts for days 4-15 (their mean as the forecast, their spread as a range that is narrow on settled days and wide on uncertain ones; gate P3 already written); a trained model over the 6 weather forecasts for days 1-7 (so far +0.02 and +0.004, not significant); the mean of the 6 weather models as published regime C, after checking it on the untouched period; shading learnt by sun position; trust per climate and the Paraná constants checked elsewhere (PVDAQ's residential fleet, Ausgrid for consumption) | ensembles collected daily since 2026-11-19, testable from ~2027-02 (90 nights); trust per climate needs a public PV set with coordinates (estimating positions from the data failed in 0.6.3) |
+| 0.10.0 | **Learning with use and the long view.** A local database (measurements, every issued forecast, per-site parameters, events the person marks); per-site trust and bias only where a site that did not choose the defaults shows a gain; days 9-15 as a weekly total with a range and the chance of a sunny day; the app stores what it forecast, so `site_range` (0.7.0) recalibrates every lead day | 0.7.0 and 0.9.0 |
+| 0.10.1 | Site polish: the overview's range whiskers and the flattened hourly band become a percentile band; the demo served at once, with real progress for uploads; a preview image for shared links; a phone-width check | — |
 | 1.0.0 | **The thesis.** A person who does not program completes the analysis end to end; the library on PyPI; the published benchmark (v2 or the 3-seed v3); a model measured on real hardware (Raspberry Pi 5, ESP32); the thesis written | the employer's and the university's IP rules (Lei 9.609 art. 4) before PyPI; the author's choice on v3 |
 | 1.x | Connect to the inverter's cloud instead of an export; alerts; read the bill from a PDF or photo; what-if (tarifa branca, a battery, more panels: a pilot first, since a wrong answer is wrong money advice); a PDF report; Home Assistant; a hosted beta (needs Open-Meteo's commercial plan, offers its source under the AGPL); the library as a hosted API | each one the author's decision |
 
@@ -227,12 +228,12 @@ The project's Portuguese docs use the labels below; each one now maps to a versi
 | F1, F2, A (closing the benchmark, improvement pilots, pending models) | 0.0.3; F2(b), the roof from the data: 0.2.0 |
 | V0-V9, V11, V11-b, C1-C10, G1-G7 (server queue and its lanes) | done: 0.6.1 and 0.6.2; fixes and CPU reruns: 0.6.3; GPU reruns: 0.6.4 |
 | V10 (re-aggregating Curitiba) | not planned (decided 2026-10-12 not to redo; the 1-h offset is declared) |
-| P1-P6 (prediction priorities) | 0.8.0; P5 blocked |
+| P1-P6 (prediction priorities) | P2 (day 8) and P4 (conversion): 0.8.0; the rest 0.9.0; P5 blocked |
 | P7 (the rest of the server batch) | 0.6.2 |
 | Product review items 4-8 | 0.6.1 |
-| Product review items 1-3, and the preview image of item 7 | 0.9.1 |
+| Product review items 1-3, and the preview image of item 7 | 0.10.1 |
 | Product review item 9 (long-use showcase, local only) | 0.6.1 |
-| "Priority 2" items 1-2 (beyond a week, local database) | 0.9.0 |
+| "Priority 2" items 1-2 (beyond a week, local database) | 0.10.0 |
 
 ## Data
 

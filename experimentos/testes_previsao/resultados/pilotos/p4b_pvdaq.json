@@ -1,0 +1,166 @@
+{
+ "portao": "docs/projeto/PILOTOS_F1_F2.md, P4-b",
+ "gama": -0.004,
+ "ross": 0.03,
+ "albedo": 0.2,
+ "34": {
+  "tz": "America/Los_Angeles",
+  "passo": "0 days 00:15:00",
+  "horas_validas": 1784,
+  "plano": [
+   11.2,
+   180.0
+  ],
+  "a_transposicao": {
+   "horas": 907,
+   "poa_media": 597.1936245865489,
+   "rmse": {
+    "isotropica_biblioteca": 140.18631197411165,
+    "isotropica_pvlib": 140.24033048557212,
+    "hay_davies": 136.81528100726467,
+    "perez": 134.76532408656513
+   },
+   "ganho_vs_isotropica_biblioteca": {
+    "isotropica_biblioteca": 0.0,
+    "isotropica_pvlib": -0.00038533370840410086,
+    "hay_davies": 0.02404679115511299,
+    "perez": 0.0386698801845049
+   },
+   "PERE_Z_5PCT": false
+  },
+  "b_temperatura": {
+   "horas_ajuste": 192,
+   "horas_avaliacao": 210,
+   "p_media_avaliacao": 60505.47619047619,
+   "rmse": {
+    "linear": 5184.344286366584,
+    "ross_ar": 4854.55550173508,
+    "modulo_medido": 4826.396793464796,
+    "ross_g_ajustado": 4889.270986768764
+   },
+   "ganho_vs_linear": {
+    "linear": 0.0,
+    "ross_ar": 0.06361243899228664,
+    "modulo_medido": 0.06904392785855151,
+    "ross_g_ajustado": 0.05691622378818151
+   },
+   "g_ajustado": -0.0017853413373934417,
+   "ROSS_2PCT": true
+  }
+ },
+ "50": {
+  "tz": "Etc/GMT+7",
+  "passo": "0 days 00:01:00",
+  "horas_validas": 2902,
+  "plano": [
+   45.0,
+   158.0
+  ],
+  "a_transposicao": {
+   "horas": 2,
+   "poa_media": 1236.2029383333333,
+   "rmse": {
+    "isotropica_biblioteca": 1085.4870405621714,
+    "isotropica_pvlib": 1087.3057640135942,
+    "hay_davies": 1078.9271927071875,
+    "perez": 1076.4623001285283
+   },
+   "ganho_vs_isotropica_biblioteca": {
+    "isotropica_biblioteca": 0.0,
+    "isotropica_pvlib": -0.0016754907092035864,
+    "hay_davies": 0.006043230006308131,
+    "perez": 0.008314001085604095
+   },
+   "PERE_Z_5PCT": false
+  },
+  "b_temperatura": {
+   "horas_ajuste": 0,
+   "horas_avaliacao": 1,
+   "p_media_avaliacao": -4.200875999999999,
+   "rmse": {
+    "linear": NaN,
+    "ross_ar": NaN,
+    "modulo_medido": NaN,
+    "ross_g_ajustado": 4.200875999999999
+   },
+   "ganho_vs_linear": {
+    "linear": NaN,
+    "ross_ar": NaN,
+    "modulo_medido": NaN,
+    "ross_g_ajustado": NaN
+   },
+   "g_ajustado": NaN,
+   "ROSS_2PCT": false
+  }
+ },
+ "1239": {
+  "tz": "America/New_York",
+  "passo": "0 days 00:15:00",
+  "horas_validas": 7383,
+  "plano": [
+   10.0,
+   155.0
+  ],
+  "b_temperatura": {
+   "horas_ajuste": 1846,
+   "horas_avaliacao": 1811,
+   "p_media_avaliacao": 4728.200165654334,
+   "rmse": {
+    "linear": 1871.4291412053435,
+    "ross_ar": 2124.7938995840195,
+    "modulo_medido": 2057.20451619164,
+    "ross_g_ajustado": 1368.1583523494473
+   },
+   "ganho_vs_linear": {
+    "linear": 0.0,
+    "ross_ar": -0.13538570753231394,
+    "modulo_medido": -0.09926925412021892,
+    "ross_g_ajustado": 0.26892324041280624
+   },
+   "g_ajustado": 0.020374220299746244,
+   "ROSS_2PCT": false
+  }
+ },
+ "1433": {
+  "tz": "America/Denver",
+  "passo": "0 days 00:15:00",
+  "horas_validas": 4126,
+  "plano": [
+   10.0,
+   180.0
+  ],
+  "b_temperatura": {
+   "horas_ajuste": 1304,
+   "horas_avaliacao": 623,
+   "p_media_avaliacao": 71.8046146565008,
+   "rmse": {
+    "linear": 80.82761976582552,
+    "ross_ar": 83.5413915527324,
+    "modulo_medido": 82.03290962685188,
+    "ross_g_ajustado": 79.27411778782059
+   },
+   "ganho_vs_linear": {
+    "linear": 0.0,
+    "ross_ar": -0.03357480765571541,
+    "modulo_medido": -0.014911856423810654,
+    "ross_g_ajustado": 0.01921993970013902
+   },
+   "g_ajustado": 0.0029325165144833687,
+   "ROSS_2PCT": false
+  }
+ },
+ "PORTAO": {
+  "a_perez": false,
+  "a_sistemas": [
+   false,
+   false
+  ],
+  "b_ross": false,
+  "b_sistemas": [
+   true,
+   false,
+   false,
+   false
+  ]
+ }
+}

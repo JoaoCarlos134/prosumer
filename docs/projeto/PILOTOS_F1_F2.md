@@ -896,7 +896,7 @@ latitude). O metodo so foi conferido em curvas sinteticas (onde o plano era conh
 no portao: as posicoes do BR-PVGen NAO sao calculadas; P5 e V11 no BR-PVGen continuam bloqueados (o PVDAQ residencial
 do C10, com coordenadas, e o caminho). `c9_posicao_brpvgen.csv` (de 18/11) continua invalido.
 
-Achado lateral (para a versao 0.7.1, relogio fora do Parana): os carimbos brutos do PVDAQ 1200, 1201 e 34 seguem o
+Achado lateral (para a versao 0.8.1, antes 0.7.1; relogio fora do Parana): os carimbos brutos do PVDAQ 1200, 1201 e 34 seguem o
 horario de verao (o centro da producao pula +1 h de marco a outubro); 1239 e 1433 tem relogio irregular (1433 deriva
 +-2 h no meio do ano).
 
@@ -974,3 +974,28 @@ atual do `outlook` na mesma noite (TRUST nos leads ate o ultimo com peso, S depo
 como no P2). **Portao.** Um lead passa a usar a media do ensemble se, nas duas usinas, skill de E contra a saida atual
 > 0 com DM p < 0,05. A faixa vem dos membros num lead se a cobertura dos 10-90 % ficar entre 75 e 85 % nas duas
 usinas; senao a faixa continua a do `site_range`/padrao. Membro de modelo com GHI impossivel sai como no `outlook`.
+
+## Resultados de 25/11/2026 (versao 0.8.0 do README): P2-b e P4-b
+
+### P2-b (peso do dia 8): PASSA
+
+`resultados/pilotos/p2b_peso_dia8.json`. Cruzado: o a de Curitiba (0,68) em Cascavel da skill +0,229 (p 1e-7; o a
+proprio, +0,229) e o de Cascavel (0,72) em Curitiba +0,176 (p 0,0005; o proprio, +0,176). No tempo: a = 0,711 nas duas
+usinas ate 07/08, avaliado depois: +0,296 em Cascavel (98 dias), +0,168 em Curitiba (99). **Passa.** Na biblioteca:
+`TRUST[8]` = 0,6904 (as duas usinas, periodo inteiro), `SKILL[8]` = 0,203 (media de +0,229 e +0,176; rotulo "baixa").
+O `SKILL[8]` fica um pouco acima do `SKILL[7]` (0,199) porque os periodos diferem (leads 1-7: ago/2025-mai/2026),
+declarado no codigo. Continua medido so no Parana.
+
+### P4-b (conversao no PVDAQ): NAO PASSA nos dois bracos
+
+`resultados/pilotos/p4b_pvdaq.json`. **(a) Transposicao** (GHI horario da NASA -> POA medida no plano do metadata):
+no 34 (Las Vegas, 907 horas) RMSE 140,2 W/m2 com a isotropica da biblioteca (media 597), Hay-Davies -2,4 %, Perez
+-3,9 % (o portao pedia 5 %); a isotropica do pvlib fica igual a da biblioteca (+0,04 %). O 50 nao tem dado: o sensor de
+POA esta quebrado no periodo (vazio das 8 as 16 h, cerca de -450 W/m2 a noite; 2 horas sobram), e o portao pedia os
+dois: nao passa de qualquer modo. Leitura: o erro do GHI de satelite (23 % da media) domina; o modelo de ceu muda pouco.
+**(b) Temperatura** (POA medida -> potencia, segunda metade dos dias): 34 +6,4 % (modulo medido +6,9 %), 1239 (Maine)
+-13,5 %, 1433 (Golden, HIT) -3,4 %, 50 sem dado (mesmo sensor). 1 de 4, o portao pedia 3. O g ajustado sai POSITIVO
+no 1239 (+0,020/K) e no 1433 (+0,003/K): no Maine os dias frios sao os de neve e de sol baixo, o que confunde o efeito
+da temperatura com outros; o HIT perde pouco com o calor. Nada muda na biblioteca. Nota de leitura: as horas com
+P >= 0,98 do maximo sairam do ajuste E da avaliacao (o portao so dizia do ajuste; declarado no cabecalho do script
+antes da rodada); no 34 isso deixa 402 horas.

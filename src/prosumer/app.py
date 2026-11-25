@@ -160,10 +160,10 @@ FOR_PEOPLE: dict[str, str] = {
         "{left}"
     ),
     "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured on "
-    "two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption (`trust=` and "
+    "two plants in Parana (Brazil), Aug/2025 to Nov/2026; elsewhere they are an assumption (`trust=` and "
     "`skill=` change them).": (
         "How much the weather forecast is trusted at each lead day, and the confidence labels, were measured "
-        "on two plants in Parana (Brazil), Aug/2025 to May/2026; elsewhere they are an assumption."
+        "on two plants in Parana (Brazil), Aug/2025 to Nov/2026; elsewhere they are an assumption."
     ),
 }
 

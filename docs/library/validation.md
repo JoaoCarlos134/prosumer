@@ -30,7 +30,7 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
   +0.14, DM p 0.0008 and 0.02), leads 9-10 do not, and at lead 15 (13 too at Curitiba) the weather makes the day significantly worse. The
   best weights at leads 4-7 on this new period are close to `trust`. Day 8's weight (0.8.0, P2-b pilot, gate
   committed first): each plant's best weight (0.72, 0.68) applied to the OTHER plant keeps its skill (+0.229 and
-  +0.176, DM p <= 0.0005, within 0.001 of the plant's own best), and a weight fitted on April-August keeps skill
+  +0.176, DM p 1e-7 and 0.0005, within 0.001 of the plant's own best), and a weight fitted on April-August keeps skill
   on August-November at both (+0.30, +0.17). `trust` now reaches day 8 with 0.69, fitted on both plants over
   the whole period; still two plants in one state.
 - **The weather-to-kWh conversion** (P4-b pilot, 2026-11-25, PVDAQ systems with a known plane and measured
@@ -38,7 +38,8 @@ The records behind each line are in `docs/projeto/PILOTOS_F1_F2.md` and `experim
   3.9% closer than the library's isotropic sky on Las Vegas (the gate needed 5%; Hay-Davies 2.4%), and a panel
   temperature factor from the air temperature (Ross, -0.4%/K) helped on 1 of 4 systems (6.4% on Las Vegas; worse
   in Maine and on a Golden system with low-loss HIT panels, where snow and cold days confound it). Neither is in
-  the library. Most of the error left is the GHI's itself (RMSE 140 W/m2 on a mean of 597 in Las Vegas). One
+  the library. The whole chain from satellite GHI to plane irradiance errs by ~23% of the mean (RMSE 140 W/m2
+  on 597 in Las Vegas, 11% low on average), and the sky model changes that by 4% at most. One
   system's plane sensor was broken (system 50: blank by day) and gave no data.
 - **Not validated**: the lead-day trust and skill anywhere but Parana; the outlook's roof fit against a known
   roof (beyond Cascavel: fitted 15 degrees facing 30, the plant's sheet says 13 facing 25).

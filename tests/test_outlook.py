@@ -328,6 +328,12 @@ def test_tuning_arguments_default_to_the_old_constants_and_take_effect() -> None
 
     with pytest.raises(ValueError, match="confidence"):
         outlook.forecast_ahead(s, site=SITE, confidence=(0.2, 0.3))
+    # review of 0.8.0: 7 skill values beside the 8 default trust values labelled day 8 "seasonal only"
+    # while it used the weather; a lead past `skill` now takes its last value
+    short = outlook.forecast_ahead(s, days=10, site=SITE, weather=w, tilt=15, azimuth=20, skill=(0.3,) * 7)
+    d8 = short.daily[short.daily["lead_day"] == 8].iloc[0]
+    assert d8["source"] == "weather" and d8["confidence"] == "medium"
+    assert (short.daily.loc[short.daily["lead_day"] >= 9, "confidence"] == "seasonal only").all()
     with pytest.raises(ValueError, match="kw_eff_days"):
         outlook.forecast_ahead(s, site=SITE, kw_eff_days=(120, 60))
     with pytest.raises(ValueError, match="kwp_share"):

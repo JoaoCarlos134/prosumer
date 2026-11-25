@@ -251,8 +251,8 @@ def _range_note(quantity: str) -> str:
         return (
             "Range: across the weather models and the usual spread of the season (not a calibrated "
             "interval). Confidence is the measured skill at that many days ahead (two plants in Brazil): "
-            "high for days 1-3, medium 4-6, low on day 7; from day 8 the weather forecasts showed no skill, "
-            "so the day is only the season's average."
+            "high for days 1-3, medium 4-6, low on days 7-8; from day 9 the weather forecasts showed no "
+            "skill, so the day is only the season's average."
         )
     return (
         "Range: the lowest and highest of the same hour in the last weeks. A household's week repeats, so "

@@ -40,7 +40,7 @@ The TCC's site does the same in TypeScript, on the same JSON (`Result.to_json`, 
 How step 4 works: for production, the plant's effective power and the roof's orientation are learnt from
 its own clear days; each hour is that power times the sunlight on the panel plane computed from the weather
 forecast. The weather is trusted less as the lead grows and the forecast slides toward the season's average
-day; from day 8 it is only that (a pilot found no skill in the weather beyond a week). For consumption, each
+day; from day 9 it is only that (the pilots found no skill in the weather beyond day 8). For consumption, each
 hour is the average of that hour on the same kind of day (weekday or weekend) in the last 4 weeks. Details and
 the measured numbers: the docstring of `prosumer.outlook`.
 

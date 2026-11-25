@@ -15,7 +15,7 @@ How (simple on purpose, every step can be explained to the person using it):
     calendar month in the data (how much of a clear day an average day of that month gave);
   - *forecast* = seasonal + trust(lead) x (weather - seasonal). The trust of each lead day says how much a
     weather forecast that far ahead is worth more than the season; it falls with the lead and is zero where
-    no model reaches (`TRUST`, measured by the horizon pilot, see below).
+    no model reaches (`TRUST`, measured by the horizon pilot and, for lead 8, the P2-b pilot, see below).
 - **Consumption** (no weather): per hour, the mean of that hour over the last `weeks` x 7 days of the same
   kind as the forecast day (weekday or weekend).
   It does not depend on the lead: a household's week repeats; what changes it (holidays, a trip, a new
@@ -44,9 +44,9 @@ there): the average day of that month, not a forecast of that day's weather. It 
   Cascavel, so the weather was not used beyond lead 7 (until 0.8.0). Two months of one season do not prove
   there is none: re-measured with Apr-Nov 2026 (`piloto_p2.py`, 2026-11-25), lead 8 has skill at both plants
   (+0.19, +0.14) and 9-10 do not. Lead 8's factor (`piloto_p2b_peso_dia8.py`, gate committed first): each
-  plant's fitted factor (0.72, 0.68) applied to the OTHER plant keeps its skill (+0.229, +0.176, DM p <=
-  0.0005), and a factor fitted on Apr-Aug only keeps skill on Aug-Nov at both; the default is the factor
-  fitted on both plants over the whole period (0.69).
+  plant's fitted factor (0.72, 0.68) applied to the OTHER plant keeps its skill (+0.229, +0.176, DM p
+  1e-7 and 0.0005), and a factor fitted on Apr-Aug only keeps skill on Aug-Nov at both; the default is the
+  factor fitted on both plants over the whole period (0.69).
 - At lead 1, on the benchmark's hours: +0.325 against clear-sky persistence (the weather forecast alone, which
   is what a factor of 1 gives), a statistical tie with the benchmark's LightGBM in regime C (+0.330, DM p
   0.88) and below the median of the benchmark's models (+0.367). It is the method that is simple to explain,
@@ -62,13 +62,14 @@ there): the average day of that month, not a forecast of that day's weather. It 
 - Not measured: the thresholds of the confidence labels (they follow the measured skill, `SKILL`), a roof the
   person types in, other climates than Parana's.
 
-**Tuning.** Every number above is an argument of `forecast_ahead`, with these defaults and origins:
-`trust` and `skill` (MEASURED by the horizon pilot on the two Parana plants: elsewhere an assumption, and the
-notes say so), `confidence` (0.40 / 0.25: set by hand so leads 1-3 read "high" and 4-6 "medium" with the
-measured skill), `implausible` (1.2 x clear sky + 50 W/m2: physical, generic), `kw_eff_days` (60, else 120
-days: the pilot's rule, set by hand), `min_month_days` (5: set by hand), `kwp_share` (0.8: a generic
-performance ratio when no clear day is recent) and the clear-day rule `clear_window_days`, `clear_quantile`,
-`clear_ratio` (shared with `diagnostics`, set by hand on the same plants).
+**Tuning.** Every number above is an argument of `forecast_ahead`, with these defaults and origins: `trust`
+and `skill` (MEASURED by the horizon pilot, lead 8 by the P2-b pilot, on the two Parana plants: elsewhere an
+assumption, and the notes say so; a lead `skill` does not reach takes its last value), `confidence` (0.40 /
+0.25: set by hand so leads 1-3 read "high" and 4-6 "medium" with the measured skill), `implausible` (1.2 x
+clear sky + 50 W/m2: physical, generic), `kw_eff_days` (60, else 120 days: the pilot's rule, set by hand),
+`min_month_days` (5: set by hand), `kwp_share` (0.8: a generic performance ratio when no clear day is recent)
+and the clear-day rule `clear_window_days`, `clear_quantile`, `clear_ratio` (shared with `diagnostics`, set by
+hand on the same plants).
 """
 
 from __future__ import annotations
@@ -113,7 +114,7 @@ TRUST: tuple[float, ...] = (1.0, 1.0, 1.0, 0.9158, 0.9058, 0.8550, 0.7854, 0.690
 # 1-3 are the plain weather forecast's, `fisico`, since the factor is 1 there): what a day's confidence label
 # says. A day only partly covered by the weather gets it in proportion. Lead 8 is the P2-b pilot's (Apr-Nov
 # 2026, another period than leads 1-7: it is not below lead 7's because the periods differ, not because day 8
-# is easier).
+# is easier; and in-sample: its factor was fitted on the same days, which cost ~0.0006 across plants).
 SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199, 0.203)
 # An hourly GHI above 1.2 x clear sky + 50 W/m2 is not weather but a broken value: on 2026-10-12 the live
 # `meteofrance_seamless` gave up to 2750 W/m2 at Cascavel on its 4th day (clear sky ~990). Brief cloud
@@ -820,7 +821,10 @@ def _generation(
     sun = physics.mean_sun(hours, *site)
     cs = physics.clear_sky_ghi(hours, *site)
     a = np.array([trust[max(k, 1) - 1] if k <= len(trust) else 0.0 for k in lead])
-    sk = np.array([tune.skill[max(k, 1) - 1] if k <= len(tune.skill) else 0.0 for k in lead])
+    # a lead the weather is trusted on but `skill` does not reach takes skill's last value (the furthest
+    # measured): before the review of 0.8.0 it got 0 and was labelled "seasonal only" while using the weather
+    last = len(tune.skill)
+    sk = np.array([tune.skill[min(max(k, 1), last) - 1] if last else 0.0 for k in lead])
     ghi, lo_ghi, hi_ghi, n_models, dropped = _weather_at(w, hours, cs, tune.implausible)
     if dropped:
         notes.append(

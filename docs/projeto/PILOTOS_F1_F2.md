@@ -992,10 +992,12 @@ declarado no codigo. Continua medido so no Parana.
 no 34 (Las Vegas, 907 horas) RMSE 140,2 W/m2 com a isotropica da biblioteca (media 597), Hay-Davies -2,4 %, Perez
 -3,9 % (o portao pedia 5 %); a isotropica do pvlib fica igual a da biblioteca (+0,04 %). O 50 nao tem dado: o sensor de
 POA esta quebrado no periodo (vazio das 8 as 16 h, cerca de -450 W/m2 a noite; 2 horas sobram), e o portao pedia os
-dois: nao passa de qualquer modo. Leitura: o erro do GHI de satelite (23 % da media) domina; o modelo de ceu muda pouco.
+dois: nao passa de qualquer modo. Leitura: o erro da cadeia inteira (GHI de satelite -> POA) e ~23 % da media (e 11 %
+abaixo em media: da NASA ou da calibracao do sensor, o piloto nao separa); o modelo de ceu muda isso em 4 % no maximo.
 **(b) Temperatura** (POA medida -> potencia, segunda metade dos dias): 34 +6,4 % (modulo medido +6,9 %), 1239 (Maine)
 -13,5 %, 1433 (Golden, HIT) -3,4 %, 50 sem dado (mesmo sensor). 1 de 4, o portao pedia 3. O g ajustado sai POSITIVO
 no 1239 (+0,020/K) e no 1433 (+0,003/K): no Maine os dias frios sao os de neve e de sol baixo, o que confunde o efeito
-da temperatura com outros; o HIT perde pouco com o calor. Nada muda na biblioteca. Nota de leitura: as horas com
-P >= 0,98 do maximo sairam do ajuste E da avaliacao (o portao so dizia do ajuste; declarado no cabecalho do script
-antes da rodada); no 34 isso deixa 402 horas.
+da temperatura com outros; o HIT perde pouco com o calor. Nada muda na biblioteca. Nota de leitura (revisao de
+25/11): o corte P >= 0,98 do maximo saiu do ajuste E da avaliacao (o portao so dizia do ajuste), mas tirou 0, 3 e 2
+horas (34, 1239, 1433) e nao muda nenhum ganho; numa media horaria ele nem detecta o limite do inversor. As 402 horas
+do 34 vem dos outros filtros (temperatura presente, sol, POA > 0).

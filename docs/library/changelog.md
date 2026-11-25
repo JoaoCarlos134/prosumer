@@ -10,6 +10,8 @@ between 0.1.0 and 0.6.3 is listed below by theme, under "0.2.0 to 0.6.3".
   seasonal expectation as before. Measured on the two Parana plants, April-November 2026 (P2 and P2-b pilots,
   gates committed first): each plant's factor holds on the other plant and on a later period. The notes say the
   defaults were measured Aug/2025 to Nov/2026, and that past the last trusted day the weather showed no skill.
+- A `skill=` shorter than `trust` (e.g. 7 values beside the default 8) gave a day that uses the weather the label
+  "seasonal only"; such a day now takes the last `skill` value (found by the review of 0.8.0, with a test).
 - Checked and not taken: a Perez sky and a panel temperature factor (P4-b pilot on PVDAQ, [Validation](validation.md)).
 
 ## 0.7.0 (2026-11-25): an honest range per site

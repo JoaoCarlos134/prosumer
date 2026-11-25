@@ -138,6 +138,13 @@ machine", "a GPU", "the private raw data", "a compute server". Library tests: `p
 
 ## How to work here (the user's standing rules)
 
+- **One numbering for all plans (decided 2026-11-25).** Every step, pilot, server run and plan is a version
+  (`MAJOR.MINOR.PATCH`, left = bigger change) in README "Versions and roadmap": done and planned in one table each.
+  New work gets a planned version there (MINOR if it changes a default or adds a capability, PATCH otherwise),
+  never a new letter code (E, F, A, V, C, P, G and the numbered UI items are retired; README "Old labels" maps
+  them). When a version is finished, move its row to "Done" with the date and the README status line. Rejected:
+  the user's literal `v0.021` (PEP 440 reads it as 0.21); kept `0.x.y`, continuing the `v0.1.0` tag. Private
+  details of a planned item stay in `CLAUDE.local.md`, under the same version number.
 - **Library first.** The end product is the library and, on top of it, the app (the TCC). Papers are
   by-products. Generation (PV) forecasting is the main thing; consumption matters more to utilities. Never
   trade speed for a small skill gain: heavy foundation models stay opt-in (2026-10-16).

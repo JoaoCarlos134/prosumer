@@ -25,8 +25,8 @@ the gap between history only (open circle) and perfect weather of the day (black
 Skill is over clear-sky persistence. Like the rest of the benchmark, its labels are in Portuguese; the write-up is
 `experimentos/testes_previsao/LEIA-ME.md`.*
 
-**Status: version 0.1 (step E2 of the thesis plan).** CPU only by design: the best model of every benchmark
-test runs on a CPU.
+**Status: 0.6.2 (2026-11-23); next 0.6.3, then 0.7.0** (see [Versions and roadmap](#versions-and-roadmap)). CPU
+only by design: the best model of every benchmark test runs on a CPU.
 
 ## Install
 
@@ -146,8 +146,8 @@ for window in task.windows():
 | `provenance` | source and licence of every input, carried to the report |
 | `data` | the real Dingle houses (CC0) and synthetic series for tests |
 
-Not written yet: TTM on a device (E4), soiling vs shading and string faults (they need 5-minute or DC data);
-in economics, COSIP read from a bill, grupo A and the tax reform (LC 214/2025).
+Not written yet: a model measured on a real device (1.0.0 below), soiling vs shading and string faults (they need
+5-minute or DC data); in economics, COSIP read from a bill, grupo A and the tax reform (LC 214/2025).
 
 ## What the benchmark found (the defaults come from here)
 
@@ -162,6 +162,76 @@ in economics, COSIP read from a bill, grupo A and the tax reform (LC 214/2025).
 
 Details, numbers and every pilot: `experimentos/testes_previsao/LEIA-ME.md` and
 `docs/projeto/PILOTOS_F1_F2.md` (in Portuguese).
+
+## Versions and roadmap
+
+One numbering for everything: the library, the app, the benchmark and the research runs. `MAJOR.MINOR.PATCH`:
+the further left the number, the bigger the change.
+
+- **MAJOR:** 1.0.0 is the thesis delivered: a person who does not program runs the whole analysis in the app, and
+  the library is on PyPI.
+- **MINOR:** a new capability (a module, an app feature), or a research result that changes a default.
+- **PATCH:** fixes, reviews, docs, and research runs that leave every default as it was.
+
+Anything that can change a number is a pilot whose gate is committed before the run (pass and fail are both
+recorded in `docs/projeto/PILOTOS_F1_F2.md`). The library's changes, item by item, are in
+[the changelog](docs/library/changelog.md). Versions before 0.1.0, and from 0.2.0 to 0.6.2, were numbered on
+2026-11-25; git tags exist only for `v0.1.0`.
+
+### Done
+
+| Version | Date | What |
+|---|---|---|
+| 0.0.1 | 2026-10-05 | Benchmark v1: next-day hourly forecast issued at midnight, one train/test cut; references, zero-shot foundation models, trained networks; history only (regime A) and the day's measured weather (B, a ceiling) |
+| 0.0.2 | 2026-10-06 | Benchmark v2: rolling origin (plants 5 folds, houses 3), every model retrained per fold, the real day-ahead weather forecast (regime C), Diebold–Mariano with Holm; a leak in the houses' consumption fixed |
+| 0.0.3 | 2026-10-09 to 11 | 57 models, 260 result rows; every pending model studied and piloted before dropping (Lag-Llama and TimeGrad out, CycleNet and Mamba in). First pilots: 6 weather models in LightGBM, +0.373 and 1st of 24 (pass); causal conformal bands (pass); BuildingsBench (fail) |
+| 0.1.0 | 2026-10-12 | **Library first release** (tag `v0.1.0`): the benchmark's protocol and metrics, physics, clock check, readers, forecasters, conformal bands, `analyze` in one call; it reproduces the benchmark model by model |
+| 0.2.0 | 2026-10-12 to 15 | Diagnostics from the energy alone (roof, clear-day performance, steps; pilot 4 of 5); `outlook`, the next 1-35 days (pilot: generation leads 1-7 and consumption 1-14 pass); `embedded`, models as C headers for a microcontroller |
+| 0.3.0 | 2026-10-13 to 17 | `economics` and `economics.brazil` (ANEEL open data, bandeiras, tarifa branca with PV, Lei 14.300). Pilot against real bills: fails, about 21 % under the bill with compensation (needs detailed bills) |
+| 0.3.1 | 2026-10-16 to 19 | Any brand, any meter: reader of unknown layouts, counters read as counters, PVDAQ, real Fronius exports; every constant chosen on our sites becomes an argument with its origin declared; MPPT-channel pilot fails |
+| 0.4.0 | 2026-10-19 to 21 | `app.run`, the app's backend in one call with strict JSON; English and Portuguese for every note; checks on what a person types; ~10 s down to ~4 s on seven years of data |
+| 0.5.0 | 2026-10-23 to 28 | The site (`webapp/`: FastAPI and React, report-style pages, animations) and a standalone Windows program |
+| 0.6.0 | 2026-11-04 | Public: AGPL-3.0-only; the plant series removed from the whole history and the repository recreated |
+| 0.6.1 | 2026-11-16 to 18 | `outlook.look_back`, the last days beside the next ones; product review of the app and its fixes (plain-words overview, unknown roof asks for tilt and direction, inputs pane, page tags); learning-with-use replay on the two plants (fails there, not conclusive for a new site: the defaults were fitted on these plants); public datasets found; the compute-server queue written |
+| 0.6.2 | 2026-11-18 to 23 | **Server results** (every gate written first). **Pass:** an untouched test period (06-11/2026) keeps the median and the ranking; 3 seeds reproduce the ties; a per-site range catches 79-82 % of days for an 80 % promise (the current range catches 64-69 %, and at 7 days ahead only 50 %); Chronos-2 fine-tuning wins 3 of 4 cases; range scores for every model. **Weak pass:** the mean of the 6 weather models wins 18 of 23 models on uncorrected p, but only 6 of 23 under Holm. **Fail:** foundation models with weather lose to the physical chain by 0.07-0.13; houses' PV in regime B changes rank with the season; the roof and clock checks on US systems; the weather-to-kWh conversion on BR-PVGen. **Broken:** plant positions, days 8-15, Time-LLM |
+
+### Planned
+
+| Version | What | Waiting on |
+|---|---|---|
+| 0.6.3 | Close the server round. Fix and rerun the broken scripts: plant positions (a crash and absurd latitudes), a source of 2026 single runs for days 8-15, the Time-LLM data type, the Crossformer and Mamba imports. Docs: a seasonal note on the houses' PV default, fine-tuning as a documented option (it loses on houses' PV), the foundation-models-with-weather negative | — |
+| 0.7.0 | **An honest range per site.** Once a site has 30 days of (forecast, actual) pairs, `outlook`'s daily range comes from its own errors (the rule tested in 0.6.2); before that, today's range. Tests, docs, the app shows it | — |
+| 0.7.1 | **Diagnostics outside Paraná.** First check the pilot's time zones (the Paraná control also failed the clock, and one US system is off by 11 h); then the clock with daylight saving time, with a test; then the tilt overestimated on low roofs (5 of 6 systems) | — |
+| 0.8.0 | **A better generation forecast**, each item a pilot: a trained model over the 6 weather forecasts for days 1-7 (so far +0.02 and +0.004, not significant); the mean of the 6 weather models as published regime C, after checking it on the untouched period; days 8-15 re-measured with ~7 months of runs; ensemble forecasts for days 4-15 (their mean as the forecast, their spread as a range that is narrow on settled days and wide on uncertain ones); a better weather-to-kWh conversion (transposition, panel temperature, shading by sun position); trust per climate and the Paraná constants checked elsewhere (PVDAQ's residential fleet, Ausgrid for consumption) | ensembles collected daily since 2026-11-18, testable from ~2027-02; the conversion needs valid plant positions |
+| 0.9.0 | **Learning with use and the long view.** A local database (measurements, every issued forecast, per-site parameters, events the person marks); per-site trust and bias only where a site that did not choose the defaults shows a gain; days 8-15 as a weekly total with a range and the chance of a sunny day | 0.7.0 and 0.8.0 |
+| 0.9.1 | Site polish: the overview's range whiskers and the flattened hourly band become a percentile band; the demo served at once, with real progress for uploads; a preview image for shared links; a phone-width check | — |
+| 1.0.0 | **The thesis.** A person who does not program completes the analysis end to end; the library on PyPI; the published benchmark (v2 or the 3-seed v3); a model measured on real hardware (Raspberry Pi 5, ESP32); the thesis written | the employer's and the university's IP rules (Lei 9.609 art. 4) before PyPI; the author's choice on v3 |
+| 1.x | Connect to the inverter's cloud instead of an export; alerts; read the bill from a PDF or photo; what-if (tarifa branca, a battery, more panels: a pilot first, since a wrong answer is wrong money advice); a PDF report; Home Assistant; a hosted beta (needs Open-Meteo's commercial plan, offers its source under the AGPL); the library as a hosted API | each one the author's decision |
+
+Blocked, not scheduled: the bill with compensation (needs detailed bills); TimeGPT (paid API that sends the data;
+houses only); BR-PVGen per-climate trust (positions first); publishing the plant series (needs the data owner's
+written permission).
+
+### Old labels
+
+The project's Portuguese docs use the labels below; each one now maps to a version.
+
+| Old label | Version |
+|---|---|
+| E1-E3 (thesis plan: rename, version 0.1, check against the benchmark) | 0.1.0 |
+| E4 (diagnosis, embedded) | 0.2.0; on a real device: 1.0.0 |
+| E5 (hardware), E7 (writing), "App" gate | 1.0.0 |
+| E6 (economics, docs, licence, publication) | 0.3.0 and 0.6.0 |
+| F0 (decisions) | 0.6.0 (licence); the rest is in "Blocked" |
+| F1, F2, A (closing the benchmark, improvement pilots, pending models) | 0.0.3; F2(b), the roof from the data: 0.2.0 |
+| V0-V9, V11, V11-b, C1-C10, G1-G7 (server queue and its lanes) | done: 0.6.1 and 0.6.2; reruns: 0.6.3 |
+| V10 (re-aggregating Curitiba) | not planned (decided 2026-10-12 not to redo; the 1-h offset is declared) |
+| P1-P6 (prediction priorities) | 0.8.0; P5 blocked |
+| P7 (the rest of the server batch) | 0.6.2 |
+| Product review items 4-8 | 0.6.1 |
+| Product review items 1-3, and the preview image of item 7 | 0.9.1 |
+| Product review item 9 (long-use showcase, local only) | 0.6.1 |
+| "Priority 2" items 1-2 (beyond a week, local database) | 0.9.0 |
 
 ## Data
 

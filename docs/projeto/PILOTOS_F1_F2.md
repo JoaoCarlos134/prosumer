@@ -924,3 +924,53 @@ usuario, versao 0.8.0 do README; o `TRUST` da biblioteca segue com 7 valores ate
 leads 4-7 neste periodo (0,92/0,89, 0,86/0,84, 0,81/0,78, 0,78/0,68) ficam perto do `TRUST` atual (0,92, 0,91, 0,86,
 0,79), medido em outro periodo: o `TRUST` se sustenta, salvo Curitiba no lead 7. No dia 15 (e no 13 em Curitiba) o tempo
 piora a previsao com p < 0,05.
+
+## Portoes de 25/11/2026 (versao 0.8.0 do README), escritos ANTES de qualquer rodada
+
+### P2-b: o peso do dia 8 vale numa usina que nao o escolheu?
+
+**Pergunta.** O P2 achou habilidade no lead 8 nas duas usinas, com a otimo 0,72 (Cascavel) e 0,68 (Curitiba), cada um
+ajustado na propria usina. O peso de uma usina serve na outra, e num periodo que nao o escolheu? **Metodo.**
+`scripts/piloto_p2b_peso_dia8.py`, so sobre `p2__usinas__*.parquet` (nada baixado, nada novo rodado na previsao):
+previsao do lead 8 = S + a (W - S). (1) Cruzado: o a otimo de cada usina aplicado na OUTRA. (2) No tempo: a ajustado
+nas duas usinas juntas na primeira metade das datas-alvo (ate 2026-08-07), avaliado na segunda metade em cada usina.
+Skill contra S nos totais diarios; DM (perda quadratica, HAC lag 7, a mesma funcao do P2). **Portao.** Passa se nas
+duas usinas: (1) skill > 0 com DM p < 0,05 E skill >= skill do a proprio - 0,02; (2) skill > 0 na segunda metade.
+**Se passar:** `TRUST[8]` = a ajustado nas duas usinas juntas no periodo inteiro (minimos quadrados, como os leads
+1-7; limitado a 1), `SKILL[8]` = media das duas usinas do skill com esse a; declarado em `docs/library/tuning.md`
+como medido nas duas usinas do Parana (abr-nov/2026, conferido entre usinas e no tempo; outro clima continua nao
+conferido). **Se falhar:** a linha plana depois do dia 7 fica, e o motivo vai para a documentacao.
+
+### P4-b: conversao tempo -> kWh no PVDAQ (posicao e plano conhecidos)
+
+**Pergunta.** A mesma do P4 (de 18/11, NAO PASSA sem posicoes), agora em sistemas com posicao, inclinacao e azimute
+no metadata e POA medida: o PVDAQ 34, 50, 1239 e 1433 (os unicos dos 6 do piloto de 17/10 com POA, temperatura do ar
+e do modulo medidas; periodos os do piloto, ja no cache). **Metodo.** `scripts/piloto_p4b_pvdaq.py` (ambiente `p4` =
+biblioteca + pvlib). Medias horarias, so horas com sol (cos zenite > 0,1) e as 60 min validas.
+(a) Transposicao, GHI horario da NASA POWER (o cache do piloto de 17/10; e o tipo de GHI que o app recebe) -> POA no
+plano do metadata (nada ajustado): isotropica da biblioteca (`physics.poa_isotropic`, Erbs) x Hay-Davies x Perez
+(pvlib, Erbs para separar, extraterrestre e massa de ar do pvlib). So nos sistemas de relogio conferido: 50 (passo
+fixo UTC-7) e 34 (fuso com horario de verao, que os carimbos seguem: achado de 25/11); 1239 e 1433 ficam fora do (a)
+(relogio irregular, achado de 25/11, ANTES deste portao). Metrica: RMSE da POA horaria no ano inteiro.
+(b) Temperatura, POA medida -> potencia AC (mesmo registrador: relogio nao importa): P = k POA x P = k POA (1 + g (Tc
+- 25)), g = -0,004/K (generico de silicio cristalino; o metadata nao traz o coeficiente; o 1433 e HIT, cerca de
+-0,0026, declarado), Tc = Tar + 0,03 POA (Ross, com a temperatura do ar: o que o app teria da previsao); como
+diagnostico, Tc = modulo medido e g ajustado. k por minimos quadrados na primeira metade dos dias, sem as amostras
+com P >= 0,98 do maximo (limitacao do inversor); RMSE da potencia na segunda metade. **Portao.** (a) Perez com RMSE
+>= 5 % menor que a isotropica nos dois sistemas -> a biblioteca ganha Perez (`physics`, com testes contra o pvlib) e
+a cadeia do `outlook` passa a usa-lo so depois de um replay nas duas usinas que nao piore o skill diario nos leads
+1-7 (portao proprio); (b) Ross com RMSE >= 2 % menor em >= 3 dos 4 -> a biblioteca ganha o fator de temperatura, com
+a mesma condicao do replay. Senao, fica como esta, com o motivo. Sombreamento por posicao do sol: fora deste piloto
+(precisa de anos de dias claros por sistema).
+
+### P3: ensembles para os dias 4-15 (portao para quando houver dados; nada roda agora)
+
+**Pergunta.** A media do ensemble preve melhor que a saida atual nos dias 4-15, e o espalhamento dos membros da uma
+faixa honesta? **Dados.** A coleta diaria do servidor (`10_coleta_ensembles.py`, desde 19/11/2026); roda quando
+houver >= 90 noites com os 5 modelos (~fev/2027), usando as noites ate a vespera da rodada. **Metodo.** Para cada noite
+e lead 4-15: GHI horario de cada membro -> total diario pela cadeia do `outlook` (telhado causal por mes, como o P2);
+E = media dos totais dos membros de todos os modelos; faixa = quantis 10 e 90 % dos membros. Comparacao com a saida
+atual do `outlook` na mesma noite (TRUST nos leads ate o ultimo com peso, S depois; as rodadas unicas da mesma noite,
+como no P2). **Portao.** Um lead passa a usar a media do ensemble se, nas duas usinas, skill de E contra a saida atual
+> 0 com DM p < 0,05. A faixa vem dos membros num lead se a cobertura dos 10-90 % ficar entre 75 e 85 % nas duas
+usinas; senao a faixa continua a do `site_range`/padrao. Membro de modelo com GHI impossivel sai como no `outlook`.

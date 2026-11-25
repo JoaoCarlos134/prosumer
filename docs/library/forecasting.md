@@ -158,6 +158,11 @@ as wide over the next three days.
   (`outlook.past_pairs` says what it reads). A recalibrated table keeps `default_low`/`default_high`, the
   range the errors are measured against.
 - Only the daily totals are recalibrated; the hourly ranges are not (the rule was measured on daily totals).
-- Measured on generation only. On consumption the rule runs, and the notes say it is untested there.
+- Measured on generation only, at lead days 1-7, with pairs issued by the same method as the day they
+  recalibrate (the outlook with the weather forecast). On consumption, beyond day 7, or with pairs of another
+  method (for example `look_back` without archived weather feeding an outlook with a live forecast: then give
+  `look_back` the archive, `weather=io.open_meteo.fetch_previous_runs(..., lead_days=1)`) it is untested.
+- The app (`app.run`) keeps no forecasts yet, so it shows the default range with a note that says so; the
+  local database of 0.9.0 is what lets it learn the site's range.
 - `outlook.site_range(o, past, window_days=60, min_pairs=30, levels=(0.1, 0.9))` applies it to an outlook you
   already have.

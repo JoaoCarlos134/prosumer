@@ -104,6 +104,14 @@ Files = Mapping[str, tuple[bytes, str]]
 # `run` rewords them in the report and the outlooks; `tests/test_app.py` checks each key is still a template
 # of the library and that no text of the tested pages carries code.
 FOR_PEOPLE: dict[str, str] = {
+    "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants in Parana "
+    "(Jun-Nov 2026) it held it on 6.4 to 6.9 days in 10, and on only 5 in 10 a week ahead. Read it as too "
+    "narrow until {n} days of this site's own forecasts can recalibrate it.": (
+        "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants in Parana "
+        "(Jun-Nov 2026) it held it on 6.4 to 6.9 days in 10, and on only 5 in 10 a week ahead: read it as "
+        "too narrow. The app does not yet keep its forecasts, so it cannot learn this site's own range ({n} "
+        "days are needed)."
+    ),
     "Licence unknown for: {inputs}. Find it out before sharing or publishing these results "
     "(`EnergySeries.from_dataframe(provenance=...)`; `prosumer.provenance.attach` for a weather frame).": (
         "Licence unknown for: {inputs}. Find out the licence of your files before sharing or publishing "

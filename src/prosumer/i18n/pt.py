@@ -884,6 +884,17 @@ PT: dict[str, str] = {
         "frente. Leia-a como estreita demais até que {n} dias de previsões deste local possam recalibrá-la."
     ),
     (
+        "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants in Parana "
+        "(Jun-Nov 2026) it held it on 6.4 to 6.9 days in 10, and on only 5 in 10 a week ahead: read it as "
+        "too narrow. The app does not yet keep its forecasts, so it cannot learn this site's own range ({n} "
+        "days are needed)."
+    ): (
+        "A faixa mínimo-máximo de cada dia deveria conter o total real em 8 de cada 10 dias; em duas usinas "
+        "no Paraná (jun-nov de 2026) conteve em 6,4 a 6,9 de cada 10, e em só 5 de cada 10 uma semana à "
+        "frente: leia-a como estreita demais. O aplicativo ainda não guarda suas previsões, então não pode "
+        "aprender a faixa deste local (são precisos {n} dias)."
+    ),
+    (
         "The past forecasts lack the columns {cols} (each needs unique_id, date, lead_day, total, low, high "
         "and the measured total, actual)."
     ): (

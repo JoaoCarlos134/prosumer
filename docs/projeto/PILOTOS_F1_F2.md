@@ -807,7 +807,7 @@ Cada veredito abaixo e o do portao escrito antes (secoes acima e V6). Agregados 
 | V11-b faixa conformal por sitio | **PASSA** | cobertura todos os leads 0,819 (Cascavel) e 0,793 (Curitiba), hoje 0,691 e 0,637; por lead 0,771-0,841 (hoje no lead 7: 0,512 e 0,500); largura relativa a de hoje ~1,0 nos leads 1-3, 1,45-1,76 nos leads 5-7 |
 | G1 / P1-gpu fundacionais + 6 NWP | NAO PASSA | lead 1, ganho sobre o fisico: Chronos-2 -0,107 / -0,126, TabPFN-TS -0,113 / -0,065 (Cascavel / Curitiba; DM p <= 0,03); pior em quase todo lead 1-7. LightGBM-6NWP +0,021 (p 0,25) / +0,004 (p 0,88) |
 | V1 teste intocado | PASSA | Ensemble-mediana empatado com o melhor em A (melhor MLP) e C (melhor KAN); Spearman v1 x v2 0,94 (A) e 0,87 (C); LightGBM C - A = +0,25 |
-| V5 regime C6 | PASSA (pelo portao; fraco, ver item 3 abaixo) | 18 de 23 modelos ganham >= +0,02 com p < 0,05 **sem correcao** (como o portao escreveu); com Holm sobre os 23 testes C6 x C so 6 de 23 (em `dm_regimes.csv`, p_holm < 0,05 so em Chronos-2, DeepAR, FEDformer, Ridge, TabPFN-TS); todos os 23 ganhos sao positivos (+0,013 a +0,048); nao ganham KAN, NBEATSx, NHITS, RandomForest, TiDE |
+| V5 regime C6 | PASSA (pelo portao; fraco, ver item 3 abaixo) | 18 de 23 modelos ganham >= +0,02 com p < 0,05 **sem correcao** (como o portao escreveu); com Holm sobre os 23 testes C6 x C so 5 de 23 (em `dm_regimes.csv`, p_holm < 0,05 so em Chronos-2, DeepAR, FEDformer, Ridge, TabPFN-TS); todos os 23 ganhos sao positivos (+0,013 a +0,048); nao ganham KAN, NBEATSx, NHITS, RandomForest, TiDE |
 | V7 ajuste fino Chronos-2 | PASSA (3 de 4) | usinas A +0,066, usinas C +0,090, casas_cons A +0,029; casas_prod A **-0,062** |
 | V4 casas no ano todo | NAO PASSA | so `casas_prod|B` falha: mediana em 2o, 1o e **7o de 23** (out-dez); Spearman entre estacoes 0,36-0,48 nesse caso (0,61-0,97 nos outros) |
 | V3 3 sementes | PASSA | 250 linhas modelo x caso; status de empate igual ao da v2 em 92,4 %; skill dentro da tolerancia em 95,6 % |
@@ -847,7 +847,7 @@ independentes falham: o V6 nao traz evidencia independente de que a conformal me
    fuso do `piloto_pvdaq.py` (e por que Cascavel falha aqui e nao nos testes da biblioteca); so depois, se sobrar
    erro, testar o `quality.clock_offset` em dados com horario de verao (o Parana nao tem desde 2019).
 3. V5: o regime C publicado ganharia a media das 6 NWP (consequencia do portao), MAS com cautela: os p do portao nao
-   tem correcao (com Holm so 6 de 23 passam) e o periodo de teste e o mesmo que escolheu as varias NWP (F2(a)). Antes
+   tem correcao (com Holm so 5 de 23 passam; corrigido de "6" na revisao de 25/11) e o periodo de teste e o mesmo que escolheu as varias NWP (F2(a)). Antes
    de republicar o regime C, conferir o C6 no periodo intocado do V1 (o V1 nao rodou C6).
 4. V4: o padrao da biblioteca para producao das casas ganha nota sazonal; a escolha da mediana para `casas_prod` no
    regime B e revista.
@@ -862,3 +862,40 @@ pelo script e da o mesmo sinal (-0,06 a -0,16), mas pelo portao nao decide nada.
 **A refazer (bugs de script, nao resultados):** C9 (dias vazios na validacao, e as latitudes absurdas), P2 (fonte das
 rodadas unicas: conferir se a Single Runs guarda abr-nov/2026 ou trocar de fonte), V9 (dtype), Crossformer/Mamba
 (caminho do `models`). P4 so tem sentido de novo com posicoes do C9 validadas.
+
+## Rodadas de 25/11/2026 na maquina de CPU (versao 0.6.3 do README): C9 e P2 depois dos consertos
+
+Os consertos estao no commit `d5ef1ad` (e descritos nos proprios scripts). Portoes: os de 18/11, sem mudanca.
+
+### C9 (posicao pelos proprios dados): NAO PASSA
+
+A validacao quebrava por um defeito do script (indices desalinhados: toda a serie virava NaN). Consertado, e com uma
+mudanca de metodo declarada ANTES de qualquer posicao de VALIDACAO calculada (as do BR-PVGen de 18/11 ja existiam e seguem invalidas; lisura do dia claro medida em medias de 15 min nos
+passos mais finos; em 1 min o ruido sozinho reprovava todo dia), rodou nos 6 sistemas do PVDAQ (passo nativo) e nas
+duas usinas (`resultados/pilotos/c9_posicao.json`).
+Evidencia da mudanca (sonda de 25/11 com o criterio antigo no passo nativo, so contagem de dias, nenhuma posicao):
+razao soma|variacoes| / (2 x maximo) mediana 6,46 no PVDAQ 50 (1 min; 0 de 365 dias lisos), 3,92 no 1200 e 3,87 no
+1201 (5 min; 31 e 25 dias lisos). A mudanca vale tambem para os dois de 5 min, que com o criterio antigo teriam ~30
+dias claros antes do filtro de maximo; o portao nao passaria de qualquer modo (erros de 6 a 15 graus).
+
+| Sistema | passo | dias claros | erro lat | erro lon | plano ajustado |
+|---|---|---|---|---|---|
+| PVDAQ 50 | 1 min | 80 | +1,9 | +4,0 | 46 / 174 |
+| PVDAQ 1200 | 5 min | 44 | +12,2 | +6,3 | 60 / 203 |
+| PVDAQ 1201 | 5 min | 41 | +8,8 | +14,7 | 24 / 254 |
+| PVDAQ 1239 | 15 min | 4 | +12,1 | -15,4 | 13 / 47 |
+| PVDAQ 34 | 15 min | 65 | -7,8 | -0,4 | 11 / 350 |
+| PVDAQ 1433 | 15 min | 22 | +3,3 | -3,8 | 3 / 0 |
+| Cascavel | 1 h | 80 | -0,0 | -13,0 | 24 / 73 |
+| Curitiba | 1 h | 80 | -28,6 | -4,1 | 60 / 360 |
+
+Portao (|erro| <= 0,5 grau em lat E lon em >= 2 dos 3 sistemas de passo <= 5 min): **0 de 3. NAO PASSA.** Leitura:
+com a curva normalizada pelo maximo do dia, o plano e a posicao se confundem (um telhado virado para leste adianta a
+curva como uma longitude mais a leste: Cascavel saiu virada a 73 graus e 13 graus a oeste; a inclinacao troca com a
+latitude). O metodo so foi conferido em curvas sinteticas (onde o plano era conhecido). Consequencia, como escrito
+no portao: as posicoes do BR-PVGen NAO sao calculadas; P5 e V11 no BR-PVGen continuam bloqueados (o PVDAQ residencial
+do C10, com coordenadas, e o caminho). `c9_posicao_brpvgen.csv` (de 18/11) continua invalido.
+
+Achado lateral (para a versao 0.7.1, relogio fora do Parana): os carimbos brutos do PVDAQ 1200, 1201 e 34 seguem o
+horario de verao (o centro da producao pula +1 h de marco a outubro); 1239 e 1433 tem relogio irregular (1433 deriva
++-2 h no meio do ano).

@@ -39,7 +39,7 @@ chose nothing.
   with the original test. Retraining every network with 3 seeds keeps the tie groups in 92% of rows.
 - **Houses' PV with the day's weather depends on the season.** Over April to December 2020 the median of
   `casas_prod` in regime B ranked 2nd, 1st and then 7th of 23 (October-December); the ranking between seasons
-  correlates only 0.36-0.48 there (0.61-0.97 elsewhere). One winter of data cannot settle a default for home PV:
+  correlates only 0.36-0.48 there (0.61-0.97 elsewhere). One test season (the original autumn-winter test) cannot settle a default for home PV:
   treat its median as a robust choice, not as the best in every season.
 - **Fine-tuning is not the default.** Fine-tuning Chronos-2 per site gained +0.066 and +0.090 skill on the plants
   (history only and with weather) and +0.029 on house consumption, but lost 0.062 on houses' PV. The library stays
@@ -50,7 +50,7 @@ chose nothing.
 - **The outlook's daily range is too narrow today; a per-site range fixes it.** The 80% range caught 64-69% of
   days on the untouched period (50% at day 7). Recalibrated on each site's own last 60 days of errors (once 30
   pairs exist), it caught 79-82% (77-84% at every lead). In the library since 0.7.0 (`outlook.site_range`).
-- **The mean of the 6 weather models** helped 18 of 23 models on uncorrected p (6 of 23 after Holm), on the
+- **The mean of the 6 weather models** helped 18 of 23 models on uncorrected p (5 of 23 after Holm: Chronos-2, DeepAR, FEDformer, Ridge, TabPFN-TS), on the
   test period that chose it: a weak result, to check on the untouched period before regime C changes.
 
 ## Away from the project's own sites
@@ -74,7 +74,7 @@ chose nothing.
   (low latitudes, near sea level): give the tilt and azimuth when you know them.**
   The full run (2026-11-18, all six systems) failed its gate: tilt right in 1 of 6 (fitted 25-60 degrees against
   a true 10-45, too steep in 5), clock confident and right in 2 of 6, the physical chain's daily skill 0.47 against
-  0.72 on Cascavel. Fitting against measured irradiance did not fix the tilt (3 of 5). The clock result is not
+  0.72 on Cascavel. Fitting against measured irradiance gave the smaller tilt error in only 3 of 5 systems (the gate needed all 5). The clock result is not
   read as a daylight-saving failure: a Denver system with daylight saving passed and the Parana control failed.
   The raw PVDAQ timestamps of three systems do follow daylight saving (+1 h from March to October), and two
   systems have irregular clocks; what is the pilot's and what is the library's is 0.7.1's question.

@@ -608,6 +608,16 @@ def look_back(
 
 
 PAIR_COLUMNS = ["unique_id", "date", "lead_day", "total", "low", "high", "actual"]
+_SITE_RANGE_NOTES = (
+    "The low-high range of lead days {leads} comes from this site's own errors",
+    "The site's own range was measured on generation",
+    "Too few past forecasts of this site",
+)
+
+
+def _site_range_note(n: str) -> bool:
+    """A note `site_range` writes (so a second call replaces it instead of adding it again)."""
+    return str(getattr(n, "template", n)).startswith(_SITE_RANGE_NOTES)
 
 
 def past_pairs(past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame]) -> pd.DataFrame:
@@ -621,7 +631,7 @@ def past_pairs(past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame]) -> p
     items = past if isinstance(past, list) else [past]
     frames = [p.daily if isinstance(p, Outlook) else p for p in items]
     if not frames:
-        return pd.DataFrame(columns=PAIR_COLUMNS)
+        frames = [pd.DataFrame(columns=PAIR_COLUMNS)]
     d = pd.concat(frames, ignore_index=True)
     if "default_low" in d.columns:
         d = d.assign(
@@ -638,6 +648,10 @@ def past_pairs(past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame]) -> p
             )
         )
     d = d[PAIR_COLUMNS].copy()
+    for c in ("total", "low", "high", "actual"):
+        d[c] = pd.to_numeric(d[c], errors="coerce").astype(float)
+    d["lead_day"] = pd.to_numeric(d["lead_day"], errors="coerce")
+    d = d.dropna(subset=["lead_day"]).astype({"lead_day": int})
     d["date"] = pd.to_datetime(d["date"])
     if d["date"].dt.tz is not None:
         d["date"] = d["date"].dt.tz_localize(None)
@@ -669,7 +683,9 @@ def site_range(
     The daily table gains `default_low`/`default_high` (the default range, to store with the forecast for
     later pairs), `range` ("site" or "default") and `range_pairs` (n). The hourly ranges are not changed: the
     rule was measured on daily totals. The defaults are the V11-b pilot's (module constants, origin declared
-    there): measured on generation at two Parana plants; on consumption the rule is untested.
+    there): measured on generation at two Parana plants, lead days 1-7, with pairs the same method issued
+    (the outlook with the weather forecast); on consumption, beyond lead day 7, or with pairs of another
+    method (e.g. `look_back` without archived weather for an outlook with a live forecast) it is untested.
     """
     lo_q, hi_q = float(levels[0]), float(levels[1])
     if not 0 < lo_q < hi_q < 1:
@@ -682,15 +698,20 @@ def site_range(
     pairs = pairs[np.isfinite(pairs["r"])]
     groups = {key: g for key, g in pairs.groupby(["unique_id", "lead_day"])}
     d = outlook.daily.copy()
-    d["default_low"], d["default_high"] = d["low"], d["high"]
+    if "default_low" in d.columns:  # already recalibrated: start again from the default range it keeps
+        d["low"], d["high"] = d["default_low"], d["default_high"]
+    else:
+        d["default_low"], d["default_high"] = d["low"], d["high"]
+    day = pd.to_datetime(d["date"])
+    day = day.dt.tz_localize(None) if day.dt.tz is not None else day
     lows, highs, used = d["low"].to_numpy(float).copy(), d["high"].to_numpy(float).copy(), []
     totals = d["total"].to_numpy(float)
-    issues = pd.to_datetime(d["date"]).dt.normalize() - pd.to_timedelta(d["lead_day"].astype(int), unit="D")
+    issues = day.dt.normalize() - pd.to_timedelta(d["lead_day"].astype(int), unit="D")
     for i, (uid, lead) in enumerate(zip(d["unique_id"], d["lead_day"].astype(int), strict=True)):
         g = groups.get((uid, lead))
         n = 0
         w = highs[i] - lows[i]
-        if g is not None and w > 0 and np.isfinite(w):
+        if g is not None:
             issue = issues.iloc[i]
             r = np.sort(
                 g.loc[
@@ -698,14 +719,15 @@ def site_range(
                 ].to_numpy(float)
             )
             n = len(r)
-            if n >= min_pairs:
+            if n >= min_pairs and w > 0 and np.isfinite(w):
                 k_lo = max(int(np.floor(lo_q * (n + 1))), 1)
                 k_hi = min(int(np.ceil(hi_q * (n + 1))), n)
                 lows[i] = max(totals[i] + r[k_lo - 1] * w, 0.0)
                 highs[i] = max(totals[i] + r[k_hi - 1] * w, 0.0)
         used.append(n)
     n_used = np.array(used, dtype=int)
-    site = n_used >= min_pairs
+    width0 = (d["default_high"] - d["default_low"]).to_numpy(float)
+    site = (n_used >= min_pairs) & np.isfinite(width0) & (width0 > 0)
     d["low"], d["high"] = lows, highs
     d["range"] = np.where(site, "site", "default")
     d["range_pairs"] = n_used
@@ -717,7 +739,7 @@ def site_range(
         "pairs": len(pairs),
         "site_days": int(site.sum()),
     }
-    notes = list(outlook.notes)
+    notes = [n for n in outlook.notes if not _site_range_note(n)]
     if site.any():
         leads = sorted({int(k) for k in d.loc[site, "lead_day"]})
         notes.append(

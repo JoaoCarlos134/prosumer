@@ -149,3 +149,45 @@ def test_bad_arguments_are_messages() -> None:
         outlook.site_range(_today(1), _pairs(np.zeros(30)), levels=(0.9, 0.1))
     with pytest.raises(ValueError, match="lack the columns"):
         outlook.site_range(_today(1), _pairs(np.zeros(30)).drop(columns="actual"))
+
+
+def test_no_past_forecasts_yet_is_the_default_range_not_a_crash() -> None:
+    """Regression (review of 0.7.0): `past=[]`, a site's first day, raised a bare TypeError."""
+    s = _series(_plant(0.8))
+    o = outlook.forecast_ahead(s, days=2, site=SITE, tilt=15, azimuth=20, past=[])
+    assert (o.daily["range"] == "default").all()
+    assert any("Too few past forecasts" in n for n in o.notes)
+    empty = outlook.site_range(_today(1), pd.DataFrame(columns=outlook.PAIR_COLUMNS))
+    assert empty.daily.iloc[0]["range"] == "default"
+
+
+def test_applying_it_twice_does_not_stack() -> None:
+    """Regression (review of 0.7.0): a second call took the site range as the default and widened it again."""
+    pairs = _pairs(np.linspace(-2, 2, 30))
+    once = outlook.site_range(_today(1), pairs)
+    twice = outlook.site_range(once, pairs)
+    cols = ["low", "high", "default_low", "default_high", "range_pairs"]
+    pd.testing.assert_frame_equal(once.daily[cols], twice.daily[cols])
+    assert sum("comes from this site's own errors" in n for n in twice.notes) == 1
+
+
+def test_aware_dates_text_lead_days_and_a_zero_width_day() -> None:
+    """Regression (review of 0.7.0): an aware date raised, a lead day read as text matched nothing, and a
+    zero-width day reported 0 pairs."""
+    today = _today(1)
+    today.daily["date"] = today.daily["date"].dt.tz_localize("America/Sao_Paulo")
+    pairs = _pairs(np.linspace(-1, 1, 30)).astype({"lead_day": str})
+    o = outlook.site_range(today, pairs)
+    assert o.daily.iloc[0]["range"] == "site"
+    flat = outlook.site_range(_today(1, low=50.0, high=50.0), _pairs(np.zeros(30)))
+    assert flat.daily.iloc[0]["range"] == "default" and flat.daily.iloc[0]["range_pairs"] == 30
+
+
+def test_the_app_does_not_promise_a_recalibration_it_cannot_make() -> None:
+    from prosumer import app
+
+    s = _series(_plant(0.8))
+    o = outlook.forecast_ahead(s, days=1, site=SITE, tilt=15, azimuth=20)
+    said = [app._for_people(n) for n in o.notes]
+    assert any("does not yet keep its forecasts" in n for n in said)
+    assert not any("can recalibrate it" in n for n in said)

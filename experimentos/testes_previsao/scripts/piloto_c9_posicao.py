@@ -77,7 +77,7 @@ def dias_claros(s, n_max=80):
     s = s.clip(lower=0)
     cheio = s.groupby(s.index.normalize()).count()
     cheio = cheio >= cheio.median() * 0.9
-    # Conserto de 25/11/2026 (declarado, depois da 1a rodada e ANTES de qualquer posicao calculada): o criterio de
+    # Conserto de 25/11/2026 (declarado, depois da 1a rodada e ANTES de qualquer posicao de validacao calculada): o criterio de
     # curva lisa foi escrito para passos de 15 min a 1 h; em 1 min o ruido sozinho da razao mediana 6,5 (limiar 1,15)
     # e nenhum dia passava. Lisura e maximo agora sao medidos nas medias de 15 min (passos mais finos); o ajuste
     # continua nas amostras nativas.

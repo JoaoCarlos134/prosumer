@@ -52,12 +52,21 @@ def baixa():
     pasta = DADOS / "_cache" / "rodadas_v1"
     pasta.mkdir(parents=True, exist_ok=True)
     indisp = []
+    # Conserto de 25/11/2026: o arquivo da Single Runs ja nao guarda as rodadas antes de ~30/05/2026 (em 18/11 o
+    # primeiro pedido, 28/03, falhou e derrubou a fila). As rodadas 02/04-30/05 ja baixadas pelo piloto do horizonte
+    # (`previsao_tempo_rodadas.parquet`, no git) entram como estao; so o resto vem da API.
+    antigas = pd.read_parquet(DADOS / "previsao_tempo_rodadas.parquet")
+    ja = set(zip(antigas.serie, antigas.modelo_nwp, antigas.run.dt.date))
     for serie, (lat, lon) in SITIOS.items():
         for m in MODELOS:
             for dia in pd.date_range(INI, FIM, freq="D"):
                 run = f"{dia.date()}T12:00"
                 f = pasta / f"{serie}__{m}__{dia.date()}.parquet"
                 if f.exists():
+                    continue
+                if (serie, m, dia.date()) in ja:
+                    antigas[(antigas.serie == serie) & (antigas.modelo_nwp == m)
+                           & (antigas.run.dt.date == dia.date())].to_parquet(f, index=False)
                     continue
                 q = dict(latitude=lat, longitude=lon, models=m, run=run, hourly="shortwave_radiation", timezone="GMT",
                          forecast_days=16)

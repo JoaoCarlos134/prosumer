@@ -164,7 +164,9 @@ def pega(url, params):
                 CONTA["espera_429_s"] += 70
                 time.sleep(70)
                 continue
-            if e.code == 400 and "not available" in msg:
+            # "The requested model run is not available" (rodada fora do arquivo) ou, em 18/11/2026 no servidor,
+            # "No data is available for this location" para uma rodada antiga: as duas sao "sem rodada"
+            if e.code == 400 and ("not available" in msg or "No data is available" in msg):
                 raise SemRodada(msg)
             raise RuntimeError(f"HTTP {e.code}: {msg}")
         except (urllib.error.URLError, TimeoutError) as e:

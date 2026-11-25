@@ -214,14 +214,29 @@ def treina_multivariado(d, caso, fab, chama, ini, fim, L, lr, perda="l1", escala
     return jan, [prev[(j["unique_id"], j["dia"])] for j in jan], sum(t.numel() for t in m.parameters())
 
 
+def _tslib():
+    """Poe a Time-Series-Library (commit 4e938a1, MIT) em ~/.cache/tslib-repo no sys.path, clonando-a se faltar.
+    Conserto de 25/11/2026: no servidor (18/11) Crossformer e Mamba falharam com "No module named 'models'"
+    porque o clone so existia nas maquinas de 10/10."""
+    import subprocess
+    import sys
+    from pathlib import Path
+    repo = Path.home() / ".cache" / "tslib-repo"
+    if not (repo / "models" / "Crossformer.py").exists():
+        url = "https://github.com/thuml/Time-Series-Library.git"
+        subprocess.run(["git", "clone", "--quiet", url, str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "checkout", "--quiet", "4e938a1"], check=True)
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+
+
 def crossformer(n):
     """Crossformer da Time-Series-Library (commit 4e938a1, MIT, em ~/.cache/tslib-repo), hiperparametros do
     script oficial de eletricidade (ECL). Etapa A, 10/10/2026: passou no portao (1o nas usinas, 2o na FV das
     casas, estavel em 3 sementes). O `reformer_pytorch` (so do Reformer) vira um modulo vazio."""
     import sys
     import types
-    from pathlib import Path
-    sys.path.insert(0, str(Path.home() / ".cache" / "tslib-repo"))
+    _tslib()
     sys.modules.setdefault("reformer_pytorch", types.SimpleNamespace(LSHSelfAttention=None))
     from models.Crossformer import Model
     return Model(types.SimpleNamespace(
@@ -233,10 +248,8 @@ def mamba(n):
     """Mamba da Time-Series-Library (models/MambaSimple.py, bloco em PyTorch puro, sem mamba_ssm), hiperparametros
     do script oficial de eletricidade (ECL). Etapa A, 10/10/2026: passou no portao na FV das casas. Como na TSLib, a
     previsao sao as ultimas 24 saidas da varredura causal sobre os 168 h de entrada (limitacao declarada no ESTUDO)."""
-    import sys
     import types
-    from pathlib import Path
-    sys.path.insert(0, str(Path.home() / ".cache" / "tslib-repo"))
+    _tslib()
     from models.MambaSimple import Model
     return Model(types.SimpleNamespace(
         task_name="long_term_forecast", pred_len=H, enc_in=n, c_out=n, d_model=128, expand=2, d_ff=16, d_conv=4,

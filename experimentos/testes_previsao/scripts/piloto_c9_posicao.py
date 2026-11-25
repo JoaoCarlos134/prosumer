@@ -75,10 +75,19 @@ def forma(tt, lat, lon, tilt=0.0, azp=0.0):
 def dias_claros(s, n_max=80):
     """s: Series (indice local ingenuo, valor >= 0). Devolve a lista de dias (Timestamp) claros."""
     s = s.clip(lower=0)
+    cheio = s.groupby(s.index.normalize()).count()
+    cheio = cheio >= cheio.median() * 0.9
+    # Conserto de 25/11/2026 (declarado, depois da 1a rodada e ANTES de qualquer posicao calculada): o criterio de
+    # curva lisa foi escrito para passos de 15 min a 1 h; em 1 min o ruido sozinho da razao mediana 6,5 (limiar 1,15)
+    # e nenhum dia passava. Lisura e maximo agora sao medidos nas medias de 15 min (passos mais finos); o ajuste
+    # continua nas amostras nativas.
+    passo = s.index.to_series().diff().median()
+    if passo < pd.Timedelta(minutes=15):
+        s = s.resample("15min").mean()
     d = s.groupby(s.index.normalize())
     mx = d.max()
     var = d.apply(lambda x: np.abs(np.diff(x.fillna(0).to_numpy())).sum())
-    cheio = d.count() >= d.count().median() * 0.9
+    cheio = cheio.reindex(mx.index, fill_value=False)
     teto = mx.rolling(31, center=True, min_periods=5).max()
     ok = (var <= 1.15 * 2 * mx) & (mx >= 0.8 * teto) & (mx > 0) & cheio
     dias = ok[ok].index
@@ -145,13 +154,19 @@ def ajusta(tt, v, dia, plano):
 # ------------------------------------------------------------------ validacao e BR-PVGen
 def valida():
     from comum import DADOS, SITIOS
-    from piloto_pvdaq import SISTEMAS, _sistemas, serie_pvdaq
+    from piloto_pvdaq import SISTEMAS, _sistemas
+
+    from prosumer.io import pvdaq
     info = _sistemas()
     rel = {}
     for sid in SISTEMAS:
-        s = serie_pvdaq(sid, info)
+        ini, fim, col = SISTEMAS[sid]
+        # passo NATIVO (o portao e sobre os sistemas de passo <= 5 min; o padrao do leitor e horario).
+        # Conserto de 25/11/2026: a linha antiga `f.set_index(f.ds).y.where(f.valid)` alinhava indices diferentes
+        # (ds x RangeIndex) e deixava TUDO NaN -> nenhum dia claro -> IndexError no reduceat (rodada de 18/11).
+        s = pvdaq.fetch(sid, ini, fim, column=col, tz=info[sid]["tz"], dst="drop", freq=None)
         f = s.frame
-        x = f.set_index(f.ds).y.where(f.valid)
+        x = pd.Series(f.y.where(f.valid).to_numpy(float), index=pd.DatetimeIndex(f.ds))
         passo_h = (x.index[1] - x.index[0]).total_seconds() / 3600
         off = pd.Timestamp("2019-01-15", tz=x.index.tz).utcoffset().total_seconds() / 3600
         xs = pd.Series(x.to_numpy(float), index=x.index.tz_convert(f"Etc/GMT{-int(off):+d}").tz_localize(None))
@@ -171,8 +186,9 @@ def valida():
         print(serie, rel[f"usina_{serie}"], flush=True)
     finos = [k for k, r in rel.items() if k.startswith("pvdaq") and r["passo_min"] <= 5]
     ok = [k for k in finos if abs(rel[k]["erro_lat"]) <= TOL and abs(rel[k]["erro_lon"]) <= TOL]
-    rel["PORTAO"] = dict(sistemas_finos=finos, dentro_de_0_5_grau=ok, PASSA=len(ok) >= 2,
-                         incerteza_declarada=max(max(abs(rel[k]["erro_lat"]), abs(rel[k]["erro_lon"])) for k in finos))
+    rel["PORTAO"] = dict(sistemas_finos=finos, dentro_de_0_5_grau=ok, PASSA=len(finos) == 3 and len(ok) >= 2,
+                         incerteza_declarada=max((max(abs(rel[k]["erro_lat"]), abs(rel[k]["erro_lon"])) for k in finos),
+                                                 default=None))
     atual = json.loads(SAIDA.read_text()) if SAIDA.exists() else {}
     atual["validacao"] = rel
     SAIDA.write_text(json.dumps(atual, indent=1, default=float))

@@ -90,6 +90,12 @@ def fabrica(caso):
     m = M.TimeLLM(prompt_prefix=PROMPT[caso], **LLM, **{**R.COMUM_T, "windows_batch_size": 32,
                                                   "inference_windows_batch_size": 32,
                                                   **({"max_steps": 2, "val_check_steps": 1} if TESTE else {})})
+    # Conserto de 25/11/2026 (V9 de 18/11 quebrou: "mat1 and mat2 must have the same dtype, Half x Float"): o
+    # transformers carrega o LLaMA-7B no dtype do checkpoint (float16), e a camada de mapeamento do Time-LLM, que
+    # treina, e float32. O LLM congelado vai para float32 (~28 GB na GPU de 96 GB); o GPT-2 ja e float32 (nada muda).
+    if next(m.llm.parameters()).dtype != torch.float32:
+        m.llm = m.llm.float()
+        m.word_embeddings = m.llm.get_input_embeddings().weight
     if SEM_LLM:
         m.llm = SemLLM(m.llm)
     return m

@@ -55,6 +55,9 @@ default chosen on the project's sites shaped a result. Origins:
 | `weeks` (consumption) | 4 | set by hand; the rule was measured on the Dingle houses (beat "same as the last day" at every lead 1-14) |
 | clear-day rule | as in diagnostics | set by hand on the two Parana plants |
 | `min_history_days` (`look_back`, `past_days`) | 28 | set by hand: the four weeks of the consumption profile |
+| `window_days` (`site_range`) | 60 days of past pairs per lead day | set by hand BEFORE the V11-b pilot; the pilot then **measured** the result on the two Parana plants, 06-11/2026 (79-82% of days inside an 80% range) |
+| `min_pairs` (`site_range`) | 30 | set by hand before the same pilot |
+| `levels` (`site_range`) | 0.1, 0.9 (finite-sample order statistics) | generic: the 80% range the default one claims |
 
 ## The forecast check (`analyze`)
 

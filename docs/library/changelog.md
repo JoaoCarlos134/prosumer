@@ -1,6 +1,30 @@
 # Changes
 
-## Unreleased (after 0.1.0)
+Versions follow README "Versions and roadmap". Since 0.7.0 each version has its own section here; what came
+between 0.1.0 and 0.6.3 is listed below by theme, under "0.2.0 to 0.6.3".
+
+## 0.7.0 (2026-11-25): an honest range per site
+
+- `outlook.site_range(outlook, past)` and `forecast_ahead(past=...)`: each day's low/high from this site's own
+  past errors, per lead day, once 30 pairs of that lead day exist in the last 60 days (split conformal with the
+  finite-sample order statistics, each edge moved from the forecast; the V11-b pilot's rule, written before
+  its run). On two Parana plants, on a period that chose nothing (06-11/2026), it held the real total on 79-82%
+  of days for an 80% range; the default range held 64-69% (50% a week ahead). The daily table gains
+  `default_low`/`default_high` (to store with the forecast), `range` ("site"/"default") and `range_pairs`;
+  the hourly ranges are unchanged. `outlook.past_pairs` reads `look_back`'s outlook (lead day 1, up to 31 days)
+  or stored daily tables with an `actual` column. Arguments `window_days`, `min_pairs`, `levels`, origins in
+  [Tuning](tuning.md).
+- A generation outlook now says that its default range is too narrow (the measured 6.4-6.9 days in 10) until
+  the site's own forecasts can recalibrate it.
+- Not yet in the app: it stores no forecasts (the local database is 0.9.0).
+
+## 0.6.3 (2026-11-25): the server round closed
+
+- Library docs only ([Validation](validation.md)): the server's checks of 2026-11 (the median and ranking on an
+  untouched period, seeds, houses' PV by season, fine-tuning as an option not taken, foundation models with
+  weather below the physical chain, the PVDAQ run).
+
+## 0.2.0 to 0.6.3 (after 0.1.0)
 
 **The last days next to the next ones (asked by the user, 16/11)**
 

@@ -24,7 +24,10 @@ How (simple on purpose, every step can be explained to the person using it):
 The low/high columns are ranges, not calibrated intervals: across the weather models (generation, blended by
 the same trust with the seasonal 10-90% range of clearness) and across the days of the profile (consumption:
 per hour, that hour's lowest and highest value; per day, the lowest and highest daily total of the same kind
-of day, not the sum of the hourly extremes, which no single day reaches).
+of day, not the sum of the hourly extremes, which no single day reaches). On two Parana plants the default
+daily range held the real total on 64-69% of days (V11-b pilot, 06-11/2026), not 80%: given the site's own
+past forecasts next to what happened (`forecast_ahead(past=...)`, `site_range`), each lead day's daily range
+is recalibrated on them (79-82% there).
 
 Beyond lead 7 the generation is only the seasonal expectation (the pilot found no skill in the weather
 there): the average day of that month, not a forecast of that day's weather. It is labelled so
@@ -111,6 +114,14 @@ SKILL: tuple[float, ...] = (0.496, 0.439, 0.408, 0.392, 0.344, 0.274, 0.199)
 IMPLAUSIBLE = (1.2, 50.0)
 HIGH, MEDIUM = 0.40, 0.25  # skill from which a day is labelled high / medium confidence (leads 1-3 / 4-6)
 KWP_SHARE = 0.8  # effective power as a share of the given kWp when no recent clear day teaches it
+# The per-site daily range (`site_range`): the rule of the V11-b pilot, written BEFORE its run on two Parana
+# plants (gate in docs/projeto/PILOTOS_F1_F2.md, 2026-11-18; run on a period that chose nothing, 06-11/2026).
+# 60 days of past pairs per lead day, at least 30 of them, the 10% and 90% finite-sample order statistics:
+# set by hand before the run, not fitted. The pilot measured the result: 79-82% of days inside for an 80%
+# range, where the default range held 64-69% (50-51% at lead day 7).
+SITE_RANGE_DAYS = 60
+SITE_RANGE_MIN_PAIRS = 30
+SITE_RANGE_LEVELS = (0.1, 0.9)
 
 
 @dataclass(frozen=True)
@@ -216,8 +227,12 @@ def forecast_ahead(
     clear_window_days: int = CLEAR_WINDOW_DAYS,
     clear_quantile: float = CLEAR_QUANTILE,
     clear_ratio: float = CLEAR_RATIO,
+    past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame] | None = None,
 ) -> Outlook:
     """Hourly forecast of the `days` days after the data end (generation or consumption), with daily totals.
+
+    `past`: this site's earlier forecasts next to what happened (see `site_range`); when given, each day's
+    low/high comes from the site's own errors once its lead day has enough of them.
 
     `site` (latitude, longitude) is required for generation. `weather`: a live forecast from
     `io.open_meteo.fetch_forecast` (long, with `model`) or its `wide` frame; without it a generation forecast
@@ -360,7 +375,18 @@ def forecast_ahead(
                 n=int(gaps["missing_hours"].sum()),
             )
         )
-    return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
+    out = Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
+    if s.quantity == "generation":
+        out.notes.append(
+            Note(
+                "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants "
+                "in Parana (Jun-Nov 2026) it held it on 6.4 to 6.9 days in 10, and on only 5 in 10 a week "
+                "ahead. Read it as too narrow until {n} days of this site's own forecasts can recalibrate "
+                "it.",
+                n=SITE_RANGE_MIN_PAIRS,
+            )
+        )
+    return out if past is None else site_range(out, past)
 
 
 def best_windows(
@@ -579,6 +605,157 @@ def look_back(
             )
     method = {"days": len(targets), "weather_days": covered, "lead_day": 1}
     return Outlook(hourly=hourly, daily=daily, quantity=s.quantity, method=method, notes=notes)
+
+
+PAIR_COLUMNS = ["unique_id", "date", "lead_day", "total", "low", "high", "actual"]
+
+
+def past_pairs(past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame]) -> pd.DataFrame:
+    """The (forecast, actual) pairs `site_range` learns from, one row per series, day and lead day:
+    `unique_id, date, lead_day, total, low, high, actual`, with `low`/`high` the DEFAULT range the forecast
+    was issued with (a range already recalibrated by `site_range` keeps it as `default_low`/`default_high`,
+    and that is what is used: the errors are measured in units of the default width). Takes `look_back`'s
+    outlook (lead day 1 of the last days, with `actual`), saved daily tables of past outlooks with an
+    `actual` column added, or a list of them. Rows without an actual are dropped; a repeated (series, day,
+    lead day) keeps the last."""
+    items = past if isinstance(past, list) else [past]
+    frames = [p.daily if isinstance(p, Outlook) else p for p in items]
+    if not frames:
+        return pd.DataFrame(columns=PAIR_COLUMNS)
+    d = pd.concat(frames, ignore_index=True)
+    if "default_low" in d.columns:
+        d = d.assign(
+            low=d["default_low"].where(d["default_low"].notna(), d["low"]),
+            high=d["default_high"].where(d["default_high"].notna(), d["high"]),
+        )
+    missing = [c for c in PAIR_COLUMNS if c not in d.columns]
+    if missing:
+        raise ValueError(
+            Note(
+                "The past forecasts lack the columns {cols} (each needs unique_id, date, lead_day, total, "
+                "low, high and the measured total, actual).",
+                cols=missing,
+            )
+        )
+    d = d[PAIR_COLUMNS].copy()
+    d["date"] = pd.to_datetime(d["date"])
+    if d["date"].dt.tz is not None:
+        d["date"] = d["date"].dt.tz_localize(None)
+    d["date"] = d["date"].dt.normalize()
+    d = d.dropna(subset=["total", "low", "high", "actual"])
+    d = d.drop_duplicates(["unique_id", "date", "lead_day"], keep="last")
+    return d.sort_values(["unique_id", "lead_day", "date"]).reset_index(drop=True)
+
+
+def site_range(
+    outlook: Outlook,
+    past: pd.DataFrame | Outlook | list[Outlook | pd.DataFrame],
+    *,
+    window_days: int = SITE_RANGE_DAYS,
+    min_pairs: int = SITE_RANGE_MIN_PAIRS,
+    levels: tuple[float, float] = SITE_RANGE_LEVELS,
+) -> Outlook:
+    """The outlook with each day's low/high taken from this site's own past errors (split conformal, per lead
+    day), where enough of them exist.
+
+    For a day at lead day k issued on day I: the pairs of lead day k (`past_pairs`) whose day is in
+    (I - `window_days`, I], i.e. known on the issue day, give the scaled errors r = (actual - total) / (high -
+    low), with the default range of each pair. With n >= `min_pairs` of them, r_lo and r_hi are the
+    floor(levels[0] (n + 1))-th and ceil(levels[1] (n + 1))-th smallest (the conservative finite-sample
+    levels), and the range becomes [total + r_lo w, total + r_hi w], w = the day's default width, cut at 0.
+    Each edge moves from the forecast on its own, so the range need not be centred on it (and, rarely, need
+    not hold it). Otherwise the day keeps the default range.
+
+    The daily table gains `default_low`/`default_high` (the default range, to store with the forecast for
+    later pairs), `range` ("site" or "default") and `range_pairs` (n). The hourly ranges are not changed: the
+    rule was measured on daily totals. The defaults are the V11-b pilot's (module constants, origin declared
+    there): measured on generation at two Parana plants; on consumption the rule is untested.
+    """
+    lo_q, hi_q = float(levels[0]), float(levels[1])
+    if not 0 < lo_q < hi_q < 1:
+        raise ValueError(Note("levels must be (low, high) with 0 < low < high < 1"))
+    if window_days < 1 or min_pairs < 1:
+        raise ValueError(Note("window_days and min_pairs must be at least 1"))
+    pairs = past_pairs(past)
+    width = pairs["high"] - pairs["low"]
+    pairs = pairs.assign(r=(pairs["actual"] - pairs["total"]) / width.where(width > 0))
+    pairs = pairs[np.isfinite(pairs["r"])]
+    groups = {key: g for key, g in pairs.groupby(["unique_id", "lead_day"])}
+    d = outlook.daily.copy()
+    d["default_low"], d["default_high"] = d["low"], d["high"]
+    lows, highs, used = d["low"].to_numpy(float).copy(), d["high"].to_numpy(float).copy(), []
+    totals = d["total"].to_numpy(float)
+    issues = pd.to_datetime(d["date"]).dt.normalize() - pd.to_timedelta(d["lead_day"].astype(int), unit="D")
+    for i, (uid, lead) in enumerate(zip(d["unique_id"], d["lead_day"].astype(int), strict=True)):
+        g = groups.get((uid, lead))
+        n = 0
+        w = highs[i] - lows[i]
+        if g is not None and w > 0 and np.isfinite(w):
+            issue = issues.iloc[i]
+            r = np.sort(
+                g.loc[
+                    (g["date"] > issue - pd.Timedelta(days=window_days)) & (g["date"] <= issue), "r"
+                ].to_numpy(float)
+            )
+            n = len(r)
+            if n >= min_pairs:
+                k_lo = max(int(np.floor(lo_q * (n + 1))), 1)
+                k_hi = min(int(np.ceil(hi_q * (n + 1))), n)
+                lows[i] = max(totals[i] + r[k_lo - 1] * w, 0.0)
+                highs[i] = max(totals[i] + r[k_hi - 1] * w, 0.0)
+        used.append(n)
+    n_used = np.array(used, dtype=int)
+    site = n_used >= min_pairs
+    d["low"], d["high"] = lows, highs
+    d["range"] = np.where(site, "site", "default")
+    d["range_pairs"] = n_used
+    method = dict(outlook.method)
+    method["site_range"] = {
+        "window_days": window_days,
+        "min_pairs": min_pairs,
+        "levels": [lo_q, hi_q],
+        "pairs": len(pairs),
+        "site_days": int(site.sum()),
+    }
+    notes = list(outlook.notes)
+    if site.any():
+        leads = sorted({int(k) for k in d.loc[site, "lead_day"]})
+        notes.append(
+            Note(
+                "The low-high range of lead days {leads} comes from this site's own errors over the last "
+                "{days} days ({n} or more past forecasts each), recalibrated to hold the real total on 8 "
+                "days in 10; the other days keep the default range.",
+                leads=leads,
+                days=window_days,
+                n=min_pairs,
+            )
+        )
+        if outlook.quantity != "generation":
+            notes.append(
+                Note("The site's own range was measured on generation; on consumption it is untested.")
+            )
+    else:
+        notes.append(
+            Note(
+                "Too few past forecasts of this site (at most {n} of one lead day, {need} needed) to "
+                "recalibrate the range: it is the default one.",
+                n=int(n_used.max()) if len(n_used) else 0,
+                need=min_pairs,
+            )
+        )
+    notes = [
+        n
+        for n in notes
+        if not (site.all() and str(n).startswith("Each day's low-high range is meant to hold"))
+    ]
+    return Outlook(
+        hourly=outlook.hourly,
+        daily=d,
+        quantity=outlook.quantity,
+        unit=outlook.unit,
+        method=method,
+        notes=notes,
+    )
 
 
 def _as_hourly(series: EnergySeries) -> EnergySeries:

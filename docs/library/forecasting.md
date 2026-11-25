@@ -126,3 +126,38 @@ Each of the last complete days is forecast by the same method as the coming days
 it and, for PV, the weather forecast that existed the day before (`weather=io.open_meteo.fetch_previous_runs(...,
 lead_days=1)`; the archive starts in 2024). Without it the past days are the seasonal expectation and the notes
 say so. It shows the error of day 1; the later days of the outlook miss by more (`skill` by lead day).
+
+### A range that fits the site: `past=` and `site_range`
+
+The default daily low-high range is meant to hold the real total on 8 days in 10. On two plants in Parana, on
+a period that chose nothing (June to November 2026), it held it on only 6.4 to 6.9 days in 10, and on 5 in 10
+a week ahead. Given this site's own earlier forecasts next to what happened, the outlook recalibrates it:
+
+```python
+from prosumer import data, forecast_ahead
+from prosumer.outlook import look_back
+
+pv, _ = data.example_plant(n_series=1, days=200)
+site = (-25.43, -49.27)
+past = look_back(pv, days=31, site=site)  # 31 days forecast at lead day 1, next to what happened
+o = forecast_ahead(pv, days=3, site=site, past=past)
+print(o.daily[["date", "lead_day", "total", "low", "high", "range", "range_pairs"]])
+assert o.daily["range"].tolist() == ["site", "default", "default"]
+```
+
+For each lead day, the errors of the last 60 days of that lead day (only days already known when the forecast
+is issued), divided by the width of the default range they were issued with, give the 10th and 90th
+percentiles (the conservative finite-sample order statistics); each edge of the day's range moves from the
+forecast by those amounts, so the range need not be centred on it. A lead day with fewer than 30 past pairs
+keeps the default range. With this rule the range held the real total on 7.9 to 8.2 days in 10 on the same
+plants (7.7 to 8.4 at every lead day 1-7); it is wider than the default a week ahead (1.5 to 1.8 times) and about
+as wide over the next three days.
+
+- `look_back` gives lead day 1 only (up to 31 days). The other lead days need the outlooks this site issued
+  before, stored with what happened: their `daily` tables with an `actual` column added, passed as a list
+  (`outlook.past_pairs` says what it reads). A recalibrated table keeps `default_low`/`default_high`, the
+  range the errors are measured against.
+- Only the daily totals are recalibrated; the hourly ranges are not (the rule was measured on daily totals).
+- Measured on generation only. On consumption the rule runs, and the notes say it is untested there.
+- `outlook.site_range(o, past, window_days=60, min_pairs=30, levels=(0.1, 0.9))` applies it to an outlook you
+  already have.

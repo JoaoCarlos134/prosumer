@@ -875,6 +875,45 @@ PT: dict[str, str] = {
         "tempo: além de uma semana, as previsões do tempo não mostraram skill no piloto."
     ),
     (
+        "Each day's low-high range is meant to hold the real total on 8 days in 10; on two plants in "
+        "Parana (Jun-Nov 2026) it held it on 6.4 to 6.9 days in 10, and on only 5 in 10 a week ahead. "
+        "Read it as too narrow until {n} days of this site's own forecasts can recalibrate it."
+    ): (
+        "A faixa mínimo-máximo de cada dia deveria conter o total real em 8 de cada 10 dias; em duas usinas "
+        "no Paraná (jun-nov de 2026) conteve em 6,4 a 6,9 de cada 10, e em só 5 de cada 10 uma semana à "
+        "frente. Leia-a como estreita demais até que {n} dias de previsões deste local possam recalibrá-la."
+    ),
+    (
+        "The past forecasts lack the columns {cols} (each needs unique_id, date, lead_day, total, low, high "
+        "and the measured total, actual)."
+    ): (
+        "Faltam às previsões passadas as colunas {cols} (cada uma precisa de unique_id, date, lead_day, "
+        "total, low, high e do total medido, actual)."
+    ),
+    "levels must be (low, high) with 0 < low < high < 1": (
+        "levels deve ser (baixo, alto) com 0 < baixo < alto < 1"
+    ),
+    "window_days and min_pairs must be at least 1": "window_days e min_pairs devem ser pelo menos 1",
+    (
+        "The low-high range of lead days {leads} comes from this site's own errors over the last {days} days "
+        "({n} or more past forecasts each), recalibrated to hold the real total on 8 days in 10; the other "
+        "days keep the default range."
+    ): (
+        "A faixa mínimo-máximo dos dias à frente {leads} vem dos próprios erros deste local nos últimos "
+        "{days} dias ({n} ou mais previsões passadas cada), recalibrada para conter o total real em 8 de "
+        "cada 10 dias; os outros dias mantêm a faixa padrão."
+    ),
+    "The site's own range was measured on generation; on consumption it is untested.": (
+        "A faixa do próprio local foi medida na geração; no consumo, não foi testada."
+    ),
+    (
+        "Too few past forecasts of this site (at most {n} of one lead day, {need} needed) to recalibrate "
+        "the range: it is the default one."
+    ): (
+        "Poucas previsões passadas deste local (no máximo {n} de um mesmo dia à frente; são precisas {need}) "
+        "para recalibrar a faixa: ela é a padrão."
+    ),
+    (
         "{n} hours have no forecast (never seen in the recent data) and are left out of the daily totals and "
         "of the load windows."
     ): (
